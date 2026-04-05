@@ -4,37 +4,33 @@ set -eu
 MANIFEST_FILE=".harness-sync-manifest.json"
 DRY_RUN=0
 TARGET_DIR=""
-TEMPLATE=""
 
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
-SOURCE_DIR="$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)"
+SOURCE_DIR="$(CDPATH= cd -- "$SCRIPT_DIR/../.." && pwd)"
 
 usage() {
   cat <<'EOF'
 사용법:
-  claude-scripts/sync.sh --target <project-path> [--source <harness-source>] [--template <category>] [--dry-run]
+  .claude/scripts/sync.sh --target <project-path> [--source <harness-source>] [--dry-run]
 
 설명:
   현재 저장소의 하네스 자산을 다른 프로젝트에 설치하거나 업데이트합니다.
 
 관리 대상 (명시적 화이트리스트):
-  - CLAUDE.md (마커 기반 병합)
-  - claude-scripts/{check-plan,check-plan-review,suggest-harness,track-edits,snapshot,sync,bootstrap,promote}.sh
+  - CLAUDE.md (마커 기반 병합: .claude/CLAUDE.md.example → 프로젝트 루트 CLAUDE.md)
+  - .claude/scripts/{check-plan,check-plan-review,suggest-harness,track-edits,snapshot,sync,bootstrap,promote,migrate}.sh
   - .claude/skills/{core-rules,failure-response,deep-study}.md
   - .claude/settings.json
   - .claude/skills/harness-engine/* (전체 서브트리)
-  - .claude/agents/{work-reviewer,domain-tutor,harness-researcher}/AGENT.md
+  - .claude/agents/{work-reviewer,domain-tutor,harness-researcher,harness-auditor}/AGENT.md
 
 비관리 대상 (프로젝트 소유):
   - .claude/sessions/*, .claude/plans/*, .claude/agent-memory/*
   - .claude/skills/harness-* (프로젝트별 도메인 하네스)
   - .claude/settings.local.json
-  - suggest-harness-patterns.json, lefthook.yml
-  - claude-scripts/ 내 화이트리스트 외 파일
+  - lefthook.yml
+  - .claude/scripts/ 내 화이트리스트 외 파일
   - .claude/agents/ 내 화이트리스트 외 디렉터리
-
-옵션:
-  --template <category>  templates/<category>/ 파일을 1회 복사 (이미 존재하면 건너뜀)
 EOF
 }
 
@@ -55,7 +51,7 @@ fail() {
 
 ensure_source_layout() {
   [ -d "$SOURCE_DIR" ] || fail "source 디렉터리가 없습니다: $SOURCE_DIR"
-  [ -f "$SOURCE_DIR/CLAUDE.md" ] || fail "source에 CLAUDE.md가 없습니다: $SOURCE_DIR"
+  [ -f "$SOURCE_DIR/.claude/CLAUDE.md.example" ] || fail "source에 .claude/CLAUDE.md.example이 없습니다: $SOURCE_DIR"
   [ -d "$SOURCE_DIR/.claude/skills" ] || fail "source에 .claude/skills 디렉터리가 없습니다: $SOURCE_DIR"
 }
 
@@ -63,12 +59,13 @@ collect_source_paths() {
   (
     cd "$SOURCE_DIR"
 
-    [ -f "CLAUDE.md" ] && printf '%s\n' "CLAUDE.md"
+    # CLAUDE.md.example (sync_merge에서 프로젝트 루트 CLAUDE.md로 병합)
+    [ -f ".claude/CLAUDE.md.example" ] && printf '%s\n' ".claude/CLAUDE.md.example"
 
-    # claude-scripts — 명시적 화이트리스트 (프로젝트 로컬 스크립트 보호)
+    # .claude/scripts — 명시적 화이트리스트 (프로젝트 로컬 스크립트 보호)
     for script in check-plan.sh check-plan-review.sh suggest-harness.sh \
-                  track-edits.sh snapshot.sh sync.sh bootstrap.sh promote.sh; do
-      [ -f "claude-scripts/$script" ] && printf '%s\n' "claude-scripts/$script"
+                  track-edits.sh snapshot.sh sync.sh bootstrap.sh promote.sh migrate.sh; do
+      [ -f ".claude/scripts/$script" ] && printf '%s\n' ".claude/scripts/$script"
     done
 
     # portable core skills
@@ -85,7 +82,7 @@ collect_source_paths() {
     fi
 
     # custom agents — 명시적 화이트리스트 (프로젝트 로컬 에이전트 보호)
-    for agent in work-reviewer domain-tutor harness-researcher; do
+    for agent in work-reviewer domain-tutor harness-researcher harness-auditor; do
       [ -f ".claude/agents/$agent/AGENT.md" ] && \
         printf '%s\n' ".claude/agents/$agent/AGENT.md"
     done
@@ -352,35 +349,6 @@ write_manifest() {
   log_action "WRITE" "$MANIFEST_FILE"
 }
 
-# stamp_template: 템플릿 파일을 1회 복사 (이미 존재하면 건너뜀, 매니페스트 비관리)
-stamp_template() {
-  template_name="$1"
-  template_dir="$SOURCE_DIR/templates/$template_name"
-
-  [ -d "$template_dir" ] || fail "템플릿이 없습니다: $template_dir"
-
-  printf 'TEMPLATE %s\n' "$template_name"
-
-  (cd "$template_dir" && find . -type f) | sed 's#^\./##' | LC_ALL=C sort | while IFS= read -r rel_path; do
-    src="$template_dir/$rel_path"
-    # .template 확장자 제거 (lefthook.yml.template → lefthook.yml)
-    dst_rel=$(echo "$rel_path" | sed 's/\.template$//')
-    dst="$TARGET_DIR/$dst_rel"
-
-    if [ -e "$dst" ]; then
-      log_action "SKIP" "$dst_rel (이미 존재)"
-      continue
-    fi
-
-    log_action "STAMP" "$dst_rel"
-    if [ "$DRY_RUN" -eq 0 ]; then
-      ensure_parent_dir "$dst_rel"
-      cp "$src" "$dst"
-      set_file_mode "$src" "$dst"
-    fi
-  done
-}
-
 while [ $# -gt 0 ]; do
   case "$1" in
     --target)
@@ -391,11 +359,6 @@ while [ $# -gt 0 ]; do
     --source)
       [ $# -ge 2 ] || fail "--source 값이 없습니다."
       SOURCE_DIR="$2"
-      shift 2
-      ;;
-    --template)
-      [ $# -ge 2 ] || fail "--template 값이 없습니다."
-      TEMPLATE="$2"
       shift 2
       ;;
     --dry-run)
@@ -441,20 +404,15 @@ done
 
 printf '%s\n' "$CURRENT_PATHS" | while IFS= read -r rel_path; do
   [ -n "$rel_path" ] || continue
-  # CLAUDE.md는 마커 기반 병합으로 처리 (core @refs만 교체, project 영역 보존)
-  if [ "$rel_path" = "CLAUDE.md" ]; then
+  # CLAUDE.md.example은 마커 기반 병합으로 별도 처리
+  if [ "$rel_path" = ".claude/CLAUDE.md.example" ]; then
     continue
   fi
   sync_path "$rel_path"
 done
 
-# CLAUDE.md 마커 기반 병합
-sync_merge "CLAUDE.md" "CLAUDE.md"
-
-# 템플릿 스탬핑 (--template 지정 시만, 이미 존재하는 파일은 건너뜀)
-if [ -n "$TEMPLATE" ]; then
-  stamp_template "$TEMPLATE"
-fi
+# CLAUDE.md.example → 프로젝트 루트 CLAUDE.md 마커 기반 병합
+sync_merge ".claude/CLAUDE.md.example" "CLAUDE.md"
 
 if [ "$DRY_RUN" -eq 1 ]; then
   echo "DRY RUN 완료"
