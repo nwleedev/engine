@@ -44,8 +44,8 @@
           },
           {
             "type": "agent",
-            "prompt": "You are a plan quality reviewer. Read the most recent .md file in .claude/plans/ directory. Verify:\n1. All file paths mentioned in the plan exist (use Glob to check)\n2. Required sections exist: Context (or background), Changes (or implementation), Verification (or testing)\n3. No TODO, TBD, or placeholder text remains\n4. The plan has at least 10 lines of substantive content\n5. If file paths are mentioned, at least one is verified to exist\n\nIf ALL checks pass, return ok:true. If ANY check fails, return ok:false with a specific reason listing what is missing or wrong.",
-            "timeout": 60
+            "prompt": "You are a plan quality and readiness reviewer. Read the most recent .md file in .claude/plans/ directory.\n\n## Quality Checks\n1. All file paths mentioned exist (use Glob to check)\n2. Required sections exist: Context, Changes, Verification\n3. No TODO, TBD, or placeholder text remains\n4. At least 10 lines of substantive content\n\n## Readiness Checks\n5. **Ambiguity Analysis**: Identify vague terms like '적절히', '필요에 따라', '등' or unclear scope\n6. **Missing Details**: Check for missing file paths, function names, error messages\n7. **Unconfirmed Assumptions**: Does the plan assume information not yet gathered?\n8. **Question Generation**: What questions should be asked before starting?\n\n## Response Format\nIf ALL quality checks pass AND no readiness issues:\n  Return ok:true\n\nIf quality fails:\n  Return ok:false with specific missing items\n\nIf readiness issues exist:\n  Return ok:false with:\n  - List of ambiguous/unclear items found\n  - Specific questions that should be asked first\n  - Example: 'The plan mentions \"적절한 에러 처리\" but doesn't specify error types. Ask: What error scenarios should be handled?'",
+            "timeout": 90
           }
         ]
       }
