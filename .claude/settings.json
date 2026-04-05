@@ -1,0 +1,111 @@
+{
+  "plansDirectory": "./.claude/plans",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "SESSION_DIR=\"$CLAUDE_PROJECT_DIR/.claude/sessions/$SESSION_ID\"; if [ -n \"$SESSION_ID\" ] && [ -d \"$SESSION_DIR\" ]; then echo '## Session State (after compaction)'; [ -f \"$SESSION_DIR/SESSION.md\" ] && cat \"$SESSION_DIR/SESSION.md\"; LATEST=$(ls -t \"$SESSION_DIR/contexts/\"CONTEXT-*.md 2>/dev/null | head -1); if [ -n \"$LATEST\" ]; then echo ''; echo '## Latest Context Snapshot'; cat \"$LATEST\"; fi; PLAN=$(ls -t \"$CLAUDE_PROJECT_DIR/.claude/plans/\"*.md 2>/dev/null | head -1); if [ -n \"$PLAN\" ]; then echo ''; echo \"## Active Plan: $PLAN\"; echo '위 플랜 파일을 Read하여 현재 작업 방향을 확인하세요.'; fi; fi",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "startup|resume|clear",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "SESSION_DIR=\"$CLAUDE_PROJECT_DIR/.claude/sessions/$SESSION_ID\"; if [ -n \"$SESSION_ID\" ] && [ -d \"$SESSION_DIR\" ]; then echo '## Session State'; [ -f \"$SESSION_DIR/SESSION.md\" ] && cat \"$SESSION_DIR/SESSION.md\"; LATEST=$(ls -t \"$SESSION_DIR/contexts/\"CONTEXT-*.md 2>/dev/null | head -1); if [ -n \"$LATEST\" ]; then echo ''; echo '## Latest Context Snapshot'; cat \"$LATEST\"; fi; PLAN=$(ls -t \"$CLAUDE_PROJECT_DIR/.claude/plans/\"*.md 2>/dev/null | head -1); if [ -n \"$PLAN\" ]; then echo ''; echo \"## Active Plan: $PLAN\"; echo '위 플랜 파일을 Read하여 현재 작업 방향을 확인하세요.'; fi; fi",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/claude-scripts/check-plan.sh\"",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "ExitPlanMode",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/claude-scripts/check-plan-review.sh\"",
+            "timeout": 5
+          },
+          {
+            "type": "agent",
+            "prompt": "You are a plan quality reviewer. Read the most recent .md file in .claude/plans/ directory. Verify:\n1. All file paths mentioned in the plan exist (use Glob to check)\n2. Required sections exist: Context (or background), Changes (or implementation), Verification (or testing)\n3. No TODO, TBD, or placeholder text remains\n4. The plan has at least 10 lines of substantive content\n5. If file paths are mentioned, at least one is verified to exist\n\nIf ALL checks pass, return ok:true. If ANY check fails, return ok:false with a specific reason listing what is missing or wrong.",
+            "timeout": 60
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/claude-scripts/suggest-harness.sh\"",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/claude-scripts/track-edits.sh\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/claude-scripts/snapshot.sh\"",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/claude-scripts/snapshot.sh\" --pre-compact",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": "clear",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -n \"$SESSION_ID\" ] && [ -f \"$CLAUDE_PROJECT_DIR/.claude/sessions/$SESSION_ID/SESSION.md\" ]; then mkdir -p \"$CLAUDE_PROJECT_DIR/.claude/sessions/$SESSION_ID/contexts\" && cp \"$CLAUDE_PROJECT_DIR/.claude/sessions/$SESSION_ID/SESSION.md\" \"$CLAUDE_PROJECT_DIR/.claude/sessions/$SESSION_ID/contexts/CONTEXT-$(date +%Y%m%d-%H%M)-session-end.md\"; fi",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
