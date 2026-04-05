@@ -246,7 +246,12 @@
 
 최종 산출물은 단일 `.claude/skills/harness-<domain>-<name>.md` 파일이며, 다음 섹션을 포함한다:
 
-- YAML frontmatter (name, description, user-invocable: true)
+- YAML frontmatter (name, description, user-invocable: true, matchPatterns)
+  - description은 `Use when working with X — keyword1, keyword2` 형식 필수
+  - matchPatterns를 포함하여 suggest-harness.sh 훅이 파일 읽기 시 자동 제안할 수 있도록 한다
+  - matchPatterns.fileGlob: 대상 파일 경로 정규식 (예: `"^.*/src/.*\.(ts|tsx)$"`)
+  - matchPatterns.regex: 파일 내용 매칭 정규식 배열 (예: `- "useQuery|useMutation"`)
+  - 코드 내용이 아닌 작업 의도 기반 스킬(리팩토링, UX 탐색 등)은 matchPatterns 생략 가능
 - 핵심 규칙 (아키텍처, 작업 흐름)
 - 안티패턴 (Anti/Good 쌍)
 - 검증 기준 (완료 조건, 체크리스트)

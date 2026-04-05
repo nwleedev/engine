@@ -63,7 +63,7 @@
 새 하네스는 **단일 `.claude/skills/harness-<domain>-<name>.md` 스킬 파일**로 생성한다.
 
 파일에 포함할 필수 섹션:
-- YAML frontmatter (name, description, user-invocable: true, paths)
+- YAML frontmatter (name, description, user-invocable: true, matchPatterns)
 - 핵심 규칙 (아키텍처, 작업 흐름)
 - 안티패턴 (Anti/Good 쌍)
 - 검증 기준 (완료 조건, 체크리스트)
@@ -86,11 +86,16 @@
 - **frontmatter** (필수)
   - name, description, user-invocable: true
   - description은 "Use when..." 형식으로 자동 활성화 트리거 조건을 기술
-  - `paths` (선택): 자동 활성화 범위를 파일 경로로 한정하는 glob 패턴
-    - 프론트엔드: `paths: ["src/**/*.tsx", "src/**/*.ts"]`
-    - 백엔드: `paths: ["src/api/**", "src/server/**"]`
-    - 테스트: `paths: ["**/*.test.*", "**/*.spec.*"]`
-    - description 매칭과 병행 — 해당 파일 작업 시 자동으로 스킬 로드
+  - `matchPatterns` (권장): suggest-harness.sh 훅이 파일 읽기 시 자동 제안하기 위한 매칭 규칙
+    - `fileGlob`: 파일 경로 필터 정규식 (선택). 매칭하지 않는 파일은 건너뜀
+      - 프론트엔드: `"^.*/src/.*\.(ts|tsx)$"`
+      - 백엔드 Python: `"^.*/src/.*\.py$"`
+      - 테스트: `"^.*\.(test|spec)\.(ts|tsx)$"`
+      - FSD 레이어: `"^.*/src/(app|pages|widgets|features|entities|shared)/.*"`
+    - `regex`: 파일 내용 매칭 정규식 배열. 하나라도 매칭하면 해당 하네스를 제안
+      - 예: `- "useQuery|useMutation|queryClient"`
+    - matchPatterns가 없으면 description의 `— ` 뒤 키워드로 폴백 매칭
+    - description은 `Use when working with X — keyword1, keyword2` 형식 필수 (폴백 호환)
 - **핵심 규칙** (필수)
   - 소프트웨어 도메인: 작업 흐름, 계층, 역할 분리, 설계 근거
   - 비소프트웨어 도메인: 작업 구조, 방법론, 절차 흐름, 설계 근거
