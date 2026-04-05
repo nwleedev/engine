@@ -16,6 +16,30 @@ COUNTER_FILE="$SESSION_DIR/.plan-review-count"
 
 mkdir -p "$SESSION_DIR"
 
+# 플랜 파일 경로 확인
+PLANS_DIR="$PROJECT_DIR/.claude/plans"
+PLAN_FILE=$(ls -t "$PLANS_DIR"/*.md 2>/dev/null | head -1)
+
+# 선택지 미완료 감지 (카운터와 무관하게 항상 확인)
+if [ -n "$PLAN_FILE" ]; then
+  HAS_OPTIONS=false
+  if grep -qiE '## Options|## 선택지|### Option [A-Z]|^- \[ \] Option' "$PLAN_FILE" 2>/dev/null; then
+    HAS_OPTIONS=true
+  fi
+
+  HAS_SELECTION=false
+  if grep -qiE '\[선택됨\]|\[Selected\]|^- \[x\] Option|✓ Option|→ 선택:' "$PLAN_FILE" 2>/dev/null; then
+    HAS_SELECTION=true
+  fi
+
+  if [ "$HAS_OPTIONS" = true ] && [ "$HAS_SELECTION" = false ]; then
+    echo "플랜에 선택지가 있지만 사용자 선택이 완료되지 않았습니다." >&2
+    echo "사용자에게 AskUserQuestion으로 선택을 요청하고, 선택 결과를 플랜에 기록하세요." >&2
+    echo "(예: '→ 선택: Option A' 또는 '[선택됨]' 마커 추가)" >&2
+    exit 2
+  fi
+fi
+
 # 카운터 읽기
 COUNT=0
 if [ -f "$COUNTER_FILE" ]; then
@@ -27,8 +51,6 @@ if [ "$COUNT" -eq 0 ]; then
   echo "1" > "$COUNTER_FILE"
 
   # 플랜 파일에서 필수 섹션 확인
-  PLANS_DIR="$PROJECT_DIR/.claude/plans"
-  PLAN_FILE=$(ls -t "$PLANS_DIR"/*.md 2>/dev/null | head -1)
   MISSING=""
 
   if [ -n "$PLAN_FILE" ]; then
