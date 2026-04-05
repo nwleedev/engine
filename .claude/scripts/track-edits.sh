@@ -31,8 +31,8 @@ if [ -f "$EDITED_FILES" ]; then
   REVIEW_COUNT=$(grep -cvE '\.claude/sessions/.*/(SESSION\.md|\.edited-files|\.plan-review-count)' "$EDITED_FILES" 2>/dev/null || echo "0")
 fi
 
-# 3개 이상이면 work-reviewer 제안
-if [ "$REVIEW_COUNT" -ge 3 ]; then
+# 2개 이상이면 work-reviewer 제안
+if [ "$REVIEW_COUNT" -ge 2 ]; then
   cat <<EOF
 {
   "hookSpecificOutput": {
