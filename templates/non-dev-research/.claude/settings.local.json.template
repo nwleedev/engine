@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:*)",
+      "mcp__tavily__tavily_search",
+      "mcp__tavily__tavily_research",
+      "mcp__tavily__tavily_extract",
+      "mcp__tavily__tavily_crawl",
+      "mcp__sequential-thinking__sequentialthinking",
+      "mcp__notion__*",
+      "Bash(ls:*)",
+      "Bash(git:*)",
+      "Bash(wc:*)"
+    ],
+    "deny": []
+  }
+}

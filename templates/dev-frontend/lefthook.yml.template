@@ -1,0 +1,11 @@
+pre-commit:
+  parallel: true
+  jobs:
+    - name: lint
+      glob: "*.{js,ts,tsx}"
+      run: pnpm lint --max-warnings=0 {staged_files}
+      fail_text: "린트 실패. 커밋 전 모든 린트 오류를 수정하세요."
+
+    - name: typecheck
+      run: pnpm typecheck
+      fail_text: "타입 체크 실패. 타입 오류를 수정하세요."

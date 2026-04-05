@@ -1,0 +1,6 @@
+{
+  "file_glob": "^.*/src/.*\\.(ts|tsx|js|jsx)$",
+  "test_regex": "\\.(test|spec)\\.(ts|tsx|js|jsx)$",
+  "test_harness": "harness-fe-testing",
+  "patterns": []
+}

@@ -1,0 +1,6 @@
+{
+  "file_glob": "^.*/docs/.*\\.md$",
+  "test_regex": null,
+  "test_harness": null,
+  "patterns": []
+}
