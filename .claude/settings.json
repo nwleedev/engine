@@ -52,11 +52,6 @@
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/check-plan-review.sh\"",
             "timeout": 5
-          },
-          {
-            "type": "agent",
-            "prompt": "You are a plan quality and readiness reviewer. Read the most recent .md file in .claude/plans/ directory.\n\n## Quality Checks\n1. All file paths mentioned exist (use Glob to check)\n2. Required sections exist: Context, Changes, Verification\n3. No TODO, TBD, or placeholder text remains\n4. At least 10 lines of substantive content\n\n## Readiness Checks\n5. **Ambiguity Analysis**: Identify vague terms like '적절히', '필요에 따라', '등' or unclear scope\n6. **Missing Details**: Check for missing file paths, function names, error messages\n7. **Unconfirmed Assumptions**: Does the plan assume information not yet gathered?\n8. **Exploration Attempt (탐색 우선)**: For each ambiguous/missing item found in steps 5-7, attempt to resolve it by reading the codebase (Glob/Grep/Read, 3-4 tool calls max). Items resolved by exploration should be excluded from questions.\n9. **Single Question Selection (단일 질문)**: From items NOT resolved by exploration, select the ONE question whose answer most changes implementation direction. Provide 2-3 concrete options with trade-offs. List remaining items as deferred questions.\n10. **Protected Surface Check**: If the plan touches public API signatures, DB schema/migrations, auth, billing, or deployment configs, verify that a rollback strategy is specified.\n\n## Response Format\nIf ALL quality checks pass AND no readiness issues:\n  Return ok:true\n\nIf quality fails:\n  Return ok:false with specific missing items\n\nIf readiness issues exist:\n  Return ok:false with:\n  - Exploration results: what was resolved by reading code\n  - Primary question (1 only): the highest-impact unresolved question with 2-3 options\n  - Deferred questions: lower-priority items to address after the primary question\n  - Protected surfaces: flagged if applicable\n  - Example: 'The plan mentions \"적절한 에러 처리\" but doesn't specify error types. Explored: grep found ErrorBoundary in src/components. Unresolved: Ask: Which error scenarios beyond network failures should be handled? A) Input validation only B) All CRUD operation errors C) Full error taxonomy'",
-            "timeout": 90
           }
         ]
       }

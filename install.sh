@@ -1,10 +1,10 @@
 #!/bin/sh
 # Claude Code Harness Installer
-# Usage: sh -c "$(curl -fsSL https://raw.githubusercontent.com/nwleedev/claude-harness/main/install.sh)" -- <project-path>
+# Usage: sh -c "$(curl -fsSL https://raw.githubusercontent.com/nwleedev/engine/main/install.sh)" -- <project-path>
 set -eu
 
 # --- Configuration ---
-REPO="nwleedev/claude-harness"
+REPO="nwleedev/engine"
 VERSION=""
 TARGET_DIR=""
 
@@ -22,7 +22,7 @@ Claude Code Harness Installer
   install.sh <project-path> [--version <tag>]
 
   # curl 원라이너
-  sh -c "$(curl -fsSL https://raw.githubusercontent.com/nwleedev/claude-harness/main/install.sh)" -- <project-path>
+  sh -c "$(curl -fsSL https://raw.githubusercontent.com/nwleedev/engine/main/install.sh)" -- <project-path>
 
 옵션:
   --version <tag>  설치할 버전 (기본: main 브랜치 최신)

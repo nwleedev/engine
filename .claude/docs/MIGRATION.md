@@ -9,8 +9,8 @@
 | 부트스트랩 | `--category` 필수 | 카테고리 없음 (harness-engine이 동적 생성) |
 | 템플릿 | `templates/<category>/` | 삭제됨 |
 | 훅 경로 | `$CLAUDE_PROJECT_DIR/claude-scripts/X` | `$CLAUDE_PROJECT_DIR/.claude/scripts/X` |
-| 부트스트랩 호출 | `~/.claude-harness/claude-scripts/bootstrap.sh` | `~/.claude-harness/.claude/scripts/bootstrap.sh` |
-| docs 위치 | `~/.claude-harness/docs/` | `~/.claude-harness/.claude/docs/` |
+| 부트스트랩 호출 | `~/.engine/claude-scripts/bootstrap.sh` | `~/.engine/.claude/scripts/bootstrap.sh` |
+| docs 위치 | `~/.engine/docs/` | `~/.engine/.claude/docs/` |
 
 ## 마이그레이션 방법
 
@@ -18,10 +18,10 @@
 
 ```bash
 # 1. 변경 사항 미리보기
-~/.claude-harness/.claude/scripts/migrate.sh --target <project-path> --dry-run
+~/.engine/.claude/scripts/migrate.sh --target <project-path> --dry-run
 
 # 2. 실행
-~/.claude-harness/.claude/scripts/migrate.sh --target <project-path>
+~/.engine/.claude/scripts/migrate.sh --target <project-path>
 ```
 
 `migrate.sh`가 수행하는 작업:
@@ -48,7 +48,7 @@ sed -i '' 's|claude-scripts/|.claude/scripts/|g' .claude/settings.json
 rm -f suggest-harness-patterns.json
 
 # 4. 최신 코어 동기화
-~/.claude-harness/.claude/scripts/sync.sh --source ~/.claude-harness --target .
+~/.engine/.claude/scripts/sync.sh --source ~/.engine --target .
 ```
 
 ## matchPatterns 프론트매터 추가

@@ -83,7 +83,7 @@ fi
 
 if [ ! -d "$OLD_SCRIPTS" ]; then
   echo "claude-scripts/ 디렉터리가 없습니다. 부트스트랩부터 실행하세요:"
-  echo "  ~/.claude-harness/.claude/scripts/bootstrap.sh --target $TARGET_DIR"
+  echo "  ~/.engine/.claude/scripts/bootstrap.sh --target $TARGET_DIR"
   exit 1
 fi
 

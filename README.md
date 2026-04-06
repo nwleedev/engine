@@ -38,7 +38,7 @@ Claude Code에 자동 규칙, 품질 게이트, 도메인 지식을 설치하는
 
 ```bash
 # 1. 프로젝트에 하네스 설치 (한 줄, git 불필요)
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/nwleedev/claude-harness/main/install.sh)" -- ~/my-project
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/nwleedev/engine/main/install.sh)" -- ~/my-project
 
 # 2. Claude Code 실행
 cd ~/my-project && claude
@@ -50,9 +50,9 @@ cd ~/my-project && claude
 <summary>수동 설치 (git 사용)</summary>
 
 ```bash
-git clone https://github.com/nwleedev/claude-harness.git /tmp/claude-harness
-/tmp/claude-harness/.claude/scripts/bootstrap.sh --source /tmp/claude-harness --target ~/my-project
-rm -rf /tmp/claude-harness
+git clone https://github.com/nwleedev/engine.git /tmp/engine
+/tmp/engine/.claude/scripts/bootstrap.sh --source /tmp/engine --target ~/my-project
+rm -rf /tmp/engine
 cd ~/my-project && claude
 ```
 </details>
@@ -161,7 +161,7 @@ cd ~/my-project && claude
 
 ```bash
 # 설치할 때와 같은 명령으로 업데이트
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/nwleedev/claude-harness/main/install.sh)" -- ~/my-project
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/nwleedev/engine/main/install.sh)" -- ~/my-project
 ```
 
 업데이트가 관리하는 것: 훅 스크립트, settings.json, 범용 스킬, 에이전트, CLAUDE.md 코어 영역.

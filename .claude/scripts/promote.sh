@@ -15,7 +15,7 @@ usage() {
   promote.sh --source <project-path> --file <relative-path> [--destination core|reference] [--dry-run]
 
 설명:
-  프로젝트에서 만든 파일을 ~/.claude-harness/에 승격합니다.
+  프로젝트에서 만든 파일을 ~/.engine/에 승격합니다.
 
 예시:
   # 범용 스킬을 코어에 승격
@@ -203,14 +203,12 @@ else
       case "$FILE_PATH" in
         .claude/scripts/*.sh)
           echo ""
-          echo "주의: 새 코어 스크립트를 sync.sh 화이트리스트에 추가해야 합니다."
-          echo "  sync.sh → collect_source_paths() → for script in ... 목록에 추가"
+          echo "주의: 새 코어 스크립트가 sync 제외 목록에 포함되어 있는지 확인하세요."
+          echo "  sync.sh → collect_source_paths() → grep -v 필터에 해당 파일이 없어야 동기화됩니다."
           ;;
         .claude/agents/*)
-          agent_name=$(echo "$FILE_PATH" | sed 's#.claude/agents/##; s#/.*##')
           echo ""
-          echo "주의: 새 코어 에이전트를 sync.sh 화이트리스트에 추가해야 합니다."
-          echo "  sync.sh → collect_source_paths() → for agent in ... 목록에 '$agent_name' 추가"
+          echo "참고: 에이전트는 .claude/agents/ 하위 전체가 자동 동기화됩니다. 추가 작업 불필요."
           ;;
       esac
       ;;

@@ -31,8 +31,6 @@ fi
 
 CONTENT=$(head -100 "$FILE_PATH" 2>/dev/null)
 SUGGESTIONS=""
-TMPFILE="/tmp/suggest-harness-$$.txt"
-: > "$TMPFILE"
 
 # 각 하네스 스킬 순회
 for skill_file in "$SKILLS_DIR"/harness-*.md; do
@@ -91,12 +89,14 @@ EOF_KW
     # label 추출
     label=$(echo "$frontmatter" | sed -n 's/^description: *Use when working with \(.*\) —.*/\1/p' | head -1)
     [ -z "$label" ] && label="$skill_name"
-    printf '• /%s (%s 감지)\n' "$skill_name" "$label" >> "$TMPFILE"
+    SUGGESTIONS="${SUGGESTIONS}$(printf '• /%s (%s 감지)\n' "$skill_name" "$label")"
+    SUGGESTIONS="${SUGGESTIONS}
+"
   fi
 done
 
-SUGGESTIONS=$(cat "$TMPFILE" 2>/dev/null)
-rm -f "$TMPFILE"
+# trailing newline 제거
+SUGGESTIONS=$(echo "$SUGGESTIONS" | sed '/^$/d')
 
 # 제안이 있으면 additionalContext로 출력
 if [ -n "$SUGGESTIONS" ]; then
