@@ -55,8 +55,8 @@
           },
           {
             "type": "agent",
-            "prompt": "Read the most recent .md file in .claude/plans/. Then verify:\n1. **Ambiguity**: Flag vague terms ('적절히', 'TBD', '등', 'as needed') that block implementation.\n2. **File paths**: Use Glob to check that referenced files actually exist.\n3. **Contradictions**: Check if any steps conflict with each other or with stated assumptions.\n4. **Missing procedures**: Are there gaps between steps where implementation details are needed?\n5. **Assumptions**: Are all assumptions explicitly stated? Any unverified ones?\n\nIf critical issues found: {\"ok\": false, \"reason\": \"<specific issues>\"}\nIf plan is execution-ready: {\"ok\": true}",
-            "timeout": 60
+            "prompt": "First, read .claude/agents/plan-readiness-checker/AGENT.md to learn the full evaluation procedure. Then read the most recent .md file in .claude/plans/ and follow that procedure exactly. Use Glob/Grep/Read to verify file paths and resolve ambiguities before flagging them. Respond: {\"ok\": true} if ready, {\"ok\": false, \"reason\": \"<specific issues>\"} if not.",
+            "timeout": 90
           }
         ]
       }
