@@ -1,6 +1,10 @@
 #!/bin/sh
 set -eu
 
+echo "경고: migrate.sh는 v1->v2 전환용이며 곧 제거됩니다."
+echo "      신규 설치는 install.sh를 사용하세요."
+echo ""
+
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 SOURCE_DIR="$(CDPATH= cd -- "$SCRIPT_DIR/../.." && pwd)"
 

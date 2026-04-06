@@ -86,8 +86,20 @@ collect_source_paths() {
     [ -f ".claude/settings.json" ]     && printf '%s\n' ".claude/settings.json"
 
     # 디렉터리 단위 자동 수집: find로 하위의 모든 일반 파일(-type f)을 재귀 탐색
+    # .claude/scripts: 설치/관리 스크립트를 제외하고 hook 스크립트만 동기화
     for dir in .claude/scripts .claude/agents .claude/docs; do
-      [ -d "$dir" ] && find "$dir" -type f
+      if [ -d "$dir" ]; then
+        if [ "$dir" = ".claude/scripts" ]; then
+          find "$dir" -type f \
+            | grep -v 'scripts/sync\.sh$' \
+            | grep -v 'scripts/bootstrap\.sh$' \
+            | grep -v 'scripts/promote\.sh$' \
+            | grep -v 'scripts/migrate\.sh$' \
+            | grep -v 'scripts/test-sync\.sh$'
+        else
+          find "$dir" -type f
+        fi
+      fi
     done
 
     # skills: harness-engine/ 하위 전체를 포함하되, 최상위 harness-*.md는 제외 (프로젝트 소유)

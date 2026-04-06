@@ -37,17 +37,27 @@ Claude Code에 자동 규칙, 품질 게이트, 도메인 지식을 설치하는
 ## Quick Start
 
 ```bash
-# 1. 이 저장소를 홈 디렉터리에 clone
-git clone <repo-url> ~/.claude-harness
+# 1. 프로젝트에 하네스 설치 (한 줄, git 불필요)
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/nwleedev/claude-harness/main/install.sh)" -- ~/my-project
 
-# 2. 프로젝트에 하네스 설치
-~/.claude-harness/.claude/scripts/bootstrap.sh --target ~/my-project
-
-# 3. Claude Code 실행
+# 2. Claude Code 실행
 cd ~/my-project && claude
 ```
 
-사전 요건: Claude Code CLI, jq, Git. 상세 설치 방법은 [Getting Started](.claude/docs/GETTING-STARTED.md#1-사전-준비) 참조.
+업데이트도 같은 명령을 재실행하면 됩니다.
+
+<details>
+<summary>수동 설치 (git 사용)</summary>
+
+```bash
+git clone https://github.com/nwleedev/claude-harness.git /tmp/claude-harness
+/tmp/claude-harness/.claude/scripts/bootstrap.sh --source /tmp/claude-harness --target ~/my-project
+rm -rf /tmp/claude-harness
+cd ~/my-project && claude
+```
+</details>
+
+사전 요건: Claude Code CLI, curl, tar, jq. 상세 설치 방법은 [Getting Started](.claude/docs/GETTING-STARTED.md#1-사전-준비) 참조.
 
 ---
 
@@ -150,20 +160,12 @@ cd ~/my-project && claude
 ## 업데이트 및 동기화
 
 ```bash
-# 코어 저장소 업데이트
-cd ~/.claude-harness && git pull
-
-# 프로젝트에 동기화
-~/.claude-harness/.claude/scripts/sync.sh --target ~/my-project
-
-# 프로젝트 하네스를 코어로 승격
-~/.claude-harness/.claude/scripts/promote.sh \
-  --source ~/my-project \
-  --file .claude/skills/harness-be-fastapi.md
+# 설치할 때와 같은 명령으로 업데이트
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/nwleedev/claude-harness/main/install.sh)" -- ~/my-project
 ```
 
-sync가 관리하는 것: 훅 스크립트, settings.json, 범용 스킬, 에이전트, CLAUDE.md 코어 영역.
-sync가 건드리지 않는 것: 프로젝트 규칙, 도메인 하네스, 세션/플랜 데이터, settings.local.json.
+업데이트가 관리하는 것: 훅 스크립트, settings.json, 범용 스킬, 에이전트, CLAUDE.md 코어 영역.
+업데이트가 건드리지 않는 것: 프로젝트 규칙, 도메인 하네스, 세션/플랜 데이터, settings.local.json.
 
 ---
 

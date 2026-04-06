@@ -87,7 +87,7 @@ test_fresh_sync() {
 
   # 핵심 파일 존재 확인
   assert_file_exists "$target/.claude/settings.json" || return 1
-  assert_file_exists "$target/.claude/scripts/sync.sh" || return 1
+  assert_file_exists "$target/.claude/scripts/check-plan.sh" || return 1
   assert_file_exists "$target/.claude/skills/core-rules.md" || return 1
   assert_file_exists "$target/.claude/skills/harness-engine/SKILL.md" || return 1
   assert_file_exists "$target/.claude/agents/work-reviewer/AGENT.md" || return 1
@@ -247,17 +247,17 @@ test_conflict_detection_script() {
   local target="$TMP_DIR/conflict_script"
   mkdir -p "$target/.claude/scripts"
 
-  # 프로젝트 소유 스크립트를 미리 생성
-  printf '#!/bin/sh\n# project-owned\n' > "$target/.claude/scripts/sync.sh"
+  # 프로젝트 소유 스크립트를 미리 생성 (hook 스크립트와 같은 이름으로 충돌 유발)
+  printf '#!/bin/sh\n# project-owned\n' > "$target/.claude/scripts/check-plan.sh"
 
   local output
   output=$(bash "$SYNC_SH" --target "$target" 2>&1)
 
-  # sync.sh에 CONFLICT가 출력되어야 함
-  assert_output_contains "$output" "CONFLICT .claude/scripts/sync.sh" || return 1
+  # check-plan.sh에 CONFLICT가 출력되어야 함
+  assert_output_contains "$output" "CONFLICT .claude/scripts/check-plan.sh" || return 1
 
   # 프로젝트 소유 파일 내용이 보존되어야 함
-  if ! grep -q "project-owned" "$target/.claude/scripts/sync.sh"; then
+  if ! grep -q "project-owned" "$target/.claude/scripts/check-plan.sh"; then
     echo "    FAIL: 프로젝트 소유 파일이 덮어쓰여짐"
     return 1
   fi
