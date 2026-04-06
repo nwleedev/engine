@@ -52,6 +52,11 @@
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/check-plan-review.sh\"",
             "timeout": 5
+          },
+          {
+            "type": "agent",
+            "prompt": "Read the most recent .md file in .claude/plans/. Then verify:\n1. **Ambiguity**: Flag vague terms ('적절히', 'TBD', '등', 'as needed') that block implementation.\n2. **File paths**: Use Glob to check that referenced files actually exist.\n3. **Contradictions**: Check if any steps conflict with each other or with stated assumptions.\n4. **Missing procedures**: Are there gaps between steps where implementation details are needed?\n5. **Assumptions**: Are all assumptions explicitly stated? Any unverified ones?\n\nIf critical issues found: {\"ok\": false, \"reason\": \"<specific issues>\"}\nIf plan is execution-ready: {\"ok\": true}",
+            "timeout": 60
           }
         ]
       }
