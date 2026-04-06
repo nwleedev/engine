@@ -119,7 +119,24 @@ if [ "$DRY_RUN" -eq 0 ] && [ -f "$GITIGNORE" ]; then
   done
 fi
 
-# Step 5: guidance
+# Step 5: 훅-스크립트 존재 검증
+SETTINGS_JSON="$TARGET_DIR/.claude/settings.json"
+if [ -f "$SETTINGS_JSON" ] && command -v jq >/dev/null 2>&1; then
+  HOOK_WARNINGS=0
+  for script_path in $(jq -r '.. | .command? // empty' "$SETTINGS_JSON" 2>/dev/null \
+    | grep -o 'scripts/[^"[:space:]]*' | sort -u); do
+    resolved="$TARGET_DIR/.claude/$script_path"
+    if [ ! -f "$resolved" ]; then
+      echo "WARN 훅이 참조하는 스크립트가 없습니다: .claude/$script_path"
+      HOOK_WARNINGS=$((HOOK_WARNINGS + 1))
+    fi
+  done
+  if [ "$HOOK_WARNINGS" -eq 0 ]; then
+    echo "CHECK 훅-스크립트 정합성 확인 완료"
+  fi
+fi
+
+# Step 6: guidance
 echo ""
 echo "========================================"
 echo "  설치 완료"
