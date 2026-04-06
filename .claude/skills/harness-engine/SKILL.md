@@ -42,12 +42,12 @@ user-invocable: true
 13. **하네스 생성 서브에이전트를 실행한다.**
 14. **검증 서브에이전트를 실행한다.**
 15. 검증 결과를 contract packet에 먼저 반영한 뒤 하네스를 보강한다.
-16. 새 하네스 스킬을 만들었다면 `.claude/skills/use-repo-skills.md`의 도메인 하네스 목록을 갱신한다. (use-repo-skills.md가 없으면 생성한다.)
+16. 새 하네스 스킬을 만들었다면 `.claude/skills/use-repo-skills.md`의 도메인 하네스 목록을 갱신한다. (파일이 없으면 이 단계를 건너뛴다 — suggest-harness.sh가 개별 harness-*.md를 직접 스캔하므로 중앙 카탈로그는 선택 사항이다.)
 17. 세션 기록(SESSION.md)을 갱신한다.
 
 ## 작업 시작 전 확인
 
-- 루트 `AGENTS.md`, `.claude/skills/core-rules.md`를 읽었는지 확인한다.
+- 루트 `AGENTS.md`(없으면 `CLAUDE.md`), `.claude/skills/core-rules.md`를 읽었는지 확인한다.
 - 특히 임시 파일 규칙(temps 경로, `/tmp` 금지)을 확인한다.
 - `CLAUDE.md`의 프로젝트별 설정을 확인한다.
 - 사용자 요청만으로 범위가 닫히는지 확인한다.
@@ -168,7 +168,7 @@ contract packet에는 최소한 다음이 있어야 한다.
 
 어댑터에 스택 분기 섹션이 있으면 `references/stacks/<stack>.md`를 확인한다.
 
-- 스택 감지 순서: 프로젝트 AGENTS.md/CLAUDE.md 선언 → 설정 파일 확인 → 사용자에게 선택 요청
+- 스택 감지 순서: 프로젝트 AGENTS.md(없으면 CLAUDE.md) 선언 → 설정 파일 확인 → 사용자에게 선택 요청
 - stack seed reference는 조사 보조 자료다. 생성/검증의 최종 진실원천은 contract packet이다.
 - stack doc가 없고 실행 경로가 `engine-asset bootstrap`이면 seed doc까지 같은 턴에 생성한다.
 - stack doc가 없고 실행 경로가 `project-harness generation`이면 현재 프로젝트 하네스와 contract packet에는 필요한 규칙을 반영하고, engine 자산 부재를 `engine_followup_required: yes`로 남긴다.
@@ -306,7 +306,7 @@ stack seed reference: {stack_reference_path 또는 "없음"}
 
 ### 검증 결과 처리
 
-- **통과**: worktree 유지. 사용자에게 결과 보고. discovery 등록(AGENTS.md, INDEX.md) 필요 시 수행. 본 에이전트는 validation artifact를 세션 경로에 저장한 뒤에만 구현 티켓을 시작한다.
+- **통과**: worktree 유지. 사용자에게 결과 보고. discovery 등록(AGENTS.md 또는 CLAUDE.md, INDEX.md) 필요 시 수행. 본 에이전트는 validation artifact를 세션 경로에 저장한 뒤에만 구현 티켓을 시작한다.
 - **보강 필요**: 검증 보고의 누락/모호/충돌 항목을 contract packet에 먼저 반영한 뒤 하네스 생성 서브에이전트에 전달하여 재실행한다. 구현은 금지한다.
 
 ## 세션 관리 (본 에이전트 책임)
@@ -316,7 +316,7 @@ stack seed reference: {stack_reference_path 또는 "없음"}
 - SESSION.md: 작업 상태, 결정 사항, 진행 로그 갱신
 - contract packet: `.claude/sessions/<session_id>/notes/contracts/` 또는 `temps/contracts/`에 저장
 - validation artifact: `.claude/sessions/<session_id>/notes/validation/` 또는 `temps/validation/`에 저장
-- `.claude/skills/use-repo-skills.md`: 새 하네스 스킬 생성 시 도메인 하네스 목록 갱신
+- `.claude/skills/use-repo-skills.md`: 새 하네스 스킬 생성 시 도메인 하네스 목록 갱신 (파일이 있는 경우에만)
 - 다른 프로젝트 환류 요청이 있으면 change request packet의 핵심 필드를 DECISIONS 또는 RESEARCH에 남긴다.
 - 실제 프로젝트에서 수집한 보고서가 있으면 원문 전체 대신 핵심 필드만 추려 upstream 판단 자료로 사용한다.
 - stack이 감지된 작업이었다면 `engine_followup_required`와 stack required checks가 validation artifact에 남는지 확인한다.
@@ -327,7 +327,7 @@ stack seed reference: {stack_reference_path 또는 "없음"}
 - “충분한 하네스”는 최소 계약과 검증 통과를 모두 만족하는 경우만 의미한다.
 - 부족한 섹션만 보강한다.
 - 새 하네스는 기존 하네스로는 반복적으로 커버되지 않는 경우에만 만든다.
-- 새 하네스를 만들었다면 discovery를 위해 `.claude/skills/use-repo-skills.md`의 도메인 하네스 목록 갱신까지 완료해야 한다.
+- 새 하네스를 만들었다면 `.claude/skills/use-repo-skills.md`가 있으면 도메인 하네스 목록을 갱신한다. (suggest-harness.sh가 개별 파일을 직접 스캔하므로 카탈로그 미갱신이 discovery를 막지는 않는다.)
 - 기존 하네스를 보강할 때도 portable core와 local evidence를 섞지 않는다.
 
 ## 금지

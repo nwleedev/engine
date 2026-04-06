@@ -14,10 +14,10 @@
 - 기존 하네스가 있었다면 왜 보강만 했는지 또는 왜 새 하네스를 만들었는지 설명할 수 있다.
 - 기존 하네스가 있었다면 최소 계약 충족 여부를 먼저 판정했고, 미달 시 왜 재사용하지 않았는지 설명할 수 있다.
 - 세션 재개 시 어떤 문서를 먼저 읽어야 하는지 드러난다.
-- 새 `task_type`를 만들었다면 `.claude/skills/use-repo-skills.md`의 도메인 하네스 목록에 등록되어 있다.
+- 새 `task_type`를 만들었다면 `.claude/skills/use-repo-skills.md`가 있는 경우 도메인 하네스 목록에 등록되어 있다.
 - 최종 문서들에 출처와 설계 근거가 직접 들어 있다.
 - 대표 분류 집합으로 처리했는지, 예외적 새 `task_type`인지 설명할 수 있다.
-- discovery 등록 형식이 현재 `AGENTS.md`의 텍스트 포맷과 어긋나지 않는다.
+- discovery 등록 형식이 현재 `AGENTS.md`(없으면 `CLAUDE.md`)의 텍스트 포맷과 어긋나지 않는다.
 - project contract packet 경로와 revision 상태를 설명할 수 있다.
 - contract packet의 필수 작업 축과 금지 패턴이 산출물에 반영되어 있다.
 - 현재 저장소 전용 예시/경로/검증 이력이 코어 규칙과 분리되어 있다.
@@ -120,7 +120,7 @@ bootstrap을 사용한 경우 (신규 모드/보충 모드 모두) 추가로 확
 - 권장 흐름만 있고 검증 기준이 없다.
 - 최종 산출물이 `temps/`에만 있다.
 - 기존 하네스를 읽지 않고 새 디렉터리를 만들었다.
-- 새 `task_type`를 만들었는데 `.claude/skills/use-repo-skills.md`의 도메인 하네스 목록을 함께 갱신하지 않았다.
+- 새 `task_type`를 만들었는데 `.claude/skills/use-repo-skills.md`가 있음에도 도메인 하네스 목록을 함께 갱신하지 않았다.
 - 최종 문서에서 출처를 생략하고 세션 notes/에만 근거를 남겼다.
 - 스킬 파일의 frontmatter(name, description, user-invocable)가 누락되어 있다.
 - thin adapter 최소 Coverage Contract 필수 축이 하네스에 누락되어 있다.

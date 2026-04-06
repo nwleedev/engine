@@ -14,7 +14,7 @@
 - task adapter: `.claude/skills/harness-engine/references/adapters/<task_type>.md`
 - 스킬 내부 reference example: `.claude/skills/harness-engine/references/examples/<task_type>/*`
 - 스택 seed 지침: `.claude/skills/harness-engine/references/stacks/<stack>.md`
-- 새 하네스 스킬 생성 시 `.claude/skills/use-repo-skills.md`의 도메인 하네스 목록을 갱신
+- 새 하네스 스킬 생성 시 `.claude/skills/use-repo-skills.md`가 있으면 도메인 하네스 목록을 갱신
 
 세션이 없는 환경에서는 `temps/contracts/<task_type>-contract.md`를 사용한다.
 
@@ -53,10 +53,10 @@
 
 ## discovery 등록 형식
 
-- `AGENTS.md` 등록 시 현재 문서가 사용하는 섹션형 서술 포맷을 따른다.
+- `AGENTS.md`(없으면 `CLAUDE.md`) 등록 시 현재 문서가 사용하는 섹션형 서술 포맷을 따른다.
 - 새 하네스가 기존 큰 범주에 자연스럽게 들어가면 해당 범주 아래 참고 문서 목록에 추가한다.
-- 기존 큰 범주로 설명되지 않으면 현재 `AGENTS.md`와 같은 톤의 새 섹션을 추가한다.
-- `.claude/skills/use-repo-skills.md`의 도메인 하네스 목록에 새 하네스를 추가한다. (파일이 없으면 생성한다.)
+- 기존 큰 범주로 설명되지 않으면 현재 `AGENTS.md`(없으면 `CLAUDE.md`)와 같은 톤의 새 섹션을 추가한다.
+- `.claude/skills/use-repo-skills.md`가 있으면 도메인 하네스 목록에 새 하네스를 추가한다. (파일이 없으면 이 단계를 건너뛴다.)
 
 ## 최종 산출물 형식
 

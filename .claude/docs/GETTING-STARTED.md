@@ -10,7 +10,7 @@ Claude Code는 터미널에서 실행하는 AI 코딩 어시스턴트다. 기본
 |---|---|---|
 | **플랜 강제** | 코드/문서 편집 전 반드시 계획 수립 | Claude가 바로 코딩 시작 → 방향 틀어짐 |
 | **도메인 규칙 제안** | 파일을 읽으면 관련 규칙 자동 표시 | 라이브러리 안티패턴 모르고 반복 |
-| **편집 추적** | 수정한 파일 수를 추적하고 3개+ 시 리뷰어 호출 | 대규모 변경이 리뷰 없이 통과 |
+| **편집 추적** | 수정한 파일 수를 추적하고 2개+ 시 리뷰어 호출 | 대규모 변경이 리뷰 없이 통과 |
 | **세션 스냅샷** | 대화 종료 시 컨텍스트 자동 저장 | 컨텍스트 압축 후 방향 상실 |
 | **플랜 품질 검증** | 플랜 완성 시 파일 존재 여부, 필수 섹션 자동 확인 | 실행 불가능한 플랜으로 작업 시작 |
 
@@ -245,10 +245,10 @@ $ claude
 
 ### 3.4 작업 리뷰 — 자동 품질 검토
 
-3개 이상의 파일을 수정하면 **work-reviewer 에이전트가 자동 호출**된다:
+2개 이상의 파일을 수정하면 **work-reviewer 에이전트가 자동 호출**된다:
 
 ```
-# 파일 3개 수정 후:
+# 파일 2개 수정 후:
 > [work-reviewer] 변경사항을 검토합니다...
 > - 원본 요구사항과 일치하는가
 > - 코드 품질 (보안, 안티패턴)
@@ -454,7 +454,7 @@ sync.sh --target ~/projects/my-api --dry-run
 | `jq: command not found` | jq 미설치 | `brew install jq` (macOS) |
 | 세션 복구 안 됨 | `.claude/sessions/` 디렉터리 없음 | `mkdir -p .claude/sessions` |
 | sync 후 CLAUDE.md 내용 사라짐 | PROJECT 영역에 마커 없음 | `<!-- HARNESS-SYNC-PROJECT-START -->` 마커 추가 |
-| work-reviewer 안 나옴 | 3개 미만 파일 수정 | 정상 동작 (3개+ 에서만 트리거) |
+| work-reviewer 안 나옴 | 2개 미만 파일 수정 | 정상 동작 (2개+ 에서만 트리거) |
 | pre-commit 훅 안 됨 | Lefthook 미설치 | `npx lefthook install` |
 
 ---
@@ -487,7 +487,7 @@ sync.sh --target ~/projects/my-api --dry-run
 │  └─────────────────────────────────────────────────┘  │
 │                                                      │
 │  ┌─── Agents (자동/수동 호출) ─────────────────────┐ │
-│  │  work-reviewer         3개+ 파일 수정 시 자동   │ │
+│  │  work-reviewer         2개+ 파일 수정 시 자동   │ │
 │  │  plan-readiness-checker 플랜 종료 시 자동 검증  │ │
 │  │  domain-tutor          /deep-study로 학습       │ │
 │  │  harness-researcher    하네스 생성 시 조사 위임  │ │

@@ -148,7 +148,7 @@ user-invocable: true
 ## Independent Verification (HARD RULE)
 
 다음 조건 중 하나라도 해당하면 반드시 독립 검증을 수행한다:
-- 3개 이상 파일 수정
+- 2개 이상 파일 수정
 - 백엔드/API 변경
 - 인프라/설정 변경
 - 리팩토링 (함수/타입/변수 이름 변경, 파일 이동)
