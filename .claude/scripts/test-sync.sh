@@ -219,6 +219,110 @@ test_manifest_format() {
   fi
 }
 
+test_conflict_detection_settings() {
+  setup
+  local target="$TMP_DIR/conflict_settings"
+  mkdir -p "$target/.claude"
+
+  # 프로젝트 소유 settings.json을 미리 생성 (매니페스트 없이)
+  echo '{"plansDirectory": "./plans"}' > "$target/.claude/settings.json"
+
+  local output
+  output=$(bash "$SYNC_SH" --target "$target" 2>&1)
+
+  # settings.json에 CONFLICT가 출력되어야 함
+  assert_output_contains "$output" "CONFLICT .claude/settings.json" || return 1
+
+  # 파일 내용이 변경되지 않아야 함 (프로젝트 소유 보존)
+  local content
+  content=$(cat "$target/.claude/settings.json")
+  if [ "$content" != '{"plansDirectory": "./plans"}' ]; then
+    echo "    FAIL: settings.json 내용이 변경됨"
+    return 1
+  fi
+}
+
+test_conflict_detection_script() {
+  setup
+  local target="$TMP_DIR/conflict_script"
+  mkdir -p "$target/.claude/scripts"
+
+  # 프로젝트 소유 스크립트를 미리 생성
+  printf '#!/bin/sh\n# project-owned\n' > "$target/.claude/scripts/sync.sh"
+
+  local output
+  output=$(bash "$SYNC_SH" --target "$target" 2>&1)
+
+  # sync.sh에 CONFLICT가 출력되어야 함
+  assert_output_contains "$output" "CONFLICT .claude/scripts/sync.sh" || return 1
+
+  # 프로젝트 소유 파일 내용이 보존되어야 함
+  if ! grep -q "project-owned" "$target/.claude/scripts/sync.sh"; then
+    echo "    FAIL: 프로젝트 소유 파일이 덮어쓰여짐"
+    return 1
+  fi
+}
+
+test_managed_file_update_after_sync() {
+  setup
+  local target="$TMP_DIR/managed_update"
+  mkdir -p "$target"
+
+  # 1차 sync: 매니페스트 확립
+  bash "$SYNC_SH" --target "$target" > /dev/null 2>&1
+
+  # 관리 파일을 임의로 수정하여 소스와 다르게 만듦
+  echo "modified" > "$target/.claude/settings.json"
+
+  # 2차 sync: 매니페스트에 있으므로 UPDATE (CONFLICT가 아님)
+  local output
+  output=$(bash "$SYNC_SH" --target "$target" 2>&1)
+
+  assert_output_contains "$output" "UPDATE .claude/settings.json" || return 1
+  assert_output_not_contains "$output" "CONFLICT .claude/settings.json" || return 1
+}
+
+test_conflict_not_in_manifest() {
+  setup
+  local target="$TMP_DIR/conflict_manifest"
+  mkdir -p "$target/.claude"
+
+  # 프로젝트 소유 settings.json을 미리 생성
+  echo '{"custom": true}' > "$target/.claude/settings.json"
+
+  bash "$SYNC_SH" --target "$target" > /dev/null 2>&1
+
+  # CONFLICT된 settings.json이 매니페스트에 포함되지 않아야 함
+  local manifest="$target/.claude/meta/manifest.json"
+  if jq -e '.managed_paths[] | select(. == ".claude/settings.json")' "$manifest" > /dev/null 2>&1; then
+    echo "    FAIL: CONFLICT 파일이 매니페스트에 포함됨"
+    return 1
+  fi
+}
+
+test_claude_md_merge_preserves_content() {
+  setup
+  local target="$TMP_DIR/claude_merge"
+  mkdir -p "$target"
+
+  # 마커 없는 프로젝트 CLAUDE.md를 미리 생성
+  printf '# My Project Rules\nCustom rule here.\n' > "$target/CLAUDE.md"
+
+  bash "$SYNC_SH" --target "$target" > /dev/null 2>&1
+
+  # 프로젝트 내용이 보존되어야 함
+  if ! grep -q "Custom rule here." "$target/CLAUDE.md"; then
+    echo "    FAIL: 프로젝트 CLAUDE.md 내용이 보존되지 않음"
+    return 1
+  fi
+
+  # 마커가 삽입되어야 함
+  if ! grep -q "HARNESS-SYNC-PROJECT-START" "$target/CLAUDE.md"; then
+    echo "    FAIL: 마커가 삽입되지 않음"
+    return 1
+  fi
+}
+
 # --- 실행 ---
 
 echo "=== sync.sh 스모크 테스트 ==="
@@ -231,6 +335,11 @@ run_test "구 매니페스트 마이그레이션" test_old_manifest_migration
 run_test "harness-*.md 제외" test_harness_skill_exclusion
 run_test "dry-run 부작용 없음" test_dry_run_no_side_effects
 run_test "매니페스트 JSON 유효성" test_manifest_format
+run_test "프로젝트 소유 settings.json 충돌 감지" test_conflict_detection_settings
+run_test "프로젝트 소유 스크립트 충돌 감지" test_conflict_detection_script
+run_test "매니페스트 관리 파일 정상 업데이트" test_managed_file_update_after_sync
+run_test "CONFLICT 파일 매니페스트 미포함" test_conflict_not_in_manifest
+run_test "CLAUDE.md 병합 시 프로젝트 내용 보존" test_claude_md_merge_preserves_content
 
 echo ""
 echo "=== 결과: ${PASSED} passed, ${FAILED} failed ==="
