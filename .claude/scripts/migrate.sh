@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-echo "경고: migrate.sh는 v1->v2 전환용이며 곧 제거됩니다."
+echo "경고: migrate.sh는 v1->v2 전환용이며 2026-07-01 이후 제거 예정입니다."
 echo "      신규 설치는 install.sh를 사용하세요."
 echo ""
 

@@ -29,7 +29,7 @@ if [ ! -d "$PLANS_DIR" ]; then
   exit 2
 fi
 
-# 24시간(86400초) 이내에 수정된 플랜 파일이 있는지 확인
+# 72시간(259200초) 이내에 수정된 플랜 파일이 있는지 확인
 NOW=$(date +%s)
 FOUND_RECENT=false
 
@@ -38,7 +38,7 @@ for plan_file in "$PLANS_DIR"/*.md; do
   MTIME=$(stat -f %m "$plan_file" 2>/dev/null || stat -c %Y "$plan_file" 2>/dev/null)
   if [ -n "$MTIME" ]; then
     AGE=$(( NOW - MTIME ))
-    if [ "$AGE" -lt 86400 ]; then
+    if [ "$AGE" -lt 259200 ]; then
       FOUND_RECENT=true
       break
     fi
@@ -46,7 +46,7 @@ for plan_file in "$PLANS_DIR"/*.md; do
 done
 
 if [ "$FOUND_RECENT" = false ]; then
-  echo "최근 24시간 이내에 수정된 플랜 파일이 없습니다. 플랜을 먼저 작성하거나 업데이트하세요." >&2
+  echo "최근 72시간 이내에 수정된 플랜 파일이 없습니다. 플랜을 먼저 작성하거나 업데이트하세요." >&2
   exit 2
 fi
 

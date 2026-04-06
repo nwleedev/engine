@@ -195,7 +195,7 @@ else
   echo "다음 단계:"
   echo "  cd $HARNESS_DIR"
   echo "  git diff"
-  echo "  git add -A && git commit -m \"feat: promote $(basename "$FILE_PATH") from $(basename "$SOURCE_PROJECT")\""
+  echo "  git add \"$DST_FILE\" && git commit -m \"feat: promote $(basename "$FILE_PATH") from $(basename "$SOURCE_PROJECT")\""
 
   # Remind about whitelist if promoting a core script or agent
   case "$DESTINATION" in

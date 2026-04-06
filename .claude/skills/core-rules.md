@@ -88,6 +88,8 @@ user-invocable: true
 
 `temps/` 폴더가 없으면 생성한다. `.gitignore`에 이미 포함되어 있다.
 
+> 이 규칙은 Claude가 세션 중 생성하는 파일에 적용된다. 셸 스크립트나 빌드 도구가 `mktemp -d`로 시스템 임시 디렉터리를 사용하는 것은 해당 없음.
+
 ## Domain Harness Skills
 
 - 도메인별 하네스는 `.claude/skills/harness-*.md` 스킬로 관리된다.

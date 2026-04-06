@@ -9,20 +9,30 @@
 | 부트스트랩 | `--category` 필수 | 카테고리 없음 (harness-engine이 동적 생성) |
 | 템플릿 | `templates/<category>/` | 삭제됨 |
 | 훅 경로 | `$CLAUDE_PROJECT_DIR/claude-scripts/X` | `$CLAUDE_PROJECT_DIR/.claude/scripts/X` |
-| 부트스트랩 호출 | `~/.engine/claude-scripts/bootstrap.sh` | `~/.engine/.claude/scripts/bootstrap.sh` |
-| docs 위치 | `~/.engine/docs/` | `~/.engine/.claude/docs/` |
+| 부트스트랩 호출 | `~/.engine/claude-scripts/bootstrap.sh` | `install.sh` 원라이너 (git clone 불필요) |
+| docs 위치 | `~/.engine/docs/` | `.claude/docs/` (프로젝트 내) |
 
 ## 마이그레이션 방법
 
 ### 자동 마이그레이션 (권장)
 
+> **사전 조건**: migrate.sh는 하네스 저장소에서 실행해야 합니다.
+
 ```bash
+# 하네스 저장소 clone (임시)
+git clone https://github.com/nwleedev/engine.git /tmp/engine
+
 # 1. 변경 사항 미리보기
-~/.engine/.claude/scripts/migrate.sh --target <project-path> --dry-run
+/tmp/engine/.claude/scripts/migrate.sh --target <project-path> --dry-run
 
 # 2. 실행
-~/.engine/.claude/scripts/migrate.sh --target <project-path>
+/tmp/engine/.claude/scripts/migrate.sh --target <project-path>
+
+# 3. 임시 clone 제거
+rm -rf /tmp/engine
 ```
+
+> **참고**: migrate.sh는 v1→v2 전환용이며 2026-07-01 이후 제거 예정입니다.
 
 `migrate.sh`가 수행하는 작업:
 1. `claude-scripts/*.sh` → `.claude/scripts/` 이동
@@ -48,7 +58,7 @@ sed -i '' 's|claude-scripts/|.claude/scripts/|g' .claude/settings.json
 rm -f suggest-harness-patterns.json
 
 # 4. 최신 코어 동기화
-~/.engine/.claude/scripts/sync.sh --source ~/.engine --target .
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/nwleedev/engine/main/install.sh)" -- .
 ```
 
 ## matchPatterns 프론트매터 추가

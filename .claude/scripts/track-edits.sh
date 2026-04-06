@@ -25,10 +25,10 @@ if [ -n "$FILE_PATH" ]; then
   fi
 fi
 
-# work-reviewer 카운트: 자동 생성 파일만 제외 (SESSION.md, .edited-files 등)
+# work-reviewer 카운트: 자동 생성 경로 전체 제외 (sessions/, meta/)
 REVIEW_COUNT=0
 if [ -f "$EDITED_FILES" ]; then
-  REVIEW_COUNT=$(grep -cvE '\.claude/sessions/.*/(SESSION\.md|\.edited-files|\.plan-review-count)' "$EDITED_FILES" 2>/dev/null || echo "0")
+  REVIEW_COUNT=$(grep -cvE '\.claude/(sessions|meta)/' "$EDITED_FILES" 2>/dev/null || echo "0")
 fi
 
 # 2개 이상이면 work-reviewer 제안
