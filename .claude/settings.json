@@ -18,7 +18,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "SESSION_DIR=\"$CLAUDE_PROJECT_DIR/.claude/sessions/$SESSION_ID\"; if [ -n \"$SESSION_ID\" ] && [ -d \"$SESSION_DIR\" ]; then echo '## Session State (after compaction)'; [ -f \"$SESSION_DIR/SESSION.md\" ] && cat \"$SESSION_DIR/SESSION.md\"; LATEST=$(ls -t \"$SESSION_DIR/contexts/\"CONTEXT-*.md 2>/dev/null | head -1); if [ -n \"$LATEST\" ]; then echo ''; echo '## Latest Context Snapshot'; cat \"$LATEST\"; fi; PLAN=$(ls -t \"$CLAUDE_PROJECT_DIR/.claude/plans/\"*.md 2>/dev/null | head -1); if [ -n \"$PLAN\" ]; then echo ''; echo \"## Active Plan: $PLAN\"; echo '위 플랜 파일을 Read하여 현재 작업 방향을 확인하세요.'; fi; fi",
+            "command": "SESSION_DIR=\"$CLAUDE_PROJECT_DIR/.claude/sessions/$SESSION_ID\"; if [ -n \"$SESSION_ID\" ] && [ -d \"$SESSION_DIR\" ]; then echo '## Session State (after compaction)'; [ -f \"$SESSION_DIR/SESSION.md\" ] && cat \"$SESSION_DIR/SESSION.md\"; LATEST=$(ls -t \"$SESSION_DIR/contexts/\"CONTEXT-*.md 2>/dev/null | head -1); if [ -n \"$LATEST\" ]; then echo ''; echo '## Latest Context Snapshot'; cat \"$LATEST\"; fi; PLAN=$(ls -t \"$CLAUDE_PROJECT_DIR/.claude/plans/\"*.md 2>/dev/null | head -1); if [ -n \"$PLAN\" ]; then echo ''; echo \"## Active Plan: $PLAN\"; echo '위 플랜 파일을 Read하여 현재 작업 방향을 확인하세요.'; fi; echo ''; echo '> 컨텍스트에 ## Outcome 헤딩이 없으면 자동 추출된 raw 요약이다. 핵심만 추출: 달성한 것, 주요 결정, 다음 단계.'; fi",
             "timeout": 10
           }
         ]

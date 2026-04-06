@@ -49,16 +49,70 @@ TIMESTAMP=$(date +"%Y-%m-%d %H:%M")
 DATE_FILE=$(date +"%Y%m%d-%H%M")
 TOOL_CALLS=$(echo "$INPUT" | jq -r '.tool_calls_made // 0')
 
-# 턴 전체 텍스트 수집: transcript에서 최근 assistant 메시지들의 text를 결합
-# last_assistant_message는 마지막 텍스트 블록만 포함하므로 부족
+# === Transcript 구조화 추출 ===
 TRANSCRIPT_PATH=$(echo "$INPUT" | jq -r '.transcript_path // empty')
-LAST_MSG=""
+
+TOOLS_USED=""
+COMMITS=""
+ERRORS=""
+TURN_SUMMARY=""
+
 if [ -n "$TRANSCRIPT_PATH" ] && [ -f "$TRANSCRIPT_PATH" ]; then
-  LAST_MSG=$(tail -200 "$TRANSCRIPT_PATH" | jq -r 'select(.type == "assistant") | .message.content[]? | select(.type == "text") | .text' 2>/dev/null | tail -200 | head -c 20000)
+  # 최근 메시지 캐시 (한 번만 읽기, 세션 디렉터리 내 생성)
+  RECENT_CACHE=$(mktemp "$SESSION_DIR/.cache-XXXXXX")
+  tail -500 "$TRANSCRIPT_PATH" > "$RECENT_CACHE"
+
+  # 1. Tools used: tool_use 블록에서 도구명+대상 추출 (Read/Grep/Glob 제외 — Files read에 이미 기록)
+  TOOLS_USED=$(jq -r '
+    select(.type == "assistant") | .message.content[]? |
+    select(.type == "tool_use") |
+    if .name == "Write" or .name == "Edit" then
+      "- \(.name) \(.input.file_path // "")"
+    elif .name == "Bash" then
+      "- Bash: \(.input.command // "" | .[0:80])"
+    elif .name == "Agent" then
+      "- Agent(\(.input.subagent_type // "general")): \(.input.description // "")"
+    elif .name == "Skill" then
+      "- Skill: \(.input.skill // "")"
+    elif .name == "Read" or .name == "Grep" or .name == "Glob" or .name == "ToolSearch" then
+      empty
+    else
+      "- \(.name)"
+    end
+  ' "$RECENT_CACHE" 2>/dev/null | head -30)
+
+  # 2. Commits: git commit 명령어 추출
+  COMMITS=$(jq -r '
+    select(.type == "assistant") | .message.content[]? |
+    select(.type == "tool_use" and .name == "Bash") |
+    .input.command // "" | select(test("git commit")) | .[0:120]
+  ' "$RECENT_CACHE" 2>/dev/null | sed 's/^/- /' | head -5)
+
+  # 3. Errors: tool_result 에러 건수 (JSONL이므로 --slurp 필요)
+  ERROR_COUNT=$(jq -s '[.[] | select(.type == "user") | .message.content[]? | select(.type == "tool_result" and .is_error == true)] | length' "$RECENT_CACHE" 2>/dev/null)
+  if [ "${ERROR_COUNT:-0}" -gt 0 ] 2>/dev/null; then
+    ERRORS="${ERROR_COUNT} tool error(s)"
+  fi
+
+  # 4. Turn summary: .turn-summary 우선, 없으면 transcript에서 추출
+  TURN_SUMMARY_FILE="$SESSION_DIR/.turn-summary"
+  if [ -f "$TURN_SUMMARY_FILE" ] && [ -s "$TURN_SUMMARY_FILE" ]; then
+    TURN_SUMMARY=$(head -c 4000 "$TURN_SUMMARY_FILE")
+    > "$TURN_SUMMARY_FILE"
+  else
+    # 폴백: 마지막 assistant text 블록들 (결론부분만 — tail로 끝부분 추출)
+    TURN_SUMMARY=$(jq -r '
+      select(.type == "assistant") | .message.content[]? |
+      select(.type == "text") | .text
+    ' "$RECENT_CACHE" 2>/dev/null | tail -40 | head -c 4000)
+  fi
+
+  rm -f "$RECENT_CACHE"
 fi
+
 # transcript 파싱 실패 시 fallback
-if [ -z "$LAST_MSG" ]; then
-  LAST_MSG=$(echo "$INPUT" | jq -r '.last_assistant_message // empty' | head -c 20000)
+if [ -z "$TURN_SUMMARY" ]; then
+  TURN_SUMMARY=$(echo "$INPUT" | jq -r '.last_assistant_message // empty' | head -c 4000)
 fi
 
 # 수정된 파일 목록
@@ -117,11 +171,20 @@ $FILES_LIST
 ## Files read
 $READS_LIST
 
+## Tools used
+${TOOLS_USED:-(none)}
+
+## Commits
+${COMMITS:-(none)}
+
+## Errors
+${ERRORS:-(none)}
+
 ## Active plan
 $PLAN_FILE
 
-## Last response summary
-$(echo "$LAST_MSG" | head -80)
+## Turn summary
+$TURN_SUMMARY
 SNAPEOF
 
 # SESSION.md 생성 또는 업데이트
@@ -136,7 +199,7 @@ if [ "$IS_MINI" = true ]; then
 fi
 
 # full/pre-compact: SESSION.md 업데이트
-DONE_LINE=$(echo "$LAST_MSG" | grep -v '^$' | grep -v '^#' | head -1 | head -c 120)
+DONE_LINE=$(echo "$TURN_SUMMARY" | grep -v '^$' | grep -v '^#' | head -1 | head -c 120)
 [ -z "$DONE_LINE" ] && DONE_LINE="(auto-snapshot)"
 
 SUMMARY="### $TIMESTAMP — $TITLE
