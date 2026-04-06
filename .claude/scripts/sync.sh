@@ -19,10 +19,11 @@ usage() {
 관리 대상 (명시적 화이트리스트):
   - CLAUDE.md (마커 기반 병합: .claude/CLAUDE.md.example → 프로젝트 루트 CLAUDE.md)
   - .claude/scripts/{check-plan,check-plan-review,suggest-harness,track-edits,snapshot,sync,bootstrap,promote,migrate}.sh
-  - .claude/skills/{core-rules,failure-response,deep-study}.md
+  - .claude/skills/{core-rules,failure-response,deep-study,research-methodology,socratic-thinking}.md
   - .claude/settings.json
   - .claude/skills/harness-engine/* (전체 서브트리)
-  - .claude/agents/{work-reviewer,domain-tutor,harness-researcher,harness-auditor}/AGENT.md
+  - .claude/agents/{work-reviewer,domain-tutor,harness-researcher,harness-auditor,plan-readiness-checker,project-researcher}/AGENT.md
+  - .claude/docs/{GETTING-STARTED,MIGRATION}.md
 
 비관리 대상 (프로젝트 소유):
   - .claude/sessions/*, .claude/plans/*, .claude/agent-memory/*
@@ -69,7 +70,8 @@ collect_source_paths() {
     done
 
     # portable core skills
-    for skill in core-rules.md failure-response.md deep-study.md; do
+    for skill in core-rules.md failure-response.md deep-study.md \
+                 research-methodology.md socratic-thinking.md; do
       [ -f ".claude/skills/$skill" ] && printf '%s\n' ".claude/skills/$skill"
     done
 
@@ -82,9 +84,15 @@ collect_source_paths() {
     fi
 
     # custom agents — 명시적 화이트리스트 (프로젝트 로컬 에이전트 보호)
-    for agent in work-reviewer domain-tutor harness-researcher harness-auditor; do
+    for agent in work-reviewer domain-tutor harness-researcher harness-auditor \
+                 plan-readiness-checker project-researcher; do
       [ -f ".claude/agents/$agent/AGENT.md" ] && \
         printf '%s\n' ".claude/agents/$agent/AGENT.md"
+    done
+
+    # docs — 사용자 참조 문서
+    for doc in GETTING-STARTED.md MIGRATION.md; do
+      [ -f ".claude/docs/$doc" ] && printf '%s\n' ".claude/docs/$doc"
     done
   ) | sed 's#^\./##' | awk 'NF && !seen[$0]++'
 }

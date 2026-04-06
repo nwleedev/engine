@@ -70,55 +70,49 @@ mkdir ~/my-project && cd ~/my-project
 git init  # Git 초기화 (이미 되어 있으면 생략)
 
 # 부트스트랩 실행
-~/.claude-harness/.claude/scripts/bootstrap.sh \
-  --target . \
-  
+~/.claude-harness/.claude/scripts/bootstrap.sh --target .
 ```
 
-**사용 가능한 카테고리:**
-
-| 카테고리 | 대상 | 예시 프로젝트 |
-|---|---|---|
-| `dev-frontend` | React, Vue, Next.js 등 프론트엔드 | 웹앱 리팩토링, UI 컴포넌트 라이브러리 |
-| `dev-backend-python` | FastAPI, Django, Flask 등 | REST API, 데이터 파이프라인 |
-| `dev-backend-go` | Go 서버 | CLI 도구, 마이크로서비스 |
-| `non-dev-research` | 시장조사, 경쟁분석, 기술조사 | 신사업 리서치, 기술 트렌드 분석 |
-| `non-dev-marketing` | 마케팅 캠페인, 광고 | 광고 카피 생성, A/B 테스트 설계 |
-| `non-dev-design-doc` | 설계 문서, RFC, ADR | 시스템 아키텍처 문서, API 설계 |
-| `non-dev-learning` | 기술 학습, 도메인 스터디 | React 학습, ML 입문 |
-
-> 아직 템플릿이 없는 카테고리도 부트스트랩 가능합니다 (코어만 설치).
+> 프로젝트 유형별 하네스는 부트스트랩 후 `/harness-engine`을 호출하면 자동 생성됩니다.
 
 ### 2.2 부트스트랩 후 생성되는 파일
 
 ```
 my-project/
 ├── CLAUDE.md                          # ← 프로젝트별 규칙 작성 (마커 아래)
-├── lefthook.yml                       # (개발 프로젝트만) pre-commit 훅
 └── .claude/
     ├── settings.json                  # 훅 설정 (수정 불필요)
     ├── settings.local.json            # ← 프로젝트별 권한 커스터마이징
-    ├── scripts/                       # 자동 훅 스크립트 (수정 불필요)
+    ├── scripts/                       # 자동화 스크립트 (수정 불필요)
     │   ├── check-plan.sh
     │   ├── check-plan-review.sh
     │   ├── suggest-harness.sh
     │   ├── track-edits.sh
-    │   └── snapshot.sh
+    │   ├── snapshot.sh
+    │   ├── sync.sh
+    │   ├── bootstrap.sh
+    │   ├── promote.sh
+    │   └── migrate.sh
     ├── skills/
     │   ├── core-rules.md              # 범용 규칙 (수정 불필요)
     │   ├── failure-response.md
     │   ├── deep-study.md
+    │   ├── research-methodology.md
+    │   ├── socratic-thinking.md
     │   ├── harness-engine/            # 하네스 생성 엔진 (수정 불필요)
     │   └── harness-*.md               # 프로젝트별 하네스 (harness-engine이 생성)
     ├── agents/
     │   ├── work-reviewer/             # 코드/문서 리뷰 에이전트
     │   ├── domain-tutor/              # 학습 에이전트
     │   ├── harness-researcher/        # 도메인 조사 에이전트
-    │   └── harness-auditor/           # 설정 평가 에이전트
+    │   ├── harness-auditor/           # 설정 평가 에이전트
+    │   ├── plan-readiness-checker/    # 플랜 품질 검증 에이전트
+    │   └── project-researcher/        # 프로젝트 리서치 에이전트
+    ├── docs/
+    │   ├── GETTING-STARTED.md         # 설치 및 사용 가이드
+    │   └── MIGRATION.md               # v1→v2 마이그레이션
     ├── plans/                         # 작업 계획 파일 (자동 생성)
     └── sessions/                      # 세션 스냅샷 (자동 생성)
-├── lefthook.yml                     # (개발 프로젝트만) pre-commit 훅
-└── .harness-sync-manifest.json      # sync 추적 (수동 수정 금지)
 ```
 
 **직접 편집해야 하는 파일은 2개뿐:**
@@ -164,7 +158,7 @@ my-project/
 
 ### 2.4 MCP 서버 설정
 
-MCP 서버는 Claude Code가 외부 도구를 사용할 수 있게 한다. 부트스트랩된 `mcp-servers.md`에 권장 서버 목록이 있다.
+MCP 서버는 Claude Code가 외부 도구를 사용할 수 있게 한다. 아래는 권장 서버 목록이다.
 
 ```bash
 # 웹 검색 (리서치 프로젝트에 필수)
@@ -483,17 +477,22 @@ sync.sh --target ~/projects/my-api --dry-run
 │  └─────────────────────────────────────────────────┘  │
 │                                                      │
 │  ┌─── Skills (호출 시 활성) ──────────────────────┐  │
-│  │  core-rules.md      범용 규칙                   │  │
-│  │  failure-response.md 에러 대응                   │  │
-│  │  deep-study.md       학습 프로토콜               │  │
-│  │  harness-engine/     하네스 생성 팩토리          │  │
-│  │  harness-<domain>-*  도메인별 규칙 (프로젝트별)  │  │
+│  │  core-rules.md           범용 규칙              │  │
+│  │  failure-response.md     에러 대응              │  │
+│  │  deep-study.md           학습 프로토콜          │  │
+│  │  research-methodology.md 리서치 프레임워크      │  │
+│  │  socratic-thinking.md    비판적 사고 원칙       │  │
+│  │  harness-engine/         하네스 생성 팩토리     │  │
+│  │  harness-<domain>-*      도메인별 규칙          │  │
 │  └─────────────────────────────────────────────────┘  │
 │                                                      │
 │  ┌─── Agents (자동/수동 호출) ─────────────────────┐ │
-│  │  work-reviewer    3개+ 파일 수정 시 자동 리뷰    │ │
-│  │  domain-tutor     /deep-study로 학습 시작        │ │
-│  │  harness-researcher  하네스 생성 시 조사 위임     │ │
+│  │  work-reviewer         3개+ 파일 수정 시 자동   │ │
+│  │  plan-readiness-checker 플랜 종료 시 자동 검증  │ │
+│  │  domain-tutor          /deep-study로 학습       │ │
+│  │  harness-researcher    하네스 생성 시 조사 위임  │ │
+│  │  harness-auditor       설정 품질 감사           │ │
+│  │  project-researcher    기술/아키텍처 조사       │ │
 │  └─────────────────────────────────────────────────┘ │
 │                                                      │
 │  ┌─── MCP Servers (외부 도구) ─────────────────────┐ │
