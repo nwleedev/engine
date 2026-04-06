@@ -1,7 +1,8 @@
 #!/bin/sh
 set -eu
 
-MANIFEST_FILE=".harness-sync-manifest.json"
+MANIFEST_FILE=".claude/meta/manifest.json"
+OLD_MANIFEST_FILE=".harness-sync-manifest.json"
 DRY_RUN=0
 TARGET_DIR=""
 
@@ -16,22 +17,19 @@ usage() {
 설명:
   현재 저장소의 하네스 자산을 다른 프로젝트에 설치하거나 업데이트합니다.
 
-관리 대상 (명시적 화이트리스트):
+관리 대상 (디렉터리 단위 자동 수집):
   - CLAUDE.md (마커 기반 병합: .claude/CLAUDE.md.example → 프로젝트 루트 CLAUDE.md)
-  - .claude/scripts/{check-plan,check-plan-review,suggest-harness,track-edits,snapshot,sync,bootstrap,promote,migrate}.sh
-  - .claude/skills/{core-rules,failure-response,deep-study,research-methodology,socratic-thinking}.md
   - .claude/settings.json
-  - .claude/skills/harness-engine/* (전체 서브트리)
-  - .claude/agents/{work-reviewer,domain-tutor,harness-researcher,harness-auditor,plan-readiness-checker,project-researcher}/AGENT.md
-  - .claude/docs/{GETTING-STARTED,MIGRATION}.md
+  - .claude/scripts/**    (전체)
+  - .claude/skills/**     (전체)
+  - .claude/agents/**     (전체)
+  - .claude/docs/**       (전체)
 
 비관리 대상 (프로젝트 소유):
   - .claude/sessions/*, .claude/plans/*, .claude/agent-memory/*
-  - .claude/skills/harness-* (프로젝트별 도메인 하네스)
   - .claude/settings.local.json
-  - lefthook.yml
-  - .claude/scripts/ 내 화이트리스트 외 파일
-  - .claude/agents/ 내 화이트리스트 외 디렉터리
+  - .claude/skills/harness-*.md  (프로젝트별 도메인 하네스)
+  - .claude/meta/                (sync 메타데이터, 자동 생성)
 EOF
 }
 
@@ -60,41 +58,20 @@ collect_source_paths() {
   (
     cd "$SOURCE_DIR"
 
-    # CLAUDE.md.example (sync_merge에서 프로젝트 루트 CLAUDE.md로 병합)
+    # 단독 파일
     [ -f ".claude/CLAUDE.md.example" ] && printf '%s\n' ".claude/CLAUDE.md.example"
+    [ -f ".claude/settings.json" ]     && printf '%s\n' ".claude/settings.json"
 
-    # .claude/scripts — 명시적 화이트리스트 (프로젝트 로컬 스크립트 보호)
-    for script in check-plan.sh check-plan-review.sh suggest-harness.sh \
-                  track-edits.sh snapshot.sh sync.sh bootstrap.sh promote.sh migrate.sh; do
-      [ -f ".claude/scripts/$script" ] && printf '%s\n' ".claude/scripts/$script"
+    # 디렉터리 단위 자동 수집
+    for dir in .claude/scripts .claude/agents .claude/docs; do
+      [ -d "$dir" ] && find "$dir" -type f
     done
 
-    # portable core skills
-    for skill in core-rules.md failure-response.md deep-study.md \
-                 research-methodology.md socratic-thinking.md; do
-      [ -f ".claude/skills/$skill" ] && printf '%s\n' ".claude/skills/$skill"
-    done
-
-    # settings.json
-    [ -f ".claude/settings.json" ] && printf '%s\n' ".claude/settings.json"
-
-    # harness-engine (전체 서브트리 — 깊은 구조라 find 유지)
-    if [ -d ".claude/skills/harness-engine" ]; then
-      find ".claude/skills/harness-engine" -type f | LC_ALL=C sort
+    # skills: harness-engine/ 전체 포함, 최상위 harness-*.md 제외 (프로젝트 소유)
+    if [ -d ".claude/skills" ]; then
+      find ".claude/skills" -type f | grep -v '^\.claude/skills/harness-[^/]*\.md$'
     fi
-
-    # custom agents — 명시적 화이트리스트 (프로젝트 로컬 에이전트 보호)
-    for agent in work-reviewer domain-tutor harness-researcher harness-auditor \
-                 plan-readiness-checker project-researcher; do
-      [ -f ".claude/agents/$agent/AGENT.md" ] && \
-        printf '%s\n' ".claude/agents/$agent/AGENT.md"
-    done
-
-    # docs — 사용자 참조 문서
-    for doc in GETTING-STARTED.md MIGRATION.md; do
-      [ -f ".claude/docs/$doc" ] && printf '%s\n' ".claude/docs/$doc"
-    done
-  ) | sed 's#^\./##' | awk 'NF && !seen[$0]++'
+  ) | sed 's#^\./##' | awk 'NF && !seen[$0]++' | LC_ALL=C sort
 }
 
 collect_source_directories() {
@@ -106,9 +83,15 @@ collect_source_directories() {
   done | awk '!seen[$0]++' | LC_ALL=C sort
 }
 
+# 구/신 위치 폴백으로 매니페스트에서 섹션 항목을 추출한다.
 manifest_entries_from_section() {
   section="$1"
   manifest_path="$TARGET_DIR/$MANIFEST_FILE"
+
+  # 신규 위치 없으면 구 위치 폴백
+  if [ ! -f "$manifest_path" ]; then
+    manifest_path="$TARGET_DIR/$OLD_MANIFEST_FILE"
+  fi
 
   [ -f "$manifest_path" ] || return 0
 
@@ -118,7 +101,7 @@ manifest_entries_from_section() {
     in_section {
       line = $0
       sub(/^[[:space:]]*"/, "", line)
-      sub(/",[[:space:]]*$/, "", line)
+      sub(/",?[[:space:]]*$/, "", line)
       if (length(line) > 0) {
         print line
       }
@@ -187,41 +170,6 @@ sync_path() {
   log_action "UPDATE" "$rel_path"
   if [ "$DRY_RUN" -eq 0 ]; then
     ensure_parent_dir "$rel_path"
-    cp "$src" "$dst"
-    set_file_mode "$src" "$dst"
-  fi
-}
-
-sync_path_to() {
-  src_rel_path="$1"
-  dst_rel_path="$2"
-  src="$SOURCE_DIR/$src_rel_path"
-  dst="$TARGET_DIR/$dst_rel_path"
-
-  [ -f "$src" ] || return 0
-
-  if [ -d "$dst" ]; then
-    fail "대상 경로가 디렉터리라서 파일을 덮어쓸 수 없습니다: $dst"
-  fi
-
-  if [ ! -e "$dst" ]; then
-    log_action "CREATE" "$dst_rel_path"
-    if [ "$DRY_RUN" -eq 0 ]; then
-      ensure_parent_dir "$dst_rel_path"
-      cp "$src" "$dst"
-      set_file_mode "$src" "$dst"
-    fi
-    return 0
-  fi
-
-  if cmp -s "$src" "$dst"; then
-    log_action "KEEP" "$dst_rel_path"
-    return 0
-  fi
-
-  log_action "UPDATE" "$dst_rel_path"
-  if [ "$DRY_RUN" -eq 0 ]; then
-    ensure_parent_dir "$dst_rel_path"
     cp "$src" "$dst"
     set_file_mode "$src" "$dst"
   fi
@@ -315,11 +263,11 @@ write_manifest() {
 
   [ "$DRY_RUN" -eq 0 ] || return 0
 
-  mkdir -p "$TARGET_DIR"
+  mkdir -p "$(dirname "$manifest_path")"
 
   {
     printf '{\n'
-    printf '  "format_version": 1,\n'
+    printf '  "format_version": 2,\n'
     printf '  "source_label": "%s",\n' "$(json_escape "$SOURCE_DIR")"
     printf '  "last_synced_commit": "%s",\n' "$(json_escape "$source_commit")"
     printf '  "managed_paths": [\n'
@@ -357,6 +305,8 @@ write_manifest() {
   log_action "WRITE" "$MANIFEST_FILE"
 }
 
+# --- 인자 파싱 ---
+
 while [ $# -gt 0 ]; do
   case "$1" in
     --target)
@@ -388,6 +338,8 @@ done
   exit 1
 }
 
+# --- 메인 플로우 ---
+
 ensure_source_layout
 
 CURRENT_PATHS=$(collect_source_paths)
@@ -403,6 +355,7 @@ if [ "$DRY_RUN" -eq 0 ]; then
   mkdir -p "$TARGET_DIR"
 fi
 
+# stale-path 제거: 이전 sync에서 관리했지만 현재 소스에 없는 파일
 printf '%s\n' "$OLD_PATHS" | while IFS= read -r old_path; do
   [ -n "$old_path" ] || continue
   if ! list_contains "$old_path" "$CURRENT_PATHS"; then
@@ -410,6 +363,7 @@ printf '%s\n' "$OLD_PATHS" | while IFS= read -r old_path; do
   fi
 done
 
+# 파일 동기화
 printf '%s\n' "$CURRENT_PATHS" | while IFS= read -r rel_path; do
   [ -n "$rel_path" ] || continue
   # CLAUDE.md.example은 마커 기반 병합으로 별도 처리
@@ -421,6 +375,16 @@ done
 
 # CLAUDE.md.example → 프로젝트 루트 CLAUDE.md 마커 기반 병합
 sync_merge ".claude/CLAUDE.md.example" "CLAUDE.md"
+
+# 매니페스트 기록
+write_manifest "$CURRENT_PATHS" "$CURRENT_DIRECTORIES"
+
+# 구 매니페스트 정리
+old_manifest="$TARGET_DIR/$OLD_MANIFEST_FILE"
+if [ "$DRY_RUN" -eq 0 ] && [ -f "$old_manifest" ]; then
+  rm -f "$old_manifest"
+  log_action "REMOVE" "$OLD_MANIFEST_FILE"
+fi
 
 if [ "$DRY_RUN" -eq 1 ]; then
   echo "DRY RUN 완료"

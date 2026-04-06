@@ -111,7 +111,7 @@ fi
 # Step 4: create .gitignore additions if needed
 GITIGNORE="$TARGET_DIR/.gitignore"
 if [ "$DRY_RUN" -eq 0 ] && [ -f "$GITIGNORE" ]; then
-  for pattern in ".claude/sessions/" ".claude/agent-memory/" "temps/" ".harness-sync-manifest.json"; do
+  for pattern in ".claude/sessions/" ".claude/agent-memory/" ".claude/meta/" "temps/"; do
     if ! grep -Fqx "$pattern" "$GITIGNORE" 2>/dev/null; then
       echo "$pattern" >> "$GITIGNORE"
       echo "APPEND .gitignore: $pattern"
