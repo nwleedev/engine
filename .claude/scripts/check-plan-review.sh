@@ -4,7 +4,7 @@
 
 INPUT=$(cat)
 SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // empty')
-PROJECT_DIR=$(echo "$INPUT" | jq -r '.cwd // empty')
+PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(echo "$INPUT" | jq -r '.cwd // empty')}"
 
 # SESSION_ID 없으면 허용
 if [ -z "$SESSION_ID" ] || [ -z "$PROJECT_DIR" ]; then

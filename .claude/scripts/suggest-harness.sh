@@ -7,7 +7,7 @@
 INPUT=$(cat)
 FILE_PATH=$(echo "$INPUT" | jq -r '.tool_input.file_path // empty')
 SESSION_ID_VAL=$(echo "$INPUT" | jq -r '.session_id // empty')
-PROJECT_DIR_VAL=$(echo "$INPUT" | jq -r '.cwd // empty')
+PROJECT_DIR_VAL="${CLAUDE_PROJECT_DIR:-$(echo "$INPUT" | jq -r '.cwd // empty')}"
 
 # 읽기 파일 추적 — snapshot.sh의 mini-snapshot 판단용
 if [ -n "$SESSION_ID_VAL" ] && [ -n "$PROJECT_DIR_VAL" ] && [ -n "$FILE_PATH" ]; then
@@ -24,7 +24,7 @@ if [ ! -f "$FILE_PATH" ]; then
 fi
 
 # 하네스 스킬 디렉터리 확인
-SKILLS_DIR="$CLAUDE_PROJECT_DIR/.claude/skills"
+SKILLS_DIR="$PROJECT_DIR_VAL/.claude/skills"
 if [ ! -d "$SKILLS_DIR" ]; then
   exit 0
 fi

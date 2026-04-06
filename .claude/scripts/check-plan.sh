@@ -20,7 +20,7 @@ if echo "$FILE_PATH" | grep -qE '(lefthook\.yml|\.eslintrc|eslint\.config|\.pret
   exit 0
 fi
 
-PROJECT_DIR=$(echo "$INPUT" | jq -r '.cwd // empty')
+PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(echo "$INPUT" | jq -r '.cwd // empty')}"
 PLANS_DIR="${PROJECT_DIR}/.claude/plans"
 
 # 플랜 디렉터리 존재 확인

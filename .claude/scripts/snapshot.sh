@@ -11,7 +11,7 @@ if [ "$STOP_ACTIVE" = "true" ]; then
 fi
 
 SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // empty')
-PROJECT_DIR=$(echo "$INPUT" | jq -r '.cwd // empty')
+PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(echo "$INPUT" | jq -r '.cwd // empty')}"
 
 # SESSION_ID 미설정 시 종료
 if [ -z "$SESSION_ID" ] || [ -z "$PROJECT_DIR" ]; then
