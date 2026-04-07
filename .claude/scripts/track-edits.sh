@@ -31,13 +31,19 @@ if [ -f "$EDITED_FILES" ]; then
   REVIEW_COUNT=$(grep -cvE '\.claude/(sessions|meta)/' "$EDITED_FILES" 2>/dev/null || echo "0")
 fi
 
+# 수정 파일 목록 추출 (sessions/meta 제외)
+EDITED_LIST=""
+if [ -f "$EDITED_FILES" ]; then
+  EDITED_LIST=$(grep -vE '\.claude/(sessions|meta)/' "$EDITED_FILES" 2>/dev/null | head -20 | tr '\n' ', ' | sed 's/,$//')
+fi
+
 # 2개 이상이면 work-reviewer 제안
 if [ "$REVIEW_COUNT" -ge 2 ]; then
   cat <<EOF
 {
   "hookSpecificOutput": {
     "hookEventName": "PostToolUse",
-    "additionalContext": "${REVIEW_COUNT}개 파일이 수정되었습니다. 완료 전 work-reviewer 에이전트를 실행하세요."
+    "additionalContext": "${REVIEW_COUNT}개 파일이 수정되었습니다 (${EDITED_LIST}). 완료 전 work-reviewer 에이전트를 실행하세요."
   }
 }
 EOF
