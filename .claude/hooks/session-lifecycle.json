@@ -1,0 +1,59 @@
+{
+  "SessionStart": [
+    {
+      "matcher": "compact",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "ENGINE_HOOK=1 SESSION_DIR=\"$CLAUDE_PROJECT_DIR/.claude/sessions/$SESSION_ID\"; if [ -n \"$SESSION_ID\" ] && [ -d \"$SESSION_DIR\" ]; then echo '## Session State (after compaction)'; [ -f \"$SESSION_DIR/SESSION.md\" ] && cat \"$SESSION_DIR/SESSION.md\"; LATEST=$(ls -t \"$SESSION_DIR/contexts/\"CONTEXT-*.md 2>/dev/null | head -1); if [ -n \"$LATEST\" ]; then echo ''; echo '## Latest Context Snapshot'; cat \"$LATEST\"; fi; PLAN=$(ls -t \"$CLAUDE_PROJECT_DIR/.claude/plans/\"*.md 2>/dev/null | head -1); if [ -n \"$PLAN\" ]; then echo ''; echo \"## Active Plan: $PLAN\"; echo '위 플랜 파일을 Read하여 현재 작업 방향을 확인하세요.'; fi; echo ''; echo '> 컨텍스트에 ## Outcome 헤딩이 없으면 자동 추출된 raw 요약이다. 핵심만 추출: 달성한 것, 주요 결정, 다음 단계.'; fi",
+          "timeout": 10
+        }
+      ]
+    },
+    {
+      "matcher": "startup|resume|clear",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "ENGINE_HOOK=1 SESSION_DIR=\"$CLAUDE_PROJECT_DIR/.claude/sessions/$SESSION_ID\"; if [ -n \"$SESSION_ID\" ] && [ -d \"$SESSION_DIR\" ]; then echo '## Session State'; [ -f \"$SESSION_DIR/SESSION.md\" ] && cat \"$SESSION_DIR/SESSION.md\"; LATEST=$(ls -t \"$SESSION_DIR/contexts/\"CONTEXT-*.md 2>/dev/null | head -1); if [ -n \"$LATEST\" ]; then echo ''; echo '## Latest Context Snapshot'; cat \"$LATEST\"; fi; PLAN=$(ls -t \"$CLAUDE_PROJECT_DIR/.claude/plans/\"*.md 2>/dev/null | head -1); if [ -n \"$PLAN\" ]; then echo ''; echo \"## Active Plan: $PLAN\"; echo '위 플랜 파일을 Read하여 현재 작업 방향을 확인하세요.'; fi; fi",
+          "timeout": 10
+        }
+      ]
+    }
+  ],
+  "Stop": [
+    {
+      "matcher": "",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "ENGINE_HOOK=1 bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/snapshot.sh\"",
+          "timeout": 15
+        }
+      ]
+    }
+  ],
+  "PreCompact": [
+    {
+      "hooks": [
+        {
+          "type": "command",
+          "command": "ENGINE_HOOK=1 bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/snapshot.sh\" --pre-compact",
+          "timeout": 15
+        }
+      ]
+    }
+  ],
+  "SessionEnd": [
+    {
+      "matcher": "clear",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "ENGINE_HOOK=1; if [ -n \"$SESSION_ID\" ] && [ -f \"$CLAUDE_PROJECT_DIR/.claude/sessions/$SESSION_ID/SESSION.md\" ]; then mkdir -p \"$CLAUDE_PROJECT_DIR/.claude/sessions/$SESSION_ID/contexts\" && cp \"$CLAUDE_PROJECT_DIR/.claude/sessions/$SESSION_ID/SESSION.md\" \"$CLAUDE_PROJECT_DIR/.claude/sessions/$SESSION_ID/contexts/CONTEXT-$(date +%Y%m%d-%H%M)-session-end.md\"; fi",
+          "timeout": 10
+        }
+      ]
+    }
+  ]
+}

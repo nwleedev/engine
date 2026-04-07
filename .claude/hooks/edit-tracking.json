@@ -1,0 +1,24 @@
+{
+  "PostToolUse": [
+    {
+      "matcher": "Read",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "ENGINE_HOOK=1 bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/suggest-harness.sh\"",
+          "timeout": 5
+        }
+      ]
+    },
+    {
+      "matcher": "Write|Edit",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "ENGINE_HOOK=1 bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/track-edits.sh\"",
+          "timeout": 5
+        }
+      ]
+    }
+  ]
+}

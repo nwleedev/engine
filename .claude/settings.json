@@ -18,7 +18,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "SESSION_DIR=\"$CLAUDE_PROJECT_DIR/.claude/sessions/$SESSION_ID\"; if [ -n \"$SESSION_ID\" ] && [ -d \"$SESSION_DIR\" ]; then echo '## Session State (after compaction)'; [ -f \"$SESSION_DIR/SESSION.md\" ] && cat \"$SESSION_DIR/SESSION.md\"; LATEST=$(ls -t \"$SESSION_DIR/contexts/\"CONTEXT-*.md 2>/dev/null | head -1); if [ -n \"$LATEST\" ]; then echo ''; echo '## Latest Context Snapshot'; cat \"$LATEST\"; fi; PLAN=$(ls -t \"$CLAUDE_PROJECT_DIR/.claude/plans/\"*.md 2>/dev/null | head -1); if [ -n \"$PLAN\" ]; then echo ''; echo \"## Active Plan: $PLAN\"; echo '위 플랜 파일을 Read하여 현재 작업 방향을 확인하세요.'; fi; echo ''; echo '> 컨텍스트에 ## Outcome 헤딩이 없으면 자동 추출된 raw 요약이다. 핵심만 추출: 달성한 것, 주요 결정, 다음 단계.'; fi",
+            "command": "ENGINE_HOOK=1 SESSION_DIR=\"$CLAUDE_PROJECT_DIR/.claude/sessions/$SESSION_ID\"; if [ -n \"$SESSION_ID\" ] && [ -d \"$SESSION_DIR\" ]; then echo '## Session State (after compaction)'; [ -f \"$SESSION_DIR/SESSION.md\" ] && cat \"$SESSION_DIR/SESSION.md\"; LATEST=$(ls -t \"$SESSION_DIR/contexts/\"CONTEXT-*.md 2>/dev/null | head -1); if [ -n \"$LATEST\" ]; then echo ''; echo '## Latest Context Snapshot'; cat \"$LATEST\"; fi; PLAN=$(ls -t \"$CLAUDE_PROJECT_DIR/.claude/plans/\"*.md 2>/dev/null | head -1); if [ -n \"$PLAN\" ]; then echo ''; echo \"## Active Plan: $PLAN\"; echo '위 플랜 파일을 Read하여 현재 작업 방향을 확인하세요.'; fi; echo ''; echo '> 컨텍스트에 ## Outcome 헤딩이 없으면 자동 추출된 raw 요약이다. 핵심만 추출: 달성한 것, 주요 결정, 다음 단계.'; fi",
             "timeout": 10
           }
         ]
@@ -28,7 +28,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "SESSION_DIR=\"$CLAUDE_PROJECT_DIR/.claude/sessions/$SESSION_ID\"; if [ -n \"$SESSION_ID\" ] && [ -d \"$SESSION_DIR\" ]; then echo '## Session State'; [ -f \"$SESSION_DIR/SESSION.md\" ] && cat \"$SESSION_DIR/SESSION.md\"; LATEST=$(ls -t \"$SESSION_DIR/contexts/\"CONTEXT-*.md 2>/dev/null | head -1); if [ -n \"$LATEST\" ]; then echo ''; echo '## Latest Context Snapshot'; cat \"$LATEST\"; fi; PLAN=$(ls -t \"$CLAUDE_PROJECT_DIR/.claude/plans/\"*.md 2>/dev/null | head -1); if [ -n \"$PLAN\" ]; then echo ''; echo \"## Active Plan: $PLAN\"; echo '위 플랜 파일을 Read하여 현재 작업 방향을 확인하세요.'; fi; fi",
+            "command": "ENGINE_HOOK=1 SESSION_DIR=\"$CLAUDE_PROJECT_DIR/.claude/sessions/$SESSION_ID\"; if [ -n \"$SESSION_ID\" ] && [ -d \"$SESSION_DIR\" ]; then echo '## Session State'; [ -f \"$SESSION_DIR/SESSION.md\" ] && cat \"$SESSION_DIR/SESSION.md\"; LATEST=$(ls -t \"$SESSION_DIR/contexts/\"CONTEXT-*.md 2>/dev/null | head -1); if [ -n \"$LATEST\" ]; then echo ''; echo '## Latest Context Snapshot'; cat \"$LATEST\"; fi; PLAN=$(ls -t \"$CLAUDE_PROJECT_DIR/.claude/plans/\"*.md 2>/dev/null | head -1); if [ -n \"$PLAN\" ]; then echo ''; echo \"## Active Plan: $PLAN\"; echo '위 플랜 파일을 Read하여 현재 작업 방향을 확인하세요.'; fi; fi",
             "timeout": 10
           }
         ]
@@ -40,7 +40,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/check-plan.sh\"",
+            "command": "ENGINE_HOOK=1 bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/check-plan.sh\"",
             "timeout": 5
           }
         ]
@@ -50,12 +50,12 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/check-plan-review.sh\"",
+            "command": "ENGINE_HOOK=1 bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/check-plan-review.sh\"",
             "timeout": 5
           },
           {
             "type": "agent",
-            "prompt": "First, read .claude/agents/plan-readiness-checker/AGENT.md to learn the full evaluation procedure. Then read the most recent .md file in .claude/plans/ and follow that procedure exactly. Use Glob/Grep/Read to verify file paths and resolve ambiguities before flagging them. Respond: {\"ok\": true} if ready, {\"ok\": false, \"reason\": \"<specific issues>\"} if not.",
+            "prompt": "[engine-hook] First, read .claude/agents/plan-readiness-checker/AGENT.md to learn the full evaluation procedure. Then read the most recent .md file in .claude/plans/ and follow that procedure exactly. Use Glob/Grep/Read to verify file paths and resolve ambiguities before flagging them. Respond: {\"ok\": true} if ready, {\"ok\": false, \"reason\": \"<specific issues>\"} if not.",
             "timeout": 90
           }
         ]
@@ -67,7 +67,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/suggest-harness.sh\"",
+            "command": "ENGINE_HOOK=1 bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/suggest-harness.sh\"",
             "timeout": 5
           }
         ]
@@ -77,7 +77,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/track-edits.sh\"",
+            "command": "ENGINE_HOOK=1 bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/track-edits.sh\"",
             "timeout": 5
           }
         ]
@@ -89,7 +89,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/snapshot.sh\"",
+            "command": "ENGINE_HOOK=1 bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/snapshot.sh\"",
             "timeout": 15
           }
         ]
@@ -100,7 +100,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/snapshot.sh\" --pre-compact",
+            "command": "ENGINE_HOOK=1 bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/snapshot.sh\" --pre-compact",
             "timeout": 15
           }
         ]
@@ -112,7 +112,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "if [ -n \"$SESSION_ID\" ] && [ -f \"$CLAUDE_PROJECT_DIR/.claude/sessions/$SESSION_ID/SESSION.md\" ]; then mkdir -p \"$CLAUDE_PROJECT_DIR/.claude/sessions/$SESSION_ID/contexts\" && cp \"$CLAUDE_PROJECT_DIR/.claude/sessions/$SESSION_ID/SESSION.md\" \"$CLAUDE_PROJECT_DIR/.claude/sessions/$SESSION_ID/contexts/CONTEXT-$(date +%Y%m%d-%H%M)-session-end.md\"; fi",
+            "command": "ENGINE_HOOK=1; if [ -n \"$SESSION_ID\" ] && [ -f \"$CLAUDE_PROJECT_DIR/.claude/sessions/$SESSION_ID/SESSION.md\" ]; then mkdir -p \"$CLAUDE_PROJECT_DIR/.claude/sessions/$SESSION_ID/contexts\" && cp \"$CLAUDE_PROJECT_DIR/.claude/sessions/$SESSION_ID/SESSION.md\" \"$CLAUDE_PROJECT_DIR/.claude/sessions/$SESSION_ID/contexts/CONTEXT-$(date +%Y%m%d-%H%M)-session-end.md\"; fi",
             "timeout": 10
           }
         ]

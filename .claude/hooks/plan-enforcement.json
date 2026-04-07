@@ -1,0 +1,29 @@
+{
+  "PreToolUse": [
+    {
+      "matcher": "Write|Edit",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "ENGINE_HOOK=1 bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/check-plan.sh\"",
+          "timeout": 5
+        }
+      ]
+    },
+    {
+      "matcher": "ExitPlanMode",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "ENGINE_HOOK=1 bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/check-plan-review.sh\"",
+          "timeout": 5
+        },
+        {
+          "type": "agent",
+          "prompt": "[engine-hook] First, read .claude/agents/plan-readiness-checker/AGENT.md to learn the full evaluation procedure. Then read the most recent .md file in .claude/plans/ and follow that procedure exactly. Use Glob/Grep/Read to verify file paths and resolve ambiguities before flagging them. Respond: {\"ok\": true} if ready, {\"ok\": false, \"reason\": \"<specific issues>\"} if not.",
+          "timeout": 90
+        }
+      ]
+    }
+  ]
+}
