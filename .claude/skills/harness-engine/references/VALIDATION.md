@@ -21,7 +21,9 @@
 - project contract packet 경로와 revision 상태를 설명할 수 있다.
 - contract packet의 필수 작업 축과 금지 패턴이 산출물에 반영되어 있다.
 - 현재 저장소 전용 예시/경로/검증 이력이 코어 규칙과 분리되어 있다.
-- ARCHITECTURE.md에 도메인 권장 패턴 대비 현재 프로젝트의 구조/방법론 평가가 포함되어 있다 (충족/부분충족/미충족/해당없음 분류). 소프트웨어 도메인은 아키텍처 패턴, 비소프트웨어 도메인은 방법론/프레임워크를 평가 대상으로 한다.
+- 핵심 규칙에 도메인 권장 패턴 대비 현재 프로젝트의 보충 분석이 포함되어 있다 (의도적 선택/미충족/해당없음 분류). 소프트웨어 도메인은 아키텍처 패턴, 비소프트웨어 도메인은 방법론/프레임워크를 평가 대상으로 한다.
+- 핵심 규칙이 공식 문서 기반이고, 프로젝트 코드가 유일한 근거인 규칙이 없다.
+- 프로젝트 전용 사항이 기본 규칙과 구분된 보충 항목으로 기재되어 있다.
 - 구조/방법론 평가에서 발견된 미충족 격차가 ANTI_PATTERNS.md와 VALIDATION.md에 반영되어 있다.
 - stack이 감지된 경우 stack required checks가 contract packet에 기록되어 있다.
 - stack이 감지된 경우 stack-specific 규칙이 산출물의 구조/안티패턴/검증에 반영되어 있다.
@@ -98,8 +100,8 @@ contract packet이 로드된 경우 추가로 확인한다.
 - thin adapter와 contract packet이 서로 충돌하지 않는가
 - 선택형 example pack이 있다면 adapter/packet 계약과 충돌하지 않는가
 - 코어 규칙과 project adapter / local evidence가 뒤섞이지 않았는가
-- contract packet의 `architecture_pattern_evaluation` 축이 ARCHITECTURE.md에 반영되었는가 (소프트웨어 도메인: 아키텍처 패턴 평가, 비소프트웨어 도메인: 방법론/프레임워크 평가, 의도적 일탈 기록)
-- stack이 감지된 경우 stack required checks가 `ARCHITECTURE.md`, `ANTI_PATTERNS.md`, `VALIDATION.md`에 반영되었는가
+- contract packet의 `architecture_pattern_evaluation` 축이 핵심 규칙의 보충 분석에 반영되었는가 (소프트웨어 도메인: 아키텍처 패턴 평가, 비소프트웨어 도메인: 방법론/프레임워크 평가, 의도적 선택 기록)
+- stack이 감지된 경우 stack required checks가 핵심 규칙, 안티패턴, 검증 기준에 반영되었는가
 - stack seed reference가 없더라도 현재 프로젝트 기준 contract packet이 충분히 닫혀 있는가
 - `engine_followup_required`가 적절한가
 
@@ -128,7 +130,9 @@ bootstrap을 사용한 경우 (신규 모드/보충 모드 모두) 추가로 확
 - thin adapter 또는 contract packet의 Anti/Good 필수 쌍의 한쪽(Anti만 또는 Good만)이 빠져 있다.
 - 선택형 example pack이 adapter/packet 계약과 충돌한다.
 - 대표 분류인데 adapter가 없었음에도 `engine-asset bootstrap` 경로를 타지 않았다.
-- ARCHITECTURE.md에 구조/방법론 평가가 없거나, 현 프로젝트의 현재 상태를 무비판적으로 수용하고 있다.
+- 핵심 규칙에 공식 기준 대비 프로젝트 보충 분석이 없거나, 현 프로젝트의 현재 상태를 무비판적으로 수용하고 있다.
+- "현재 코드가 이렇게 하고 있다"만을 근거로 규칙을 서술하고, 공식 문서 출처가 없다.
+- 프로젝트 전용 로컬 패턴이 공식 문서 기반 규칙과 혼재되어 구분 없이 기재되어 있다.
 - stack이 감지됐는데 contract packet에 stack required checks가 없거나 산출물에 반영되지 않았다.
 - 검증 결과가 `통과`가 아닌데 구현 티켓이 시작되었다.
 - validation artifact가 저장되지 않았는데 구현 티켓이 시작되었다.

@@ -98,8 +98,12 @@ user-invocable: true
 
 모든 `task_type`는 먼저 `references/common/RESEARCH_PHASE.md`를 적용한다.
 
+공통 research phase는 공식 문서/표준 기반으로 권장 패턴을 먼저 정리한다.
+현재 프로젝트 코드 분석은 공식 기준과 다른 부분을 파악하기 위한 보충이다.
+
 이 단계에서 최소한 다음을 닫는다.
 
+- 공식 문서 기반 권장 패턴
 - 1차 근거 소스 우선순위
 - 최신성 확인
 - 실패 모드 또는 제한 사항
@@ -131,8 +135,10 @@ user-invocable: true
 
 contract packet에는 최소한 다음이 있어야 한다.
 
+- 공식 문서 기반 권장 패턴 요약
 - 프로젝트 목표와 작업 범위
 - 실제 프레임워크/라이브러리/런타임 스택
+- 공식 기준과 다른 프로젝트 결정 사항 (사유 포함)
 - 필수 작업 축
 - 금지 패턴
 - stack-specific required checks
