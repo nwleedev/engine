@@ -95,7 +95,8 @@ collect_source_paths() {
             | grep -v 'scripts/bootstrap\.sh$' \
             | grep -v 'scripts/promote\.sh$' \
             | grep -v 'scripts/migrate\.sh$' \
-            | grep -v 'scripts/test-sync\.sh$'
+            | grep -v 'scripts/test-sync\.sh$' \
+            | grep -v 'scripts/install-hooks\.sh$'
         else
           find "$dir" -type f
         fi

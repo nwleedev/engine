@@ -94,7 +94,7 @@ cd ~/my-project && claude
 | domain-tutor | `/deep-study`로 수동 | 도메인 학습 튜터 |
 | harness-researcher | `/harness-engine` 내부 | 하네스 생성용 도메인 조사 |
 | project-researcher | 수동 | 기술 선택, 아키텍처 결정 조사 |
-| harness-auditor | 수동 | `.claude/` 설정 품질 감사 |
+| system-auditor | 수동 | `.claude/` 설정 품질 감사 |
 
 ### Scripts (자동화)
 

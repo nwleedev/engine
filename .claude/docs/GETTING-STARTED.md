@@ -102,7 +102,7 @@ my-project/
     │   ├── work-reviewer/             # 코드/문서 리뷰 에이전트
     │   ├── domain-tutor/              # 학습 에이전트
     │   ├── harness-researcher/        # 도메인 조사 에이전트
-    │   ├── harness-auditor/           # 설정 평가 에이전트
+    │   ├── system-auditor/            # 설정 평가 에이전트
     │   ├── plan-readiness-checker/    # 플랜 품질 검증 에이전트
     │   └── project-researcher/        # 프로젝트 리서치 에이전트
     ├── docs/
@@ -481,7 +481,7 @@ sh -c "$(curl -fsSL https://raw.githubusercontent.com/nwleedev/engine/main/insta
 │  │  plan-readiness-checker 플랜 종료 시 자동 검증  │ │
 │  │  domain-tutor          /deep-study로 학습       │ │
 │  │  harness-researcher    하네스 생성 시 조사 위임  │ │
-│  │  harness-auditor       설정 품질 감사           │ │
+│  │  system-auditor        설정 품질 감사           │ │
 │  │  project-researcher    기술/아키텍처 조사       │ │
 │  └─────────────────────────────────────────────────┘ │
 │                                                      │

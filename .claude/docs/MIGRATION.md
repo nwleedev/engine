@@ -39,7 +39,7 @@ rm -rf /tmp/engine
 2. `.claude/settings.json` 훅 경로 업데이트
 3. `suggest-harness-patterns.json` 제거
 4. 빈 `claude-scripts/` 디렉터리 제거
-5. 최신 코어 파일 동기화 (harness-auditor 등 새 에이전트 포함)
+5. 최신 코어 파일 동기화 (system-auditor 등 새 에이전트 포함)
 
 ### 수동 마이그레이션
 
