@@ -6,7 +6,7 @@
 
 ## 경로 규칙
 
-- 최종 산출물: `.claude/skills/harness-<domain>-<name>.md` (단일 스킬 파일)
+- 최종 산출물: `.claude/skills/harness-<domain>-<name>.md` (하네스 1개당 단일 스킬 파일. 관심사 그룹 분할 시 동일 도메인에 복수 하네스 허용 — "하네스 파일 분할 전략" 섹션 참조)
 - 임시 메모: `.claude/sessions/<session_id>/notes/*`
 - project contract packet: `.claude/sessions/<session_id>/notes/contracts/<task_type>-contract.md`
 - 스킬 자체 보강 지침: `.claude/skills/harness-engine/**`
@@ -51,6 +51,76 @@
 - 스킬 내부 reference example은 조사와 문서 구조의 참고 자료로만 사용하고, 최종 산출물의 필수 규칙으로 승격하지 않는다.
 - 프로젝트별 세부 stack/library 규칙은 코어 문서보다 contract packet에 먼저 기록한다.
 
+## 하네스 파일 분할 전략
+
+한 도메인에 대해 하네스 파일을 몇 개 생성할지는 아래 기준으로 판정한다.
+
+### 기본값: 관심사 그룹 분할
+
+동일 도메인 내 라이브러리/기술을 **상호작용 빈도와 관심사 경계**에 따라 2-3개 그룹으로 묶는다. 각 그룹이 하나의 `harness-<domain>-<name>.md` 파일이 된다.
+
+그룹핑 기준:
+
+- 데이터 흐름이 직접 연결되는 라이브러리는 같은 그룹에 배치한다 (예: 쿼리 라이브러리 + 상태 관리 + 폼 라이브러리 → 데이터 관리 그룹)
+- 구조적 관심사(아키텍처, 레이어, 라우팅)는 별도 그룹으로 분리한다
+- 어댑터의 Coverage Contract 필수 축을 기준으로, 같은 축에 속하는 라이브러리는 같은 그룹에 배치한다
+
+### 분할 판정 기준 (3가지)
+
+1. **교차점 비용**: 도메인 내 하네스 파일 N개에서 N*(N-1)/2 페어의 교차점 검사가 발생한다. 같은 fileGlob을 공유하는 파일은 Stage 1(File Scope Overlap)이 전부 발동하여 Stage 2/3까지 진행된다. 도메인 내 파일이 4개 이상이면 교차점 비용이 과도해진다.
+2. **컨텍스트 효율**: 현재 작업과 무관한 규칙이 함께 로딩되는 비율을 최소화한다. 하나의 파일이 서로 다른 작업 맥락에서 반복 활성화되면 분할을 검토한다.
+3. **관심사 일관성**: 하나의 완결된 작업 흐름(예: mutation → form reset → query invalidation → re-render)이 여러 파일에 걸쳐 서술되면, 각 파일이 흐름의 일부만 보게 되어 품질이 저하된다. 상호작용이 빈번한 라이브러리는 같은 파일에 배치한다.
+
+### 전략 선택 조건
+
+| 전략 | 적용 조건 |
+|---|---|
+| 관심사 그룹 (기본값) | 대부분의 소프트웨어/비소프트웨어 도메인. 라이브러리 2개 이상, 상호작용 존재 |
+| 통합 (단일 파일) | 비소프트웨어 도메인이거나, 전체 규칙이 Anti/Good 쌍 포함 50개 미만이거나, 라이브러리 1-2개만 사용 |
+| 라이브러리별 분할 | 라이브러리 간 공유 개념이 없고 완전히 독립적인 경우에만. 같은 fileGlob을 공유하는 라이브러리는 이 전략을 사용하지 않는다 |
+
+### 예시
+
+프론트엔드(React + Next.js + TanStack Query + Zustand + React Hook Form):
+
+```text
+harness-fe-architecture.md
+  ├ FSD 레이어 구조, 컴포넌트 경계, 라우팅 패턴
+  ├ Server/Client Component 경계, import 규칙
+  └ Coverage 축: #5 (컴포넌트/레이어 경계)
+
+harness-fe-data-management.md
+  ├ 상태 관리 분류 (서버/라우트/폼/글로벌/로컬)
+  ├ TanStack Query + Zustand + React Hook Form + useEffect
+  └ Coverage 축: #1, #2, #3, #4
+```
+
+연구 도메인:
+
+```text
+harness-research-methodology.md (통합 — 연구는 본질적으로 통합적)
+```
+
+또는 규모가 클 때:
+
+```text
+harness-research-quantitative.md (양적 조사: 시장 규모, 통계, 데이터 수집)
+harness-research-qualitative.md (질적 조사: 인터뷰, 사용자 리서치, 경쟁 분석)
+```
+
+### 기존 메커니즘과의 연동
+
+- **Source Coverage Manifest**: 분할된 각 파일이 manifest의 대상 하네스 열에 나타난다. cross-cutting 소스는 여러 파일에 매핑된다.
+- **Intersection Detection (Step 6.5, 14.5)**: 관심사 그룹 분할은 도메인 내 교차점을 최소화하도록 설계되었으나, 그룹 간 교차점이 발생하면 일반적인 교차점 절차를 따른다.
+- **matchPatterns**: 각 파일의 `regex`를 그룹 내 라이브러리에 한정하여, 불필요한 하네스 제안을 방지한다.
+
+### 금지
+
+- 라이브러리별 1:1 분할을 기본값으로 사용하는 것 (교차점 감지 비용 과도)
+- 교차점 감지 비용(도메인 내 페어 수)을 고려하지 않고 파일을 분할하는 것
+- 하나의 완결된 작업 흐름이 3개 이상의 파일에 걸쳐 서술되는 분할
+- 같은 fileGlob을 공유하는 라이브러리를 별도 파일로 분할하면서 교차점 해결 없이 진행하는 것
+
 ## discovery 등록 형식
 
 - `AGENTS.md`(없으면 `CLAUDE.md`) 등록 시 현재 문서가 사용하는 섹션형 서술 포맷을 따른다.
@@ -60,7 +130,7 @@
 
 ## 최종 산출물 형식
 
-새 하네스는 **단일 `.claude/skills/harness-<domain>-<name>.md` 스킬 파일**로 생성한다.
+각 하네스는 **개별 `.claude/skills/harness-<domain>-<name>.md` 스킬 파일**로 생성한다. 관심사 그룹 분할 시 동일 도메인에 복수 파일이 생성될 수 있다 ("하네스 파일 분할 전략" 섹션 참조).
 
 파일에 포함할 필수 섹션:
 - YAML frontmatter (name, description, user-invocable: true, matchPatterns)
@@ -82,7 +152,7 @@
 
 ## 단일 스킬 파일 내 섹션 역할
 
-하네스 스킬 파일(`.claude/skills/harness-<domain>-<name>.md`)은 단일 파일이며, 내부에 다음 섹션을 포함한다:
+각 하네스 스킬 파일(`.claude/skills/harness-<domain>-<name>.md`)은 자기 완결적이며, 내부에 다음 섹션을 포함한다:
 
 - **frontmatter** (필수)
   - name, description, user-invocable: true

@@ -119,3 +119,4 @@
 - **stack seed reference 경로 또는 부재 사유**
 - **engine_followup_required 초기값**
 - **기존 하네스의 Intersection Metadata 요약** (concept_keywords, Potential Intersections 수집 결과)
+- **분할 전략 초기값** (관심사 그룹 / 통합 / 라이브러리별. 기존 하네스 파일 수와 프로젝트 스택 복잡도 기반)

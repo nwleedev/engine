@@ -28,6 +28,8 @@
 - `cross_cutting_distribution`: Cross-Cutting Distribution 지시 (또는 "없음")
 - `intersection_map`: Intersection Map (교차점 감지 결과 또는 "없음")
 - `intersection_directives`: Intersection Map의 Resolution Directives (또는 "없음")
+- `splitting_strategy`: `concern-group`, `consolidated`, `per-library` 중 하나
+- `target_files`: 생성할 파일 목록과 각 파일의 포함 내용 요약 (예: `[{harness-fe-architecture.md: "FSD, 컴포넌트 경계, Coverage 축 #5"}, {harness-fe-data-management.md: "상태 관리, 쿼리, 폼, Coverage 축 #1-#4"}]`)
 
 ## 실행 절차
 
@@ -274,6 +276,20 @@ Step 8에서 정리한 공식 문서 기반 규칙이 하네스의 기본 내용
 
 ### 12. 산출물 작성
 
+#### 12a. 분할 전략 적용
+
+전달받은 `splitting_strategy`와 `target_files`에 따라 생성할 파일 목록을 확정한다.
+
+- `consolidated`: `target_files`에 1개 파일. 모든 규칙, Anti/Good 쌍, 검증 기준을 단일 파일에 작성한다.
+- `concern-group`: `target_files`에 2-3개 파일. 각 파일에 지정된 Coverage 축과 라이브러리를 배치한다. 파일 간 상호작용이 필요한 규칙은 그 규칙이 속한 그룹의 파일에 완결적으로 서술한다.
+- `per-library`: `target_files`에 라이브러리별 파일. 각 파일에 해당 라이브러리의 규칙만 작성한다.
+
+각 파일의 `matchPatterns.regex`를 해당 파일이 담당하는 라이브러리/관심사에 한정한다.
+
+#### 12b. 파일별 산출물 생성
+
+`target_files`의 각 파일에 대해 아래 작성 규칙을 적용한다.
+
 `.claude/skills/harness-<domain>-<name>.md`에 하네스 스킬을 작성하거나 보강한다.
 
 `references/OUTPUT_CONTRACT.md`의 산출물 규칙을 따른다.
@@ -286,7 +302,7 @@ Step 8에서 정리한 공식 문서 기반 규칙이 하네스의 기본 내용
 - `references/examples/<task_type>/VALIDATION_REFERENCE.md`
 - `references/stacks/<stack>.md` (해당 시)
 
-최종 산출물은 단일 `.claude/skills/harness-<domain>-<name>.md` 파일이며, 다음 섹션을 포함한다:
+각 최종 산출물은 개별 `.claude/skills/harness-<domain>-<name>.md` 파일이며 (`target_files` 기준), 다음 섹션을 포함한다:
 
 - YAML frontmatter (name, description, user-invocable: true, matchPatterns)
   - description은 `Use when working with X — keyword1, keyword2` 형식 필수
@@ -334,6 +350,7 @@ Step 8에서 정리한 공식 문서 기반 규칙이 하네스의 기본 내용
 12. **Source Coverage Manifest 준수 상태**: manifest의 대상 하네스와 실제 생성 하네스의 일치 여부
 13. **Cross-cutting 배포 상태**: cross-cutting 소스의 배포 지시 이행 여부와 배포 로그 경로
 14. **Intersection directive 이행 상태**: intersection_directives의 각 교차점에 대해 authority별 규칙 작성 방식 준수 여부, 참조 마커 포함 여부, Intersection Metadata 섹션 포함 여부
+15. **분할 전략 이행 상태**: `target_files`로 지정된 파일이 모두 생성되었는지, 각 파일별 Coverage 축 매핑이 지정과 일치하는지
 
 ## 임시 파일 규칙
 

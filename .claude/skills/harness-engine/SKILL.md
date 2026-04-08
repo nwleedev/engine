@@ -33,6 +33,7 @@ user-invocable: true
 4. 기존 하네스가 있으면 최소 계약 충족 여부를 먼저 판정한다.
 5. 최소 계약 미달이면 기존 하네스를 재사용하지 말고 보강 모드로 전환한다.
 6. 이번 작업이 `project-harness generation`인지 `engine-asset bootstrap`인지 먼저 판정한다.
+6a. **하네스 파일 분할 전략을 판정한다.** `references/OUTPUT_CONTRACT.md`의 "하네스 파일 분할 전략"에 따라 이 도메인의 하네스를 몇 개 파일로 분할할지 결정한다. 분할 제안과 그룹핑을 사용자에게 제시하고 확인받는다.
 6.5. **Intersection Scan을 수행한다.** 기존 하네스가 1개 이상 있으면 `references/INTERSECTION.md`의 3단계 휴리스틱으로 교차점을 감지한다. 교차점이 발견되면 사용자에게 authority 배정을 확인받고 contract packet의 Intersection Map에 기록한다.
 7. 공통 `research` phase를 먼저 수행한다. 동시에 **Potential Intersection Discovery**를 수행하여 현재 도메인과 교차 가능성이 높은 미생성 도메인을 조사하고 사용자에게 제안한다.
 8. 도메인 task adapter를 로드하고, 스택/라이브러리 조합을 확인한다.
@@ -54,6 +55,7 @@ user-invocable: true
 - `CLAUDE.md`의 프로젝트별 설정을 확인한다.
 - 사용자 요청만으로 범위가 닫히는지 확인한다.
 - 최종 산출물이 어떤 스킬 파일명(`harness-<domain>-<name>.md`)이 될지 결정한다.
+- 하네스 파일 수와 분할 기준을 `references/OUTPUT_CONTRACT.md`의 "하네스 파일 분할 전략"에 따라 판정한다. 기본값은 관심사 그룹 분할이며, 사용자에게 그룹핑 제안을 보여주고 확인받는다.
 - 프로젝트 전용 예시나 검증 이력을 코어 문서에 넣을지 여부를 먼저 검토하지 않는다. 먼저 `portable core` / `project adapter` / `local evidence pack` 분리 원칙을 적용한다.
 - 이미 있는 하네스가 있다면 우선 읽고, 덮어쓰지 말고 보강 방향을 잡는다.
 - 다른 프로젝트에서 core만 sync한 상태라면, 이 스킬이 해당 프로젝트의 첫 로컬 작업 분야 하네스를 만드는 공식 경로임을 전제로 한다.
@@ -266,6 +268,8 @@ Agent tool 호출:
 - cross_cutting_distribution: {contract packet 내 Cross-Cutting Distribution 내용 또는 "없음"}
 - intersection_map: {contract packet 내 Intersection Map 내용 또는 "없음"}
 - intersection_directives: {Intersection Map의 Resolution Directives 내용 또는 "없음"}
+- splitting_strategy: {concern-group | consolidated | per-library}
+- target_files: [{harness-<domain>-<name1>.md: 포함 내용 요약}, {harness-<domain>-<name2>.md: 포함 내용 요약}]
 ```
 
 ### 서브에이전트 결과 처리
@@ -283,6 +287,7 @@ Agent tool 호출:
 - 미충족 항목
 - worktree_path (worktree 격리 사용 시)
 - intersection directive 이행 상태
+- 분할 전략 이행 상태 (각 파일별 Coverage 축 매핑 결과)
 
 결과를 확인하고, 미충족 항목이 있으면 사용자에게 보고한 뒤 대응을 결정한다.
 `통과`가 아니면 구현 티켓을 시작하지 않는다.
