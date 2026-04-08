@@ -33,17 +33,19 @@ user-invocable: true
 4. 기존 하네스가 있으면 최소 계약 충족 여부를 먼저 판정한다.
 5. 최소 계약 미달이면 기존 하네스를 재사용하지 말고 보강 모드로 전환한다.
 6. 이번 작업이 `project-harness generation`인지 `engine-asset bootstrap`인지 먼저 판정한다.
-7. 공통 `research` phase를 먼저 수행한다.
+6.5. **Intersection Scan을 수행한다.** 기존 하네스가 1개 이상 있으면 `references/INTERSECTION.md`의 3단계 휴리스틱으로 교차점을 감지한다. 교차점이 발견되면 사용자에게 authority 배정을 확인받고 contract packet의 Intersection Map에 기록한다.
+7. 공통 `research` phase를 먼저 수행한다. 동시에 **Potential Intersection Discovery**를 수행하여 현재 도메인과 교차 가능성이 높은 미생성 도메인을 조사하고 사용자에게 제안한다.
 8. 도메인 task adapter를 로드하고, 스택/라이브러리 조합을 확인한다.
-9. 세션 경로에 프로젝트별 `contract packet`을 만들거나 갱신한다.
+9. 세션 경로에 프로젝트별 `contract packet`을 만들거나 갱신한다. **Intersection Map**과 **Potential Intersection Domains** 섹션을 포함한다.
 10. Coverage 갭 또는 미지 도메인이면 공통 bootstrap phase와 사용자 검증을 수행하고 contract packet을 보강한다.
 11. 선택형 example pack과 stack seed reference가 있으면 참고 자료로만 로드한다.
-12. **Source Coverage Manifest를 작성하고 검증한다 (HARD GATE).** 모든 소스 파일이 최소 1개 하네스에 매핑되었는지 확인한다. UNASSIGNED가 0이 아니면 사용자에게 매핑 결정을 요청하고 대기한다. cross-cutting 유형이 있으면 Cross-Cutting Distribution도 작성한다.
-13. **하네스 생성 서브에이전트를 실행한다.**
+12. **Source Coverage Manifest를 작성하고 검증한다 (HARD GATE).** 모든 소스 파일이 최소 1개 하네스에 매핑되었는지 확인한다. UNASSIGNED가 0이 아니면 사용자에게 매핑 결정을 요청하고 대기한다. cross-cutting 유형이 있으면 Cross-Cutting Distribution도 작성한다. **Intersection Map의 교차점 정보와 정합성을 확인한다.**
+13. **하네스 생성 서브에이전트를 실행한다.** `intersection_map`과 `intersection_directives`를 추가로 전달한다.
 14. **검증 서브에이전트를 실행한다.**
-15. 검증 결과를 contract packet에 먼저 반영한 뒤 하네스를 보강한다.
+14.5. **Cross-Harness Validation을 수행한다.** 새로 생성된 하네스를 프로젝트 내 모든 기존 하네스와 대조한다. 미선언 교차점이나 모순 규칙이 발견되면 해결될 때까지 진행을 차단한다 (HARD GATE). 기존 하네스에 업데이트가 필요하면 Pending Harness Update 지시서를 생성한다.
+15. 검증 결과를 contract packet에 먼저 반영한 뒤 하네스를 보강한다. **Pending Harness Update가 있으면 사용자 확인 후 기존 하네스에 최소 편집을 적용한다.**
 16. 새 하네스 스킬을 만들었다면 `.claude/skills/use-repo-skills.md`의 도메인 하네스 목록을 갱신한다. (파일이 없으면 이 단계를 건너뛴다 — suggest-harness.sh가 개별 harness-*.md를 직접 스캔하므로 중앙 카탈로그는 선택 사항이다.)
-17. 세션 기록(SESSION.md)을 갱신한다.
+17. 세션 기록(SESSION.md)을 갱신한다. **새 하네스에 Intersection Metadata 섹션이 최종 반영되었는지 확인한다.**
 
 ## 작업 시작 전 확인
 
@@ -94,6 +96,21 @@ user-invocable: true
 
 위 항목 중 하나라도 아니면, 기존 하네스는 `존재하지만 재사용 불가`로 판정하고 보강 모드로 전환한다.
 
+### Intersection Scan (Step 6.5)
+
+대상 프로젝트에 기존 `.claude/skills/harness-*.md` 파일이 1개 이상 있을 때 수행한다. 기존 하네스가 없으면 `intersection_map: none`으로 기록하고 건너뛴다.
+
+`references/INTERSECTION.md`를 읽고 아래를 수행한다.
+
+1. 기존 하네스 파일들의 `Intersection Metadata` 섹션을 스캔한다. 메타데이터가 없으면 frontmatter(matchPatterns), 규칙 제목, Anti/Good 케이스명에서 concept_keywords를 동적 추출한다.
+2. 3단계 감지 휴리스틱을 실행한다:
+   - 단계 1: File Scope Overlap — matchPatterns.fileGlob 비교
+   - 단계 2: Concept Keyword Overlap — concept_keywords 정규화 매칭 (2+ 공유 시 교차점 후보)
+   - 단계 3: Semantic Rule Analysis — 공유 개념의 규칙 간 관계 분류 (complementary/redundant/contradictory)
+3. 교차점이 발견되면 authority 배정 제안과 함께 사용자에게 확인을 요청한다.
+4. contradictory 교차점이 있으면 사용자가 해결할 때까지 대기한다.
+5. 확정된 Intersection Map을 contract packet에 기록한다.
+
 ### 공통 research phase
 
 모든 `task_type`는 먼저 `references/common/RESEARCH_PHASE.md`를 적용한다.
@@ -109,6 +126,7 @@ user-invocable: true
 - 실패 모드 또는 제한 사항
 - Anti/Good 직접 사례 후보
 - 검색 실행 안전 규칙
+- **Potential Intersection Discovery**: 공식 문서에서 현재 도메인이 언급하는 다른 도메인 키워드를 추출하고, 어댑터의 `known_intersections` 힌트와 프로젝트 스택을 기반으로 교차 가능성이 높은 미생성 도메인을 조사한다. 결과를 contract packet의 `Potential Intersection Domains`에 기록하고, 사용자에게 "이 도메인과 교차 가능성이 높습니다. 함께 생성하시겠습니까?"를 제안한다. 이 단계는 HARD GATE가 아닌 권고(SHOULD)다.
 
 `research`가 최종 `task_type`이어도 이 phase를 먼저 수행하고, 그 다음 `references/adapters/research.md`를 추가 적용한다.
 
@@ -145,6 +163,8 @@ contract packet에는 최소한 다음이 있어야 한다.
 - 공식 문서 출처 목록
 - 보수적 기본값과 미확정 항목
 - engine follow-up 필요 여부
+- **Intersection Map** (Step 6.5 결과 — 교차점 없으면 `intersection_map: none`)
+- **Potential Intersection Domains** (Step 7 Research Phase 결과 — 없으면 `potential_intersections: none`)
 
 ### Coverage 갭 체크
 
@@ -244,6 +264,8 @@ Agent tool 호출:
 - engine_followup_required: {yes/no}
 - coverage_manifest: {contract packet 내 Source Coverage Manifest 내용}
 - cross_cutting_distribution: {contract packet 내 Cross-Cutting Distribution 내용 또는 "없음"}
+- intersection_map: {contract packet 내 Intersection Map 내용 또는 "없음"}
+- intersection_directives: {Intersection Map의 Resolution Directives 내용 또는 "없음"}
 ```
 
 ### 서브에이전트 결과 처리
@@ -260,6 +282,7 @@ Agent tool 호출:
 - `engine_followup_required`
 - 미충족 항목
 - worktree_path (worktree 격리 사용 시)
+- intersection directive 이행 상태
 
 결과를 확인하고, 미충족 항목이 있으면 사용자에게 보고한 뒤 대응을 결정한다.
 `통과`가 아니면 구현 티켓을 시작하지 않는다.
@@ -315,6 +338,30 @@ stack seed reference: {stack_reference_path 또는 "없음"}
 - **통과**: worktree 유지. 사용자에게 결과 보고. discovery 등록(AGENTS.md 또는 CLAUDE.md, INDEX.md) 필요 시 수행. 본 에이전트는 validation artifact를 세션 경로에 저장한 뒤에만 구현 티켓을 시작한다.
 - **보강 필요**: 검증 보고의 누락/모호/충돌 항목을 contract packet에 먼저 반영한 뒤 하네스 생성 서브에이전트에 전달하여 재실행한다. 구현은 금지한다.
 
+## Cross-Harness Validation (Step 14.5)
+
+검증 서브에이전트(Step 14) 통과 후, 본 에이전트가 새로 생성된 하네스를 프로젝트 내 모든 기존 하네스와 대조한다.
+
+### 절차
+
+1. 프로젝트의 모든 `.claude/skills/harness-*.md` 파일 목록을 수집한다 (새로 생성된 하네스 제외).
+2. 각 기존 하네스에 대해 `references/INTERSECTION.md`의 3단계 휴리스틱을 실행한다:
+   - 기존 하네스의 Intersection Metadata가 있으면 concept_keywords를 사용
+   - 없으면 규칙 제목, Anti/Good 케이스명, frontmatter에서 동적 추출
+3. 결과를 분류한다:
+   - **이미 선언된 교차점**: Step 6.5에서 감지하고 Intersection Map에 기록한 것 — authority 배정과 실제 규칙 내용이 일치하는지 확인
+   - **새로 발견된 교차점** (HARD GATE): Step 6.5에서 놓친 교차점 — Intersection Map을 갱신하고 사용자에게 authority 확인을 받아야 함
+   - **모순 규칙** (HARD GATE): contradictory 관계 — 사용자 해결 필요
+4. 기존 하네스에 업데이트가 필요하면 `Pending Harness Update` 지시서를 생성한다 (세션 notes에 저장).
+5. 양쪽 하네스의 Intersection Metadata가 상호 대칭인지 확인한다.
+
+### 결과 처리
+
+- **교차점 없음 또는 모두 해결됨**: 다음 단계(Step 15)로 진행
+- **미선언 교차점 발견**: Intersection Map 갱신 → 사용자 확인 → 하네스 재생성 또는 메타데이터만 보강
+- **모순 규칙 발견**: 사용자가 해결할 때까지 대기. 해결 후 하네스 재생성
+- **Pending Harness Update 생성**: 사용자에게 기존 하네스 변경 내용을 보고하고 확인 후 적용
+
 ## 세션 관리 (본 에이전트 책임)
 
 서브에이전트는 세션 파일을 갱신하지 않는다. 본 에이전트가 다음을 담당한다.
@@ -358,6 +405,7 @@ stack seed reference: {stack_reference_path 또는 "없음"}
 - 생성 지침 (서브에이전트용): `references/GENERATION.md`
 - 산출물 기준: `references/OUTPUT_CONTRACT.md`
 - 검증 기준: `references/VALIDATION.md`
+- **교차점 감지/해결 기준: `references/INTERSECTION.md`**
 - 공통 조사 phase: `references/common/RESEARCH_PHASE.md`
 - 도메인 어댑터: `references/adapters/<task_type>.md`
 - 공통 bootstrap phase: `references/common/BOOTSTRAP_PHASE.md`

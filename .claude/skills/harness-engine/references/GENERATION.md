@@ -26,6 +26,8 @@
 - `engine_followup_required`: `yes` 또는 `no`
 - `coverage_manifest`: Source Coverage Manifest (소스 파일 → 대상 하네스 매핑 테이블)
 - `cross_cutting_distribution`: Cross-Cutting Distribution 지시 (또는 "없음")
+- `intersection_map`: Intersection Map (교차점 감지 결과 또는 "없음")
+- `intersection_directives`: Intersection Map의 Resolution Directives (또는 "없음")
 
 ## 실행 절차
 
@@ -59,6 +61,20 @@
 - 배포 지시에 따라 cross-cutting 내용을 해당 하네스의 적절한 섹션에 반영할 준비를 한다
 
 반영 대상: 핵심 규칙, 안티패턴, 검증 기준 중 배포 지시에서 지정한 섹션.
+
+### 2.7. Intersection Directive Processing
+
+전달받은 `intersection_directives`가 있으면 (`"없음"`이 아니면) 다음을 수행한다.
+
+1. `references/INTERSECTION.md`를 읽어 authority 유형별 규칙/예시 작성 방식을 파악한다.
+2. 각 교차점에 대해 이 하네스의 authority를 확인하고 작성 방식을 결정한다:
+   - **primary authority**: 해당 개념의 전체 규칙 + 전체 코드 예시를 작성한다. 참조 마커 불필요.
+   - **secondary authority**: 자기 도메인 관점의 축약 규칙을 작성하고, primary 하네스를 참조하는 Cross-Reference 마커를 추가한다. 코드 예시는 primary에 위임 가능.
+   - **shared authority**: 자기 도메인 관점의 전체 규칙 + 전체 코드 예시를 작성하고, 상대 하네스를 참조하는 Cross-Reference 마커를 추가한다.
+3. 교차점에 해당하는 규칙 번호와 Anti/Good 케이스를 미리 계획한다 (Step 10에서 배포 규칙 적용).
+4. 이 하네스의 `Intersection Metadata` 섹션에 기록할 `concept_keywords`와 `Declared Intersections`를 준비한다.
+
+`intersection_directives`가 `"없음"`이면 이 단계를 건너뛴다.
 
 ### 3. project contract packet 로드
 
@@ -223,6 +239,10 @@ Step 8에서 정리한 공식 문서 기반 규칙이 하네스의 기본 내용
 - 현재 프로젝트 코드에서 가져온 예시는 "프로젝트 보충" 레이블을 붙여 구분한다.
 - 어댑터 최소 쌍 외에 contract packet에서 발견한 추가 쌍도 작성한다.
 - example pack에 강한 직접 예시가 있다면, 거기서 패턴의 강도와 서술 밀도를 참고할 수 있다.
+- **intersection directive가 있으면** 교차점에 해당하는 Anti/Good 쌍에 `references/INTERSECTION.md`의 배포 규칙을 적용한다:
+  - primary authority → 전체 Anti 코드 + 전체 Good 코드
+  - secondary authority → 자기 도메인 관점 축약 + primary 하네스 참조
+  - shared authority → 자기 관점의 전체 Anti/Good 쌍 + 상호 참조 마커
 
 ### 11. 강제 규칙 추출 (소프트웨어 도메인, 선택)
 
@@ -274,9 +294,10 @@ Step 8에서 정리한 공식 문서 기반 규칙이 하네스의 기본 내용
   - matchPatterns.fileGlob: 대상 파일 경로 정규식 (예: `"^.*/src/.*\.(ts|tsx)$"`)
   - matchPatterns.regex: 파일 내용 매칭 정규식 배열 (예: `- "useQuery|useMutation"`)
   - 코드 내용이 아닌 작업 의도 기반 스킬(리팩토링, UX 탐색 등)은 matchPatterns 생략 가능
-- 핵심 규칙 (아키텍처, 작업 흐름)
-- 안티패턴 (Anti/Good 쌍)
+- 핵심 규칙 (아키텍처, 작업 흐름) — 교차점 규칙에는 참조 마커 포함
+- 안티패턴 (Anti/Good 쌍) — 교차점 쌍에는 authority별 배포 규칙 적용
 - 검증 기준 (완료 조건, 체크리스트)
+- **Intersection Metadata** — `concept_keywords`, `Declared Intersections`, `Potential Intersections` 포함. 교차점이 없어도 `concept_keywords`와 빈 섹션을 포함한다.
 
 최소 섹션 계약:
 
@@ -312,6 +333,7 @@ Step 8에서 정리한 공식 문서 기반 규칙이 하네스의 기본 내용
 11. **미충족 항목**: 조사나 작성에서 충족하지 못한 항목 (있으면)
 12. **Source Coverage Manifest 준수 상태**: manifest의 대상 하네스와 실제 생성 하네스의 일치 여부
 13. **Cross-cutting 배포 상태**: cross-cutting 소스의 배포 지시 이행 여부와 배포 로그 경로
+14. **Intersection directive 이행 상태**: intersection_directives의 각 교차점에 대해 authority별 규칙 작성 방식 준수 여부, 참조 마커 포함 여부, Intersection Metadata 섹션 포함 여부
 
 ## 임시 파일 규칙
 

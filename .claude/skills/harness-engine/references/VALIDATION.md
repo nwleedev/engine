@@ -34,6 +34,12 @@
 - 생성된 하네스 파일 목록이 Manifest의 대상 하네스 열과 일치한다.
 - cross-cutting으로 표시된 소스가 실제로 해당 하네스들에 반영되었다.
 - cross-cutting 배포 로그가 세션 notes에 존재한다 (cross-cutting 소스가 있는 경우).
+- Intersection Map이 contract packet에 존재한다 (교차점 없으면 `intersection_map: none`).
+- Potential Intersection Domains가 contract packet에 존재한다 (없으면 `potential_intersections: none`).
+- intersection_directives가 있었다면 authority별 규칙 작성 방식이 준수되었다.
+- 교차점 규칙에 authority에 맞는 참조 마커가 포함되어 있다.
+- Intersection Metadata 섹션이 하네스 파일에 포함되어 있다 (교차점 유무와 무관하게 concept_keywords 포함).
+- Intersection Metadata의 Declared Intersections가 Intersection Map과 일치한다.
 
 ## 검증 서브에이전트
 
@@ -112,6 +118,19 @@ bootstrap을 사용한 경우 (신규 모드/보충 모드 모두) 추가로 확
 - 보수적 기본값을 사용한 항목이 명시되어 있는가
 - **보충 모드의 경우**: 기존 어댑터의 방법론(HOW)이 유지되고, 프로젝트 고유 도메인 지식(WHAT)만 보충되었는가
 
+## Cross-Harness Validation 체크리스트 (Step 14.5)
+
+검증 서브에이전트(Step 14) 통과 후, 본 에이전트가 수행하는 교차 하네스 검증이다. 대상 프로젝트에 기존 하네스가 1개 이상 있을 때 적용한다.
+
+- 새 하네스를 프로젝트 내 모든 기존 `harness-*.md`와 대조했는가
+- 선언된 교차점의 authority 배정이 실제 규칙 내용과 일치하는가 (primary인데 전체 규칙/코드 예시 보유, secondary인데 참조 마커 존재)
+- 참조 마커가 필요한 규칙(secondary/shared authority)에 올바른 형식으로 포함되어 있는가
+- 양쪽 하네스의 Declared Intersections가 상호 대칭인가 (A의 `this` = B의 `other`)
+- **미선언 교차점이 새로 발견되지 않았는가** (HARD GATE — 발견 시 Intersection Map 갱신 필요)
+- **contradictory 교차점이 없는가** (HARD GATE — 발견 시 사용자 해결 필요)
+- 기존 하네스에 업데이트가 필요하면 Pending Harness Update 지시서가 생성되었는가
+- 새 하네스의 Intersection Metadata에 concept_keywords, Declared Intersections, Potential Intersections가 모두 포함되어 있는가
+
 ## 실패 신호
 
 - 문서가 있는데 적용 시점이 불명확하다.
@@ -138,3 +157,10 @@ bootstrap을 사용한 경우 (신규 모드/보충 모드 모두) 추가로 확
 - validation artifact가 저장되지 않았는데 구현 티켓이 시작되었다.
 - 테스트 전략이 구현 후 테스트 정합화로 밀렸는데도 하네스가 차단하지 못했다.
 - 현재 저장소 전용 경로나 예시가 portable core의 필수 규칙처럼 남아 있다.
+- Intersection Map이 contract packet에 없다 (기존 하네스가 있는데도).
+- intersection_directives가 있었는데 authority별 작성 방식이 지켜지지 않았다 (primary인데 축약만 있거나, secondary인데 참조 마커가 없음).
+- Intersection Metadata 섹션이 하네스 파일에 누락되었다.
+- Intersection Metadata의 Declared Intersections와 Intersection Map이 불일치한다.
+- 양쪽 하네스의 Declared Intersections가 비대칭이다 (A의 `this` ≠ B의 `other`).
+- Cross-Harness Validation(Step 14.5)에서 미선언 교차점이 발견됐는데 해결되지 않았다.
+- contradictory 교차점이 해결되지 않은 채 하네스가 생성됐다.

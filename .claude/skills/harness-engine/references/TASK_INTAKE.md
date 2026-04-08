@@ -35,6 +35,14 @@
 - 예외적 `task_type`가 실제 작업에서 반복적으로 다시 등장하고, 기존 분류로 계속 설명하기 어렵다는 근거가 쌓이면 그때 대표 분류 집합 승격을 검토한다.
 - 승격 여부는 사용자 확인 또는 명시적 작업 범위 안에서 결정한다.
 
+## 기존 하네스 확인 시 교차점 사전 스캔
+
+기존 `.claude/skills/harness-*.md` 하네스를 확인할 때 (판정 순서 3-4단계), 각 하네스의 `Intersection Metadata` 섹션도 함께 읽는다.
+
+- Intersection Metadata가 있으면 `concept_keywords`와 `Potential Intersections`를 수집한다.
+- 현재 생성하려는 도메인이 기존 하네스의 `Potential Intersections`에 언급되어 있으면 교차점 감지 우선순위를 높인다.
+- 수집된 정보는 Step 6.5(Intersection Scan)의 입력으로 전달한다.
+
 ## 기존 하네스 재사용 신호
 
 - 이미 같은 작업 흐름을 다루는 문서가 있다.
@@ -110,3 +118,4 @@
 - **스택 분기 필요 여부 (해당 시 스택명)**
 - **stack seed reference 경로 또는 부재 사유**
 - **engine_followup_required 초기값**
+- **기존 하네스의 Intersection Metadata 요약** (concept_keywords, Potential Intersections 수집 결과)

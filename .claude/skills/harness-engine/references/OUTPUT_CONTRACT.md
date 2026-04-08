@@ -71,6 +71,7 @@
 선택적 섹션:
 - enforcement 가이드 (lint, 정적 분석 규칙 매핑)
 - 조합 패턴 (다른 라이브러리와의 통합)
+- Intersection Metadata (교차점 메타데이터 — 교차점 유무와 관계없이 포함 권장)
 
 정식 adapter를 만들거나 크게 보강할 때 추가:
 
@@ -200,6 +201,150 @@ Source Coverage Manifest에 `cross-cutting` 유형이 있으면, 각 cross-cutti
 - 생성 서브에이전트는 이 지시에 따라 각 대상 하네스에 내용을 반영한다.
 - 반영 후 세션 notes에 배포 로그를 기록한다.
 
+### Intersection Map (contract packet 필수 섹션)
+
+대상 프로젝트에 기존 하네스가 1개 이상 있을 때, Step 6.5(Intersection Scan)의 결과를 기록한다. 교차점이 없으면 `intersection_map: none`으로 명시한다.
+
+형식:
+
+```markdown
+## Intersection Map
+
+### Detected Intersections
+
+| 기존 하네스 | 감지 방법 | 공유 개념 | 관계 유형 |
+|---|---|---|---|
+| harness-fe-fsd-module | file-scope + concept | server-only, data-projection | complementary |
+
+### Resolution Directives
+
+#### server-only (harness-fe-fsd-module × harness-fe-security)
+- 관계: complementary
+- FSD 관점: 서버 전용 코드의 레이어 배치 규칙
+- Security 관점: `import "server-only"` 의무 선언 이유
+- Authority: shared
+- 조치: 양쪽 하네스에 상호 참조 마커 추가
+- Anti/Good: 양쪽 모두 전체 쌍 유지
+
+### User Confirmation
+- [확인됨] server-only: shared authority
+```
+
+교차점이 없는 경우:
+
+```markdown
+## Intersection Map
+
+intersection_map: none
+```
+
+규칙:
+- 기존 하네스가 없으면 이 섹션 자체를 `intersection_map: none`으로 작성한다.
+- 교차점이 있으면 반드시 Resolution Directives와 User Confirmation을 포함한다.
+- Authority 배정 기준은 `references/INTERSECTION.md`를 따른다.
+
+### Potential Intersection Domains (contract packet 필수 섹션)
+
+Step 7(Research Phase)에서 발견한 잠재적 교차 도메인을 기록한다.
+
+형식:
+
+```markdown
+## Potential Intersection Domains
+
+| 도메인 | 교차 개념 | 근거 | 기존 하네스 존재 |
+|---|---|---|---|
+| security | server-only, input-validation | FSD 공식 문서 보안 경계 섹션 | 없음 |
+| testing | component-boundary | FSD 테스트 가이드 | 없음 |
+```
+
+잠재적 교차 도메인이 없는 경우:
+
+```markdown
+## Potential Intersection Domains
+
+potential_intersections: none
+```
+
+규칙:
+- 이 섹션은 HARD GATE가 아닌 권고(SHOULD)다. 잠재적 교차 도메인이 있어도 진행을 차단하지 않는다.
+- 사용자가 함께 생성하기로 한 도메인은 현재 하네스 완료 후 순차 생성한다.
+- 사용자가 선택하지 않은 도메인은 하네스의 Intersection Metadata에 `Potential Intersections`로 기록한다.
+
+## 참조 마커 형식
+
+교차점에 해당하는 규칙에는 참조 마커를 추가한다. 상세 형식은 `references/INTERSECTION.md`를 따른다.
+
+Secondary authority 마커:
+
+```markdown
+> **Cross-Reference** — 이 규칙은 `harness-X` Rule N (규칙 제목)과 교차합니다.
+> Primary authority: harness-X (관점). 이 하네스: (관점).
+```
+
+Shared authority 마커:
+
+```markdown
+> **Cross-Reference** — 이 규칙은 `harness-X` Rule N (규칙 제목)과 교차합니다.
+> Authority: shared. X 관점: (설명). Y 관점: (설명).
+```
+
+## Intersection Metadata (하네스 파일 내장 섹션)
+
+하네스 파일(`.claude/skills/harness-*.md`)의 검증 기준 이후에 `## Intersection Metadata` 섹션을 배치한다. 이 섹션은 별도 Registry 파일 없이 세션 간 교차점 지속성을 제공한다.
+
+형식:
+
+```markdown
+## Intersection Metadata
+
+concept_keywords: [keyword1, keyword2, keyword3]
+
+### Declared Intersections
+- with: harness-<other-domain>-<name>
+  concepts: [shared-concept-1, shared-concept-2]
+  authority: {shared-concept-1: shared, shared-concept-2: this}
+
+### Potential Intersections
+- <domain>: <concept1>, <concept2>
+```
+
+규칙:
+- 교차점이 없어도 `concept_keywords`와 빈 `Declared Intersections`, `Potential Intersections` 섹션을 포함한다.
+- `concept_keywords`는 규칙 제목, Anti/Good 케이스명, contract packet 필수 축에서 자동 추출한다.
+- `authority`에서 `this`는 이 하네스가 primary, `other`는 상대 하네스가 primary, `shared`는 양쪽 동등.
+- 양쪽 하네스의 `Declared Intersections`는 상호 대칭이어야 한다 (A의 `this` = B의 `other`).
+
+## Pending Harness Update (세션 notes 산출물)
+
+Cross-Harness Validation(Step 14.5)에서 기존 하네스에 업데이트가 필요할 때 생성하는 지시서다.
+
+경로: `.claude/sessions/<session_id>/notes/pending-harness-updates.md`
+
+형식:
+
+```markdown
+# Pending Harness Updates
+
+## harness-fe-fsd-module (기존)
+- 변경 유형: Intersection Metadata 추가
+- 추가 내용:
+  - Declared Intersections에 harness-fe-security 항목 추가
+  - concept_keywords에 누락 키워드 추가
+- 참조 마커: Rule 7에 shared authority 마커 추가
+- 재검증 필요: 아니오 (메타데이터 추가만)
+
+## harness-fe-nextjs-appdir (기존)
+- 변경 유형: Anti/Good 재배포
+- 변경 내용: Case 10의 코드 예시를 harness-fe-fsd-module로 이관, 참조 마커로 대체
+- 재검증 필요: 예 (규칙 내용 변경)
+```
+
+규칙:
+- Pending Harness Update는 자동 적용하지 않는다. 사용자 확인 후 적용한다.
+- 재검증이 필요한 변경은 기존 하네스의 validation sub-agent 재실행을 권고한다.
+- 적용 후 세션 notes에 적용 로그를 기록한다.
+
 ## 예시 코드 규칙
 
 - 예시 코드는 Markdown 코드 블록으로 제시한다.
@@ -224,7 +369,7 @@ Source Coverage Manifest에 `cross-cutting` 유형이 있으면, 각 cross-cutti
 - 세션 파일(SESSION.md)은 서브에이전트가 갱신하지 않는다 (본 에이전트 책임).
 - `.claude/skills/use-skills.md`는 서브에이전트가 갱신하지 않는다 (본 에이전트 책임).
 - worktree 격리 사용 시, 산출물은 worktree 내 `.claude/skills/` 경로에 생성된다.
-- 서브에이전트는 완료 시 생성/수정 파일 목록, 실행 경로, Coverage 충족 상태, Anti/Good 쌍 충족 상태, contract packet 사용 상태, engine follow-up 필요 여부, 미충족 항목을 보고한다.
+- 서브에이전트는 완료 시 생성/수정 파일 목록, 실행 경로, Coverage 충족 상태, Anti/Good 쌍 충족 상태, contract packet 사용 상태, engine follow-up 필요 여부, 미충족 항목, **intersection directive 이행 상태**를 보고한다.
 
 ## 환류 패킷 규칙
 
