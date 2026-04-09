@@ -89,7 +89,7 @@ cd ~/my-project && claude
 
 | 에이전트 | 트리거 | 역할 |
 |---------|--------|------|
-| work-reviewer | 2개+ 파일 수정 시 자동 | 변경사항 품질 리뷰 |
+| work-reviewer | 2-4개 단일 / 5+개 병렬 자동 | 변경사항 품질 리뷰 |
 | plan-readiness-checker | 플랜 종료 시 자동 | 플랜 실행 가능성 검증 |
 | domain-professor | `/deep-study`로 수동 | 도메인 학습 프로페서 + 피드 생성 |
 | harness-researcher | `/harness-engine` 내부 | 하네스 생성용 도메인 조사 |
