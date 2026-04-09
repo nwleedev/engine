@@ -25,20 +25,36 @@ if [ -n "$FILE_PATH" ]; then
   fi
 fi
 
-# work-reviewer 카운트: 자동 생성 경로 전체 제외 (sessions/, meta/)
+# work-reviewer 카운트: 자동 생성 경로 전체 제외 (sessions/, meta/, feeds/)
 REVIEW_COUNT=0
 if [ -f "$EDITED_FILES" ]; then
-  REVIEW_COUNT=$(grep -cvE '\.claude/(sessions|meta)/' "$EDITED_FILES" 2>/dev/null || echo "0")
+  REVIEW_COUNT=$(grep -cvE '\.claude/(sessions|meta|feeds)/' "$EDITED_FILES" 2>/dev/null || echo "0")
 fi
 
-# 수정 파일 목록 추출 (sessions/meta 제외)
+# 수정 파일 목록 추출 (sessions/meta/feeds 제외)
 EDITED_LIST=""
 if [ -f "$EDITED_FILES" ]; then
-  EDITED_LIST=$(grep -vE '\.claude/(sessions|meta)/' "$EDITED_FILES" 2>/dev/null | head -20 | tr '\n' ', ' | sed 's/,$//')
+  EDITED_LIST=$(grep -vE '\.claude/(sessions|meta|feeds)/' "$EDITED_FILES" 2>/dev/null | head -20 | tr '\n' ', ' | sed 's/,$//')
 fi
 
-# 2개 이상이면 work-reviewer 제안
-if [ "$REVIEW_COUNT" -ge 2 ]; then
+# 인프라 파일 감지: .json, .yaml, .yml, .sh, .toml, Dockerfile 등 설정 위치
+INFRA_COUNT=0
+if [ -f "$EDITED_FILES" ]; then
+  INFRA_COUNT=$(grep -vE '\.claude/(sessions|meta|feeds)/' "$EDITED_FILES" 2>/dev/null \
+    | grep -cE '\.(json|yaml|yml|sh|toml)$|Dockerfile|settings\.' 2>/dev/null || echo "0")
+fi
+
+# 단계적 리뷰 제안
+if [ "$REVIEW_COUNT" -ge 5 ] || { [ "$REVIEW_COUNT" -ge 2 ] && [ "$INFRA_COUNT" -ge 1 ]; }; then
+  cat <<EOF
+{
+  "hookSpecificOutput": {
+    "hookEventName": "PostToolUse",
+    "additionalContext": "${REVIEW_COUNT}개 파일이 수정되었습니다 (${EDITED_LIST}). 인프라/대규모 변경 감지: 완료 전 multi-review (2명 병렬 검토)를 실행하세요."
+  }
+}
+EOF
+elif [ "$REVIEW_COUNT" -ge 2 ]; then
   cat <<EOF
 {
   "hookSpecificOutput": {

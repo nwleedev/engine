@@ -72,7 +72,7 @@ user-invocable: true
 
 해당 도메인의 하네스 스킬(`.claude/skills/harness-*.md`)이 있으면 커리큘럼의 기반 자료로 활용한다. 하네스가 없으면 학습 진행 후 harness-engine으로 새 하네스 생성을 제안할 수 있다.
 
-구체적인 탐색/로드 절차는 `.claude/agents/domain-tutor/AGENT.md`에 정의되어 있다.
+구체적인 탐색/로드 절차는 `.claude/agents/domain-professor/AGENT.md`에 정의되어 있다.
 
 ## 금지
 

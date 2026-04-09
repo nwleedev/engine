@@ -55,7 +55,9 @@ Stop 훅이 이 파일을 컨텍스트 스냅샷에 반영한다. 미작성 시 
 ## Enforced by Hooks (참고, 규칙 아님)
 
 - 플랜 없이 코딩 시작 불가 (PreToolUse Write|Edit)
-- 2개+ 파일 수정 시 work-reviewer 알림 (PostToolUse Write|Edit)
+- 2-4개 파일 수정: work-reviewer 단일 검토 알림 (PostToolUse Write|Edit)
+- 5+개 파일 또는 인프라 변경: multi-review (2명 병렬) 알림 (PostToolUse Write|Edit)
+- 대규모 플랜(4+ 변경 단위) 자동 분할 권고 (plan-readiness-checker 10단계)
 - 세션 스냅샷 자동 생성 (Stop hook)
 - 미커밋 변경 감지 경고 (Stop hook)
 - 컨텍스트 압축 시 SESSION.md + 최신 context + 플랜 경로 재주입 (SessionStart compact)

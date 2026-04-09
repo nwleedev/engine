@@ -10,7 +10,7 @@ Claude Code는 터미널에서 실행하는 AI 코딩 어시스턴트다. 기본
 |---|---|---|
 | **플랜 강제** | 코드/문서 편집 전 반드시 계획 수립 | Claude가 바로 코딩 시작 → 방향 틀어짐 |
 | **도메인 규칙 제안** | 파일을 읽으면 관련 규칙 자동 표시 | 라이브러리 안티패턴 모르고 반복 |
-| **편집 추적** | 수정한 파일 수를 추적하고 2개+ 시 리뷰어 호출 | 대규모 변경이 리뷰 없이 통과 |
+| **편집 추적** | 수정 파일 수 추적, 2-4개 단일 / 5+개 병렬 리뷰 | 대규모 변경이 리뷰 없이 통과 |
 | **세션 스냅샷** | 대화 종료 시 컨텍스트 자동 저장 | 컨텍스트 압축 후 방향 상실 |
 | **플랜 품질 검증** | 플랜 완성 시 파일 존재 여부, 필수 섹션 자동 확인 | 실행 불가능한 플랜으로 작업 시작 |
 
@@ -100,7 +100,7 @@ my-project/
     │   └── harness-*.md               # 프로젝트별 하네스 (harness-engine이 생성)
     ├── agents/
     │   ├── work-reviewer/             # 코드/문서 리뷰 에이전트
-    │   ├── domain-tutor/              # 학습 에이전트
+    │   ├── domain-professor/              # 학습 에이전트
     │   ├── harness-researcher/        # 도메인 조사 에이전트
     │   ├── system-auditor/            # 설정 평가 에이전트
     │   ├── plan-readiness-checker/    # 플랜 품질 검증 에이전트
@@ -227,7 +227,7 @@ $ claude
 > "/deep-study"
 > "React Query를 기초부터 배우고 싶어"
 
-# domain-tutor 에이전트가 활성화
+# domain-professor 에이전트가 활성화
 # 1. 현재 수준 평가 (퀴즈)
 # 2. 맞춤 커리큘럼 설계
 # 3. 단계별 강의 + 실습
@@ -242,14 +242,16 @@ $ claude
 
 ### 3.4 작업 리뷰 — 자동 품질 검토
 
-2개 이상의 파일을 수정하면 **work-reviewer 에이전트가 자동 호출**된다:
+파일 수정 규모에 따라 **단계적 리뷰**가 제안된다:
+
+| 조건 | 리뷰 모드 |
+|------|----------|
+| 2-4개 파일 수정 | 단일 work-reviewer |
+| 5+개 파일 또는 인프라 변경 | multi-review (2명 병렬, 관점별 교차비교) |
 
 ```
-# 파일 2개 수정 후:
-> [work-reviewer] 변경사항을 검토합니다...
-> - 원본 요구사항과 일치하는가
-> - 코드 품질 (보안, 안티패턴)
-> - 하네스 규칙 준수 여부
+# 파일 5개 수정 후:
+> 5개 파일이 수정되었습니다. 인프라/대규모 변경 감지: multi-review (2명 병렬 검토)를 실행하세요.
 ```
 
 ### 3.5 세션 관리 — 맥락 자동 보존
@@ -445,6 +447,7 @@ sh -c "$(curl -fsSL https://raw.githubusercontent.com/nwleedev/engine/main/insta
 | 세션 복구 안 됨 | `.claude/sessions/` 디렉터리 없음 | `mkdir -p .claude/sessions` |
 | sync 후 CLAUDE.md 내용 사라짐 | PROJECT 영역에 마커 없음 | `<!-- HARNESS-SYNC-PROJECT-START -->` 마커 추가 |
 | work-reviewer 안 나옴 | 2개 미만 파일 수정 | 정상 동작 (2개+ 에서만 트리거) |
+| multi-review 안 나옴 | 5개 미만 비인프라 파일 수정 | 정상 동작 (5+개 또는 인프라 변경 시 트리거) |
 | pre-commit 훅 안 됨 | Lefthook 미설치 | `npx lefthook install` |
 
 ---
@@ -477,9 +480,9 @@ sh -c "$(curl -fsSL https://raw.githubusercontent.com/nwleedev/engine/main/insta
 │  └─────────────────────────────────────────────────┘  │
 │                                                      │
 │  ┌─── Agents (자동/수동 호출) ─────────────────────┐ │
-│  │  work-reviewer         2개+ 파일 수정 시 자동   │ │
+│  │  work-reviewer         2-4개 단일 / 5+개 병렬  │ │
 │  │  plan-readiness-checker 플랜 종료 시 자동 검증  │ │
-│  │  domain-tutor          /deep-study로 학습       │ │
+│  │  domain-professor          /deep-study로 학습       │ │
 │  │  harness-researcher    하네스 생성 시 조사 위임  │ │
 │  │  system-auditor        설정 품질 감사           │ │
 │  │  project-researcher    기술/아키텍처 조사       │ │
