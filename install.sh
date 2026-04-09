@@ -105,6 +105,12 @@ echo "--- 압축 해제 ---"
 tar -xzf "$WORK_DIR/archive.tar.gz" --strip-components=1 -C "$WORK_DIR" \
   || fail "타볼 압축 해제에 실패했습니다."
 echo "OK"
+
+# VERSION 파일에서 실제 엔진 버전 표시
+if [ -f "$WORK_DIR/VERSION" ]; then
+  DETECTED_VERSION=$(tr -d '[:space:]' < "$WORK_DIR/VERSION")
+  echo "ENGINE   v${DETECTED_VERSION}"
+fi
 echo ""
 
 # --- Run Bootstrap ---

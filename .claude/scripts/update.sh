@@ -104,6 +104,7 @@ if [ ! -f "$SYNC_SCRIPT" ]; then
 fi
 
 # --- Read current version ---
+current_version=$(awk -F'"' '/"engine_version"/ {print $4}' "$MANIFEST")
 current_commit=$(awk -F'"' '/"last_synced_commit"/ {print $4}' "$MANIFEST")
 
 # --- Check mode ---
@@ -112,35 +113,54 @@ if [ "$CHECK_ONLY" -eq 1 ]; then
     fail "'curl'이 설치되어 있지 않습니다. --check 모드에는 curl이 필요합니다."
   fi
 
-  echo "현재 설치 버전: ${current_commit:-unknown}"
-
-  if [ "$current_commit" = "unknown" ]; then
-    echo ""
-    echo "버전 정보가 없습니다 (이전 업데이트가 타볼 다운로드로 수행됨)."
-    echo "업데이트 가능 여부를 확인하려면 --source 옵션으로 로컬 레포를 지정하세요."
-    echo "또는 바로 업데이트를 실행하세요: bash .claude/scripts/update.sh"
-    exit 0
-  fi
-
-  # GitHub API에서 최신 커밋 해시 조회 — current_commit 길이에 맞춰 비교
-  commit_len=${#current_commit}
-  latest_commit=$(curl -sL "https://api.github.com/repos/${REPO}/commits/main" \
-    | awk -F'"' -v len="$commit_len" '/"sha"/ {print substr($4,1,len); exit}') || true
-
-  if [ -z "$latest_commit" ]; then
-    fail "GitHub API 조회 실패. 네트워크를 확인하세요."
-  fi
-
-  if [ "$current_commit" = "$latest_commit" ]; then
-    echo "최신 버전입니다."
-    exit 0
+  # 현재 버전 표시
+  if [ -n "$current_version" ]; then
+    echo "현재 설치 버전: ${current_version} (${current_commit})"
   else
-    echo "업데이트 가능: ${current_commit} → ${latest_commit}"
-    echo ""
-    echo "미리보기: bash .claude/scripts/update.sh --dry-run"
-    echo "업데이트: bash .claude/scripts/update.sh"
+    echo "현재 설치 버전: ${current_commit:-unknown}"
+  fi
+
+  # 1차: VERSION 파일 기반 비교 (rate limit 없음)
+  remote_version=$(curl -sL "https://raw.githubusercontent.com/${REPO}/main/VERSION" 2>/dev/null | head -c 20 | tr -d '[:space:]') || true
+
+  if [ -n "$remote_version" ] && [ -n "$current_version" ]; then
+    if [ "$current_version" = "$remote_version" ]; then
+      echo "최신 버전입니다. (${remote_version})"
+    else
+      echo "업데이트 가능: ${current_version} → ${remote_version}"
+      echo ""
+      echo "미리보기: bash .claude/scripts/update.sh --dry-run"
+      echo "업데이트: bash .claude/scripts/update.sh"
+    fi
     exit 0
   fi
+
+  # 2차 폴백: 커밋 해시 비교 (VERSION 파일이 아직 리모트에 없거나 로컬에 engine_version 없을 때)
+  if [ -n "$current_commit" ] && [ "$current_commit" != "unknown" ]; then
+    commit_len=${#current_commit}
+    latest_commit=$(curl -sL "https://api.github.com/repos/${REPO}/commits/main" \
+      | awk -F'"' -v len="$commit_len" '/"sha"/ {print substr($4,1,len); exit}') || true
+
+    if [ -z "$latest_commit" ]; then
+      fail "GitHub 조회 실패. 네트워크를 확인하세요."
+    fi
+
+    if [ "$current_commit" = "$latest_commit" ]; then
+      echo "최신 버전입니다."
+    else
+      echo "업데이트 가능: ${current_commit} → ${latest_commit}"
+      echo ""
+      echo "미리보기: bash .claude/scripts/update.sh --dry-run"
+      echo "업데이트: bash .claude/scripts/update.sh"
+    fi
+    exit 0
+  fi
+
+  # 둘 다 없으면 안내
+  echo ""
+  echo "버전 정보가 부족합니다."
+  echo "바로 업데이트를 실행하세요: bash .claude/scripts/update.sh"
+  exit 0
 fi
 
 # --- Prepare source ---
@@ -198,7 +218,7 @@ echo "========================================"
 echo "  하네스 업데이트"
 echo "========================================"
 echo ""
-echo "현재 버전: ${current_commit:-unknown}"
+echo "현재 버전: ${current_version:-${current_commit:-unknown}}"
 echo "대상: $PROJECT_DIR"
 echo ""
 

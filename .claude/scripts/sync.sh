@@ -376,6 +376,13 @@ write_manifest() {
   manifest_path="$TARGET_DIR/$MANIFEST_FILE"
   # $$ : 현재 프로세스 ID. 임시 파일 이름에 포함하여 병렬 실행 시 충돌을 방지한다.
   tmp_manifest="$manifest_path.tmp.$$"
+  # VERSION 파일에서 엔진 버전 읽기 (타볼에도 포함되어 .git 없이 동작)
+  if [ -f "$SOURCE_DIR/VERSION" ]; then
+    engine_version=$(tr -d '[:space:]' < "$SOURCE_DIR/VERSION")
+  else
+    engine_version=""
+  fi
+
   # git rev-parse --short HEAD : 현재 커밋의 짧은 해시를 가져온다.
   # 2>/dev/null : git 오류(예: git 저장소가 아닌 경우)를 숨긴다.
   # || printf 'unknown' : git 명령 실패 시 "unknown"을 기본값으로 사용한다.
@@ -388,6 +395,7 @@ write_manifest() {
   {
     printf '{\n'
     printf '  "format_version": 2,\n'
+    printf '  "engine_version": "%s",\n' "$(json_escape "$engine_version")"
     printf '  "source_label": "%s",\n' "$(json_escape "$SOURCE_DIR")"
     printf '  "last_synced_commit": "%s",\n' "$(json_escape "$source_commit")"
     printf '  "managed_paths": [\n'

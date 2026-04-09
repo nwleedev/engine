@@ -217,6 +217,16 @@ test_manifest_format() {
     echo "    FAIL: managed_paths에 .claude/settings.json 없음"
     return 1
   fi
+
+  # engine_version 확인: VERSION 파일이 소스에 있으면 비어있지 않아야 함
+  if [ -f "$SOURCE_DIR/VERSION" ]; then
+    local eng_ver
+    eng_ver=$(jq -r '.engine_version' "$manifest")
+    if [ -z "$eng_ver" ] || [ "$eng_ver" = "null" ]; then
+      echo "    FAIL: engine_version이 비어 있음 (VERSION 파일이 소스에 존재)"
+      return 1
+    fi
+  fi
 }
 
 test_conflict_detection_settings() {
