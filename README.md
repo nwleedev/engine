@@ -44,7 +44,7 @@ sh -c "$(curl -fsSL https://raw.githubusercontent.com/nwleedev/engine/main/insta
 cd ~/my-project && claude
 ```
 
-업데이트도 같은 명령을 재실행하면 됩니다.
+업데이트: `bash .claude/scripts/update.sh` 또는 같은 명령을 재실행하면 됩니다.
 
 <details>
 <summary>수동 설치 (git 사용)</summary>
@@ -108,6 +108,7 @@ cd ~/my-project && claude
 | `suggest-harness.sh` | 파일 내용 기반 하네스 자동 제안 (훅용) |
 | `track-edits.sh` | 편집 파일 수 추적, 리뷰어 트리거 (훅용) |
 | `snapshot.sh` | 세션 스냅샷 저장 (훅용) |
+| `update.sh` | 설치된 하네스를 최신 엔진 버전으로 업데이트 |
 | `migrate.sh` | v1→v2 마이그레이션 |
 
 ---
@@ -159,8 +160,28 @@ cd ~/my-project && claude
 
 ## 업데이트 및 동기화
 
+### 방법 1: 프로젝트에서 직접 업데이트 (권장)
+
 ```bash
-# 설치할 때와 같은 명령으로 업데이트
+# 업데이트 확인만
+bash .claude/scripts/update.sh --check
+
+# 변경 미리보기
+bash .claude/scripts/update.sh --dry-run
+
+# 업데이트 실행
+bash .claude/scripts/update.sh
+
+# 로컬 엔진 레포에서 오프라인 업데이트
+bash .claude/scripts/update.sh --source ~/engine
+
+# 특정 버전으로 업데이트
+bash .claude/scripts/update.sh --version v1.2.0
+```
+
+### 방법 2: install.sh 재실행
+
+```bash
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/nwleedev/engine/main/install.sh)" -- ~/my-project
 ```
 

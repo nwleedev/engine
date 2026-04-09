@@ -89,7 +89,8 @@ my-project/
     │   ├── check-plan-review.sh       # hook: 플랜 완성도 검증
     │   ├── suggest-harness.sh         # hook: 도메인 규칙 자동 제안
     │   ├── track-edits.sh             # hook: 다중 파일 수정 감지
-    │   └── snapshot.sh                # hook: 세션 컨텍스트 저장
+    │   ├── snapshot.sh                # hook: 세션 컨텍스트 저장
+    │   └── update.sh                  # 하네스 업데이트 (프로젝트에서 직접 실행)
     ├── skills/
     │   ├── core-rules.md              # 범용 규칙 (수정 불필요)
     │   ├── failure-response.md
@@ -423,12 +424,29 @@ git clone https://github.com/nwleedev/engine.git /tmp/engine
 
 ## 6. 인프라 업데이트 받기
 
-설치할 때와 같은 명령을 재실행하면 됩니다:
+### 방법 1: 프로젝트에서 직접 업데이트 (권장)
 
 ```bash
-# 각 프로젝트에 최신 하네스 동기화
+# 업데이트 확인만
+bash .claude/scripts/update.sh --check
+
+# 변경 미리보기
+bash .claude/scripts/update.sh --dry-run
+
+# 업데이트 실행
+bash .claude/scripts/update.sh
+
+# 로컬 엔진 레포에서 오프라인 업데이트
+bash .claude/scripts/update.sh --source ~/engine
+
+# 특정 버전으로 업데이트
+bash .claude/scripts/update.sh --version v1.2.0
+```
+
+### 방법 2: install.sh 재실행
+
+```bash
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/nwleedev/engine/main/install.sh)" -- ~/projects/my-api
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/nwleedev/engine/main/install.sh)" -- ~/research/my-analysis
 ```
 
 **sync가 변경하는 것:** 훅 스크립트, settings.json, 범용 스킬, 하네스 엔진, 에이전트, CLAUDE.md CORE 영역
