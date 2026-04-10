@@ -1,0 +1,9 @@
+{
+  "name": "engine",
+  "version": "1.0.0",
+  "description": "Claude Code Harness System — plan enforcement, quality gates, domain knowledge, and session continuity",
+  "author": {
+    "name": "nwleedev"
+  },
+  "repository": "https://github.com/nwleedev/engine"
+}
