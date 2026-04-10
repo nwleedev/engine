@@ -1,0 +1,17 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "engine",
+  "description": "Claude Code Harness System — plan enforcement, quality gates, domain knowledge, and session continuity",
+  "owner": {
+    "name": "nwleedev"
+  },
+  "plugins": [
+    {
+      "name": "engine",
+      "description": "Plan enforcement, quality gates, domain knowledge, and session continuity for Claude Code",
+      "version": "1.0.0",
+      "source": "./engine-plugin",
+      "category": "development"
+    }
+  ]
+}
