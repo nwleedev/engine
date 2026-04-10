@@ -88,7 +88,7 @@ test_fresh_sync() {
   # 핵심 파일 존재 확인
   assert_file_exists "$target/.claude/settings.json" || return 1
   assert_file_exists "$target/.claude/scripts/check-plan.sh" || return 1
-  assert_file_exists "$target/.claude/skills/core-rules.md" || return 1
+  assert_file_exists "$target/.claude/skills/failure-response.md" || return 1
   assert_file_exists "$target/.claude/skills/harness-engine/SKILL.md" || return 1
   assert_file_exists "$target/.claude/agents/work-reviewer/AGENT.md" || return 1
   assert_file_exists "$target/.claude/agents/plan-readiness-checker/AGENT.md" || return 1

@@ -78,7 +78,6 @@ cd ~/my-project && claude
 
 | 스킬 | 호출 방법 | 용도 |
 |------|----------|------|
-| core-rules | 항상 활성 | 모든 작업에 적용되는 범용 규칙 |
 | harness-engine | `/harness-engine` | 프로젝트 맞춤 도메인 규칙 자동 생성 |
 | deep-study | `/deep-study` | 단계별 학습 프로토콜 (평가→설계→강의→검증) |
 | failure-response | `/failure-response` | 에러 대응 방법론 (근본 원인 우선) |

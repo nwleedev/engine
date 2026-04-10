@@ -50,7 +50,7 @@ user-invocable: true
 
 ## 작업 시작 전 확인
 
-- 루트 `AGENTS.md`(없으면 `CLAUDE.md`), `.claude/skills/core-rules.md`를 읽었는지 확인한다.
+- 루트 `AGENTS.md`(없으면 `CLAUDE.md`)를 읽었는지 확인한다.
 - 특히 임시 파일 규칙(temps 경로, `/tmp` 금지)을 확인한다.
 - `CLAUDE.md`의 프로젝트별 설정을 확인한다.
 - 사용자 요청만으로 범위가 닫히는지 확인한다.

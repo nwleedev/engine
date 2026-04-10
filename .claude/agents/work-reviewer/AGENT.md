@@ -40,7 +40,7 @@ permissionMode: plan
    - 변경된 파일의 도메인과 관련된 하네스를 식별한다 (예: `.tsx` 변경 → `harness-fe-*` 하네스).
    - 관련 하네스가 있으면 읽고, 해당 하네스의 안티패턴(Anti/Good 쌍)을 기준으로 위반 여부를 검증한다.
    - 하네스의 검증 기준(체크리스트)을 항목별로 통과 여부를 판정한다.
-8. **core-rules 준수 확인**: `.claude/skills/core-rules.md`의 규칙을 준수했는지 확인한다.
+8. **프로젝트 규칙 준수 확인**: CLAUDE.md의 프로젝트 규칙과 관련 스킬(research-methodology, socratic-thinking, failure-response)의 규칙을 준수했는지 확인한다.
 
 ## 보고 형식
 

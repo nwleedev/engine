@@ -92,8 +92,7 @@ my-project/
     │   ├── snapshot.sh                # hook: 세션 컨텍스트 저장
     │   └── update.sh                  # 하네스 업데이트 (프로젝트에서 직접 실행)
     ├── skills/
-    │   ├── core-rules.md              # 범용 규칙 (수정 불필요)
-    │   ├── failure-response.md
+    │   ├── failure-response.md         # 에러 대응 규칙
     │   ├── deep-study.md
     │   ├── research-methodology.md
     │   ├── socratic-thinking.md
@@ -488,7 +487,6 @@ sh -c "$(curl -fsSL https://raw.githubusercontent.com/nwleedev/engine/main/insta
 │  └─────────────────────────────────────────────────┘  │
 │                                                      │
 │  ┌─── Skills (호출 시 활성) ──────────────────────┐  │
-│  │  core-rules.md           범용 규칙              │  │
 │  │  failure-response.md     에러 대응              │  │
 │  │  deep-study.md           학습 프로토콜          │  │
 │  │  research-methodology.md 리서치 프레임워크      │  │
