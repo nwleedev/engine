@@ -54,7 +54,7 @@ Stop 훅이 이 파일을 컨텍스트 스냅샷에 반영한다. 미작성 시 
 ## Git Commits (MUST)
 
 - .gitignore 등록 파일 커밋 금지. 민감정보(.env, 토큰) 편집/출력 금지
-- **작업 턴 종료 시 반드시 커밋**. 커밋 누락은 Stop 훅이 감지하여 다음 세션에 경고한다
+- **작업 턴 종료 시 반드시 변경 사항을 적절하게 분할하여 커밋**. 커밋 누락은 Stop 훅이 감지하여 다음 세션에 경고한다
 
 형식 (Conventional Commits + Angular + 50/72 규칙):
 
@@ -97,3 +97,10 @@ Stop 훅이 이 파일을 컨텍스트 스냅샷에 반영한다. 미작성 시 
 - 컨텍스트 압축 시 SESSION.md + 최신 context + 플랜 경로 재주입 (SessionStart compact)
 - ExitPlanMode 첫 호출 시 플랜 재검토 강제 (PreToolUse ExitPlanMode)
 - 파괴적 git 명령 차단: --no-verify, --force/-f (push), reset --hard, clean -f, branch -D, checkout -- . (permissions.deny)
+
+## 임시 파일
+
+`temps/<date>/<scope>/` 폴더 내 적절한 위치에 저장한다.
+
+- date: 날짜 ('yyyy-MM-dd')
+- scope: 작업의 범위
