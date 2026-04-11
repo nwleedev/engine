@@ -1,104 +1,104 @@
 ---
 name: research-methodology
-description: "조사가 필요한 질문(기술 선택, 라이브러리 비교, 아키텍처 결정, 모범사례 확인)에 적용하는 조사 방법론. project-researcher 에이전트와 인라인 조사에 모두 사용."
+description: "Research methodology for questions requiring investigation — technology selection, library comparison, architecture decisions, best practice verification. Used by both the project-researcher agent and inline research."
 user-invocable: true
 ---
 
 # Research Methodology
 
-프로젝트 수준 조사에 적용하는 방법론이다. 기술 선택, 라이브러리 비교, 아키텍처 결정, 모범사례 확인 등 근거 기반 답변이 필요한 질문에 사용한다.
+A methodology applied to project-level research. Used for questions requiring evidence-based answers such as technology selection, library comparison, architecture decisions, and best practice verification.
 
 ---
 
-## 일반 원칙
+## General Principles
 
-- 답변과 작업 근거를 인터넷 조사로 교차 검증한다. 블로그/큐레이션 글보다 공식 문서와 실제 소스 코드를 최우선 참조한다. 최신순 조사.
-- 모든 작업에 신뢰도 높은 출처를 명시한다.
-
----
-
-## 출처 우선순위
-
-### 소프트웨어 도메인
-
-1. 공식 문서
-2. 표준 문서 (RFC, spec)
-3. 실제 소스 코드
-4. 공개 이슈 트래커, 벤더 기술 자료, 보조 자료
-
-### 비소프트웨어 도메인
-
-1. 학술 논문, 정부/국제기구 공식 자료
-2. 업계 표준 보고서, 전문 기관 발행 자료
-3. 공개 데이터셋, 공식 통계
-4. 전문 서적, 보조 자료
-
-### 금지
-
-- 블로그 단독 근거로 기술적 결론 확정
-- 마케팅 문구를 기술적 사실로 취급 — 사용 방식 단서로만 활용
-- 날짜/버전 확인 없이 자료 인용
-
-블로그가 유일한 근거일 때: 공식 문서에서 확인하거나, 확인 불가 시 `미확정`으로 표시한다.
+- Cross-verify answers and work rationale with internet research. Prioritize official documentation and actual source code over blogs/curated articles. Research in recency order.
+- Cite reliable sources for all work.
 
 ---
 
-## 검색 실행 안전
+## Source Priority
 
-- 단일 턴 병렬 검색은 최대 3-4건으로 제한한다.
-- 5건 이상 필요하면 배치를 나누어 실행한다.
-- 각 검색의 결과 수는 3-5건으로 제한한다.
-- 무관한 대용량 결과(PDF, vocab 파일 등)는 즉시 제외한다.
-- 각 배치 완료 후 핵심 발견을 기록한 뒤 다음 배치를 진행한다.
-- API Error 500 등 도구 호출 실패 시: (1) 직전 턴 작업 기록, (2) 에러 원인 추정, (3) 병렬 호출 수를 절반으로 줄이고 재시도, (4) 재시도 실패 시 사용자에게 대안 제시.
+### Software Domain
 
----
+1. Official documentation
+2. Standards documents (RFC, spec)
+3. Actual source code
+4. Public issue trackers, vendor technical resources, supplementary materials
 
-## 조사 체크리스트
+### Non-Software Domain
 
-조사 완료 전에 다음을 모두 충족해야 한다:
+1. Academic papers, government/international organization official materials
+2. Industry standard reports, professional organization publications
+3. Public datasets, official statistics
+4. Professional books, supplementary materials
 
-- [ ] 조사 주제와 직접 관련된 1차 근거 소스를 최소 3개 이상 확보했는가
-- [ ] 가장 자주 발생하는 실패 모드/제한 사항을 최소 3개 이상 설명할 수 있는가
-- [ ] 참고할 직접 사례를 최소 2개 이상 확보했는가
-- [ ] 최신성이 중요한 항목이라면 날짜, 버전, 재검색 사실 중 최소 1개를 기록했는가
-- [ ] 반대 근거, 제한 사항, 예외 케이스를 최소 1건 이상 확인했는가
+### Prohibited
 
----
+- Confirming technical conclusions based solely on blog evidence
+- Treating marketing copy as technical facts — use only as usage clues
+- Citing materials without date/version verification
 
-## 주장-근거 분리 (Claim-to-Evidence)
-
-- 근거 메모와 최종 결론을 분리하여 기록한다. 같은 문단에 혼합하지 않는다.
-- 고영향 주장(기술 선택, 아키텍처 결정, 성능 판단)은 독립 근거 2개 이상을 요구한다.
-- 독립 근거 미충족 시 해당 주장을 `미확정`으로 표시한다.
+When a blog is the only evidence: verify in official documentation, or if verification is impossible, mark as `unconfirmed`.
 
 ---
 
-## 반대 근거 규칙 (Contradiction Rule)
+## Search Execution Safety
 
-- 한 방향 근거만 모였으면 반대 근거, 제한 사항, 실패 모드를 추가로 조사한다.
-- 비교 조사의 경우, 각 선택지의 대체 불가 영역을 분리하여 기록한다.
-- 반대 근거 없이 결론을 내리지 않는다.
-
----
-
-## 선택형 MCP 도구
-
-- **Context7 MCP**: 라이브러리/프레임워크 문서 문맥 보강에 적합하다.
-- **Tavily MCP**: 최신 웹 검색과 원문 추출 보강에 적합하다.
-
-규칙:
-- 둘 다 선택형이다. 설치되지 않았어도 조사는 WebSearch/WebFetch로 수행 가능하다.
-- MCP 결과도 최종 인용 전에 공식 문서 또는 실제 소스 코드로 다시 확인한다.
+- Limit single-turn parallel searches to a maximum of 3-4.
+- If 5+ are needed, split into batches.
+- Limit results per search to 3-5.
+- Immediately exclude irrelevant large results (PDFs, vocab files, etc.).
+- After each batch completion, record key findings before proceeding to the next batch.
+- On tool call failure (API Error 500, etc.): (1) record work from the previous turn, (2) estimate error cause, (3) halve parallel call count and retry, (4) if retry fails, present alternatives to the user.
 
 ---
 
-## 실패 신호
+## Research Checklist
 
-다음 중 하나라도 해당하면 조사가 불충분하다:
+All of the following must be satisfied before research is complete:
 
-- 검색 결과를 한 번만 보고 바로 결론을 확정한다.
-- 1차 근거가 하나도 없는 상태에서 주장을 작성한다.
-- 최신성이 중요한 항목에 날짜나 버전 정보가 없다.
-- 반대 근거나 제한 사항을 전혀 검토하지 않는다.
-- 근거 메모와 결론이 분리되지 않고 혼합되어 있다.
+- [ ] Have at least 3 primary evidence sources directly related to the research topic been obtained?
+- [ ] Can at least 3 most common failure modes/limitations be explained?
+- [ ] Have at least 2 direct reference cases been obtained?
+- [ ] For items where recency matters, has at least 1 of date, version, or re-search fact been recorded?
+- [ ] Has at least 1 counter-evidence, limitation, or exception case been verified?
+
+---
+
+## Claim-to-Evidence Separation
+
+- Record evidence notes and final conclusions separately. Do not mix them in the same paragraph.
+- High-impact claims (technology selection, architecture decisions, performance assessments) require at least 2 independent evidence sources.
+- If independent evidence is insufficient, mark the claim as `unconfirmed`.
+
+---
+
+## Contradiction Rule
+
+- If only one-directional evidence has been gathered, additionally investigate counter-evidence, limitations, and failure modes.
+- For comparative research, separately record each option's irreplaceable domains.
+- Do not reach conclusions without counter-evidence.
+
+---
+
+## Optional MCP Tools
+
+- **Context7 MCP**: Suitable for library/framework documentation context enrichment.
+- **Tavily MCP**: Suitable for latest web search and original text extraction enrichment.
+
+Rules:
+- Both are optional. Research can be performed with WebSearch/WebFetch even if they are not installed.
+- MCP results must also be re-verified against official documentation or actual source code before final citation.
+
+---
+
+## Failure Signals
+
+If any of the following apply, the research is insufficient:
+
+- Confirming conclusions after viewing search results only once.
+- Writing claims with zero primary evidence sources.
+- No date or version information for items where recency matters.
+- No counter-evidence or limitations reviewed at all.
+- Evidence notes and conclusions are mixed without separation.

@@ -1,94 +1,94 @@
 # Operator Stack Adapter
 
-## 목적
+## Purpose
 
-harness-engine이 에이전트 운영 환경과 하네스 배포 구조를 설계하는 하네스를 생성하거나 보강할 때, 공통 `research` phase 이후 이 어댑터를 추가 적용하여 `operator-stack` task_type의 최소 계약을 적용한다.
+When harness-engine generates or augments a harness for designing the agent operating environment and harness deployment structure, this adapter is additionally applied after the common `research` phase to enforce the minimum contract for the `operator-stack` task_type.
 
 ## Coverage Contract
 
-운영 스택 하네스에는 아래 항목이 반드시 포함되어야 한다.
+An operator stack harness must include the following items.
 
-### 필수 축
+### Required Axes
 
-1. **운영 계층 모델**
-   - 머신, 사용자, 저장소, 세션, 팀, 배포 계층
-2. **지속 설정 모델**
-   - 개인 기본값, 프로젝트 오버라이드, 일회성 플래그 경계
-3. **작업 루프**
-   - 조사, 구현, 검증, 리뷰, 재개 절차
-4. **권한/통제 모델**
-   - 승인 정책, 샌드박스, MCP, 스킬, 훅, 로깅
-5. **배포 구조**
-   - 현재 복사형 모델과 장기 패키지형 모델 비교
-6. **유지 판단**
-   - 어떤 자산을 유지하고 무엇을 바꾸는지
+1. **Operating Layer Model**
+   - Machine, user, repository, session, team, and deployment layers
+2. **Persistent Configuration Model**
+   - Personal defaults, project overrides, and one-off flag boundaries
+3. **Work Loop**
+   - Research, implementation, verification, review, and resume procedures
+4. **Permission/Control Model**
+   - Approval policies, sandbox, MCP, skills, hooks, logging
+5. **Deployment Structure**
+   - Comparison of the current copy-based model vs. the long-term package-based model
+6. **Retention Decisions**
+   - Which assets to retain and which to change
 
-### contract packet에서 반드시 닫을 항목
+### Items That Must Be Finalized in the Contract Packet
 
-- 대상 운영 표면(Claude Code, Codex 등)
-- 현재 저장소의 유지 자산 목록
-- 패키지화 범위
-- override 보존 정책
-- 후속 구현 분리 기준
+- Target operating surface (Claude Code, Codex, etc.)
+- List of retained assets in the current repository
+- Packaging scope
+- Override preservation policy
+- Criteria for separating follow-up implementations
 
-## 1차 근거 소스
+## Primary Evidence Sources
 
-1. 도구 공식 문서
-2. 현재 저장소의 하네스 구조와 스크립트
-3. 공식 best practices 또는 config reference
-4. 기존 세션 조사 결과
+1. Tool official documentation
+2. Harness structure and scripts in the current repository
+3. Official best practices or config references
+4. Results from existing session investigations
 
-규칙:
+Rules:
 
-- 내부 전용 기능 추정만으로 운영 스택을 설계하지 않는다.
-- 공개 표면에서 설명 가능한 운영 계층을 먼저 닫는다.
+- Do not design an operator stack based solely on assumptions about internal-only features.
+- First finalize the operating layers that can be explained through the public surface.
 
-## Anti/Good 최소 필수 쌍
+## Anti/Good Minimum Required Pairs
 
-### 운영 목표
+### Operating Goals
 
-| 케이스 | Anti | Good |
+| Case | Anti | Good |
 |---|---|---|
-| 내부 특권 추격 | 직원 전용 기능 재현을 목표로 문서화 | 외부 사용자가 구축 가능한 최고 수준 운영 체계 설계 |
-| 배포-규칙 혼합 | 배포 방식 문제를 코어 하네스 폐기로 연결 | 규칙층 유지 여부와 배포 메커니즘을 분리 판단 |
+| Chasing internal privileges | Documenting with the goal of replicating employee-only features | Designing the best possible operating system achievable by external users |
+| Mixing deployment and rules | Connecting deployment mechanism issues to discarding core harnesses | Judging rule layer retention and deployment mechanisms separately |
 
-### 계층 설계
+### Layer Design
 
-| 케이스 | Anti | Good |
+| Case | Anti | Good |
 |---|---|---|
-| 설정 혼합 | 사용자 기본값과 프로젝트 규칙을 구분하지 않음 | user/repo/session 계층을 분리 |
-| 세션 경시 | 장기 작업인데 세션 구조를 운영 스택 밖으로 둠 | 세션과 evidence를 운영 계층으로 포함 |
+| Configuration mixing | Not distinguishing between user defaults and project rules | Separating user/repo/session layers |
+| Session neglect | Placing session structure outside the operator stack for long-running work | Including sessions and evidence as part of the operating layers |
 
-### 배포
+### Deployment
 
-| 케이스 | Anti | Good |
+| Case | Anti | Good |
 |---|---|---|
-| 즉시 재작성 | 현재 자산 평가 없이 바로 새 CLI 구현 | RFC, package architecture, migration plan을 먼저 작성 |
-| override 파괴 | 패키지화 과정에서 프로젝트 로컬 자산을 덮어씀 | portable core / adapter / evidence 경계를 유지 |
+| Immediate rewrite | Implementing a new CLI immediately without evaluating current assets | Writing RFC, package architecture, and migration plan first |
+| Override destruction | Overwriting project-local assets during the packaging process | Maintaining portable core / adapter / evidence boundaries |
 
-## 드라이런 입출력 예시
+## Dry-Run Input/Output Examples
 
 ### Positive Case
 
-**Input**: "현재 sync 스크립트 대신 npx 기반 배포 구조를 설계하고 싶다."
+**Input**: "I want to design an npx-based deployment structure instead of the current sync script."
 
 **Expected Output**:
 
-- 유지할 코어 자산 정리
-- 배포 방식 비교표
-- 패키지 아키텍처 초안
-- 단계별 migration plan
+- Inventory of core assets to retain
+- Deployment method comparison table
+- Package architecture draft
+- Phased migration plan
 
 ### Negative Case
 
-**Input**: "내부 기능처럼 보이는 모든 것을 그대로 복제하는 게 목표다."
+**Input**: "The goal is to replicate everything that looks like an internal feature as-is."
 
 **Expected Output**:
 
-- operator-stack 목표 재정의
-- 공개 표면 기반 운영 모델로 범위 조정
+- Redefine operator-stack objectives
+- Adjust scope to a public surface-based operating model
 
-## 설계 근거
+## Design Rationale
 
-- Claude Code와 Codex 모두 지속 설정, 저장소 지침, 도구 연결, 리뷰/검증 루프를 공식 운영 표면으로 노출한다.
-- 따라서 외부 사용자의 운영 품질 향상은 내부 기능 추정보다 계층화된 작업 환경 설계로 접근하는 편이 타당하다.
+- Both Claude Code and Codex expose persistent configuration, repository directives, tool connections, and review/verification loops as official operating surfaces.
+- Therefore, improving operating quality for external users is better approached through designing a layered work environment rather than speculating about internal features.

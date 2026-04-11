@@ -1,8 +1,8 @@
 # Frontend Anti/Good Reference
 
-## 1. 서버 상태 복제
+## 1. Server State Duplication
 
-나쁜 예시:
+Bad example:
 
 ```tsx
 const [profile, setProfile] = useState<User | null>(null);
@@ -14,7 +14,7 @@ useEffect(() => {
 }, []);
 ```
 
-좋은 예시:
+Good example:
 
 ```tsx
 function ProfileScreen() {
@@ -28,14 +28,14 @@ function ProfileScreen() {
 }
 ```
 
-의도:
+Intent:
 
-- 서버 데이터를 로컬 state로 복제하지 않는다.
-- Query 계층이 서버 상태의 단일 진실 공급원이 되게 한다.
+- Do not duplicate server data into local state.
+- Let the query layer be the single source of truth for server state.
 
-## 2. useEffect fetch 남용
+## 2. useEffect Fetch Overuse
 
-나쁜 예시:
+Bad example:
 
 ```tsx
 useEffect(() => {
@@ -53,7 +53,7 @@ useEffect(() => {
 }, [tag]);
 ```
 
-좋은 예시:
+Good example:
 
 ```tsx
 const postsQuery = useQuery({
@@ -62,14 +62,14 @@ const postsQuery = useQuery({
 });
 ```
 
-의도:
+Intent:
 
-- fetch를 effect 생명주기에 묶지 않는다.
-- 캐시, 로딩, 오류, 재검증을 데이터 계층에서 처리한다.
+- Do not tie fetches to the effect lifecycle.
+- Handle cache, loading, errors, and revalidation in the data layer.
 
-## 3. 폼 초기값 분산 주입
+## 3. Scattered Form Default Value Injection
 
-나쁜 예시:
+Bad example:
 
 ```tsx
 const form = useForm<UserForm>();
@@ -81,7 +81,7 @@ useEffect(() => {
 }, [profile, form]);
 ```
 
-좋은 예시:
+Good example:
 
 ```tsx
 const form = useForm<UserForm>({
@@ -91,7 +91,7 @@ const form = useForm<UserForm>({
 });
 ```
 
-또는:
+Or:
 
 ```tsx
 useEffect(() => {
@@ -100,34 +100,34 @@ useEffect(() => {
 }, [profile, form]);
 ```
 
-의도:
+Intent:
 
-- 초기값 주입 시점을 문서로 명확히 고정한다.
-- `setValue` 반복 호출로 필드별 동기화를 하지 않는다.
+- Fix the default value injection timing clearly in the documentation.
+- Do not synchronize field by field with repeated `setValue` calls.
 
-## 4. FSD slice 내부 구현 직접 import
+## 4. Direct Import of FSD Slice Internal Implementation
 
-나쁜 예시:
+Bad example:
 
 ```tsx
 import { useAuthModel } from "@/features/auth/model/useAuthModel";
 import { AuthButton } from "@/features/auth/ui/AuthButton";
 ```
 
-좋은 예시:
+Good example:
 
 ```tsx
 import { useAuth, AuthButton } from "@/features/auth";
 ```
 
-의도:
+Intent:
 
-- 다른 slice의 내부 구현 경로에 직접 접근하지 않는다.
-- slice 외부에서는 public API만 사용하게 제한한다.
+- Do not directly access another slice's internal implementation paths.
+- Restrict external access from outside a slice to the public API only.
 
-## 5. FSD cross-import로 feature 조립
+## 5. Feature Assembly via FSD Cross-Import
 
-나쁜 예시:
+Bad example:
 
 ```tsx
 import { addToCart } from "@/features/cart/model/addToCart";
@@ -137,7 +137,7 @@ export function ProductCard() {
 }
 ```
 
-좋은 예시:
+Good example:
 
 ```tsx
 import { ProductCard } from "@/entities/product";
@@ -153,7 +153,7 @@ export function ProductListItem() {
 }
 ```
 
-의도:
+Intent:
 
-- 같은 layer의 다른 slice를 직접 엮어서 흐름을 만들지 않는다.
-- 상위 layer에서 조립하거나, 공통 도메인 로직은 더 적절한 layer로 이동한다.
+- Do not create flows by directly coupling slices from the same layer.
+- Assemble in a higher layer, or move shared domain logic to a more appropriate layer.

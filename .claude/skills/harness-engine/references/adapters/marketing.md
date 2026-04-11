@@ -1,120 +1,120 @@
 # Marketing Task Adapter
 
-## 목적
+## Purpose
 
-harness-engine이 마케팅 도메인 하네스를 생성하거나 보강할 때, 공통 `research` phase 이후 이 어댑터를 추가 적용하여 마케팅 task_type 고유의 **최소 계약**을 적용한다.
+When harness-engine generates or augments a marketing domain harness, this adapter is additionally applied after the common `research` phase to enforce the **minimum contract** specific to the marketing task_type.
 
 ## Coverage Contract
 
-마케팅 하네스에는 다음 항목이 반드시 포함되어야 한다. 누락 시 하네스가 불완전한 것으로 판정한다.
+A marketing harness must include the following items. If any are missing, the harness is deemed incomplete.
 
-### 필수 축 (모든 마케팅 프로젝트)
+### Required Axes (All Marketing Projects)
 
-1. **타겟 오디언스 정의**
-   - 페르소나 명세 (인구통계, 행동, 니즈, 목표)
-   - 세분화 기준과 우선순위 세그먼트
-   - 세그먼트별 메시징 방향
-2. **캠페인 구조**
-   - 목표 설정 (인지/고려/전환/유지 중 어디)
-   - 채널 선택 근거
-   - KPI 정의와 측정 방법
-   - 예산 배분 프레임워크
-3. **크리에이티브 가이드라인**
-   - 톤앤매너, 브랜드 보이스 규칙
-   - 채널별 콘텐츠 형식과 제약 (글자수, 이미지 사이즈 등)
-   - CTA(Call to Action) 설계 원칙
-4. **실험/최적화 프레임워크**
-   - A/B 테스트 설계 규칙 (가설, 변수, 표본 크기)
-   - 통계적 유의성 판단 기준
-   - 반복 최적화 사이클 정의
-5. **성과 측정**
-   - 퍼널별 핵심 지표 (CAC, LTV, ROAS, CTR 등)
-   - 어트리뷰션 모델 선택 기준
-   - 보고 주기와 형식
+1. **Target Audience Definition**
+   - Persona specification (demographics, behaviors, needs, goals)
+   - Segmentation criteria and priority segments
+   - Messaging direction per segment
+2. **Campaign Structure**
+   - Goal setting (awareness/consideration/conversion/retention — which stage)
+   - Channel selection rationale
+   - KPI definition and measurement methods
+   - Budget allocation framework
+3. **Creative Guidelines**
+   - Tone and manner, brand voice rules
+   - Content format and constraints per channel (character limits, image sizes, etc.)
+   - CTA (Call to Action) design principles
+4. **Experimentation/Optimization Framework**
+   - A/B test design rules (hypothesis, variables, sample size)
+   - Statistical significance judgment criteria
+   - Iterative optimization cycle definition
+5. **Performance Measurement**
+   - Key metrics per funnel stage (CAC, LTV, ROAS, CTR, etc.)
+   - Attribution model selection criteria
+   - Reporting cadence and format
 
-### 프로젝트 contract packet에서 반드시 조사할 항목
+### Items That Must Be Investigated in the Project Contract Packet
 
-- 제품/서비스 카테고리와 경쟁 포지셔닝
-- 사용 채널 목록 (검색, 소셜, 이메일, 디스플레이 등)
-- 예산 규모와 제약
-- 법적/규제 제약 (광고 표시 의무, 업종별 규제)
-- 기존 브랜드 가이드라인 유무
+- Product/service category and competitive positioning
+- List of channels in use (search, social, email, display, etc.)
+- Budget scale and constraints
+- Legal/regulatory constraints (advertising disclosure requirements, industry-specific regulations)
+- Whether existing brand guidelines exist
 
-## 1차 근거 소스
+## Primary Evidence Sources
 
-마케팅 하네스의 규칙은 다음 소스를 1차 근거로 사용한다:
+Marketing harness rules use the following sources as primary evidence:
 
-1. 플랫폼 공식 가이드 (Google Ads, Meta Ads, LinkedIn Ads 등)
-2. 업계 표준 프레임워크 (AIDA, AARRR, STP 등)
-3. 학술 마케팅 저널 (Journal of Marketing, HBR 등)
-4. 공식 플랫폼 정책 문서 (광고 정책, 크리에이티브 사양)
+1. Platform official guides (Google Ads, Meta Ads, LinkedIn Ads, etc.)
+2. Industry standard frameworks (AIDA, AARRR, STP, etc.)
+3. Academic marketing journals (Journal of Marketing, HBR, etc.)
+4. Official platform policy documents (advertising policies, creative specifications)
 
-블로그, 에이전시 사례 연구는 보조 자료로만 사용한다.
+Blogs and agency case studies are used as supplementary materials only.
 
-## Anti/Good 최소 필수 쌍 목록
+## Anti/Good Minimum Required Pair List
 
-### 타겟팅
+### Targeting
 
-| 케이스 | Anti 내용 | Good 내용 |
+| Case | Anti Content | Good Content |
 |---|---|---|
-| 모호한 타겟 | "20-40대 남녀 전체" 같은 광범위 타겟 | 행동/니즈 기반 세그먼트 정의, 우선순위 부여 |
-| 가정 기반 페르소나 | 데이터 없이 "아마 이런 사람들일 것" | 기존 데이터, 인터뷰, 설문 기반 페르소나 |
+| Vague target | Broad targeting like "all men and women ages 20-40" | Behavior/needs-based segment definition with prioritization |
+| Assumption-based persona | "Probably these kinds of people" without data | Persona based on existing data, interviews, and surveys |
 
-### 캠페인 설계
+### Campaign Design
 
-| 케이스 | Anti 내용 | Good 내용 |
+| Case | Anti Content | Good Content |
 |---|---|---|
-| KPI 없는 캠페인 | "브랜드 인지도 높이기" 같은 측정 불가 목표 | SMART 기준 KPI 정의 (CTR X%, CAC Y원 이하) |
-| 채널 무분별 확산 | 모든 채널에 동시 집행, 채널별 전략 미분화 | 채널별 역할 정의, 우선순위 채널 집중 |
-| 예산 균등 배분 | 모든 채널/소재에 동일 비율 배분 | 성과 데이터 기반 차등 배분, 테스트 예산 분리 |
+| Campaign without KPIs | Unmeasurable goals like "increase brand awareness" | SMART-criteria KPI definition (CTR X%, CAC under Y) |
+| Indiscriminate channel expansion | Simultaneous execution across all channels without differentiated strategy | Defining roles per channel, focusing on priority channels |
+| Equal budget allocation | Allocating identical proportions to all channels/creatives | Differentiated allocation based on performance data, with separate test budget |
 
-### 크리에이티브
+### Creative
 
-| 케이스 | Anti 내용 | Good 내용 |
+| Case | Anti Content | Good Content |
 |---|---|---|
-| 기능 나열형 카피 | 제품 기능을 나열만 하는 광고 문구 | 타겟의 문제/니즈를 먼저 제시 → 솔루션으로 연결 |
-| CTA 부재/모호 | "자세히 보기" 같은 약한 CTA | 구체적 행동 유도 ("무료 체험 시작", "견적 받기") |
-| 채널 무시 포맷 | 동일 소재를 모든 채널에 그대로 사용 | 채널별 사양/맥락에 맞는 소재 제작 |
+| Feature-listing copy | Ad copy that merely lists product features | Present the target's problem/need first -> connect to solution |
+| Absent/vague CTA | Weak CTAs like "Learn more" | Specific action prompts ("Start free trial", "Get a quote") |
+| Channel-ignorant format | Using identical creatives across all channels as-is | Producing creatives tailored to each channel's specifications/context |
 
-### 실험/최적화
+### Experimentation/Optimization
 
-| 케이스 | Anti 내용 | Good 내용 |
+| Case | Anti Content | Good Content |
 |---|---|---|
-| 직감 기반 판단 | "이게 더 나은 것 같다"로 소재 선택 | A/B 테스트 + 통계적 유의성 검증 |
-| 조기 종료 | 충분한 데이터 수집 전 테스트 종료 | 최소 표본 크기 도달 후 판단 |
-| 다변수 혼합 테스트 | 한 번에 여러 변수를 동시 변경 | 단일 변수 격리 테스트, 순차 실험 |
+| Intuition-based judgment | Selecting creatives based on "this seems better" | A/B test + statistical significance verification |
+| Premature termination | Ending tests before sufficient data collection | Making decisions only after reaching minimum sample size |
+| Multi-variable mixed test | Changing multiple variables simultaneously in one test | Single variable isolation testing, sequential experiments |
 
-### 성과 보고
+### Performance Reporting
 
-| 케이스 | Anti 내용 | Good 내용 |
+| Case | Anti Content | Good Content |
 |---|---|---|
-| 허영 지표 | 좋아요/팔로워 수만 보고 | 비즈니스 지표 (매출, 전환, CAC) 중심 보고 |
-| 어트리뷰션 무시 | 라스트클릭만으로 성과 귀속 | 멀티터치 어트리뷰션 또는 의도적 모델 선택 기록 |
+| Vanity metrics | Reporting only likes/follower counts | Business metric-centered reporting (revenue, conversions, CAC) |
+| Attribution ignored | Attributing results solely via last-click | Multi-touch attribution or intentional model selection with documentation |
 
-## 드라이런 입출력 예시
+## Dry-Run Input/Output Examples
 
-### Positive Case: 캠페인 구조 검증
+### Positive Case: Campaign Structure Verification
 
-**Input**: "신규 SaaS 제품 런칭 마케팅 캠페인을 기획해줘."
+**Input**: "Plan a marketing campaign for a new SaaS product launch."
 
-**Expected Output (하네스가 안내해야 하는 방향)**:
+**Expected Output (direction the harness should guide)**:
 
-- 타겟 세그먼트 정의 먼저 요구
-- 퍼널 단계별 KPI 설정
-- 채널별 역할 분리
-- A/B 테스트 계획 포함
+- Require target segment definition first
+- Set KPIs per funnel stage
+- Separate roles per channel
+- Include A/B test plan
 
-### Negative Case: KPI 없는 캠페인 감지
+### Negative Case: Campaign Without KPIs Detection
 
-**Input**: "브랜드 인지도를 높이는 SNS 캠페인을 만들어줘."
+**Input**: "Create an SNS campaign to increase brand awareness."
 
-**Expected Output (하네스가 차단해야 하는 패턴)**:
+**Expected Output (pattern the harness should block)**:
 
-- 측정 불가 목표 → Anti-pattern으로 감지
-- 구체적 KPI 정의 요구 (도달수 X, 브랜드 검색량 Y% 증가)
+- Unmeasurable goal -> detected as anti-pattern
+- Require specific KPI definition (reach X, brand search volume increase Y%)
 
-## 설계 근거
+## Design Rationale
 
-- Coverage Contract 필수 축: 마케팅 전략 프레임워크(STP, AIDA, AARRR) 교차 분석
-- Anti/Good 필수 쌍: Anthropic Growth Marketing팀 사례 (광고 처리 2시간→15분, 10x 산출량) 기반 패턴 추출
-- 실험 프레임워크: Google Ads/Meta Ads 공식 실험 가이드라인
+- Coverage Contract required axes: cross-analysis of marketing strategy frameworks (STP, AIDA, AARRR)
+- Anti/Good required pairs: pattern extraction based on Anthropic Growth Marketing team case studies (ad processing 2 hours -> 15 minutes, 10x output)
+- Experimentation framework: Google Ads/Meta Ads official experimentation guidelines

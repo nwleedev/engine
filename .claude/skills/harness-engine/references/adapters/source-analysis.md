@@ -1,98 +1,98 @@
 # Source Analysis Adapter
 
-## 목적
+## Purpose
 
-harness-engine이 대규모 코드베이스 전수 분석 하네스를 생성하거나 보강할 때, 공통 `research` phase 이후 이 어댑터를 추가 적용하여 `source-analysis` task_type의 최소 계약을 적용한다.
+When harness-engine generates or augments a large-scale codebase exhaustive analysis harness, this adapter is additionally applied after the common `research` phase to enforce the minimum contract for the `source-analysis` task_type.
 
 ## Coverage Contract
 
-소스 분석 하네스에는 아래 항목이 반드시 포함되어야 한다.
+A source analysis harness must include the following items.
 
-### 필수 축
+### Required Axes
 
-1. **범위 봉인**
-   - 입력 루트와 비교 루트
-   - 실제 파일 수
-   - 제외 항목 여부
-2. **파일 인벤토리**
-   - 파일별 역할, 서브시스템, import/export 요약
-3. **심볼 카탈로그**
-   - 함수/클래스/메서드/타입/상수 선언
-   - 심볼 0개 파일의 명시적 처리
-4. **서브시스템 맵**
-   - top-level 책임과 주요 진입점
-5. **공개 표면 차이**
-   - 원본 소스와 공개 배포물/문서의 대응 관계
-6. **coverage ledger**
-   - 실제 파일 수와 카탈로그 수 일치
-   - 누락 0건 확인
+1. **Scope Sealing**
+   - Input root and comparison root
+   - Actual file count
+   - Whether exclusions exist
+2. **File Inventory**
+   - Per-file role, subsystem, and import/export summary
+3. **Symbol Catalog**
+   - Function/class/method/type/constant declarations
+   - Explicit handling of files with 0 symbols
+4. **Subsystem Map**
+   - Top-level responsibilities and major entry points
+5. **Public Surface Diff**
+   - Correspondence between the original source and the public distribution/documentation
+6. **Coverage Ledger**
+   - Match between actual file count and catalog count
+   - Confirmation of 0 omissions
 
-### contract packet에서 반드시 닫을 항목
+### Items That Must Be Finalized in the Contract Packet
 
-- 입력 소스 루트
-- 비교 대상 루트
-- 심볼 추출 방식의 보수적 기본값
-- 내부 신호 태그 기준
-- provenance 분리 규칙
+- Input source root
+- Comparison target root
+- Conservative defaults for symbol extraction method
+- Internal signal tag criteria
+- Provenance separation rules
 
-## 1차 근거 소스
+## Primary Evidence Sources
 
-1. 실제 소스 트리
-2. 공개 배포물 또는 공개 번들
-3. 공식 문서
-4. 기존 조사 문서와 공개 이슈
+1. Actual source tree
+2. Public distributions or public bundles
+3. Official documentation
+4. Existing investigation documents and public issues
 
-규칙:
+Rules:
 
-- 실제 소스 트리가 없는데 source-analysis 하네스를 선언하지 않는다.
-- 공개 번들 부재는 증거이지만 결론 그 자체는 아니다.
+- Do not declare a source-analysis harness when no actual source tree exists.
+- Absence of a public bundle is evidence, but not a conclusion in itself.
 
-## Anti/Good 최소 필수 쌍
+## Anti/Good Minimum Required Pairs
 
-### 범위
+### Scope
 
-| 케이스 | Anti | Good |
+| Case | Anti | Good |
 |---|---|---|
-| 샘플링 추정 | 일부 파일만 읽고 전체를 판단 | 전체 파일 수를 계산하고 전부 카탈로그화 |
-| 무음 제외 | 읽지 않은 파일을 기록하지 않음 | 제외 또는 0-symbol 이유를 ledger에 명시 |
+| Sampling estimation | Reading only some files and judging the whole | Calculating the total file count and cataloging all files |
+| Silent exclusion | Not recording files that were not read | Explicitly noting the reason for exclusion or 0-symbol status in the ledger |
 
-### 카탈로그
+### Catalog
 
-| 케이스 | Anti | Good |
+| Case | Anti | Good |
 |---|---|---|
-| 파일 설명 누락 | 경로 목록만 남김 | 파일 역할과 서브시스템을 기록 |
-| 메서드 생략 | 클래스만 적고 내부 메서드를 생략 | 선언 심볼을 종류별로 기록 |
+| Missing file descriptions | Leaving only a path listing | Recording file roles and subsystems |
+| Method omission | Listing only classes and omitting internal methods | Recording declared symbols by type |
 
-### 해석
+### Interpretation
 
-| 케이스 | Anti | Good |
+| Case | Anti | Good |
 |---|---|---|
-| provenance 혼합 | 공개 근거와 비공개 artifact를 같은 강도로 사용 | provenance와 verdict 강도를 분리 |
-| 번들 문자열 과해석 | 문자열 존재만으로 정책/기능을 확정 | 코드 경로와 문맥을 함께 확인 |
+| Provenance mixing | Using public evidence and non-public artifacts at the same strength | Separating provenance and verdict strength |
+| Bundle string over-interpretation | Confirming policy/feature based solely on string existence | Verifying code paths and context together |
 
-## 드라이런 입출력 예시
+## Dry-Run Input/Output Examples
 
 ### Positive Case
 
-**Input**: "벤더가 준 소스 트리 전체를 읽고 내부 분기와 공개 표면 차이를 정리해 주세요."
+**Input**: "Read the entire source tree provided by the vendor and organize the differences between internal branches and the public surface."
 
 **Expected Output**:
 
-- 전체 파일 수 계산
-- 파일/심볼 카탈로그
-- 공개 배포물 diff
-- coverage ledger
+- Total file count calculation
+- File/symbol catalog
+- Public distribution diff
+- Coverage ledger
 
 ### Negative Case
 
-**Input**: "대표 파일 몇 개만 읽고 대략 결론을 내리자."
+**Input**: "Let's just read a few representative files and draw a rough conclusion."
 
 **Expected Output**:
 
-- source-analysis 적용 불가 경고
-- 전수 분석 범위와 최소 산출물 요구
+- Warning that source-analysis cannot be applied
+- Exhaustive analysis scope and minimum deliverable requirements
 
-## 설계 근거
+## Design Rationale
 
-- 기존 조사 하네스는 claim/evidence 관리에는 강하지만, exhaustive한 소스 카탈로그를 강제하지 않는다.
-- 대형 코드베이스 분석에서는 coverage ledger와 shard 구조가 별도 최소 계약으로 필요하다.
+- Existing research harnesses are strong in claim/evidence management but do not enforce an exhaustive source catalog.
+- For large codebase analysis, a coverage ledger and shard structure are needed as a separate minimum contract.

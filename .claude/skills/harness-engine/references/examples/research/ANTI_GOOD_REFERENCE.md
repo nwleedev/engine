@@ -1,72 +1,72 @@
 # Research Anti/Good Reference
 
-## 1. 블로그 단독 근거
+## 1. Blog as Sole Evidence
 
-나쁜 예시:
+Bad example:
 
 ```md
-결론: X 프레임워크가 가장 빠르다.
-근거: 블로그 글 1개에서 가장 빠르다고 했다.
+Conclusion: Framework X is the fastest.
+Evidence: One blog post said it was the fastest.
 ```
 
-좋은 예시:
+Good example:
 
 ```md
-현재 가장 유력한 해석: X 프레임워크는 특정 벤치마크 조건에서 빠를 가능성이 높다.
-
-근거:
-- 공식 문서의 성능 설명
-- 실제 벤치마크 코드 또는 공개 재현 자료
-- 블로그 글은 보조 설명으로만 사용
-```
-
-의도:
-
-- 블로그는 보조 근거로만 쓴다.
-- 기술 결론은 공식 문서나 실제 코드로 보강한다.
-
-## 2. 첫 검색 결과로 종료
-
-나쁜 예시:
-
-```md
-검색 결과 첫 페이지에서 A 서비스가 가장 많이 언급되므로 업계 표준이라고 결론낸다.
-```
-
-좋은 예시:
-
-```md
-초기 검색 결과를 바탕으로 후보를 만들고,
-실패 모드, 비용/성능, 권한/보안, 실제 운영 사례 관점으로 검색 폭을 확장한다.
-```
-
-의도:
-
-- 검색을 한 방향으로만 끝내지 않는다.
-- 관점이 비어 있으면 조사 폭을 추가로 넓힌다.
-
-## 3. 결론과 근거를 한 문단에 혼합
-
-나쁜 예시:
-
-```md
-이 도구는 장기 세션 재개가 좋다. resume 기능도 있고 다른 글들도 좋다고 한다.
-```
-
-좋은 예시:
-
-```md
-Claim: 이 도구는 장기 세션 재개 지원이 강한 편이다.
+Current most likely interpretation: Framework X is likely fast under specific benchmark conditions.
 
 Evidence:
-- 공식 문서에 resume 또는 session continuation 기능이 명시되어 있다.
-- 실제 사용 예시나 CLI reference가 존재한다.
-
-Limits:
-- 재개 품질은 프로젝트 구조나 세션 기록 운영 방식에 따라 달라질 수 있다.
+- Performance description from official documentation
+- Actual benchmark code or publicly reproducible materials
+- Blog post used only as supplementary explanation
 ```
 
-의도:
+Intent:
 
-- 주장을 근거와 분리한다.
-- 제한 사항이나 반대 근거도 함께 남긴다.
+- Use blogs only as supplementary evidence.
+- Support technical conclusions with official documentation or actual code.
+
+## 2. Terminating at First Search Results
+
+Bad example:
+
+```md
+Since Service A is mentioned most on the first page of search results, conclude it is the industry standard.
+```
+
+Good example:
+
+```md
+Build a candidate list from initial search results,
+then expand search breadth across failure modes, cost/performance, permissions/security, and real operational case perspectives.
+```
+
+Intent:
+
+- Do not end a search in only one direction.
+- If perspectives are missing, additionally broaden the research scope.
+
+## 3. Mixing Conclusions and Evidence in One Paragraph
+
+Bad example:
+
+```md
+This tool has good long session resumption. It has a resume feature and other articles say it's good too.
+```
+
+Good example:
+
+```md
+Claim: This tool has strong support for long session resumption.
+
+Evidence:
+- Official documentation explicitly mentions resume or session continuation features.
+- Actual usage examples or CLI references exist.
+
+Limits:
+- Resumption quality may vary depending on project structure or session history management approach.
+```
+
+Intent:
+
+- Separate claims from evidence.
+- Also include limitations or counter-evidence.

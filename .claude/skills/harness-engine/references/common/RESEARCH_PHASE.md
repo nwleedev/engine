@@ -1,75 +1,75 @@
 # Common Research Phase
 
-## 목적
+## Purpose
 
-이 문서는 `harness-engine`이 어떤 `task_type` 하네스를 만들든 먼저 수행해야 하는 공통 조사 phase를 정의한다.
+This document defines the common research phase that `harness-engine` must perform before creating any `task_type` harness.
 
-이 phase는 특정 도메인의 task adapter를 대체하지 않는다. 대신 모든 하네스 생성 전에 다음을 공통으로 닫는다.
+This phase does not replace domain-specific task adapters. Instead, it closes the following items commonly before all harness creation:
 
-- 1차 근거 소스 우선순위
-- 최신성 확인
-- 검색 실행 안전 규칙
-- 반대 근거 또는 한계 확인
-- 예시와 계약을 분리하기 위한 evidence 수집
-- project contract packet 작성을 위한 조사 입력
+- Primary evidence source priority
+- Recency verification
+- Search execution safety rules
+- Counter-evidence or limitation checks
+- Evidence collection to separate examples from contracts
+- Research inputs for project contract packet creation
 
-`research`가 최종 `task_type`인 경우에도 이 phase를 먼저 수행하고, 그 다음 `references/adapters/research.md`를 추가 적용한다.
+Even when `research` is the final `task_type`, perform this phase first, then additionally apply `references/adapters/research.md`.
 
-## 기본 원칙
+## Core Principles
 
-1. 공식 문서, 표준, 공인 가이드라인에서 해당 도메인의 권장 패턴과 원칙을 조사한다. 이것이 하네스 규칙의 기반이다.
-2. 현재 프로젝트 코드는 공식 기준과 다른 부분을 파악하기 위한 보충 분석 대상이다. 코드 패턴 자체를 규칙의 근거로 사용하지 않는다.
-3. 블로그, 마케팅 문구, 큐레이션 글만으로 하네스 규칙을 확정하지 않는다.
-4. 중요한 규칙은 최신성 정보를 함께 확인한다.
-5. 한 방향 근거만 모였으면 반대 근거, 제한 사항, 실패 모드를 추가로 찾는다.
-6. 검색 호출은 작은 배치로 나누고, 배치마다 핵심 발견을 기록한다.
+1. Research recommended patterns and principles for the domain from official documentation, standards, and authoritative guidelines. These form the foundation of harness rules.
+2. Current project code is a supplementary analysis target for identifying deviations from official standards. Do not use code patterns themselves as the basis for rules.
+3. Do not finalize harness rules based solely on blogs, marketing copy, or curated articles.
+4. Verify recency information alongside important rules.
+5. If evidence has been gathered in only one direction, additionally search for counter-evidence, limitations, and failure modes.
+6. Break search calls into small batches, and record key findings after each batch.
 
-## 공통 조사 체크리스트
+## Common Research Checklist
 
-- 공식 문서/표준에서 해당 도메인의 권장 패턴을 정리했는가
-- 현재 `task_type`와 직접 관련된 1차 근거 소스를 최소 3개 이상 설명할 수 있는가
-- 이 하네스에서 가장 자주 틀리는 실패 모드를 최소 3개 이상 설명할 수 있는가
-- 예시를 만들 때 참고할 직접 사례를 최소 2개 이상 확보했는가
-- 최신성이 중요한 항목이라면 날짜, 버전, 재검색 사실 중 최소 1개를 남겼는가
-- 반대 근거, 제한 사항, 예외 케이스를 최소 1개 이상 확인했는가
+- Have you compiled recommended patterns for the domain from official documentation/standards
+- Can you describe at least 3 primary evidence sources directly related to the current `task_type`
+- Can you describe at least 3 failure modes most commonly encountered in this harness
+- Have you secured at least 2 direct examples to reference when creating examples
+- If recency matters for an item, have you recorded at least one of: date, version, or re-search confirmation
+- Have you confirmed at least 1 counter-evidence item, limitation, or exception case
 
-## 검색 실행 안전 규칙
+## Search Execution Safety Rules
 
-- 단일 턴 병렬 검색 호출은 최대 3~4건으로 제한한다.
-- 5건 이상 필요하면 배치를 나누어 실행한다.
-- 각 검색의 결과 수는 보통 3~5건으로 제한한다.
-- 무관한 대용량 결과(PDF, 코드 파일, vocab 파일 등)는 즉시 제외한다.
-- 각 배치 완료 후 핵심 발견을 세션 notes(`<session_path>/notes/`)에 기록한 뒤 다음 배치를 진행한다.
+- Limit parallel search calls in a single turn to a maximum of 3-4.
+- If 5 or more are needed, split into batches.
+- Limit results per search to typically 3-5.
+- Immediately exclude irrelevant large results (PDFs, code files, vocab files, etc.).
+- After each batch completes, record key findings in session notes (`<session_path>/notes/`) before proceeding to the next batch.
 
-## 선택형 MCP
+## Optional MCPs
 
 - Tavily MCP
-  - 최신 웹 검색과 원문 추출 보강에 적합하다.
+  - Suitable for augmenting with latest web search and source text extraction.
 - Context7 MCP
-  - 라이브러리/프레임워크 문서 문맥 보강에 적합하다.
+  - Suitable for augmenting with library/framework documentation context.
 
-규칙:
+Rules:
 
-- 둘 다 선택형 도구다.
-- 최종 규칙과 인용은 항상 공식 문서 또는 실제 소스 코드로 다시 확인한다.
+- Both are optional tools.
+- Always re-verify final rules and citations against official documentation or actual source code.
 
-## task adapter / contract packet으로 넘겨야 하는 출력
+## Output to Pass to Task Adapter / Contract Packet
 
-공통 조사 phase가 끝나면 최소한 아래를 다음 단계로 전달한다.
+Once the common research phase is complete, pass at least the following to the next stage:
 
-- 공식 문서 기반 권장 패턴 목록
-- 1차 근거 소스 목록 (공식 문서 출처)
-- 최신성 확인 정보
-- 실패 모드 또는 예외 케이스
-- Anti/Good 직접 사례 후보
-- 현재 프로젝트와 공식 기준이 다른 항목 (해당 시)
-- 현재 프로젝트에서만 통하는 local evidence와 공통 규칙 후보의 분리 메모
-- contract packet에 기록해야 할 스택/라이브러리/미확정 항목
+- List of recommended patterns based on official documentation
+- List of primary evidence sources (official documentation references)
+- Recency verification information
+- Failure modes or exception cases
+- Anti/Good direct example candidates
+- Items where the current project differs from official standards (if applicable)
+- Separation notes distinguishing local evidence valid only for the current project from portable core rule candidates
+- Stack/library/unconfirmed items to record in the contract packet
 
-## 실패 신호
+## Failure Signals
 
-- 검색 결과를 한 번만 보고 바로 규칙을 확정한다.
-- 1차 근거가 하나도 없는 상태에서 하네스 문장을 쓴다.
-- 최신성이 중요한 규칙에 날짜나 버전 정보가 없다.
-- 직접 예시를 만들 근거가 없는데도 예시 문장을 단정적으로 작성한다.
-- 반대 근거나 제한 사항을 전혀 검토하지 않는다.
+- Reviewing search results only once and immediately finalizing rules.
+- Writing harness statements with zero primary evidence.
+- Missing date or version information for rules where recency matters.
+- Writing example statements definitively without evidence to support them.
+- Not reviewing any counter-evidence or limitations at all.

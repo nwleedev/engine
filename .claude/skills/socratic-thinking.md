@@ -1,115 +1,115 @@
 ---
 name: socratic-thinking
-description: "소크라테스적 사고 원칙. 탐색 우선, 단일 질문 규율, 가정 검증, 범위 고정, 인라인 검증-수리 루프를 적용하는 인지 프레임워크. plan-readiness-checker가 참조하며, 사용자도 직접 호출 가능."
+description: "Socratic thinking principles. A cognitive framework applying explore-first, single-question discipline, assumption probing, closed scope, and inline verify-evaluate-repair loops. Referenced by plan-readiness-checker; also user-invocable."
 user-invocable: true
 ---
 
 # Socratic Thinking Principles
 
-소크라테스적 사고를 AI 작업 워크플로우에 적용하는 인지 원칙이다. "모름을 인식하고, 탐색하고, 가장 중요한 질문 하나만 묻는다."
+Cognitive principles applying Socratic thinking to AI work workflows. "Recognize what you don't know, explore, and ask only the single most important question."
 
-출처: [socrates-protocol](https://github.com/jiyeongjun/socrates-protocol) 핵심 원칙을 하네스 아키텍처에 적응.
-
----
-
-## 1. 탐색 우선 (Explore Before Asking)
-
-사용자에게 질문하기 전에, 기존 아티팩트에서 답을 먼저 찾는다.
-
-절차:
-1. Glob/Grep/Read로 관련 코드, 설정, 테스트 탐색
-2. git log로 변경 이력과 커밋 메시지에서 맥락 파악
-3. 기존 플랜, 세션 기록, 하네스 스킬에서 단서 확인
-4. 탐색으로 해결되면 질문 없이 진행. 해결 불가능할 때만 질문
-
-핵심: **아티팩트 복구가 사용자 질문보다 항상 우선한다.**
+Source: [socrates-protocol](https://github.com/jiyeongjun/socrates-protocol) core principles adapted to harness architecture.
 
 ---
 
-## 2. 단일 질문 규율 (One Load-Bearing Question)
+## 1. Explore Before Asking
 
-질문이 필요하면 구현 방향을 가장 크게 바꾸는 질문 **하나만** 묻고 중단한다.
+Before asking the user, first search for answers in existing artifacts.
 
-규칙:
-- 턴당 최대 1개 질문
-- 2-3개 구체적 선택지와 각각의 트레이드오프를 제시
-- 질문 후 가정으로 진행하지 않고 **즉시 중단**하여 답을 기다림
-- 추가 질문이 있으면 "후속 질문"으로 나열하되, 현재 질문의 답 이후에 진행
+Procedure:
+1. Explore related code, config, and tests via Glob/Grep/Read
+2. Understand context from change history and commit messages via git log
+3. Check for clues in existing plans, session records, and harness skills
+4. If exploration resolves the issue, proceed without asking. Ask only when resolution is impossible
 
-안티패턴: 3-5개 질문을 번호 목록으로 한꺼번에 던지는 것.
-
----
-
-## 3. 가정 검증 (Assumption Probing)
-
-구현 접근법을 확정하기 전에 스스로 묻는다: **"이 접근이 틀릴 조건은?"**
-
-절차:
-1. 현재 접근법의 가정을 나열한다
-2. 가장 위험한 가정(틀릴 경우 전체 접근을 뒤엎는 것)을 식별한다
-3. 위험한 가정부터 검증한다 (코드를 읽거나, 테스트를 실행하거나, 제약을 확인)
-4. 검증 불가능한 가정은 플랜에 명시적으로 기록한다
-
-핵심: 확신이 아니라 **반증 가능성**에 집중한다.
+Key: **Artifact recovery always takes priority over asking the user.**
 
 ---
 
-## 4. 범위 고정 (Closed Scope Default)
+## 2. One Load-Bearing Question
 
-요청된 것만 구현한다. 미요청 기능은 추가하지 않는다.
+When a question is needed, ask **only one** question that most significantly changes the implementation direction, then stop.
 
-규칙:
-- 범위 확장 신호 감지: "겸사겸사", "완전성을 위해", "이왕이면", "while we're at it"
-- 이런 신호를 발견하면 현재 작업과 분리하여 별도로 제안
-- 관련 개선을 발견해도 현재 작업을 먼저 완료한 뒤 별도 제안
-- 범위 확장은 **명시적 사용자 승인** 필요
+Rules:
+- Maximum 1 question per turn
+- Present 2-3 specific options with trade-offs for each
+- After asking, do not proceed with assumptions — **stop immediately** and wait for the answer
+- If there are additional questions, list them as "follow-up questions" but proceed only after the current question is answered
 
-안티패턴: 버그 수정 중에 주변 코드를 리팩토링하거나 타입 추가.
-
----
-
-## 5. 인라인 검증 루프 (Verify-Evaluate-Repair)
-
-구현 후 현재 턴 안에서 검증-평가-수리를 완결한다.
-
-루프:
-1. **검증**: 최협 체크 실행 (타입 체크, 단일 테스트, 린트 등)
-2. **평가**: 결과가 플랜의 성공 기준을 충족하는가?
-3. **수리**: 실패 시 원인 파악 후 1회 수리 시도
-4. **재검증**: 수리 후 동일 체크 재실행
-
-상한: 수리는 **최대 1회**. 재수리가 필요하면 실패를 보고하고 중단한다.
-
-핵심: 검증을 사후 리뷰(work-reviewer)에만 의존하지 않고, **구현 중에** 수행한다.
+Anti-pattern: Dumping 3-5 questions as a numbered list all at once.
 
 ---
 
-## 6. 보호 표면 인식 (Protected Surface Awareness)
+## 3. Assumption Probing
 
-다음 표면에 닿는 변경은 플랜에서 추가 주의를 요구한다:
+Before finalizing an implementation approach, ask yourself: **"Under what conditions would this approach be wrong?"**
 
-- 공개 API 시그니처
-- 데이터베이스 스키마 / 마이그레이션
-- 인증 / 인가
-- 과금 / 결제
-- 배포 설정
+Procedure:
+1. List the assumptions of the current approach
+2. Identify the most dangerous assumption (one that would overturn the entire approach if wrong)
+3. Verify the most dangerous assumption first (read code, run tests, or check constraints)
+4. Explicitly record unverifiable assumptions in the plan
 
-이 표면을 변경할 때:
-- 플랜에 **무엇이 변경되는지** 명시
-- **롤백 전략** 포함
-- 침묵하는 마이그레이션 전략 선택 금지
-
-별도 에이전트는 불필요. plan-readiness-checker가 준비 상태 검사 시 이 항목을 확인한다.
+Key: Focus on **falsifiability**, not certainty.
 
 ---
 
-## 적용 시점
+## 4. Closed Scope Default
 
-| 원칙 | 주요 적용 단계 |
-|------|--------------|
-| 탐색 우선 | 계획 단계 (질문 전) |
-| 단일 질문 | 계획 단계 (모호성 해소) |
-| 가정 검증 | 계획 단계 (접근법 확정 전) |
-| 범위 고정 | 전 단계 |
-| 인라인 검증 | 구현 단계 |
-| 보호 표면 | 계획 단계 (플랜 작성 시) |
+Implement only what was requested. Do not add unrequested features.
+
+Rules:
+- Detect scope expansion signals: "while we're at it", "for completeness", "might as well"
+- When these signals are detected, separate from the current task and suggest separately
+- Even if related improvements are discovered, complete the current task first then suggest separately
+- Scope expansion requires **explicit user approval**
+
+Anti-pattern: Refactoring surrounding code or adding types while fixing a bug.
+
+---
+
+## 5. Inline Verify-Evaluate-Repair Loop
+
+After implementation, complete the verify-evaluate-repair cycle within the current turn.
+
+Loop:
+1. **Verify**: Run the narrowest check (type check, single test, lint, etc.)
+2. **Evaluate**: Does the result meet the plan's success criteria?
+3. **Repair**: On failure, identify the cause and attempt 1 repair
+4. **Re-verify**: Re-run the same check after repair
+
+Limit: **Maximum 1 repair**. If re-repair is needed, report the failure and stop.
+
+Key: Do not rely solely on post-review (work-reviewer) for verification — perform it **during implementation**.
+
+---
+
+## 6. Protected Surface Awareness
+
+Changes touching the following surfaces require extra care in the plan:
+
+- Public API signatures
+- Database schema / migrations
+- Authentication / authorization
+- Billing / payment
+- Deployment configuration
+
+When changing these surfaces:
+- Specify **what is being changed** in the plan
+- Include a **rollback strategy**
+- Do not choose silent migration strategies
+
+No separate agent needed. The plan-readiness-checker verifies these items during readiness checks.
+
+---
+
+## Application Timing
+
+| Principle | Primary Application Stage |
+|-----------|--------------------------|
+| Explore Before Asking | Planning stage (before questions) |
+| One Load-Bearing Question | Planning stage (ambiguity resolution) |
+| Assumption Probing | Planning stage (before finalizing approach) |
+| Closed Scope | All stages |
+| Inline Verify-Evaluate-Repair | Implementation stage |
+| Protected Surface Awareness | Planning stage (when writing plans) |

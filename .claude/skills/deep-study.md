@@ -6,77 +6,77 @@ user-invocable: true
 
 # Deep Study
 
-사용자가 특정 도메인에 대한 지식이 없을 때, 밑바닥부터 체계적으로 학습할 수 있도록 강의를 진행하는 스킬이다.
+A skill for conducting systematic lectures from the ground up when the user lacks knowledge in a specific domain.
 
-## 언제 사용하는가
+## When to Use
 
-- 사용자가 "이 분야를 모른다", "처음부터 배우고 싶다"고 말할 때
-- 새로운 프레임워크, 라이브러리, 아키텍처 패턴을 학습해야 할 때
-- 프로젝트 도메인(의료, 금융, 물류 등)의 업무 지식이 필요할 때
-- 하네스 스킬이 있지만 그 내용을 이해하지 못할 때
+- When the user says "I don't know this area" or "I want to learn from scratch"
+- When learning a new framework, library, or architecture pattern
+- When domain expertise is needed (healthcare, finance, logistics, etc.)
+- When a harness skill exists but the user doesn't understand its content
 
-## 학습 절차
+## Learning Procedure
 
-### Phase 1: 진단 (Assessment)
+### Phase 1: Assessment
 
-학습을 시작하기 전에 사용자의 현재 수준을 파악한다.
+Assess the user's current level before starting.
 
-1. 도메인의 핵심 개념 5가지를 나열하고, 각각에 대해 사용자가 아는 정도를 물어본다.
-2. 관련 경험을 물어본다 (유사 도메인 경험, 실무 경험, 학습 경험).
-3. 학습 목표를 확인한다 (개발에 필요한 수준? 의사결정 수준? 전문가 수준?).
-4. 진단 결과를 바탕으로 학습 수준을 판정한다:
-   - **입문**: 도메인 용어도 모름 → 용어와 기본 개념부터
-   - **초급**: 용어는 알지만 관계를 모름 → 구조와 흐름부터
-   - **중급**: 구조는 알지만 실무 적용이 약함 → 패턴과 사례부터
-   - **보강**: 대부분 알지만 특정 영역이 약함 → 약점 집중
+1. List 5 core concepts of the domain and ask the user's familiarity with each.
+2. Ask about related experience (similar domain experience, professional experience, prior learning).
+3. Confirm learning objectives (development-level? decision-making level? expert level?).
+4. Based on assessment results, determine the learning level:
+   - **Novice**: Doesn't know domain terminology -> start with terms and basic concepts
+   - **Beginner**: Knows terms but not relationships -> start with structure and flow
+   - **Intermediate**: Knows structure but weak in practical application -> start with patterns and case studies
+   - **Reinforcement**: Knows most things but weak in specific areas -> focus on weaknesses
 
-### Phase 2: 커리큘럼 설계
+### Phase 2: Curriculum Design
 
-진단 결과를 바탕으로 학습 계획을 수립한다.
+Create a learning plan based on assessment results.
 
-1. **학습 단위(Unit)** 목록을 만든다 (최소 3개, 최대 10개).
-2. 각 Unit에 포함할 내용:
-   - 핵심 개념 (1-3개)
-   - 학습 목표 (이 Unit을 끝내면 무엇을 할 수 있는가)
-   - 선행 조건 (이전 Unit과의 관계)
-3. 학습 순서를 정한다 (의존성 기반).
-4. 사용자에게 커리큘럼을 제시하고 조정한다.
+1. Create a list of **Units** (minimum 3, maximum 10).
+2. Each Unit includes:
+   - Core concepts (1-3)
+   - Learning objectives (what the user can do after completing this Unit)
+   - Prerequisites (relationship to previous Units)
+3. Determine learning order (dependency-based).
+4. Present the curriculum to the user and adjust.
 
-### Phase 3: 강의 진행
+### Phase 3: Lecture Delivery
 
-각 Unit을 다음 구조로 진행한다.
+Conduct each Unit with the following structure:
 
-1. **도입**: 이 Unit이 왜 중요한지, 실제 어디에 쓰이는지 설명.
-2. **핵심 개념 설명**: 비유, 다이어그램, 실제 사례로 설명. 사용자가 이미 아는 개념과 연결.
-3. **예시**: 구체적인 코드/시나리오로 개념을 보여줌.
-4. **이해도 확인**: 개념을 자기 말로 설명해보라고 요청. 또는 간단한 퀴즈.
-5. **실습 (선택)**: 프로젝트 코드에서 해당 개념이 적용된 부분을 찾아보기.
-6. **요약**: Unit의 핵심 내용을 3줄로 정리.
+1. **Introduction**: Explain why this Unit matters and where it's used in practice.
+2. **Core Concept Explanation**: Explain using analogies, diagrams, and real-world examples. Connect to concepts the user already knows.
+3. **Examples**: Demonstrate concepts with specific code/scenarios.
+4. **Comprehension Check**: Ask the user to explain concepts in their own words. Or a short quiz.
+5. **Practice (optional)**: Find parts of the project code where these concepts are applied.
+6. **Summary**: Summarize the Unit's key content in 3 lines.
 
-### Phase 4: 평가 및 진도 기록
+### Phase 4: Evaluation and Progress Recording
 
-각 Unit 완료 후:
-1. 이해도를 3단계로 자가 평가하도록 요청 (이해함 / 대략 이해 / 다시 필요).
-2. 평가 결과를 에이전트 메모리에 기록한다.
-3. 다시 필요한 Unit은 다음 세션에서 복습 대상으로 표시한다.
+After each Unit completion:
+1. Ask for self-assessment on a 3-level scale (Understood / Roughly understood / Need review).
+2. Record evaluation results in agent memory.
+3. Mark Units needing review as review targets for the next session.
 
-## 교수법 원칙
+## Teaching Principles
 
-- **구체적 → 추상적**: 예시를 먼저 보여주고, 일반 원칙을 도출한다.
-- **연결 학습**: 사용자가 이미 아는 것과 새로운 것을 연결한다.
-- **능동 참여**: 일방적 설명보다 질문과 대화를 우선한다.
-- **적정 깊이**: 학습 목표에 필요한 깊이만 다룬다. 과도한 세부사항은 피한다.
-- **실패 허용**: 틀린 답에 대해 왜 틀렸는지 설명하고, 올바른 사고 과정을 안내한다.
+- **Concrete -> Abstract**: Show examples first, then derive general principles.
+- **Connected Learning**: Connect new knowledge to what the user already knows.
+- **Active Participation**: Prioritize questions and dialogue over one-way explanations.
+- **Appropriate Depth**: Cover only the depth needed for learning objectives. Avoid excessive detail.
+- **Failure Tolerance**: Explain why wrong answers are wrong and guide correct thinking processes.
 
-## 도메인 하네스와의 연동
+## Domain Harness Integration
 
-해당 도메인의 하네스 스킬(`.claude/skills/harness-*.md`)이 있으면 커리큘럼의 기반 자료로 활용한다. 하네스가 없으면 학습 진행 후 harness-engine으로 새 하네스 생성을 제안할 수 있다.
+If a harness skill for the domain (`.claude/skills/harness-*.md`) exists, use it as curriculum foundation material. If no harness exists, suggest creating a new harness via harness-engine after learning has progressed.
 
-구체적인 탐색/로드 절차는 `.claude/agents/domain-professor/AGENT.md`에 정의되어 있다.
+The specific discovery/loading procedure is defined in the domain-professor agent.
 
-## 금지
+## Prohibitions
 
-- 사용자의 질문 없이 다음 Unit으로 넘어가지 않는다.
-- 이해도 확인 없이 "다 이해한 것으로 간주"하지 않는다.
-- 학습 목표와 무관한 심화 내용을 강요하지 않는다.
-- 출처 없는 주장을 사실로 가르치지 않는다.
+- Do not proceed to the next Unit without the user's confirmation.
+- Do not assume "everything is understood" without a comprehension check.
+- Do not force advanced content unrelated to learning objectives.
+- Do not teach unsourced claims as facts.
