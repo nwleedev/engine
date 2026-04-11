@@ -259,7 +259,7 @@ Work information:
 - coverage_contract: {coverage_contract content}
 - user_decisions: {user-confirmed decisions}
 - existing_harness_path: {existing harness path or "none"}
-- session_path: {session directory path}
+- session_path: {resolved literal path — main agent must resolve before dispatch}
 - stack: {stack info or "N/A"}
 - stack_reference_path: {references/stacks/<stack>.md or "none"}
 - stack_required_checks: {stack required checks reflected in contract packet}
@@ -271,6 +271,15 @@ Work information:
 - splitting_strategy: {concern-group | consolidated | per-library}
 - target_files: [{harness-<domain>-<name1>.md: content summary}, {harness-<domain>-<name2>.md: content summary}]
 ```
+
+### session_path Rules
+
+The main agent must fill in `session_path` before dispatching the sub-agent.
+
+1. If the session directory path is known from `## Session State` context (e.g., file paths in Snapshots containing `.claude/sessions/<uuid>/`), use it
+2. If the session directory path is unknown, use `temps/<date>/<scope>/` instead (per project convention)
+3. Do NOT generate random IDs with `uuidgen`, `mktemp`, `$RANDOM`, or similar — this creates orphan directories that the Stop hook cannot manage
+4. Do NOT use `ls -td .claude/sessions/*/` to guess — in concurrent sessions it may return a different session's directory
 
 ### Sub-Agent Result Processing
 
@@ -315,6 +324,7 @@ Read only the harness document at the following path and perform validation.
 Harness path: {worktree_path}/.claude/skills/harness-{domain}-{name}.md
 Validation criteria: .claude/skills/harness-engine/references/VALIDATION.md
 Temporary file rules: Record only in temps/ under session_path. /tmp usage prohibited.
+session_path: {resolved literal path — main agent must resolve before dispatch}
 Common research phase: {.claude/skills/harness-engine/references/common/RESEARCH_PHASE.md}
 Task adapter: {adapter_path or "none"}
 Project contract packet: {contract_packet_path}
@@ -390,6 +400,7 @@ Sub-agents do not update session files. The main agent handles:
 
 ## Prohibitions
 
+- Generating random session IDs (`uuidgen`, `mktemp`, `$RANDOM`) — creates orphan directories the Stop hook cannot manage
 - Creating new directories without `task_type` determination
 - Leaving final outputs only in `temps/` and terminating
 - Passing unresolved matters to sub-agent before user confirmation
