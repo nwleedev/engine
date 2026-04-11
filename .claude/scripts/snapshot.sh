@@ -94,17 +94,17 @@ if [ -n "$TRANSCRIPT_PATH" ] && [ -f "$TRANSCRIPT_PATH" ]; then
     ERRORS="${ERROR_COUNT} tool error(s)"
   fi
 
-  # 4. Turn summary: .turn-summary 우선, 없으면 transcript에서 추출
+  # 4. Turn summary: .turn-summary 우선 (에이전트 훅 또는 메인 세션이 작성), 없으면 최소 폴백
   TURN_SUMMARY_FILE="$SESSION_DIR/.turn-summary"
   if [ -f "$TURN_SUMMARY_FILE" ] && [ -s "$TURN_SUMMARY_FILE" ]; then
     TURN_SUMMARY=$(head -c 4000 "$TURN_SUMMARY_FILE")
     > "$TURN_SUMMARY_FILE"
   else
-    # 폴백: 마지막 assistant text 블록들 (결론부분만 — tail로 끝부분 추출)
+    # 최소 폴백: 마지막 assistant text 5줄 (에이전트 훅이 실패한 경우)
     TURN_SUMMARY=$(jq -r '
       select(.type == "assistant") | .message.content[]? |
       select(.type == "text") | .text
-    ' "$RECENT_CACHE" 2>/dev/null | tail -40 | head -c 4000)
+    ' "$RECENT_CACHE" 2>/dev/null | tail -5 | head -c 1000)
   fi
 
   rm -f "$RECENT_CACHE"
