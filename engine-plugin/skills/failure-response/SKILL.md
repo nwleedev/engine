@@ -1,83 +1,83 @@
 ---
 name: failure-response
-description: "오류, 테스트 실패, 빌드 실패, 타입 오류, 런타임 예외, blocked 상태, 문제 해결, 에러 대응 — 실패 발생 시 대응 규칙. Use when encountering errors, test failures, or blocked states."
+description: "Response rules for failures — errors, test failures, build failures, type errors, runtime exceptions, blocked states, and problem resolution. Use when encountering errors, test failures, or blocked states."
 user-invocable: true
 ---
 
 # Failure Response Rules
 
-작업 중 오류, 테스트 실패, 빌드 실패, 타입 오류, 런타임 예외가 발생하면 먼저 **재현 조건과 직접 원인**을 식별한다.
-직접 원인을 해결하지 않은 상태에서 우회 구현 금지, 기능 비활성화 금지, 요구사항 해석 변경 금지, 목표 축소 금지.
+When errors, test failures, build failures, type errors, or runtime exceptions occur during work, first identify the **reproduction conditions and direct cause**.
+Do not implement workarounds, disable functionality, reinterpret requirements, or reduce scope without resolving the direct cause.
 
 ---
 
 ## Failure Response Principles
 
-문제 발생 시 반드시 수행:
-- 실패 증상 기록
-- 재현 절차 기록
-- 직접 원인 또는 가장 가능성 높은 원인 후보 식별
-- 원인별 대응책 비교
+Must perform when a problem occurs:
+- Record failure symptoms
+- Record reproduction steps
+- Identify the direct cause or most likely cause candidates
+- Compare response options per cause
 
-대응책 비교 시 고려:
-- 애플리케이션 목표 유지 여부
-- 테스트 영향
-- 구현 범위 영향
-- 되돌리기 가능성
-- 임시 대응 여부
+Consider when comparing response options:
+- Whether application goals are maintained
+- Test impact
+- Implementation scope impact
+- Reversibility
+- Whether it's a temporary response
 
-금지 행위:
-- 에러를 숨기는 처리만 추가
-- 테스트를 비활성화하여 통과 처리
-- 기능 제거로 실패를 사라지게 만드는 방식
-- 문제를 기록하지 않고 완료 처리
+Prohibited actions:
+- Adding error-hiding handling only
+- Disabling tests to make them pass
+- Making failures disappear by removing features
+- Marking as complete without recording the problem
 
-예외: 외부 서비스 장애, 보안상 즉시 차단이 필요한 상황. 이 경우에도 임시 대응임을 명시하고 후속 작업을 기록.
+Exceptions: External service outages, situations requiring immediate security blocking. Even in these cases, explicitly mark it as a temporary response and record follow-up tasks.
 
-임시 우회 구현을 남길 때는 만료 조건을 명시한다:
-- 형식: `// WORKAROUND: {문제 설명} — {조건} 충족 시 제거`
-- 만료 조건 없는 임시 코드는 영구 기술 부채가 된다.
+When leaving a temporary workaround, specify expiration conditions:
+- Format: `// WORKAROUND: {problem description} — remove when {condition} is met`
+- Temporary code without expiration conditions becomes permanent technical debt.
 
 ---
 
 ## Goal Immutability
 
-애플리케이션 목표와 티켓 목표는 라이브러리/프레임워크/도구 제약 때문에 임의로 변경하지 않는다.
+Application goals and ticket goals must not be arbitrarily changed due to library/framework/tool constraints.
 
-라이브러리 제약 발견 시 처리 순서:
-1. 애플리케이션 목표 재확인
-2. 티켓 목표 재확인
-3. 현재 구현으로 달성 가능 여부 검토
-4. 대체 구현 조사 (설정 변경, 다른 라이브러리, 자체 구현, 작업 분할)
+When library constraints are discovered, follow this order:
+1. Reconfirm application goals
+2. Reconfirm ticket goals
+3. Evaluate whether the current implementation can achieve them
+4. Investigate alternative implementations (configuration changes, different libraries, custom implementation, task splitting)
 
-목표 변경이 필요한 경우: 직접 변경하지 않고 사용자 검토를 요청한다.
+If goal changes are needed: Do not change directly — request user review.
 
 ---
 
 ## Failure Analysis Recording
 
-문제를 해결했더라도 분석 기록을 반드시 남긴다.
+Even after resolving a problem, always leave an analysis record.
 
-기록 항목: 증상, 재현 절차, 직접 원인/후보, 고려한 대응책, 선택한 대응책, 선택 이유.
-비교 관점: 목표 유지, 테스트 영향, 구현 복잡도, 되돌리기 가능성.
+Record items: symptoms, reproduction steps, direct cause/candidates, considered responses, chosen response, reason for choice.
+Comparison perspectives: goal preservation, test impact, implementation complexity, reversibility.
 
 ---
 
 ## Blocked State Rules
 
-직접 원인을 확인했지만 현재 환경/권한/외부 시스템 제약으로 해결할 수 없으면 **blocked 상태**로 전환한다.
+If the direct cause is identified but cannot be resolved due to current environment/permission/external system constraints, transition to **blocked state**.
 
-blocked 기록: 문제 증상, 직접 원인, 시도한 해결 방법, 해결에 필요한 외부 결정/권한, 후속 작업 여부.
-금지: blocked 사유를 숨기고 완료 처리, 임시 우회만 남기고 원인 미기록.
+Blocked record: problem symptoms, direct cause, attempted solutions, external decisions/permissions needed, follow-up task status.
+Prohibited: hiding the blocked reason and marking as complete, leaving only a temporary workaround without recording the cause.
 
 ---
 
 ## Problem Avoidance Prohibition
 
-문제를 해결하지 못했을 때 허용되지 않는 행동:
-- 원인 해결 없이 구현 방식만 변경
-- 기능 제거로 테스트 통과
-- 요구사항 축소로 완료 처리
-- 문제를 다른 작업으로 넘기고 현재 작업 완료 처리
+Actions not permitted when a problem cannot be resolved:
+- Changing only the implementation approach without resolving the cause
+- Removing features to make tests pass
+- Marking as complete by reducing requirements
+- Passing the problem to another task and marking the current task as complete
 
-해결할 수 없는 경우: **blocked 상태 전환 또는 사용자 검토 요청**.
+When resolution is impossible: **transition to blocked state or request user review**.
