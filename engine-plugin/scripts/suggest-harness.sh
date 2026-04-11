@@ -1,15 +1,15 @@
 #!/bin/bash
-# PostToolUse(Read) hook: 파일 내용 기반 harness 스킬 제안
-# .claude/skills/harness-*.md 프론트매터의 matchPatterns에서 패턴을 직접 로드
-# 외부 설정 파일 불필요 — matchPatterns 없으면 description 키워드로 폴백
-# additionalContext JSON으로 Claude 컨텍스트에 주입
+# PostToolUse(Read) hook: suggest harness skills based on file content
+# Loads patterns directly from matchPatterns in .claude/skills/harness-*.md frontmatter
+# No external config file needed — falls back to description keywords if matchPatterns is absent
+# Injects suggestions into Claude context via additionalContext JSON
 
 INPUT=$(cat)
 FILE_PATH=$(echo "$INPUT" | jq -r '.tool_input.file_path // empty')
 SESSION_ID_VAL=$(echo "$INPUT" | jq -r '.session_id // empty')
 PROJECT_DIR_VAL="${CLAUDE_PROJECT_DIR:-$(echo "$INPUT" | jq -r '.cwd // empty')}"
 
-# 읽기 파일 추적 — snapshot.sh의 mini-snapshot 판단용
+# Track read files — used by snapshot.sh for mini-snapshot decisions
 if [ -n "$SESSION_ID_VAL" ] && [ -n "$PROJECT_DIR_VAL" ] && [ -n "$FILE_PATH" ]; then
   READ_FILE="$PROJECT_DIR_VAL/.claude/sessions/$SESSION_ID_VAL/.read-files"
   mkdir -p "$(dirname "$READ_FILE")"
@@ -18,12 +18,12 @@ if [ -n "$SESSION_ID_VAL" ] && [ -n "$PROJECT_DIR_VAL" ] && [ -n "$FILE_PATH" ];
   fi
 fi
 
-# 파일 존재 확인
+# Check if file exists
 if [ ! -f "$FILE_PATH" ]; then
   exit 0
 fi
 
-# 하네스 스킬 디렉터리 확인
+# Check if harness skills directory exists
 SKILLS_DIR="$PROJECT_DIR_VAL/.claude/skills"
 if [ ! -d "$SKILLS_DIR" ]; then
   exit 0
@@ -32,32 +32,32 @@ fi
 CONTENT=$(head -100 "$FILE_PATH" 2>/dev/null)
 SUGGESTIONS=""
 
-# 각 하네스 스킬 순회
+# Iterate over each harness skill
 for skill_file in "$SKILLS_DIR"/harness-*.md; do
   [ -f "$skill_file" ] || continue
 
   skill_name=$(basename "$skill_file" .md)
 
-  # YAML 프론트매터 추출 (첫 번째 --- 이후 ~ 두 번째 --- 이전)
+  # Extract YAML frontmatter (between first --- and second ---)
   frontmatter=$(sed -n '2,/^---$/p' "$skill_file" | sed '$d')
 
-  # matchPatterns.fileGlob 추출
+  # Extract matchPatterns.fileGlob
   file_glob=$(echo "$frontmatter" | sed -n 's/^  fileGlob: *"\(.*\)"/\1/p' | head -1)
 
-  # fileGlob이 있으면 파일 경로 필터링
+  # Filter by file path if fileGlob is present
   if [ -n "$file_glob" ]; then
     if ! echo "$FILE_PATH" | grep -qE "$file_glob"; then
       continue
     fi
   fi
 
-  # matchPatterns.regex 배열 추출
+  # Extract matchPatterns.regex array
   regexes=$(echo "$frontmatter" | sed -n '/^  regex:/,/^[^ ]/p' | grep '^ *- ' | sed 's/^ *- *"\(.*\)"/\1/' | sed "s/^ *- *'\(.*\)'/\1/" | sed 's/^ *- *//')
 
   matched=false
 
   if [ -n "$regexes" ]; then
-    # matchPatterns.regex로 매칭
+    # Match using matchPatterns.regex
     while IFS= read -r regex; do
       [ -n "$regex" ] || continue
       if echo "$CONTENT" | grep -qE "$regex"; then
@@ -68,7 +68,7 @@ for skill_file in "$SKILLS_DIR"/harness-*.md; do
 $regexes
 EOF_REGEX
   else
-    # matchPatterns 없으면 description에서 키워드 추출하여 폴백
+    # Fallback: extract keywords from description if matchPatterns is absent
     description=$(echo "$frontmatter" | sed -n 's/^description: *//p' | head -1)
     keywords=$(echo "$description" | sed 's/.*— //; s/\. .*//' | tr ',' '\n' | sed 's/^ *//; s/ *$//' | grep -v '^$')
 
@@ -86,21 +86,21 @@ EOF_KW
   fi
 
   if [ "$matched" = true ]; then
-    # label 추출
+    # Extract label
     label=$(echo "$frontmatter" | sed -n 's/^description: *Use when working with \(.*\) —.*/\1/p' | head -1)
     [ -z "$label" ] && label="$skill_name"
-    SUGGESTIONS="${SUGGESTIONS}$(printf '• /%s (%s 감지)\n' "$skill_name" "$label")"
+    SUGGESTIONS="${SUGGESTIONS}$(printf '• /%s (%s detected)\n' "$skill_name" "$label")"
     SUGGESTIONS="${SUGGESTIONS}
 "
   fi
 done
 
-# trailing newline 제거
+# Remove trailing newline
 SUGGESTIONS=$(echo "$SUGGESTIONS" | sed '/^$/d')
 
-# 제안이 있으면 additionalContext로 출력
+# Output suggestions as additionalContext if any were found
 if [ -n "$SUGGESTIONS" ]; then
-  MSG="관련 harness 스킬이 감지되었습니다. 편집 전 해당 스킬을 호출하세요:\n${SUGGESTIONS}\n"
+  MSG="Related harness skills detected. Please invoke the relevant skill before editing:\n${SUGGESTIONS}\n"
   ESCAPED_MSG=$(echo -e "$MSG" | jq -Rs .)
   cat <<EOF
 {

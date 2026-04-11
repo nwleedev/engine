@@ -1,10 +1,10 @@
 #!/bin/bash
-# Stop/PreCompact hook: 자동 세션 스냅샷 생성
-# 3단계: pre-compact(항상), auto(편집 있을 때), mini(읽기만 있을 때)
+# Stop/PreCompact hook: automatic session snapshot creation
+# 3 tiers: pre-compact (always), auto (when edits exist), mini (read-only turns)
 
 INPUT=$(cat)
 
-# 무한 루프 방지: 이미 Stop 훅이 활성화된 상태면 즉시 종료
+# Prevent infinite loop: exit immediately if Stop hook is already active
 STOP_ACTIVE=$(echo "$INPUT" | jq -r '.stop_hook_active // false')
 if [ "$STOP_ACTIVE" = "true" ]; then
   exit 0
@@ -13,14 +13,14 @@ fi
 SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // empty')
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(echo "$INPUT" | jq -r '.cwd // empty')}"
 
-# SESSION_ID 미설정 시 종료
+# Exit if SESSION_ID is not set
 if [ -z "$SESSION_ID" ] || [ -z "$PROJECT_DIR" ]; then
   exit 0
 fi
 
 SESSION_DIR="$PROJECT_DIR/.claude/sessions/$SESSION_ID"
 
-# 세션 디렉터리 없으면 생성
+# Create session directory if it doesn't exist
 if [ ! -d "$SESSION_DIR" ]; then
   mkdir -p "$SESSION_DIR/contexts" "$SESSION_DIR/notes"
 fi
@@ -38,18 +38,18 @@ if [ -f "$READ_FILES" ] && [ -s "$READ_FILES" ]; then
   HAS_READS=true
 fi
 
-# 편집도 읽기도 없으면 건너뛰기 (단순 질문/답변 턴)
-# --pre-compact이면 무조건 생성
+# Skip if no edits and no reads (simple Q&A turn)
+# Always create snapshot for --pre-compact
 if [ "$1" != "--pre-compact" ] && [ "$HAS_EDITS" = false ] && [ "$HAS_READS" = false ]; then
   exit 0
 fi
 
-# 스냅샷 데이터 수집
+# Collect snapshot data
 TIMESTAMP=$(date +"%Y-%m-%d %H:%M")
 DATE_FILE=$(date +"%Y%m%d-%H%M")
 TOOL_CALLS=$(echo "$INPUT" | jq -r '.tool_calls_made // 0')
 
-# === Transcript 구조화 추출 ===
+# === Structured transcript extraction ===
 TRANSCRIPT_PATH=$(echo "$INPUT" | jq -r '.transcript_path // empty')
 
 TOOLS_USED=""
@@ -58,11 +58,11 @@ ERRORS=""
 TURN_SUMMARY=""
 
 if [ -n "$TRANSCRIPT_PATH" ] && [ -f "$TRANSCRIPT_PATH" ]; then
-  # 최근 메시지 캐시 (한 번만 읽기, 세션 디렉터리 내 생성)
+  # Cache recent messages (read once, created in session directory)
   RECENT_CACHE=$(mktemp "$SESSION_DIR/.cache-XXXXXX")
   tail -500 "$TRANSCRIPT_PATH" > "$RECENT_CACHE"
 
-  # 1. Tools used: tool_use 블록에서 도구명+대상 추출 (Read/Grep/Glob 제외 — Files read에 이미 기록)
+  # 1. Tools used: extract tool names + targets from tool_use blocks (exclude Read/Grep/Glob — already in Files read)
   TOOLS_USED=$(jq -r '
     select(.type == "assistant") | .message.content[]? |
     select(.type == "tool_use") |
@@ -81,26 +81,26 @@ if [ -n "$TRANSCRIPT_PATH" ] && [ -f "$TRANSCRIPT_PATH" ]; then
     end
   ' "$RECENT_CACHE" 2>/dev/null | head -30)
 
-  # 2. Commits: git commit 명령어 추출
+  # 2. Commits: extract git commit commands
   COMMITS=$(jq -r '
     select(.type == "assistant") | .message.content[]? |
     select(.type == "tool_use" and .name == "Bash") |
     .input.command // "" | select(test("git commit")) | .[0:120]
   ' "$RECENT_CACHE" 2>/dev/null | sed 's/^/- /' | head -5)
 
-  # 3. Errors: tool_result 에러 건수 (JSONL이므로 --slurp 필요)
+  # 3. Errors: count tool_result errors (JSONL requires --slurp)
   ERROR_COUNT=$(jq -s '[.[] | select(.type == "user") | .message.content[]? | select(.type == "tool_result" and .is_error == true)] | length' "$RECENT_CACHE" 2>/dev/null)
   if [ "${ERROR_COUNT:-0}" -gt 0 ] 2>/dev/null; then
     ERRORS="${ERROR_COUNT} tool error(s)"
   fi
 
-  # 4. Turn summary: .turn-summary 우선 (에이전트 훅 또는 메인 세션이 작성), 없으면 최소 폴백
+  # 4. Turn summary: prefer .turn-summary (written by agent hook or main session), fallback to minimal extraction
   TURN_SUMMARY_FILE="$SESSION_DIR/.turn-summary"
   if [ -f "$TURN_SUMMARY_FILE" ] && [ -s "$TURN_SUMMARY_FILE" ]; then
     TURN_SUMMARY=$(head -c 4000 "$TURN_SUMMARY_FILE")
     > "$TURN_SUMMARY_FILE"
   else
-    # 최소 폴백: 마지막 assistant text 5줄 (에이전트 훅이 실패한 경우)
+    # Minimal fallback: last 5 lines of assistant text (in case agent hook failed)
     TURN_SUMMARY=$(jq -r '
       select(.type == "assistant") | .message.content[]? |
       select(.type == "text") | .text
@@ -110,46 +110,46 @@ if [ -n "$TRANSCRIPT_PATH" ] && [ -f "$TRANSCRIPT_PATH" ]; then
   rm -f "$RECENT_CACHE"
 fi
 
-# transcript 파싱 실패 시 fallback
+# Fallback if transcript parsing failed
 if [ -z "$TURN_SUMMARY" ]; then
   TURN_SUMMARY=$(echo "$INPUT" | jq -r '.last_assistant_message // empty' | head -c 4000)
 fi
 
-# 수정된 파일 목록
+# Edited files list
 FILES_LIST=""
 if [ -f "$EDITED_FILES" ]; then
   FILES_LIST=$(sort -u "$EDITED_FILES" | head -20)
 fi
 
-# 읽기 파일 목록
+# Read files list
 READS_LIST=""
 if [ -f "$READ_FILES" ]; then
   READS_LIST=$(sort -u "$READ_FILES" | head -20)
 fi
 
-# 플랜 경로
+# Plan path
 PLAN_FILE=""
 if [ -d "$PROJECT_DIR/.claude/plans" ]; then
   PLAN_FILE=$(ls -t "$PROJECT_DIR/.claude/plans/"*.md 2>/dev/null | head -1)
 fi
 
-# 스냅샷 타입 결정
+# Determine snapshot type
 IS_MINI=false
 if [ "$1" = "--pre-compact" ]; then
   TITLE="pre-compact"
 elif [ "$HAS_EDITS" = true ]; then
   TITLE="auto"
 else
-  # 편집 없이 읽기만 있는 턴 → mini-snapshot
+  # Read-only turn with no edits → mini-snapshot
   TITLE="mini"
   IS_MINI=true
 fi
 SNAP_FILE="$SESSION_DIR/contexts/CONTEXT-${DATE_FILE}-${TITLE}.md"
 
-# contexts/ 디렉터리 확인
+# Ensure contexts/ directory exists
 mkdir -p "$SESSION_DIR/contexts"
 
-# 파일 수 집계
+# Count files
 FILE_COUNT=0
 if [ -f "$EDITED_FILES" ]; then
   FILE_COUNT=$(wc -l < "$EDITED_FILES" | tr -d ' ')
@@ -159,7 +159,7 @@ if [ -f "$READ_FILES" ]; then
   READ_COUNT=$(wc -l < "$READ_FILES" | tr -d ' ')
 fi
 
-# 스냅샷 파일 생성
+# Generate snapshot file
 cat > "$SNAP_FILE" << SNAPEOF
 # Snapshot: $TITLE
 Date: $TIMESTAMP
@@ -187,18 +187,18 @@ $PLAN_FILE
 $TURN_SUMMARY
 SNAPEOF
 
-# SESSION.md 생성 또는 업데이트
+# Create or update SESSION.md
 SESSION_MD="$SESSION_DIR/SESSION.md"
 
-# mini-snapshot은 contexts/에만 저장, SESSION.md는 건너뛰기 (80줄 보존)
+# Mini-snapshots are saved only to contexts/, skip SESSION.md (preserve 80-line limit)
 if [ "$IS_MINI" = true ]; then
-  # 파일 목록 초기화 (대칭성 유지)
+  # Reset file lists (maintain symmetry)
   [ -f "$EDITED_FILES" ] && > "$EDITED_FILES"
   [ -f "$READ_FILES" ] && > "$READ_FILES"
   exit 0
 fi
 
-# full/pre-compact: SESSION.md 업데이트
+# full/pre-compact: update SESSION.md
 DONE_LINE=$(echo "$TURN_SUMMARY" | grep -v '^$' | grep -v '^#' | head -1 | head -c 120)
 [ -z "$DONE_LINE" ] && DONE_LINE="(auto-snapshot)"
 
@@ -208,12 +208,12 @@ SUMMARY="### $TIMESTAMP — $TITLE
 - Tool calls: $TOOL_CALLS"
 
 if [ ! -f "$SESSION_MD" ]; then
-  # SESSION.md가 없으면 초기 생성
+  # Create initial SESSION.md
   cat > "$SESSION_MD" << SESSIONEOF
 # Session Log
 
 ## Goal
-(세션 목표 미설정)
+(Session goal not set)
 
 ## Active Decisions
 
@@ -222,24 +222,24 @@ if [ ! -f "$SESSION_MD" ]; then
 $SUMMARY
 SESSIONEOF
 else
-  # 기존 SESSION.md에 스냅샷 prepend
+  # Prepend snapshot to existing SESSION.md
   TEMP_FILE=$(mktemp "$SESSION_DIR/.session-md-XXXXXX")
   {
-    # Goal과 Active Decisions 섹션 유지
+    # Preserve Goal and Active Decisions sections
     sed -n '1,/^## Snapshots/p' "$SESSION_MD"
     echo ""
     echo "$SUMMARY"
     echo ""
-    # 기존 스냅샷 유지
+    # Preserve existing snapshots
     sed -n '/^## Snapshots/,$ { /^## Snapshots/d; p; }' "$SESSION_MD"
   } > "$TEMP_FILE"
 
-  # 80줄 제한
+  # Enforce 80-line limit
   head -80 "$TEMP_FILE" > "$SESSION_MD"
   rm -f "$TEMP_FILE"
 fi
 
-# 파일 목록 초기화
+# Reset file lists
 [ -f "$EDITED_FILES" ] && > "$EDITED_FILES"
 [ -f "$READ_FILES" ] && > "$READ_FILES"
 

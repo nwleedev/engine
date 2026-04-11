@@ -1,5 +1,5 @@
 #!/bin/bash
-# SessionEnd(clear) hook: SESSION.md → contexts/ 백업
+# SessionEnd(clear) hook: backup SESSION.md → contexts/
 
 INPUT=$(cat)
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(echo "$INPUT" | jq -r '.cwd // empty')}"

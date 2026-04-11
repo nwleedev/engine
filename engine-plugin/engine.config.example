@@ -1,23 +1,23 @@
-# .claude/engine.config — 프로젝트별 engine 플러그인 설정
-# 이 파일을 프로젝트의 .claude/engine.config 에 복사하여 사용하세요.
+# .claude/engine.config — per-project engine plugin settings
+# Copy this file to .claude/engine.config in your project to use.
 #
-# 모든 항목은 선택사항이며, 미설정 시 기본값이 적용됩니다.
+# All settings are optional; defaults apply when unset.
 
-# === 리뷰 설정 ===
+# === Review Settings ===
 
-# 리뷰 에이전트 관점 (쉼표 구분, 자유 형식)
-# 예시: "도메인,구조", "도메인,구조,요구사항", "보안,성능"
-# 미설정 시: 기본 multi-review (관점 구분 없이 2명 병렬)
-# REVIEW_AGENTS="도메인,구조"
+# Review agent perspectives (comma-separated, free-form)
+# Examples: "domain,structure", "domain,structure,requirements", "security,performance"
+# When unset: default multi-review (2 parallel reviewers without perspective distinction)
+# REVIEW_AGENTS="domain,structure"
 
-# 리뷰 트리거 임계값 (수정 파일 수 기준)
-# REVIEW_THRESHOLD_SINGLE=2    # 단일 리뷰 시작
-# REVIEW_THRESHOLD_MULTI=5     # 병렬 리뷰 시작
+# Review trigger thresholds (based on number of modified files)
+# REVIEW_THRESHOLD_SINGLE=2    # Start single review
+# REVIEW_THRESHOLD_MULTI=5     # Start parallel review
 
-# === 조사 설정 ===
+# === Research Settings ===
 
-# 조사 에이전트 관점 (쉼표 구분)
-# 설정 시 project-researcher를 관점별로 병렬 호출
-# 예시: "찬성,반대", "장점,단점,리스크"
-# 미설정 시: 단일 에이전트가 양쪽 근거 모두 조사 (기존 방식)
-# RESEARCH_PERSPECTIVES="찬성,반대"
+# Research agent perspectives (comma-separated)
+# When set, project-researcher is invoked in parallel by perspective
+# Examples: "pro,con", "advantages,disadvantages,risks"
+# When unset: single agent investigates both sides (default behavior)
+# RESEARCH_PERSPECTIVES="pro,con"
