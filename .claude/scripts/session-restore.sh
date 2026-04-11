@@ -41,7 +41,7 @@ fi
 
 if [ "$COMPACT_MODE" = true ]; then
   echo ''
-  echo '> If the context lacks a ## Outcome heading, it is an auto-extracted raw summary. Extract only the essentials: what was accomplished, key decisions, and next steps.'
+  echo '> Context restored from snapshot. The Request section shows what the user asked for. The Summary section shows what was accomplished. The Notes section (if present) contains a structured narrative.'
 fi
 
 # Inject engine config (notify Claude at session start if config exists)

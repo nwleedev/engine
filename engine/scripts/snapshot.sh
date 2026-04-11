@@ -47,90 +47,71 @@ fi
 # Collect snapshot data
 TIMESTAMP=$(date +"%Y-%m-%d %H:%M")
 DATE_FILE=$(date +"%Y%m%d-%H%M")
-TOOL_CALLS=$(echo "$INPUT" | jq -r '.tool_calls_made // 0')
-
 # === Structured transcript extraction ===
 TRANSCRIPT_PATH=$(echo "$INPUT" | jq -r '.transcript_path // empty')
 
-TOOLS_USED=""
+USER_REQUEST=""
+KEY_ACTIONS=""
 COMMITS=""
 ERRORS=""
-TURN_SUMMARY=""
 
 if [ -n "$TRANSCRIPT_PATH" ] && [ -f "$TRANSCRIPT_PATH" ]; then
   # Cache recent messages (read once, created in session directory)
   RECENT_CACHE=$(mktemp "$SESSION_DIR/.cache-XXXXXX")
   tail -500 "$TRANSCRIPT_PATH" > "$RECENT_CACHE"
 
-  # 1. Tools used: extract tool names + targets from tool_use blocks (exclude Read/Grep/Glob — already in Files read)
-  TOOLS_USED=$(jq -r '
+  # 1. User request: last human message text (what triggered this turn)
+  USER_REQUEST=$(jq -r '
+    select(.type == "human") | .message.content[]? |
+    select(.type == "text") | .text
+  ' "$RECENT_CACHE" 2>/dev/null | tail -1 | tr '\n' ' ' | head -c 300)
+
+  # 2. Key actions: only significant actions (skip file Read/Edit/Write/Grep/Glob)
+  KEY_ACTIONS=$(jq -r '
     select(.type == "assistant") | .message.content[]? |
     select(.type == "tool_use") |
-    if .name == "Write" or .name == "Edit" then
-      "- \(.name) \(.input.file_path // "")"
-    elif .name == "Bash" then
-      "- Bash: \(.input.command // "" | .[0:80])"
-    elif .name == "Agent" then
+    if .name == "Agent" then
       "- Agent(\(.input.subagent_type // "general")): \(.input.description // "")"
     elif .name == "Skill" then
       "- Skill: \(.input.skill // "")"
-    elif .name == "Read" or .name == "Grep" or .name == "Glob" or .name == "ToolSearch" then
-      empty
-    else
+    elif .name == "EnterPlanMode" or .name == "ExitPlanMode" then
       "- \(.name)"
-    end
-  ' "$RECENT_CACHE" 2>/dev/null | head -30)
+    elif .name == "Bash" then
+      (.input.command // "") as $cmd |
+      if ($cmd | test("^(npm |npx |pnpm |yarn |bun |make |docker |pytest |cargo |go test|git push|git checkout|git merge|git rebase)")) then
+        "- Bash: \($cmd | .[0:80])"
+      else empty end
+    else empty end
+  ' "$RECENT_CACHE" 2>/dev/null | head -15)
 
-  # 2. Commits: extract git commit commands
+  # 3. Commits: extract from tool_result output (session-isolated, not git log)
+  # git commit output format: "[branch hash] commit subject"
   COMMITS=$(jq -r '
-    select(.type == "assistant") | .message.content[]? |
-    select(.type == "tool_use" and .name == "Bash") |
-    .input.command // "" | select(test("git commit")) | .[0:120]
-  ' "$RECENT_CACHE" 2>/dev/null | sed 's/^/- /' | head -5)
+    select(.type == "user") | .message.content[]? |
+    select(.type == "tool_result") |
+    (if .content | type == "string" then .content
+     else (.content[]? | select(.type == "text") | .text) end) // empty
+  ' "$RECENT_CACHE" 2>/dev/null | grep -E '^\[[a-zA-Z0-9/_.-]+ [a-f0-9]{7,}\] ' | sed 's/^\[[^ ]* [a-f0-9]*\] /- /' | head -5)
 
-  # 3. Errors: count tool_result errors (JSONL requires --slurp)
+  # 4. Errors: count tool_result errors
   ERROR_COUNT=$(jq -s '[.[] | select(.type == "user") | .message.content[]? | select(.type == "tool_result" and .is_error == true)] | length' "$RECENT_CACHE" 2>/dev/null)
   if [ "${ERROR_COUNT:-0}" -gt 0 ] 2>/dev/null; then
     ERRORS="${ERROR_COUNT} tool error(s)"
   fi
 
-  # 4. Turn summary: prefer .turn-summary (written by agent hook or main session), fallback to minimal extraction
-  TURN_SUMMARY_FILE="$SESSION_DIR/.turn-summary"
-  if [ -f "$TURN_SUMMARY_FILE" ] && [ -s "$TURN_SUMMARY_FILE" ]; then
-    TURN_SUMMARY=$(head -c 4000 "$TURN_SUMMARY_FILE")
-    > "$TURN_SUMMARY_FILE"
-  else
-    # Minimal fallback: last 5 lines of assistant text (in case agent hook failed)
-    TURN_SUMMARY=$(jq -r '
-      select(.type == "assistant") | .message.content[]? |
-      select(.type == "text") | .text
-    ' "$RECENT_CACHE" 2>/dev/null | tail -5 | head -c 1000)
-  fi
-
   rm -f "$RECENT_CACHE"
 fi
 
-# Fallback if transcript parsing failed
-if [ -z "$TURN_SUMMARY" ]; then
-  TURN_SUMMARY=$(echo "$INPUT" | jq -r '.last_assistant_message // empty' | head -c 4000)
-fi
-
-# Edited files list
+# Edited files list (relative paths)
 FILES_LIST=""
 if [ -f "$EDITED_FILES" ]; then
-  FILES_LIST=$(sort -u "$EDITED_FILES" | head -20)
+  FILES_LIST=$(sort -u "$EDITED_FILES" | sed "s|^$PROJECT_DIR/||" | head -20)
 fi
 
-# Read files list
-READS_LIST=""
-if [ -f "$READ_FILES" ]; then
-  READS_LIST=$(sort -u "$READ_FILES" | head -20)
-fi
-
-# Plan path
+# Plan path (relative)
 PLAN_FILE=""
 if [ -d "$PROJECT_DIR/.claude/plans" ]; then
-  PLAN_FILE=$(ls -t "$PROJECT_DIR/.claude/plans/"*.md 2>/dev/null | head -1)
+  PLAN_FILE=$(ls -t "$PROJECT_DIR/.claude/plans/"*.md 2>/dev/null | head -1 | sed "s|^$PROJECT_DIR/||")
 fi
 
 # Determine snapshot type
@@ -140,7 +121,6 @@ if [ "$1" = "--pre-compact" ]; then
 elif [ "$HAS_EDITS" = true ]; then
   TITLE="auto"
 else
-  # Read-only turn with no edits → mini-snapshot
   TITLE="mini"
   IS_MINI=true
 fi
@@ -149,66 +129,96 @@ SNAP_FILE="$SESSION_DIR/contexts/CONTEXT-${DATE_FILE}-${TITLE}.md"
 # Ensure contexts/ directory exists
 mkdir -p "$SESSION_DIR/contexts"
 
-# Count files
+# Count files (deduplicated, consistent with FILES_LIST)
 FILE_COUNT=0
 if [ -f "$EDITED_FILES" ]; then
-  FILE_COUNT=$(wc -l < "$EDITED_FILES" | tr -d ' ')
+  FILE_COUNT=$(sort -u "$EDITED_FILES" | wc -l | tr -d ' ')
 fi
-READ_COUNT=0
-if [ -f "$READ_FILES" ]; then
-  READ_COUNT=$(wc -l < "$READ_FILES" | tr -d ' ')
+
+# Generate deterministic summary line
+SUMMARY_LINE=""
+[ "$FILE_COUNT" -gt 0 ] && SUMMARY_LINE="Edited ${FILE_COUNT} file(s)"
+if [ -n "$COMMITS" ]; then
+  COMMIT_COUNT=$(echo "$COMMITS" | grep -c '^-')
+  FIRST_COMMIT=$(echo "$COMMITS" | head -1 | sed 's/^- //' | head -c 60)
+  SUMMARY_LINE="${SUMMARY_LINE:+$SUMMARY_LINE. }${COMMIT_COUNT} commit(s): \"${FIRST_COMMIT}\""
+fi
+[ -n "$ERRORS" ] && SUMMARY_LINE="${SUMMARY_LINE:+$SUMMARY_LINE. }$ERRORS"
+[ -z "$SUMMARY_LINE" ] && SUMMARY_LINE="(no file changes)"
+
+# Notes: only include .turn-summary if it has structured ## Outcome heading
+NOTES=""
+TURN_SUMMARY_FILE="$SESSION_DIR/.turn-summary"
+if [ -f "$TURN_SUMMARY_FILE" ] && [ -s "$TURN_SUMMARY_FILE" ]; then
+  if grep -q '^## Outcome' "$TURN_SUMMARY_FILE"; then
+    NOTES=$(head -c 2000 "$TURN_SUMMARY_FILE")
+  fi
+  > "$TURN_SUMMARY_FILE"
 fi
 
 # Generate snapshot file
-cat > "$SNAP_FILE" << SNAPEOF
-# Snapshot: $TITLE
-Date: $TIMESTAMP
-Tool calls: $TOOL_CALLS | Files edited: $FILE_COUNT | Files read: $READ_COUNT
-
-## Files changed
-$FILES_LIST
-
-## Files read
-$READS_LIST
-
-## Tools used
-${TOOLS_USED:-(none)}
-
-## Commits
-${COMMITS:-(none)}
-
-## Errors
-${ERRORS:-(none)}
-
-## Active plan
-$PLAN_FILE
-
-## Turn summary
-$TURN_SUMMARY
-SNAPEOF
+{
+  echo "# Snapshot: $TITLE"
+  echo "Date: $TIMESTAMP"
+  echo ""
+  echo "## Request"
+  if [ -n "$USER_REQUEST" ]; then
+    echo "> $USER_REQUEST"
+  else
+    echo "(no request captured)"
+  fi
+  echo ""
+  echo "## Summary"
+  echo "$SUMMARY_LINE"
+  if [ -n "$KEY_ACTIONS" ]; then
+    echo ""
+    echo "## Key actions"
+    echo "$KEY_ACTIONS"
+  fi
+  echo ""
+  echo "## Files changed"
+  if [ -n "$FILES_LIST" ]; then
+    echo "$FILES_LIST" | sed 's/^/- /'
+  else
+    echo "(none)"
+  fi
+  echo ""
+  echo "## Commits"
+  echo "${COMMITS:-(none)}"
+  echo ""
+  echo "## Errors"
+  echo "${ERRORS:-(none)}"
+  echo ""
+  echo "## Active plan"
+  echo "${PLAN_FILE:-(none)}"
+  if [ -n "$NOTES" ]; then
+    echo ""
+    echo "## Notes"
+    echo "$NOTES"
+  fi
+} > "$SNAP_FILE"
 
 # Create or update SESSION.md
 SESSION_MD="$SESSION_DIR/SESSION.md"
 
 # Mini-snapshots are saved only to contexts/, skip SESSION.md (preserve 80-line limit)
 if [ "$IS_MINI" = true ]; then
-  # Reset file lists (maintain symmetry)
   [ -f "$EDITED_FILES" ] && > "$EDITED_FILES"
   [ -f "$READ_FILES" ] && > "$READ_FILES"
   exit 0
 fi
 
 # full/pre-compact: update SESSION.md
-DONE_LINE=$(echo "$TURN_SUMMARY" | grep -v '^$' | grep -v '^#' | head -1 | head -c 120)
-[ -z "$DONE_LINE" ] && DONE_LINE="(auto-snapshot)"
+REQUEST_LINE=$(echo "$USER_REQUEST" | tr '\n' ' ' | head -c 100)
+[ -z "$REQUEST_LINE" ] && REQUEST_LINE="(no request captured)"
+DONE_LINE=$(echo "$SUMMARY_LINE" | head -c 120)
 
 SUMMARY="### $TIMESTAMP — $TITLE
+- Request: $REQUEST_LINE
 - Done: $DONE_LINE
-- Files ($FILE_COUNT): $(echo "$FILES_LIST" | tr '\n' ', ' | sed 's/,$//')
-- Tool calls: $TOOL_CALLS"
+- Files ($FILE_COUNT): $(echo "$FILES_LIST" | tr '\n' ', ' | sed 's/,$//')"
 
 if [ ! -f "$SESSION_MD" ]; then
-  # Create initial SESSION.md
   cat > "$SESSION_MD" << SESSIONEOF
 # Session Log
 
@@ -222,19 +232,15 @@ if [ ! -f "$SESSION_MD" ]; then
 $SUMMARY
 SESSIONEOF
 else
-  # Prepend snapshot to existing SESSION.md
   TEMP_FILE=$(mktemp "$SESSION_DIR/.session-md-XXXXXX")
   {
-    # Preserve Goal and Active Decisions sections
     sed -n '1,/^## Snapshots/p' "$SESSION_MD"
     echo ""
     echo "$SUMMARY"
     echo ""
-    # Preserve existing snapshots
     sed -n '/^## Snapshots/,$ { /^## Snapshots/d; p; }' "$SESSION_MD"
   } > "$TEMP_FILE"
 
-  # Enforce 80-line limit
   head -80 "$TEMP_FILE" > "$SESSION_MD"
   rm -f "$TEMP_FILE"
 fi
