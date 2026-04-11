@@ -1,18 +1,18 @@
 # Research Validation Reference
 
-조사 하네스가 최소한 아래 질문에 답할 수 있어야 한다.
+A research harness must be able to answer at least the following questions.
 
-## 필수 확인
+## Required Checks
 
-- 1차 근거 소스 우선순위를 설명할 수 있는가
-- 최신성 확인 방식이 문서 안에 드러나는가
-- Claim-to-Evidence Map과 Contradiction Rule이 보이는가
-- 검색 실행 안전 규칙이 드러나는가
-- `미확정` 또는 `추가 조사 필요`로 멈춰야 하는 조건이 보이는가
+- Can you explain the primary evidence source priority
+- Is the recency verification method visible within the document
+- Are the Claim-to-Evidence Map and Contradiction Rule visible
+- Are the search execution safety rules visible
+- Are the conditions under which you should stop with `unconfirmed` or `further research needed` visible
 
-## 구현 시작 전 체크
+## Pre-Implementation Check
 
-- `INDEX.md`, `ARCHITECTURE.md`, `ANTI_PATTERNS.md`, `VALIDATION.md` 묶음이 있는가
-- 중요한 주장마다 근거와 제한 사항을 분리해 남기게 만드는가
-- 블로그 단독 근거, 첫 검색 종료, 결론-근거 혼합을 차단하는가
-- 세션 재개 시 어떤 문서를 먼저 읽어야 하는지 보이는가
+- Do you have the `INDEX.md`, `ARCHITECTURE.md`, `ANTI_PATTERNS.md`, `VALIDATION.md` bundle
+- Does it ensure that evidence and limitations are recorded separately for each important claim
+- Does it block blog-only evidence, first-search termination, and conclusion-evidence mixing
+- Is it visible which documents should be read first when resuming a session

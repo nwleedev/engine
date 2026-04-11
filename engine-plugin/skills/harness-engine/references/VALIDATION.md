@@ -1,166 +1,166 @@
 # Validation
 
-## 목적
+## Purpose
 
-`harness-engine`로 만든 하네스가 실제 작업 전에 참고 가능한 상태인지 검증한다.
+Verify that a harness created by `harness-engine` is in a referenceable state before actual work begins.
 
-## 최소 체크리스트
+## Minimum Checklist
 
-- `task_type` 판정 이유를 설명할 수 있다.
-- 이번 실행이 `project-harness generation`인지 `engine-asset bootstrap`인지 설명할 수 있다.
-- 공통 `research` phase를 적용했는지 설명할 수 있다.
-- 최종 산출물이 `.claude/skills/harness-<domain>-<name>.md`에 있다.
-- 목적, 흐름, 금지 패턴, 완료 기준이 분리되어 있다.
-- 기존 하네스가 있었다면 왜 보강만 했는지 또는 왜 새 하네스를 만들었는지 설명할 수 있다.
-- 기존 하네스가 있었다면 최소 계약 충족 여부를 먼저 판정했고, 미달 시 왜 재사용하지 않았는지 설명할 수 있다.
-- 세션 재개 시 어떤 문서를 먼저 읽어야 하는지 드러난다.
-- 새 `task_type`를 만들었다면 `.claude/skills/use-repo-skills.md`가 있는 경우 도메인 하네스 목록에 등록되어 있다.
-- 최종 문서들에 출처와 설계 근거가 직접 들어 있다.
-- 대표 분류 집합으로 처리했는지, 예외적 새 `task_type`인지 설명할 수 있다.
-- discovery 등록 형식이 현재 `AGENTS.md`(없으면 `CLAUDE.md`)의 텍스트 포맷과 어긋나지 않는다.
-- project contract packet 경로와 revision 상태를 설명할 수 있다.
-- contract packet의 필수 작업 축과 금지 패턴이 산출물에 반영되어 있다.
-- 현재 저장소 전용 예시/경로/검증 이력이 코어 규칙과 분리되어 있다.
-- 핵심 규칙에 도메인 권장 패턴 대비 현재 프로젝트의 보충 분석이 포함되어 있다 (의도적 선택/미충족/해당없음 분류). 소프트웨어 도메인은 아키텍처 패턴, 비소프트웨어 도메인은 방법론/프레임워크를 평가 대상으로 한다.
-- 핵심 규칙이 공식 문서 기반이고, 프로젝트 코드가 유일한 근거인 규칙이 없다.
-- 프로젝트 전용 사항이 기본 규칙과 구분된 보충 항목으로 기재되어 있다.
-- 구조/방법론 평가에서 발견된 미충족 격차가 ANTI_PATTERNS.md와 VALIDATION.md에 반영되어 있다.
-- stack이 감지된 경우 stack required checks가 contract packet에 기록되어 있다.
-- stack이 감지된 경우 stack-specific 규칙이 산출물의 구조/안티패턴/검증에 반영되어 있다.
-- 소프트웨어 도메인이고 스택이 감지된 경우, ANTI_PATTERNS.md의 자동 검출 가능한 안티패턴이 `enforcement/LINT_RULES.md`에 매핑되어 있다.
-- `engine_followup_required` 판정이 적절하고 설명 가능하다.
-- validation artifact의 저장 위치와 최소 형식을 설명할 수 있다.
-- Source Coverage Manifest가 contract packet에 존재하며 UNASSIGNED가 0개이다.
-- 생성된 하네스 파일 목록이 Manifest의 대상 하네스 열과 일치한다.
-- cross-cutting으로 표시된 소스가 실제로 해당 하네스들에 반영되었다.
-- cross-cutting 배포 로그가 세션 notes에 존재한다 (cross-cutting 소스가 있는 경우).
-- Intersection Map이 contract packet에 존재한다 (교차점 없으면 `intersection_map: none`).
-- Potential Intersection Domains가 contract packet에 존재한다 (없으면 `potential_intersections: none`).
-- intersection_directives가 있었다면 authority별 규칙 작성 방식이 준수되었다.
-- 교차점 규칙에 authority에 맞는 참조 마커가 포함되어 있다.
-- Intersection Metadata 섹션이 하네스 파일에 포함되어 있다 (교차점 유무와 무관하게 concept_keywords 포함).
-- Intersection Metadata의 Declared Intersections가 Intersection Map과 일치한다.
+- Can explain the reason for the `task_type` determination.
+- Can explain whether this execution is `project-harness generation` or `engine-asset bootstrap`.
+- Can explain whether the common `research` phase was applied.
+- The final deliverable exists at `.claude/skills/harness-<domain>-<name>.md`.
+- Purpose, flow, prohibited patterns, and completion criteria are separated.
+- If an existing harness existed, can explain why only reinforcement was done or why a new harness was created.
+- If an existing harness existed, minimum contract fulfillment was assessed first, and if unmet, can explain why reuse was not chosen.
+- It is clear which documents to read first when resuming a session.
+- If a new `task_type` was created and `.claude/skills/use-repo-skills.md` exists, it is registered in the domain harness list.
+- Sources and design rationale are directly included in the final documents.
+- Can explain whether handled by the representative classification set or an exceptional new `task_type`.
+- The discovery registration format does not conflict with the current `AGENTS.md` (or `CLAUDE.md` if absent) text format.
+- Can explain the project contract packet path and revision status.
+- The contract packet's required work axes and prohibited patterns are reflected in the deliverables.
+- Repository-specific examples/paths/validation history are separated from core rules.
+- Core rules include supplementary analysis of the current project against domain recommended patterns (classified as intentional choice/unmet/not applicable). Software domains evaluate architecture patterns; non-software domains evaluate methodologies/frameworks.
+- Core rules are based on official documentation, and no rules exist with only project code as the sole basis.
+- Project-specific items are noted as supplementary items distinct from base rules.
+- Unmet gaps discovered in structure/methodology evaluation are reflected in ANTI_PATTERNS.md and VALIDATION.md.
+- If a stack was detected, stack required checks are recorded in the contract packet.
+- If a stack was detected, stack-specific rules are reflected in the deliverable's structure/anti-patterns/validation.
+- For software domains with a detected stack, auto-detectable anti-patterns in ANTI_PATTERNS.md are mapped in `enforcement/LINT_RULES.md`.
+- The `engine_followup_required` determination is appropriate and explainable.
+- Can explain the storage location and minimum format of the validation artifact.
+- The Source Coverage Manifest exists in the contract packet with 0 UNASSIGNED entries.
+- The list of generated harness files matches the target harness column in the Manifest.
+- Sources marked as cross-cutting are actually reflected in the corresponding harnesses.
+- A cross-cutting distribution log exists in session notes (when cross-cutting sources exist).
+- The Intersection Map exists in the contract packet (if no intersections, `intersection_map: none`).
+- Potential Intersection Domains exist in the contract packet (if none, `potential_intersections: none`).
+- If intersection_directives existed, authority-specific rule writing conventions were followed.
+- Intersection rules include reference markers appropriate to their authority.
+- The Intersection Metadata section is included in the harness file (regardless of whether intersections exist, including concept_keywords).
+- Declared Intersections in the Intersection Metadata match the Intersection Map.
 
-## 검증 서브에이전트
+## Validation Sub-Agent
 
-하네스 생성 서브에이전트 완료 후, 독립 인스턴스인 검증 서브에이전트가 이 문서의 기준으로 검증을 수행한다.
+After the harness generation sub-agent completes, an independent instance — the validation sub-agent — performs validation against the criteria in this document.
 
-### 검증 서브에이전트의 역할
+### Role of the Validation Sub-Agent
 
-- 하네스 생성 과정을 모르는 독립 인스턴스로서, 생성된 하네스 문서와 contract packet만 읽고 검증한다.
-- 자기 검증 편향(verification bias)을 방지하기 위해 하네스를 만든 에이전트와 분리된다.
-- worktree에서 생성된 파일은 worktree_path를 통해 접근한다.
+- As an independent instance unaware of the harness generation process, it reads only the generated harness documents and contract packet to validate.
+- It is separated from the agent that created the harness to prevent verification bias.
+- Files generated in a worktree are accessed via worktree_path.
 
-### 검증 절차
+### Validation Procedure
 
-1. 생성된 `.claude/skills/harness-<domain>-<name>.md` 파일을 읽는다.
-2. 공통 `research` phase, task adapter, project contract packet을 함께 읽는다.
-3. 선택형 example pack과 stack seed reference가 제공되었다면 추가로 읽는다.
-4. 아래 "질문" 항목에 대해 하네스와 관련 reference만으로 답할 수 있는지 확인한다.
-5. contract packet 연동 검증 항목을 확인한다.
-6. 가상 작업을 시도하고, 하네스에서 빠진 정보를 파악한다.
-7. 결과를 보고 형식으로 반환한다.
+1. Read the generated `.claude/skills/harness-<domain>-<name>.md` file.
+2. Read the common `research` phase, task adapter, and project contract packet together.
+3. If an optional example pack and stack seed reference were provided, read those additionally.
+4. Verify whether the "questions" items below can be answered using only the harness and related references.
+5. Check the contract packet integration verification items.
+6. Attempt a hypothetical task and identify information missing from the harness.
+7. Return results in the report format.
 
-### 보고 형식
+### Report Format
 
 ```text
-- 누락 항목: [목록]
-- 모호 지점: [목록]
-- 충돌 규칙: [목록]
-- 체크리스트 통과 여부: [항목별]
+- Missing items: [list]
+- Ambiguous points: [list]
+- Conflicting rules: [list]
+- Checklist pass status: [per item]
 - engine follow-up required: [yes/no]
-- 종합 판정: [통과/보강 필요]
-- 구현 시작 허용: [yes/no]
+- Overall determination: [pass/reinforcement needed]
+- Implementation start allowed: [yes/no]
 ```
 
-본 에이전트는 위 결과를 세션 validation artifact로 `.claude/sessions/<session_id>/notes/validation/`에 저장해야 한다.
+The main agent must save the above results as a session validation artifact in `.claude/sessions/<session_id>/notes/validation/`.
 
-## 드라이런 시나리오
+## Dry-Run Scenarios
 
-최소 1개 이상 수행한다.
+Perform at least 1.
 
-1. 기존 하네스 보강 시나리오
-   - 기존 `.claude/skills/harness-<domain>-*`를 읽고 최소 계약 충족 여부를 먼저 판정한 뒤 부족한 섹션만 보강
-2. 새 하네스 생성 시나리오
-   - 기존 하네스로 커버되지 않는 분야에 대해 문서 묶음 생성
+1. Existing harness reinforcement scenario
+   - Read existing `.claude/skills/harness-<domain>-*`, assess minimum contract fulfillment first, then reinforce only insufficient sections
+2. New harness generation scenario
+   - Generate a document bundle for a domain not covered by existing harnesses
 
-## 질문
+## Questions
 
-- 이 하네스만 읽고 다음 작업 절차를 바로 시작할 수 있는가
-- 기존 하네스가 약했더라도 왜 바로 구현하면 안 되는지 하네스만으로 설명할 수 있는가
-- 안티패턴과 권장 절차가 충돌하지 않는가
-- 검증 규칙이 너무 약하거나 과도하지 않은가
-- 세션 압축 이후에도 문서만으로 맥락을 이어갈 수 있는가
-- 다른 프로젝트에 복사할 때 무엇을 그대로 가져가고 무엇을 로컬에서 다시 만들어야 하는지 보이는가
+- Can the next work procedure be started immediately by reading only this harness
+- Even if an existing harness was weak, can the harness alone explain why immediate implementation should not proceed
+- Do anti-patterns and recommended procedures not conflict with each other
+- Are validation rules neither too weak nor excessive
+- Can context be maintained from documents alone even after session compression
+- When copying to another project, is it clear what to carry over as-is and what to recreate locally
 
-## contract packet 연동 검증
+## Contract Packet Integration Verification
 
-contract packet이 로드된 경우 추가로 확인한다.
+When a contract packet is loaded, additionally verify the following.
 
-- contract packet이 존재하는가
-- contract packet의 프로젝트 목표와 작업 범위가 하네스 문서에 반영되어 있는가
-- thin adapter의 최소 Coverage Contract가 모두 하네스 산출물에 반영되었는가
-- contract packet의 필수 축이 모두 하네스 산출물에 반영되었는가
-- thin adapter의 Anti/Good 최소 필수 쌍이 ANTI_PATTERNS.md에 모두 쌍으로 존재하는가
-- contract packet의 프로젝트별 Anti/Good 필수 쌍이 ANTI_PATTERNS.md에 모두 쌍으로 존재하는가
-- thin adapter와 contract packet이 서로 충돌하지 않는가
-- 선택형 example pack이 있다면 adapter/packet 계약과 충돌하지 않는가
-- 코어 규칙과 project adapter / local evidence가 뒤섞이지 않았는가
-- contract packet의 `architecture_pattern_evaluation` 축이 핵심 규칙의 보충 분석에 반영되었는가 (소프트웨어 도메인: 아키텍처 패턴 평가, 비소프트웨어 도메인: 방법론/프레임워크 평가, 의도적 선택 기록)
-- stack이 감지된 경우 stack required checks가 핵심 규칙, 안티패턴, 검증 기준에 반영되었는가
-- stack seed reference가 없더라도 현재 프로젝트 기준 contract packet이 충분히 닫혀 있는가
-- `engine_followup_required`가 적절한가
+- Does the contract packet exist
+- Are the contract packet's project goals and work scope reflected in the harness documents
+- Are all minimum Coverage Contract items from the thin adapter reflected in the harness deliverables
+- Are all required axes from the contract packet reflected in the harness deliverables
+- Do all minimum required Anti/Good pairs from the thin adapter exist as pairs in ANTI_PATTERNS.md
+- Do all project-specific Anti/Good required pairs from the contract packet exist as pairs in ANTI_PATTERNS.md
+- Do the thin adapter and contract packet not conflict with each other
+- If an optional example pack exists, does it not conflict with adapter/packet contracts
+- Are core rules and project adapter / local evidence not intermingled
+- Is the contract packet's `architecture_pattern_evaluation` axis reflected in the core rules' supplementary analysis (software domains: architecture pattern evaluation, non-software domains: methodology/framework evaluation, intentional choice recording)
+- If a stack was detected, are stack required checks reflected in core rules, anti-patterns, and validation criteria
+- Even without a stack seed reference, is the contract packet for the current project sufficiently closed
+- Is `engine_followup_required` appropriate
 
-bootstrap을 사용한 경우 (신규 모드/보충 모드 모두) 추가로 확인한다.
+When bootstrap was used (both new mode and supplement mode), additionally verify the following.
 
-- Role-Goal-Backstory가 구체적으로 정의되었는가 (generic 직책 사용 여부)
-- human-in-the-loop 검증이 수행되었는가 (사용자 확인 기록)
-- 보수적 기본값을 사용한 항목이 명시되어 있는가
-- **보충 모드의 경우**: 기존 어댑터의 방법론(HOW)이 유지되고, 프로젝트 고유 도메인 지식(WHAT)만 보충되었는가
+- Is the Role-Goal-Backstory concretely defined (check for generic job title usage)
+- Was human-in-the-loop verification performed (user confirmation record)
+- Are items using conservative defaults explicitly noted
+- **For supplement mode**: Is the existing adapter's methodology (HOW) preserved, with only project-specific domain knowledge (WHAT) supplemented
 
-## Cross-Harness Validation 체크리스트 (Step 14.5)
+## Cross-Harness Validation Checklist (Step 14.5)
 
-검증 서브에이전트(Step 14) 통과 후, 본 에이전트가 수행하는 교차 하네스 검증이다. 대상 프로젝트에 기존 하네스가 1개 이상 있을 때 적용한다.
+This is the cross-harness validation performed by the main agent after the validation sub-agent (Step 14) passes. Applied when the target project has 1 or more existing harnesses.
 
-- 새 하네스를 프로젝트 내 모든 기존 `harness-*.md`와 대조했는가
-- 선언된 교차점의 authority 배정이 실제 규칙 내용과 일치하는가 (primary인데 전체 규칙/코드 예시 보유, secondary인데 참조 마커 존재)
-- 참조 마커가 필요한 규칙(secondary/shared authority)에 올바른 형식으로 포함되어 있는가
-- 양쪽 하네스의 Declared Intersections가 상호 대칭인가 (A의 `this` = B의 `other`)
-- **미선언 교차점이 새로 발견되지 않았는가** (HARD GATE — 발견 시 Intersection Map 갱신 필요)
-- **contradictory 교차점이 없는가** (HARD GATE — 발견 시 사용자 해결 필요)
-- 기존 하네스에 업데이트가 필요하면 Pending Harness Update 지시서가 생성되었는가
-- 새 하네스의 Intersection Metadata에 concept_keywords, Declared Intersections, Potential Intersections가 모두 포함되어 있는가
+- Was the new harness compared against all existing `harness-*.md` in the project
+- Does the authority assignment of declared intersections match the actual rule content (primary has full rules/code examples, secondary has reference markers)
+- Are reference markers included in the correct format for rules requiring them (secondary/shared authority)
+- Are Declared Intersections in both harnesses mutually symmetric (A's `this` = B's `other`)
+- **Were no undeclared intersections newly discovered** (HARD GATE — if discovered, Intersection Map update required)
+- **Are there no contradictory intersections** (HARD GATE — if discovered, user resolution required)
+- If existing harnesses need updates, was a Pending Harness Update directive generated
+- Does the new harness's Intersection Metadata include concept_keywords, Declared Intersections, and Potential Intersections
 
-## 실패 신호
+## Failure Signals
 
-- 문서가 있는데 적용 시점이 불명확하다.
-- 공통 `research` phase를 거치지 않고 task adapter만 적용했다.
-- 기존 하네스가 있으나 최소 계약 미달인데도 재사용 결정이 내려졌다.
-- contract packet 없이 하네스를 생성하거나 검증했다.
-- 안티패턴만 있고 권장 흐름이 없다.
-- 권장 흐름만 있고 검증 기준이 없다.
-- 최종 산출물이 `temps/`에만 있다.
-- 기존 하네스를 읽지 않고 새 디렉터리를 만들었다.
-- 새 `task_type`를 만들었는데 `.claude/skills/use-repo-skills.md`가 있음에도 도메인 하네스 목록을 함께 갱신하지 않았다.
-- 최종 문서에서 출처를 생략하고 세션 notes/에만 근거를 남겼다.
-- 스킬 파일의 frontmatter(name, description, user-invocable)가 누락되어 있다.
-- thin adapter 최소 Coverage Contract 필수 축이 하네스에 누락되어 있다.
-- contract packet의 프로젝트 필수 축이 하네스에 누락되어 있다.
-- thin adapter 또는 contract packet의 Anti/Good 필수 쌍의 한쪽(Anti만 또는 Good만)이 빠져 있다.
-- 선택형 example pack이 adapter/packet 계약과 충돌한다.
-- 대표 분류인데 adapter가 없었음에도 `engine-asset bootstrap` 경로를 타지 않았다.
-- 핵심 규칙에 공식 기준 대비 프로젝트 보충 분석이 없거나, 현 프로젝트의 현재 상태를 무비판적으로 수용하고 있다.
-- "현재 코드가 이렇게 하고 있다"만을 근거로 규칙을 서술하고, 공식 문서 출처가 없다.
-- 프로젝트 전용 로컬 패턴이 공식 문서 기반 규칙과 혼재되어 구분 없이 기재되어 있다.
-- stack이 감지됐는데 contract packet에 stack required checks가 없거나 산출물에 반영되지 않았다.
-- 검증 결과가 `통과`가 아닌데 구현 티켓이 시작되었다.
-- validation artifact가 저장되지 않았는데 구현 티켓이 시작되었다.
-- 테스트 전략이 구현 후 테스트 정합화로 밀렸는데도 하네스가 차단하지 못했다.
-- 현재 저장소 전용 경로나 예시가 portable core의 필수 규칙처럼 남아 있다.
-- Intersection Map이 contract packet에 없다 (기존 하네스가 있는데도).
-- intersection_directives가 있었는데 authority별 작성 방식이 지켜지지 않았다 (primary인데 축약만 있거나, secondary인데 참조 마커가 없음).
-- Intersection Metadata 섹션이 하네스 파일에 누락되었다.
-- Intersection Metadata의 Declared Intersections와 Intersection Map이 불일치한다.
-- 양쪽 하네스의 Declared Intersections가 비대칭이다 (A의 `this` ≠ B의 `other`).
-- Cross-Harness Validation(Step 14.5)에서 미선언 교차점이 발견됐는데 해결되지 않았다.
-- contradictory 교차점이 해결되지 않은 채 하네스가 생성됐다.
+- Documents exist but the timing for application is unclear.
+- The task adapter was applied without going through the common `research` phase.
+- An existing harness did not meet the minimum contract but a reuse decision was made anyway.
+- A harness was generated or validated without a contract packet.
+- Only anti-patterns exist without recommended flows.
+- Only recommended flows exist without validation criteria.
+- The final deliverable exists only in `temps/`.
+- A new directory was created without reading existing harnesses.
+- A new `task_type` was created but the domain harness list was not updated despite `.claude/skills/use-repo-skills.md` existing.
+- Sources were omitted from the final documents and evidence was left only in session notes/.
+- The skill file's frontmatter (name, description, user-invocable) is missing.
+- Required axes from the thin adapter's minimum Coverage Contract are missing from the harness.
+- Required project axes from the contract packet are missing from the harness.
+- One side (Anti only or Good only) of a required Anti/Good pair from the thin adapter or contract packet is missing.
+- The optional example pack conflicts with adapter/packet contracts.
+- A representative classification had no adapter but did not take the `engine-asset bootstrap` path.
+- Core rules lack supplementary analysis against official standards, or uncritically accept the current project's current state.
+- Rules are described with "the current code does it this way" as the sole basis, without official documentation sources.
+- Project-specific local patterns are mixed with official documentation-based rules without distinction.
+- A stack was detected but the contract packet has no stack required checks or they are not reflected in deliverables.
+- The validation result is not `pass` but an implementation ticket was started.
+- A validation artifact was not saved but an implementation ticket was started.
+- The test strategy was deferred to post-implementation test alignment but the harness failed to block it.
+- Repository-specific paths or examples remain as if they were mandatory rules of the portable core.
+- The Intersection Map is missing from the contract packet (despite existing harnesses).
+- intersection_directives existed but authority-specific writing conventions were not followed (primary has only abbreviations, or secondary lacks reference markers).
+- The Intersection Metadata section is missing from the harness file.
+- Declared Intersections in the Intersection Metadata do not match the Intersection Map.
+- Declared Intersections in both harnesses are asymmetric (A's `this` ≠ B's `other`).
+- An undeclared intersection was discovered in Cross-Harness Validation (Step 14.5) but was not resolved.
+- A contradictory intersection was left unresolved when the harness was generated.

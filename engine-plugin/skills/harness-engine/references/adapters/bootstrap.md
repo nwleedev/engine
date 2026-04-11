@@ -1,149 +1,149 @@
 # Bootstrap Adapter
 
-## 목적
+## Purpose
 
-대표 분류 집합(frontend, research, backend, testing, security, ops)으로 설명되지 않는 미지 도메인에 대해 harness-engine이 어댑터 초안을 생성하는 시작 템플릿이다.
+A starting template for harness-engine to generate an adapter draft for unknown domains that cannot be described by the representative classification set (frontend, research, backend, testing, security, ops).
 
-## 언제 사용하는가
+## When to Use
 
-### 신규 모드 (어댑터 없음)
+### New Mode (No Adapter)
 
-- TASK_INTAKE 판정에서 대표 분류 집합에 해당하지 않을 때
-- 기존 adapters/ 에 해당 도메인 어댑터가 없을 때
-- 사용자가 직접 "새 도메인 하네스가 필요하다"고 선언했을 때
+- When the TASK_INTAKE judgment does not match the representative classification set
+- When no adapter for the domain exists in adapters/
+- When the user explicitly declares "I need a new domain harness"
 
-### 보충 모드 (어댑터 있음 + Coverage 갭)
+### Supplementary Mode (Adapter Exists + Coverage Gap)
 
-- 어댑터가 존재하지만, SKILL.md의 Coverage 갭 체크에서 갭이 감지되었을 때
-- 어댑터는 방법론(HOW)을 제공하지만, 프로젝트 고유 도메인 지식(WHAT)이 부족할 때
-- 예: research 어댑터 + 유튜브 트렌드 조사, frontend 어댑터 + 처음 보는 프레임워크
+- When an adapter exists but a gap is detected in SKILL.md's Coverage gap check
+- When the adapter provides methodology (HOW) but lacks project-specific domain knowledge (WHAT)
+- Example: research adapter + YouTube trend analysis, frontend adapter + an unfamiliar framework
 
-보충 모드에서는 기존 어댑터를 **교체하지 않고**, 부족한 도메인 지식만 보충한다.
+In supplementary mode, the existing adapter is **not replaced**; only the missing domain knowledge is supplemented.
 
-## 제약
+## Constraints
 
-- 완전 자율 어댑터 생성은 현재 어떤 공식 프레임워크도 지원하지 않는다.
-  - 출처: Anthropic Building Effective Agents, CrewAI Crafting Effective Agents
-- 반드시 human-in-the-loop 검증을 포함해야 한다.
-- 이 템플릿으로 생성한 어댑터는 "초안" 상태이며, 실제 사용 후 reflexion 루프를 통해 보강해야 한다.
+- Fully autonomous adapter generation is not supported by any official framework at this time.
+  - Source: Anthropic Building Effective Agents, CrewAI Crafting Effective Agents
+- Human-in-the-loop verification must be included.
+- Adapters generated with this template are in "draft" status and must be augmented through a reflexion loop after actual use.
 
-## 하이브리드 구조에서의 역할 분담
+## Role Division in Hybrid Structure
 
-- **1~3단계 (역할 정의, Coverage 초안, 사용자 검증)**: 본 에이전트가 수행. 사용자 상호작용이 필요하므로 본 에이전트가 직접 처리한다.
-- **4단계 (결과 반영)**: 본 에이전트가 확정한 내용을 하네스 생성 서브에이전트에 전달한다.
-- **5단계 (Reflexion 루프)**: 검증 서브에이전트의 보고를 기반으로 본 에이전트가 판단한다.
+- **Steps 1-3 (role definition, Coverage draft, user verification)**: Performed by the main agent. The main agent handles these directly since user interaction is required.
+- **Step 4 (result reflection)**: The content confirmed by the main agent is passed to the harness generation sub-agent.
+- **Step 5 (Reflexion loop)**: The main agent makes judgments based on the verification sub-agent's report.
 
-## 절차
+## Procedure
 
-### 1단계: 역할 정의 (Role Bootstrapping) — 본 에이전트
+### Step 1: Role Bootstrapping — Main Agent
 
-해당 도메인의 전문가 역할을 구체적으로 정의한다.
+Define the expert role for the domain in specific terms.
 
 ```markdown
-- Role: [도메인]의 [구체적 전문 직책]
-  - 예: "시장 조사 전문 분석가", "UX 리서처", "포트폴리오 투자 전략가"
-  - "Researcher", "Analyst" 같은 generic 직책 금지
-- Goal: [이 하네스로 달성할 outcome]
-  - 예: "조사 결과물이 투자 의사결정에 직접 활용 가능한 수준"
-- Backstory: [이 역할의 전문성과 작업 철학]
-  - 예: "10년간 소비재 시장 조사를 수행한 분석가로, 정량 데이터와 정성 인사이트를 교차 검증하는 것을 원칙으로 한다"
+- Role: [specific expert title] in [domain]
+  - Example: "market research specialist analyst", "UX researcher", "portfolio investment strategist"
+  - Generic titles like "Researcher" or "Analyst" are prohibited
+- Goal: [outcome to achieve with this harness]
+  - Example: "research deliverables are directly usable for investment decision-making"
+- Backstory: [expertise and work philosophy of this role]
+  - Example: "An analyst with 10 years of consumer goods market research who follows the principle of cross-verifying quantitative data with qualitative insights"
 ```
 
-출처: CrewAI Crafting Effective Agents — Role-Goal-Backstory 아키텍처
+Source: CrewAI Crafting Effective Agents — Role-Goal-Backstory architecture
 
-### 2단계: 도메인 Coverage Contract 초안 생성 — 본 에이전트
+### Step 2: Domain Coverage Contract Draft Generation — Main Agent
 
-본 에이전트가 역할에 기반하여 해당 도메인의 필수 Coverage 항목을 초안으로 생성한다.
+The main agent generates a draft of the required Coverage items for the domain based on the role.
 
-필수 포함 항목:
-- 이 도메인에서 반드시 다뤄야 하는 핵심 축 (최소 4개)
-- 이 도메인에서 흔한 실패 모드 (최소 3개)
-- 이 도메인의 1차 근거 소스 (공식 문서, 표준, 학술 자료 등)
-- 이 도메인의 품질 기준 (무엇을 보면 완성이라고 판단하는가)
+Required items:
+- Core axes that must be covered in this domain (minimum 4)
+- Common failure modes in this domain (minimum 3)
+- Primary evidence sources for this domain (official documentation, standards, academic materials, etc.)
+- Quality criteria for this domain (what indicates completion)
 
-#### 비개발 도메인 Coverage Contract 예시
+#### Non-Development Domain Coverage Contract Examples
 
-**시장 조사/경쟁 분석:**
-- 핵심 축: 문제 식별 및 심각도, 시장 규모(TAM/SAM/SOM), 경쟁 솔루션 비교(최소 2개), 사용자 세그먼트, 차별화 전략
-- 실패 모드: 확증 편향(데이터 선별), "사용자 없는 아이디어" 함정, 시장 규모 과대추정
-- 1차 근거 소스: 정부 통계, 업계 보고서, 앱스토어/리뷰 데이터, 실제 사용자 인터뷰
-- 품질 기준: 투자/실행 의사결정에 직접 활용 가능한 수준
+**Market Research/Competitive Analysis:**
+- Core axes: problem identification and severity, market size (TAM/SAM/SOM), competitive solution comparison (minimum 2), user segments, differentiation strategy
+- Failure modes: confirmation bias (data cherry-picking), "idea without users" trap, market size overestimation
+- Primary evidence sources: government statistics, industry reports, app store/review data, actual user interviews
+- Quality criteria: directly usable for investment/execution decision-making
 
-**전략/사업 기획:**
-- 핵심 축: 가치 제안, 수익 모델, 핵심 자원/활동, 고객 관계/채널
-- 실패 모드: 가설 미검증 상태로 실행, 수익 모델과 사용자 가치 괴리, 실현 불가능한 범위
-- 1차 근거 소스: 린 캔버스/비즈니스 모델 캔버스, 동종 업계 사례, 재무 벤치마크
-- 품질 기준: 구체적 실행 단계와 검증 지표가 도출 가능한 수준
+**Strategy/Business Planning:**
+- Core axes: value proposition, revenue model, key resources/activities, customer relationships/channels
+- Failure modes: executing without hypothesis validation, disconnect between revenue model and user value, infeasible scope
+- Primary evidence sources: Lean Canvas/Business Model Canvas, same-industry case studies, financial benchmarks
+- Quality criteria: actionable execution steps and validation metrics can be derived
 
-**미지 도메인 (처음 접하는 업무):**
-- 핵심 축: 도메인 조사로 파악한 해당 분야의 핵심 성공 요소 (최소 4개)
-- 실패 모드: 도메인 전문가 인터뷰 또는 문헌에서 가장 빈번한 실패 사유 (최소 3개)
-- 1차 근거 소스: 해당 분야의 공식 표준, 학술 자료, 업계 리더의 방법론 문서
-- 품질 기준: "이 분야 전문가가 산출물을 보고 실무에 바로 활용할 수 있는가"
+**Unknown Domain (encountering a field for the first time):**
+- Core axes: key success factors identified through domain research (minimum 4)
+- Failure modes: most frequent failure causes from domain expert interviews or literature (minimum 3)
+- Primary evidence sources: official standards, academic materials, and methodology documents from industry leaders in the field
+- Quality criteria: "Can a domain expert look at the deliverable and use it directly in practice?"
 
-### 3단계: 사용자 검증 (Human-in-the-loop) — 본 에이전트
+### Step 3: User Verification (Human-in-the-loop) — Main Agent
 
-본 에이전트가 초안을 사용자에게 제시하고 검증을 요청한다.
+The main agent presents the draft to the user and requests verification.
 
-질문 형식:
+Question format:
 ```markdown
-이 도메인([도메인명])에 대해 다음 Coverage 항목을 확인해주세요.
+Please review the following Coverage items for this domain ([domain name]).
 
-1. 핵심 축: [항목1], [항목2], [항목3], [항목4]
-   - 빠진 항목이 있나요?
-   - 불필요한 항목이 있나요?
+1. Core axes: [item1], [item2], [item3], [item4]
+   - Are any items missing?
+   - Are any items unnecessary?
 
-2. 실패 모드: [모드1], [모드2], [모드3]
-   - 실제로 경험한 실패 사례가 있나요?
+2. Failure modes: [mode1], [mode2], [mode3]
+   - Have you experienced any actual failure cases?
 
-3. 1차 근거 소스: [소스1], [소스2]
-   - 다른 참고 소스가 있나요?
+3. Primary evidence sources: [source1], [source2]
+   - Are there other reference sources?
 
-4. 품질 기준: [기준1], [기준2]
-   - 이 기준으로 충분한가요?
+4. Quality criteria: [criterion1], [criterion2]
+   - Are these criteria sufficient?
 ```
 
-규칙:
-- 사용자가 "모르겠다"고 답한 항목은 에이전트가 해당 도메인의 일반적 기준으로 보수적 기본값을 설정한다.
-- 보수적 기본값을 설정한 경우 그 사실을 어댑터에 명시한다.
+Rules:
+- For items where the user answers "I don't know," the agent sets conservative defaults based on general standards for the domain.
+- When conservative defaults are set, that fact is explicitly noted in the adapter.
 
-### 4단계: 결과 반영 — 서브에이전트에 전달
+### Step 4: Result Reflection — Passed to Sub-Agent
 
-본 에이전트가 1~3단계에서 확정한 내용(Role-Goal-Backstory, Coverage Contract, 사용자 확정 사항)을 하네스 생성 서브에이전트에 전달한다.
+The main agent passes the content confirmed in Steps 1-3 (Role-Goal-Backstory, Coverage Contract, user-confirmed items) to the harness generation sub-agent.
 
-**신규 모드**: 서브에이전트가 하네스 산출물 생성 + `references/adapters/<new_task_type>.md` 저장.
+**New mode**: The sub-agent generates harness deliverables + saves to `references/adapters/<new_task_type>.md`.
 
-**보충 모드**: 서브에이전트가 어댑터 파일을 수정하지 않고, 보충된 도메인 지식을 하네스 산출물(`.claude/skills/harness-<domain>-<name>.md`)에 직접 반영한다. 기존 어댑터의 방법론은 그대로 유지한다.
+**Supplementary mode**: The sub-agent does not modify the adapter file but reflects the supplemented domain knowledge directly in the harness deliverables (`.claude/skills/harness-<domain>-<name>.md`). The existing adapter's methodology is preserved as-is.
 
-신규 모드에서 저장할 때:
+Minimum structure when saving in new mode:
 
-어댑터 파일 최소 구조:
+Adapter file minimum structure:
 ```markdown
-# [도메인명] Adapter
+# [Domain Name] Adapter
 
 ## Role-Goal-Backstory
 ## Coverage Contract
-## 1차 근거 소스
-## Anti/Good 필수 쌍 목록
-## 드라이런 입출력 예시
-## 스택/도구 분기 (해당 시)
-## 보수적 기본값 표시
+## Primary Evidence Sources
+## Anti/Good Required Pair List
+## Dry-Run Input/Output Examples
+## Stack/Tool Branching (when applicable)
+## Conservative Default Annotations
 ```
 
-### 5단계: Reflexion 루프 — 검증 서브에이전트 + 본 에이전트
+### Step 5: Reflexion Loop — Verification Sub-Agent + Main Agent
 
-하네스 생성 서브에이전트 완료 후, 검증 서브에이전트가 독립적으로 검증을 수행한다.
+After the harness generation sub-agent completes, the verification sub-agent independently performs verification.
 
-1. 검증 서브에이전트: 생성된 하네스가 도메인 핵심 축을 모두 커버하는지 검증
-2. 본 에이전트: 검증 보고를 확인하고, 보강 필요 시 사용자에게 보고
-3. 본 에이전트: 어댑터 보강 여부 결정 (Coverage 항목 추가/수정)
+1. Verification sub-agent: verifies that the generated harness covers all domain core axes
+2. Main agent: reviews the verification report and reports to the user if augmentation is needed
+3. Main agent: decides whether to augment the adapter (adding/modifying Coverage items)
 
-출처: Anthropic Skill authoring best practices (Claude A → Claude B 이터레이션)
+Source: Anthropic Skill authoring best practices (Claude A -> Claude B iteration)
 
-## 승격 기준
+## Promotion Criteria
 
-bootstrap으로 생성한 어댑터가 다음 조건을 모두 만족하면 TASK_INTAKE의 대표 분류 집합 승격을 검토한다.
+If an adapter generated via bootstrap meets all of the following conditions, promotion to the TASK_INTAKE representative classification set is considered.
 
-- 3회 이상 실제 작업에서 반복 사용됨
-- 기존 분류로 설명하기 어렵다는 근거가 누적됨
-- 사용자가 승격에 동의함
+- Used in actual work 3 or more times
+- Evidence has accumulated that it is difficult to describe with existing classifications
+- The user agrees to the promotion
