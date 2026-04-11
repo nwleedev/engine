@@ -9,7 +9,7 @@
     {
       "name": "engine",
       "description": "Plan enforcement, quality gates, domain knowledge, and session continuity for Claude Code",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "source": "./engine",
       "category": "development"
     }

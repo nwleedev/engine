@@ -117,3 +117,7 @@ Stop 훅이 이 파일을 컨텍스트 스냅샷에 반영한다. 미작성 시 
 
 - date: 날짜 ('yyyy-MM-dd')
 - scope: 작업의 범위
+
+## Github CLI
+
+- api.github.com HTTP 호출 대신 gh cli 사용을 우선 검토
