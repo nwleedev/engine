@@ -37,6 +37,15 @@ if [ -f "$EDITED_FILES" ]; then
   EDITED_LIST=$(grep -vE '\.claude/(sessions|meta|feeds)/' "$EDITED_FILES" 2>/dev/null | head -20 | tr '\n' ', ' | sed 's/,$//')
 fi
 
+# Load engine config
+ENGINE_CONFIG="$PROJECT_DIR/.claude/engine.config"
+if [ -f "$ENGINE_CONFIG" ]; then
+  # shellcheck source=/dev/null
+  . "$ENGINE_CONFIG"
+fi
+REVIEW_THRESHOLD_SINGLE="${REVIEW_THRESHOLD_SINGLE:-2}"
+REVIEW_THRESHOLD_MULTI="${REVIEW_THRESHOLD_MULTI:-5}"
+
 # 인프라 파일 감지: .json, .yaml, .yml, .sh, .toml, Dockerfile 등 설정 위치
 INFRA_COUNT=0
 if [ -f "$EDITED_FILES" ]; then
@@ -44,22 +53,43 @@ if [ -f "$EDITED_FILES" ]; then
     | grep -cE '\.(json|yaml|yml|sh|toml)$|Dockerfile|settings\.' 2>/dev/null || echo "0")
 fi
 
+# 관점별 리뷰 메시지 생성
+build_review_msg() {
+  local count="$1" list="$2" multi="$3"
+  if [ "$multi" = true ] && [ -n "${REVIEW_AGENTS:-}" ]; then
+    # REVIEW_AGENTS 설정 시: 관점별 병렬 리뷰
+    local agent_lines=""
+    IFS=',' read -r -a PERSPECTIVES <<< "$REVIEW_AGENTS"
+    for P in "${PERSPECTIVES[@]}"; do
+      P=$(echo "$P" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+      agent_lines="${agent_lines}\\n- work-reviewer (관점: ${P})"
+    done
+    echo "${count}개 파일이 수정되었습니다 (${list}). 다음 관점별 병렬 리뷰를 실행하세요:${agent_lines}"
+  elif [ "$multi" = true ]; then
+    echo "${count}개 파일이 수정되었습니다 (${list}). 인프라/대규모 변경 감지: 완료 전 multi-review (2명 병렬 검토)를 실행하세요."
+  else
+    echo "${count}개 파일이 수정되었습니다 (${list}). 완료 전 work-reviewer 에이전트를 실행하세요."
+  fi
+}
+
 # 단계적 리뷰 제안
-if [ "$REVIEW_COUNT" -ge 5 ] || { [ "$REVIEW_COUNT" -ge 2 ] && [ "$INFRA_COUNT" -ge 1 ]; }; then
+if [ "$REVIEW_COUNT" -ge "$REVIEW_THRESHOLD_MULTI" ] || { [ "$REVIEW_COUNT" -ge "$REVIEW_THRESHOLD_SINGLE" ] && [ "$INFRA_COUNT" -ge 1 ]; }; then
+  MSG=$(build_review_msg "$REVIEW_COUNT" "$EDITED_LIST" true)
   cat <<EOF
 {
   "hookSpecificOutput": {
     "hookEventName": "PostToolUse",
-    "additionalContext": "${REVIEW_COUNT}개 파일이 수정되었습니다 (${EDITED_LIST}). 인프라/대규모 변경 감지: 완료 전 multi-review (2명 병렬 검토)를 실행하세요."
+    "additionalContext": "$MSG"
   }
 }
 EOF
-elif [ "$REVIEW_COUNT" -ge 2 ]; then
+elif [ "$REVIEW_COUNT" -ge "$REVIEW_THRESHOLD_SINGLE" ]; then
+  MSG=$(build_review_msg "$REVIEW_COUNT" "$EDITED_LIST" false)
   cat <<EOF
 {
   "hookSpecificOutput": {
     "hookEventName": "PostToolUse",
-    "additionalContext": "${REVIEW_COUNT}개 파일이 수정되었습니다 (${EDITED_LIST}). 완료 전 work-reviewer 에이전트를 실행하세요."
+    "additionalContext": "$MSG"
   }
 }
 EOF

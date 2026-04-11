@@ -51,6 +51,18 @@ skills:
 - 추가 조사가 필요한 항목
 ```
 
+## 관점 모드 (perspective mode)
+
+관점 프롬프트와 함께 호출된 경우:
+1. 지정된 관점에서만 근거를 수집한다.
+2. 반대 관점의 근거는 의도적으로 탐색하지 않는다 (다른 에이전트가 담당).
+3. 보고서 제목에 관점을 명시한다 (예: "## Research Report (관점: 찬성)").
+4. 신뢰도 수준을 관점 내에서만 평가한다.
+5. Counter-evidence / Limitations 섹션은 해당 관점 내의 제한 사항만 기술한다.
+
+관점 프롬프트 없이 호출된 경우:
+- 기존 방식 (양쪽 근거 모두 조사, research-methodology 스킬의 Contradiction Rule 적용).
+
 ## 제한 사항
 
 - 이 에이전트는 **읽기 전용**이다 (disallowedTools로 쓰기 도구 차단).
