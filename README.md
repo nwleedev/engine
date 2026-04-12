@@ -106,6 +106,8 @@ Prerequisites: Claude Code CLI. Standalone install additionally requires curl, t
 | Edit tracking | After file edit | Tracks modified file count; 2-4 single / 5+ parallel review |
 | Session snapshot | On session end | Saves work state to `.claude/sessions/` |
 | Context restore | On session start/compaction | Restores context from previous snapshots |
+| ExitPlanMode review | First ExitPlanMode call | Forces perspective-based plan review before approval |
+| Destructive git command block | Before Bash git calls | Blocks `--no-verify`, `--force` push, `reset --hard`, `clean -f`, `branch -D`, `checkout -- .` |
 
 ### Skills (Activated on Invocation)
 

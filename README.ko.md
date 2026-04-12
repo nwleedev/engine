@@ -104,6 +104,8 @@ cd ~/my-project && claude
 | 편집 추적 | 파일 편집 후 | 수정 파일 수 추적, 2-4개 단일 / 5+개 병렬 리뷰 |
 | 세션 스냅샷 | 세션 종료 시 | 작업 상태를 `.claude/sessions/`에 저장 |
 | 컨텍스트 복구 | 세션 시작/압축 시 | 이전 스냅샷에서 맥락 복원 |
+| ExitPlanMode 재검토 | 첫 ExitPlanMode 호출 | 승인 전 관점 기반 플랜 리뷰 강제 |
+| 파괴적 git 명령 차단 | Bash git 호출 전 | `--no-verify`, `--force` push, `reset --hard`, `clean -f`, `branch -D`, `checkout -- .` 차단 |
 
 ### Skills (호출 시 활성)
 
