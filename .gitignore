@@ -7,3 +7,21 @@
 temps/
 DISTRIBUTION.*.md
 DISTRIBUTION.md
+
+# Root project rules (local only — the repo uses its own CLAUDE.md
+# that is not meant to be checked in).
+/CLAUDE.md
+
+# .claude/ content that duplicates the engine plugin — the plugin is
+# the single source of truth. system-auditor/ and settings.json are
+# deliberately NOT ignored (repo-unique local assets).
+.claude/CLAUDE.md.example
+.claude/agents/domain-professor/
+.claude/agents/harness-researcher/
+.claude/agents/plan-readiness-checker/
+.claude/agents/project-researcher/
+.claude/agents/turn-summarizer/
+.claude/agents/work-reviewer/
+.claude/skills/
+.claude/hooks/
+.claude/scripts/
