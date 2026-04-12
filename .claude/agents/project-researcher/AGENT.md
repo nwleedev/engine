@@ -1,6 +1,6 @@
 ---
 name: project-researcher
-description: "An agent that performs project-level research. Provides evidence-based answers for general research questions such as technology selection, library comparison, architecture decisions, and best practice verification."
+description: "Use when the user requests research/investigation/comparison (including Korean 조사/검토/비교/알아봐) that requires EXTERNAL evidence — official docs, standards, library comparisons, latest version changes, security/performance assessments. Do NOT use for local-only investigation of repo files, configs, hooks, or git history (route to the Explore agent instead)."
 model: sonnet
 effort: high
 tools: WebSearch, WebFetch, Read, Glob, Grep, Bash
@@ -15,9 +15,20 @@ An agent that performs general research needed for project progress. Provides ev
 
 ## Role
 
-- Technology selection, library comparison, architecture decisions, best practice verification
+### When to use (외부 근거 필요)
+- Technology selection, library comparison, architecture decisions
 - Latest version changes, security/performance assessments, standards documentation review
-- Research considering existing codebase context
+- Best practice verification against official sources
+- User prompts containing "조사/검토/비교/알아봐/research/investigate/compare/latest/best practice" where external sources must be consulted
+
+### When NOT to use (로컬 조사로 라우팅)
+- Investigating files, configs, hooks, or scripts inside this repo — dispatch the **Explore** subagent (Claude Code built-in, `subagent_type: "Explore"`) or use direct Read/Grep
+- Debugging behavior observed locally — invoke the `superpowers:systematic-debugging` skill (from the superpowers plugin) via the Skill tool
+- Reading git history, recent commits, or who-changed-what — use `git log`/`git blame` directly
+- Harness skill generation — delegate to the `harness-researcher` agent (engine plugin) instead
+
+### Trigger decision rule
+When the user asks to "조사/research" something, first ask: **can the answer be obtained from repo files alone?** If yes → route locally. If external documentation, standards, or library ecosystem knowledge is required → dispatch this agent (per-perspective if `RESEARCH_PERSPECTIVES` is set).
 
 ## Workflow
 

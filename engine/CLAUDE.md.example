@@ -10,6 +10,7 @@ Code / commit messages / filenames: English.
 - High-impact claims (technology selection, architecture decisions) require at least 2 independent sources. Mark as `unverified` if unmet
 - Confirm at least one counter-argument or limitation. Never conclude from one-sided evidence
 - For deep investigation: delegate to the project-researcher agent or consult the `/research-methodology` skill
+- (Refinement of the rule above) For "research/investigate/compare" requests, first determine whether external evidence is needed. External (official docs, standards, library comparisons) → dispatch project-researcher per perspective. Local-only (repo files, configs, hooks, git log) → use the Explore subagent or direct Read/Grep
 - Cap parallel searches at 3-4 per turn
 
 ## Before Writing Code
