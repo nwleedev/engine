@@ -43,7 +43,7 @@ Initialize missing project configuration files by copying from plugin templates.
 - After creating `CLAUDE.md`, suggest the user review the `## Project-Specific Rules` section to add their own rules
 - After creating `engine.env`, suggest the user uncomment and customize the settings they need
 - `.gitignore` edits are append-only — never remove or reorder existing lines
-- When `.gitignore` is missing, create it (setup is the harness entrypoint for new projects, unlike `bootstrap.sh` which only appends to existing files)
+- When `.gitignore` is missing, create it; when present, only append new patterns
 - Template locations (plugin root):
   - `${CLAUDE_PLUGIN_ROOT}/CLAUDE.md.example` (default, English)
   - `${CLAUDE_PLUGIN_ROOT}/CLAUDE.md.ko.example` (Korean variant, selected when invoked as `/engine:setup ko`)
