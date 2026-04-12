@@ -1,90 +1,78 @@
 # Project Rules
 
-MUST 규칙은 훅이 기계적으로 강제한다. 이 파일에는 판단이 필요한 규칙만 기술한다.
-코드/커밋/파일명: 영어 | 사용자 소통: 한국어
+MUST rules are mechanically enforced by hooks. This file only describes rules that require judgment.
+Code / commit messages / filenames: English.
 
 ## Research (MUST)
 
-- 출처 우선순위: 공식 문서 > 표준 문서 > 소스 코드 > 블로그. 블로그 단독 근거 금지
-- context7 MCP로 라이브러리 문서 참조
-- 고영향 주장(기술 선택, 아키텍처 결정)은 독립 근거 2개 이상 확보. 미충족 시 `미확정` 표시
-- 반대 근거/제한사항을 최소 1건 확인. 한 방향 근거만으로 결론 금지
-- 심층 조사 필요 시: project-researcher 에이전트 위임 또는 /research-methodology 스킬 참조
-- 병렬 검색은 턴당 3-4건 제한
+- Source priority: official docs > standard specs > source code > blogs. Never rely on a blog alone as primary evidence
+- Use the context7 MCP to fetch library documentation
+- High-impact claims (technology selection, architecture decisions) require at least 2 independent sources. Mark as `unverified` if unmet
+- Confirm at least one counter-argument or limitation. Never conclude from one-sided evidence
+- For deep investigation: delegate to the project-researcher agent or consult the `/research-methodology` skill
+- Cap parallel searches at 3-4 per turn
 
 ## Before Writing Code
 
-- 파일 편집 전 Read, 편집 후 재확인. 같은 파일 3회 이상 연속 편집 시 중간 확인 읽기
-- 10턴 이상 또는 컨텍스트 압축 후에는 편집 대상 파일을 반드시 다시 읽는다
-- harness 스킬 관련 파일: 해당 harness 스킬 먼저 호출 (훅이 제안)
-- 새 작업 시작 시 기존 플랜에 섹션 추가 또는 새 플랜 파일 생성
+- Read the file before editing, and re-read after. When editing the same file 3+ times in a row, re-read between edits
+- After 10+ turns or a context compaction, always re-read the files you are about to edit
+- Harness-related files: invoke the relevant harness skill first (the hook will suggest it)
+- When starting new work, add a section to the existing plan or create a new plan file
 
 ## Editing
 
-- 주석은 비자명한 WHY만
-- 이름 변경 시 모든 참조 범주 검색 (import, type, string, re-export, test, barrel)
+- Comments only for non-obvious WHY
+- When renaming, search every reference category (import, type, string, re-export, test, barrel)
 
 ## List
 
-**각 리스트는 가능하면 2~7개 항목으로 유지하고, 각 항목은 단독으로 읽어도 의미가 통하도록 작성하며 조건, 근거, 예외를 필요한 범위에서 포함한다.**
+**Keep each list to 2-7 items when possible, write each item so it is self-contained, and include conditions, rationale, and exceptions as needed.**
 
 ## Ambiguity
 
-- 성공 기준 불명확, 범위 변경, 새 의존성, 파괴적 변경: 선택지 제시 후 대기
-- 탐색 우선: 질문 전에 코드/설정/테스트/git log 먼저 탐색. 아티팩트로 해결 가능하면 질문 불필요
-- 턴당 질문 1개만. 구현 방향을 가장 크게 바꾸는 질문 선택, 구체적 선택지 제시
-- 외부 의존성(라이브러리, 도구) 도입 시: 선택지와 장단점을 제시하고 대기
+- Unclear success criteria, scope change, new dependency, destructive change: present options and wait
+- Explore first: before asking, search code / configuration / tests / git log. If artifacts resolve it, no question needed
+- Only one question per turn. Choose the question that most reshapes the implementation direction, with concrete options
+- Introducing external dependencies (libraries, tools): present options with pros/cons and wait
 
 ## Verification (MUST)
 
-- 완료 전 검증: 테스트 실행, 출력 확인
-- 실패한 검사 억제 금지. 미완료 작업 완료 보고 금지
-- 도구 결과가 의심스럽게 적으면 범위를 좁혀 재실행. 절삭이 의심되면 명시
+- Verify before completion: run tests, inspect output
+- Do not suppress failing checks. Do not claim completion for unfinished work
+- If tool output looks suspiciously small, narrow the scope and re-run. If truncation is suspected, state it explicitly
 
 ## Collaboration
 
-- 요청이 오해에 기반하거나, 요청 범위 근처에 버그를 발견하면 말한다
-- 요청된 것만 구현한다. 관련 개선은 현재 작업 완료 후 별도 제안
+- Speak up when a request is based on a misunderstanding, or when you find a bug near the requested scope
+- Implement only what was requested. Propose related improvements separately after the current task completes
 
 ## Output Style
 
-- 첫 도구 호출 전에 무엇을 하려는지 간단히 말한다
-- 핵심 발견/방향 전환 시 짧은 업데이트. 테이블은 짧은 열거 사실에만 사용
+- Briefly state what you are about to do before the first tool call
+- Short updates at key findings or direction changes. Use tables only for short enumerable facts
 
 ## Failure Response
 
-- 근본 원인 먼저 식별. 테스트 비활성화, 기능 제거, 요구사항 변경 금지
+- Identify the root cause first. Do not disable tests, remove features, or change requirements
 
 ## Turn Summary (SHOULD)
 
-파일 편집이 있는 작업 턴 종료 전, `.claude/sessions/<session_id>/.turn-summary`에 구조화 요약 작성 (덮어쓰기).
-포맷: `## Outcome` (1-2문장), `## Decisions` (이유 포함), `## Next steps`, `## Blockers`.
-Stop 훅이 이 파일을 컨텍스트 스냅샷에 반영한다. 미작성 시 transcript에서 자동 추출 (폴백).
+Before ending a turn that edits files, write a structured summary to `.claude/sessions/<session_id>/.turn-summary` (overwrite).
+Format: `## Outcome` (1-2 sentences), `## Decisions` (with reasoning), `## Next steps`, `## Blockers`.
+The Stop hook folds this file into the context snapshot. If missing, it falls back to auto-extraction from the transcript.
 
-## 임시 파일
+## Temporary Files
 
-`temps/<date>/<scope>/` 폴더 내 적절한 위치에 저장한다. `/tmp`, `/private/tmp` 등 시스템 임시 경로 사용 금지.
+Store under `temps/<date>/<scope>/` in the most appropriate location. Do not use system temp paths such as `/tmp` or `/private/tmp`.
 
 <!-- HARNESS-SYNC-CORE-END -->
 <!-- HARNESS-SYNC-PROJECT-START -->
 
 ## Git Commits (MUST)
 
-- .gitignore 등록 파일 커밋 금지. 민감정보(.env, 토큰) 편집/출력 금지
-- **작업 턴 종료 시 반드시 커밋**. 커밋 누락은 Stop 훅이 감지하여 다음 세션에 경고한다
-
-## Enforced by Hooks (참고, 규칙 아님)
-
-- 플랜 없이 코딩 시작 불가 (PreToolUse Write|Edit)
-- 2-4개 파일 수정: work-reviewer 단일 검토 알림 (PostToolUse Write|Edit)
-- 5+개 파일 또는 인프라 변경: multi-review (2명 병렬) 알림 (PostToolUse Write|Edit)
-- 대규모 플랜(4+ 변경 단위) 자동 분할 권고 (plan-readiness-checker 10단계)
-- 세션 스냅샷 자동 생성 (Stop hook)
-- 미커밋 변경 감지 경고 (Stop hook)
-- 컨텍스트 압축 시 SESSION.md + 최신 context + 플랜 경로 재주입 (SessionStart compact)
-- ExitPlanMode 첫 호출 시 플랜 재검토 강제 (PreToolUse ExitPlanMode)
-- 파괴적 git 명령 차단: --no-verify, --force/-f (push), reset --hard, clean -f, branch -D, checkout -- . (permissions.deny)
+- Do not commit files listed in `.gitignore`. Do not edit or print sensitive data (.env, tokens)
+- **Always split and commit changes at turn end**. The Stop hook detects missed commits and warns the next session
 
 ## Project-Specific Rules
 
-여기에 프로젝트별 규칙을 작성하세요.
+Write your project-specific rules here.
