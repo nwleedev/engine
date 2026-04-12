@@ -50,8 +50,9 @@ For per-project settings, create `.claude/engine.env` (optional):
 
 ```bash
 # .claude/engine.env
-REVIEW_AGENTS="domain,structure"         # Review perspectives (comma-separated)
-RESEARCH_PERSPECTIVES="pro,con"          # Research perspectives (comma-separated)
+WORK_REVIEW_PERSPECTIVES="domain,structure"         # Work review perspectives (on Write/Edit)
+PLAN_REVIEW_PERSPECTIVES="structure,steps"          # Plan review perspectives (on ExitPlanMode)
+RESEARCH_PERSPECTIVES="pro,con"                     # Research perspectives
 ```
 
 ### Method 2: Standalone Install

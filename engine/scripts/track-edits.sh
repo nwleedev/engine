@@ -23,6 +23,12 @@ if [ -n "$FILE_PATH" ]; then
   if ! grep -qxF "$FILE_PATH" "$EDITED_FILES" 2>/dev/null; then
     echo "$FILE_PATH" >> "$EDITED_FILES"
   fi
+  # Track per-session current plan (session-isolated for parallel terminals)
+  case "$FILE_PATH" in
+    "$PROJECT_DIR"/.claude/plans/*.md)
+      echo "$FILE_PATH" > "$SESSION_DIR/.current-plan"
+      ;;
+  esac
 fi
 
 # work-reviewer count: exclude all auto-generated paths (sessions/, meta/, feeds/)
@@ -56,10 +62,10 @@ fi
 # Build perspective-based review message
 build_review_msg() {
   local count="$1" list="$2" multi="$3"
-  if [ "$multi" = true ] && [ -n "${REVIEW_AGENTS:-}" ]; then
-    # When REVIEW_AGENTS is set: parallel review by perspective
+  if [ "$multi" = true ] && [ -n "${WORK_REVIEW_PERSPECTIVES:-}" ]; then
+    # When WORK_REVIEW_PERSPECTIVES is set: parallel review by perspective
     local agent_lines=""
-    IFS=',' read -r -a PERSPECTIVES <<< "$REVIEW_AGENTS"
+    IFS=',' read -r -a PERSPECTIVES <<< "$WORK_REVIEW_PERSPECTIVES"
     for P in "${PERSPECTIVES[@]}"; do
       P=$(echo "$P" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
       agent_lines="${agent_lines}\\n- work-reviewer (perspective: ${P})"

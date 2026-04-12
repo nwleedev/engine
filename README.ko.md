@@ -48,8 +48,9 @@ claude plugin install nwleedev/engine
 
 ```bash
 # .claude/engine.env
-REVIEW_AGENTS="도메인,구조"              # 리뷰 관점 (쉼표 구분)
-RESEARCH_PERSPECTIVES="찬성,반대"        # 조사 관점 (쉼표 구분)
+WORK_REVIEW_PERSPECTIVES="도메인,구조"              # 작업 리뷰 관점 (Write/Edit 시)
+PLAN_REVIEW_PERSPECTIVES="플랜구조,작업단계"        # 플랜 리뷰 관점 (ExitPlanMode 시)
+RESEARCH_PERSPECTIVES="찬성,반대"                   # 조사 관점
 ```
 
 ### 방법 2: 독립 설치

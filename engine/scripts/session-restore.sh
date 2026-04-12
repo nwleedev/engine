@@ -19,8 +19,10 @@ if [ -f "$ENGINE_CONFIG" ]; then
   # shellcheck source=/dev/null
   . "$ENGINE_CONFIG"
   CONFIG_ITEMS=""
-  [ -n "${REVIEW_AGENTS:-}" ] && CONFIG_ITEMS="${CONFIG_ITEMS}
-- REVIEW_AGENTS=${REVIEW_AGENTS}"
+  [ -n "${WORK_REVIEW_PERSPECTIVES:-}" ] && CONFIG_ITEMS="${CONFIG_ITEMS}
+- WORK_REVIEW_PERSPECTIVES=${WORK_REVIEW_PERSPECTIVES}"
+  [ -n "${PLAN_REVIEW_PERSPECTIVES:-}" ] && CONFIG_ITEMS="${CONFIG_ITEMS}
+- PLAN_REVIEW_PERSPECTIVES=${PLAN_REVIEW_PERSPECTIVES}"
   [ -n "${RESEARCH_PERSPECTIVES:-}" ] && CONFIG_ITEMS="${CONFIG_ITEMS}
 - RESEARCH_PERSPECTIVES=${RESEARCH_PERSPECTIVES}"
   [ -n "${REVIEW_THRESHOLD_SINGLE:-}" ] && CONFIG_ITEMS="${CONFIG_ITEMS}
@@ -59,7 +61,13 @@ if [ -n "$LATEST" ]; then
   cat "$LATEST"
 fi
 
-PLAN=$(ls -t "$PROJECT_DIR/.claude/plans/"*.md 2>/dev/null | head -1)
+# Prefer session-specific plan pointer (for parallel terminals), fallback to most-recent
+PLAN=""
+if [ -f "$SESSION_DIR/.current-plan" ]; then
+  PTR=$(cat "$SESSION_DIR/.current-plan" 2>/dev/null)
+  [ -n "$PTR" ] && [ -f "$PTR" ] && PLAN="$PTR"
+fi
+[ -z "$PLAN" ] && PLAN=$(ls -t "$PROJECT_DIR/.claude/plans/"*.md 2>/dev/null | head -1)
 if [ -n "$PLAN" ]; then
   echo ''
   echo "## Active Plan: $PLAN"
