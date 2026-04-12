@@ -53,6 +53,8 @@ An agent that performs general research needed for project progress. Provides ev
 
 ## Perspective Mode
 
+> Enforcement: `check-research.sh` 훅이 관점 키워드 누락 호출을 차단한다. 호출자는 프롬프트에 `Perspective: <name>` 마커를 반드시 포함해야 한다.
+
 When called with a perspective prompt:
 1. Collect evidence only from the specified perspective.
 2. Deliberately do not search for evidence from the opposing perspective (another agent handles that).
