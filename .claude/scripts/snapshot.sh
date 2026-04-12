@@ -108,9 +108,15 @@ if [ -f "$EDITED_FILES" ]; then
   FILES_LIST=$(sort -u "$EDITED_FILES" | sed "s|^$PROJECT_DIR/||" | head -20)
 fi
 
-# Plan path (relative)
+# Plan path (relative) — prefer session pointer for parallel-terminal isolation
 PLAN_FILE=""
-if [ -d "$PROJECT_DIR/.claude/plans" ]; then
+if [ -f "$SESSION_DIR/.current-plan" ]; then
+  PTR=$(cat "$SESSION_DIR/.current-plan" 2>/dev/null)
+  if [ -n "$PTR" ] && [ -f "$PTR" ]; then
+    PLAN_FILE=$(echo "$PTR" | sed "s|^$PROJECT_DIR/||")
+  fi
+fi
+if [ -z "$PLAN_FILE" ] && [ -d "$PROJECT_DIR/.claude/plans" ]; then
   PLAN_FILE=$(ls -t "$PROJECT_DIR/.claude/plans/"*.md 2>/dev/null | head -1 | sed "s|^$PROJECT_DIR/||")
 fi
 
