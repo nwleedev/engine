@@ -16,23 +16,33 @@ Initialize missing project configuration files by copying from plugin templates.
 |--------|----------------------|---------|
 | `.claude/CLAUDE.md` | `CLAUDE.md.example` | Project rules for Claude Code |
 | `.claude/engine.env` | `engine.env.example` | Engine plugin settings (review/research perspectives) |
+| `.gitignore` (patterns) | — | Harness-generated paths (sessions, memory, meta, feeds, temps) |
 
 ## Procedure
 
 1. Check if `.claude/CLAUDE.md` exists (use Glob for `**/.claude/CLAUDE.md` or Read)
 2. Check if `.claude/engine.env` exists
 3. For each **missing** file:
-   - Read the corresponding `.example` template from the plugin root (`engine.env.example`, or `.claude/CLAUDE.md.example` in the project)
+   - Read the corresponding `.example` template from the plugin root (`CLAUDE.md.example`, `engine.env.example`)
    - Write it to the target path
    - Report what was created
 4. For each **existing** file: skip and report that it already exists
 5. If both files already exist: report that setup is complete, no action needed
+6. Ensure `.gitignore` includes harness-generated paths:
+   - Target: `<project-root>/.gitignore`
+   - Patterns (exact-match, append-only): `.claude/sessions/`, `.claude/agent-memory/`, `.claude/meta/`, `.claude/feeds/`, `temps/`
+   - If `.gitignore` does not exist: create it with exactly these 5 lines (one per line, with a trailing newline after the last line)
+   - If `.gitignore` exists: Read the file, then for each pattern check exact-line match (`grep -Fxq "$pattern" .gitignore`). Skip if present, append if absent. When appending, ensure the file ends with a newline before the new line (read the last byte; if it is not `\n`, add one first) to prevent the pattern from being glued to the final existing line
+   - Report: list of patterns that were appended; if the file was newly created, mark "created"
+   - Never remove, reorder, or modify existing `.gitignore` entries
 
 ## Important
 
 - **Never overwrite** existing files — only copy when the target is missing
 - After creating `CLAUDE.md`, suggest the user review the `## Project-Specific Rules` section to add their own rules
 - After creating `engine.env`, suggest the user uncomment and customize the settings they need
-- Template locations depend on context:
-  - Plugin root: `${CLAUDE_PLUGIN_ROOT}/engine.env.example` and `${CLAUDE_PLUGIN_ROOT}/../.claude/CLAUDE.md.example`
-  - Project fallback: `.claude/engine.env.example` and `.claude/CLAUDE.md.example`
+- `.gitignore` edits are append-only — never remove or reorder existing lines
+- When `.gitignore` is missing, create it (setup is the harness entrypoint for new projects, unlike `bootstrap.sh` which only appends to existing files)
+- Template locations (plugin root):
+  - `${CLAUDE_PLUGIN_ROOT}/CLAUDE.md.example`
+  - `${CLAUDE_PLUGIN_ROOT}/engine.env.example`
