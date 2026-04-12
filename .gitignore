@@ -5,3 +5,5 @@
 .claude/meta/
 .claude/engine.env
 temps/
+DISTRIBUTION.*.md
+DISTRIBUTION.md
