@@ -9,10 +9,37 @@ SESSION_ID_VAL="${SESSION_ID:-$(echo "$INPUT" | jq -r '.session_id // empty')}"
 [ -z "$SESSION_ID_VAL" ] && exit 0
 
 SESSION_DIR="$PROJECT_DIR/.claude/sessions/$SESSION_ID_VAL"
-[ -d "$SESSION_DIR" ] || exit 0
 
 # Auto-create project directories
 mkdir -p "$PROJECT_DIR/.claude/plans" "$PROJECT_DIR/.claude/sessions" "$PROJECT_DIR/temps" 2>/dev/null
+
+# Inject engine config (always runs, regardless of session directory existence)
+ENGINE_CONFIG="$PROJECT_DIR/.claude/engine.config"
+if [ -f "$ENGINE_CONFIG" ]; then
+  # shellcheck source=/dev/null
+  . "$ENGINE_CONFIG"
+  CONFIG_ITEMS=""
+  [ -n "${REVIEW_AGENTS:-}" ] && CONFIG_ITEMS="${CONFIG_ITEMS}
+- REVIEW_AGENTS=${REVIEW_AGENTS}"
+  [ -n "${RESEARCH_PERSPECTIVES:-}" ] && CONFIG_ITEMS="${CONFIG_ITEMS}
+- RESEARCH_PERSPECTIVES=${RESEARCH_PERSPECTIVES}"
+  [ -n "${REVIEW_THRESHOLD_SINGLE:-}" ] && CONFIG_ITEMS="${CONFIG_ITEMS}
+- REVIEW_THRESHOLD_SINGLE=${REVIEW_THRESHOLD_SINGLE}"
+  [ -n "${REVIEW_THRESHOLD_MULTI:-}" ] && CONFIG_ITEMS="${CONFIG_ITEMS}
+- REVIEW_THRESHOLD_MULTI=${REVIEW_THRESHOLD_MULTI}"
+  if [ -n "$CONFIG_ITEMS" ]; then
+    echo ''
+    echo '## Engine Config'
+    printf 'Project settings (.claude/engine.config):%s\n' "$CONFIG_ITEMS"
+    if [ -n "${RESEARCH_PERSPECTIVES:-}" ]; then
+      echo ''
+      echo "When research is requested, invoke project-researcher in parallel by perspective (${RESEARCH_PERSPECTIVES})."
+    fi
+  fi
+fi
+
+# Session restoration requires existing session directory
+[ -d "$SESSION_DIR" ] || exit 0
 
 COMPACT_MODE=false
 [ "$1" = "--compact" ] && COMPACT_MODE=true
@@ -42,31 +69,6 @@ fi
 if [ "$COMPACT_MODE" = true ]; then
   echo ''
   echo '> Context restored from snapshot. The Request section shows what the user asked for. The Summary section shows what was accomplished. The Notes section (if present) contains a structured narrative.'
-fi
-
-# Inject engine config (notify Claude at session start if config exists)
-ENGINE_CONFIG="$PROJECT_DIR/.claude/engine.config"
-if [ -f "$ENGINE_CONFIG" ]; then
-  # shellcheck source=/dev/null
-  . "$ENGINE_CONFIG"
-  CONFIG_ITEMS=""
-  [ -n "${REVIEW_AGENTS:-}" ] && CONFIG_ITEMS="${CONFIG_ITEMS}
-- REVIEW_AGENTS=${REVIEW_AGENTS}"
-  [ -n "${RESEARCH_PERSPECTIVES:-}" ] && CONFIG_ITEMS="${CONFIG_ITEMS}
-- RESEARCH_PERSPECTIVES=${RESEARCH_PERSPECTIVES}"
-  [ -n "${REVIEW_THRESHOLD_SINGLE:-}" ] && CONFIG_ITEMS="${CONFIG_ITEMS}
-- REVIEW_THRESHOLD_SINGLE=${REVIEW_THRESHOLD_SINGLE}"
-  [ -n "${REVIEW_THRESHOLD_MULTI:-}" ] && CONFIG_ITEMS="${CONFIG_ITEMS}
-- REVIEW_THRESHOLD_MULTI=${REVIEW_THRESHOLD_MULTI}"
-  if [ -n "$CONFIG_ITEMS" ]; then
-    echo ''
-    echo '## Engine Config'
-    printf 'Project settings (.claude/engine.config):%s\n' "$CONFIG_ITEMS"
-    if [ -n "${RESEARCH_PERSPECTIVES:-}" ]; then
-      echo ''
-      echo "When research is requested, invoke project-researcher in parallel by perspective (${RESEARCH_PERSPECTIVES})."
-    fi
-  fi
 fi
 
 exit 0
