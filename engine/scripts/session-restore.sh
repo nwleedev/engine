@@ -14,7 +14,7 @@ SESSION_DIR="$PROJECT_DIR/.claude/sessions/$SESSION_ID_VAL"
 mkdir -p "$PROJECT_DIR/.claude/plans" "$PROJECT_DIR/.claude/sessions" "$PROJECT_DIR/temps" 2>/dev/null
 
 # Inject engine config (always runs, regardless of session directory existence)
-ENGINE_CONFIG="$PROJECT_DIR/.claude/engine.config"
+ENGINE_CONFIG="$PROJECT_DIR/.claude/engine.env"
 if [ -f "$ENGINE_CONFIG" ]; then
   # shellcheck source=/dev/null
   . "$ENGINE_CONFIG"
@@ -30,7 +30,7 @@ if [ -f "$ENGINE_CONFIG" ]; then
   if [ -n "$CONFIG_ITEMS" ]; then
     echo ''
     echo '## Engine Config'
-    printf 'Project settings (.claude/engine.config):%s\n' "$CONFIG_ITEMS"
+    printf 'Project settings (.claude/engine.env):%s\n' "$CONFIG_ITEMS"
     if [ -n "${RESEARCH_PERSPECTIVES:-}" ]; then
       echo ''
       echo "When research is requested, invoke project-researcher in parallel by perspective (${RESEARCH_PERSPECTIVES})."

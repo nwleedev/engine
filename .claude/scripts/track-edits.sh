@@ -38,7 +38,7 @@ if [ -f "$EDITED_FILES" ]; then
 fi
 
 # Load engine config
-ENGINE_CONFIG="$PROJECT_DIR/.claude/engine.config"
+ENGINE_CONFIG="$PROJECT_DIR/.claude/engine.env"
 if [ -f "$ENGINE_CONFIG" ]; then
   # shellcheck source=/dev/null
   . "$ENGINE_CONFIG"

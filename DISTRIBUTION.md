@@ -141,14 +141,14 @@ When `--plugin-dir` is used with the same name as an installed plugin, the local
 
 ## Per-Project Configuration
 
-After installation, users can customize plugin behavior by creating `.claude/engine.config` in their project:
+After installation, users can customize plugin behavior by creating `.claude/engine.env` in their project:
 
 ```bash
-# .claude/engine.config
+# .claude/engine.env
 REVIEW_AGENTS="domain,structure"         # Review perspectives
 RESEARCH_PERSPECTIVES="pro,con"          # Research perspectives
 REVIEW_THRESHOLD_SINGLE=2               # Single review threshold
 REVIEW_THRESHOLD_MULTI=5                # Parallel review threshold
 ```
 
-A template is included in the plugin at `engine.config.example`.
+A template is included in the plugin at `engine.env.example`.

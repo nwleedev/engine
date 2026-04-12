@@ -141,14 +141,14 @@ claude --plugin-dir ./engine
 
 ## 프로젝트별 설정
 
-설치 후 프로젝트의 `.claude/engine.config`를 생성하여 플러그인 동작을 커스터마이징할 수 있습니다:
+설치 후 프로젝트의 `.claude/engine.env`를 생성하여 플러그인 동작을 커스터마이징할 수 있습니다:
 
 ```bash
-# .claude/engine.config
+# .claude/engine.env
 REVIEW_AGENTS="도메인,구조"              # 리뷰 관점
 RESEARCH_PERSPECTIVES="찬성,반대"        # 조사 관점
 REVIEW_THRESHOLD_SINGLE=2               # 단일 리뷰 임계값
 REVIEW_THRESHOLD_MULTI=5                # 병렬 리뷰 임계값
 ```
 
-템플릿은 플러그인 내 `engine.config.example`에 포함되어 있습니다.
+템플릿은 플러그인 내 `engine.env.example`에 포함되어 있습니다.

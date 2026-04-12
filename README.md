@@ -46,10 +46,10 @@ Applies to **all work using Claude Code** — not just coding, but research, mar
 claude plugin install nwleedev/engine
 ```
 
-For per-project settings, create `.claude/engine.config` (optional):
+For per-project settings, create `.claude/engine.env` (optional):
 
 ```bash
-# .claude/engine.config
+# .claude/engine.env
 REVIEW_AGENTS="domain,structure"         # Review perspectives (comma-separated)
 RESEARCH_PERSPECTIVES="pro,con"          # Research perspectives (comma-separated)
 ```
@@ -86,7 +86,7 @@ cd ~/my-project && claude
 | Install | `claude plugin install` | curl one-liner |
 | Update | Automatic (plugin manager) | `update.sh` manual |
 | Multiple projects | One install, shared | Install per project |
-| Customization | `.claude/engine.config` | `.claude/settings.local.json` |
+| Customization | `.claude/engine.env` | `.claude/settings.local.json` |
 | Skill prefix | `/engine:deep-study` | `/deep-study` |
 
 Prerequisites: Claude Code CLI. Standalone install additionally requires curl, tar, jq. See [Getting Started](.claude/docs/GETTING-STARTED.md#1-사전-준비) for detailed setup.
@@ -175,7 +175,7 @@ When conversations get long, Claude Code may compress or lose previous context. 
 
 ```
 .claude/
-  engine.config          # Plugin settings (optional, review/research perspectives, etc.)
+  engine.env          # Plugin settings (optional, review/research perspectives, etc.)
   settings.json          # Hook settings (system-managed, no editing needed)
   settings.local.json    # Per-project permission/hook customization
   scripts/               # 9 automation scripts
@@ -186,7 +186,7 @@ When conversations get long, Claude Code may compress or lose previous context. 
   sessions/              # Session snapshots (auto-generated)
 ```
 
-Only **3 files** need direct editing: `CLAUDE.md` (project rules), `.claude/settings.local.json` (permissions), `.claude/engine.config` (plugin settings, optional).
+Only **3 files** need direct editing: `CLAUDE.md` (project rules), `.claude/settings.local.json` (permissions), `.claude/engine.env` (plugin settings, optional).
 
 ---
 

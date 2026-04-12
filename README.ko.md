@@ -44,10 +44,10 @@ Claude Code에 자동 규칙, 품질 게이트, 도메인 지식을 설치하는
 claude plugin install nwleedev/engine
 ```
 
-프로젝트별 설정이 필요하면 `.claude/engine.config`를 생성하세요 (선택):
+프로젝트별 설정이 필요하면 `.claude/engine.env`를 생성하세요 (선택):
 
 ```bash
-# .claude/engine.config
+# .claude/engine.env
 REVIEW_AGENTS="도메인,구조"              # 리뷰 관점 (쉼표 구분)
 RESEARCH_PERSPECTIVES="찬성,반대"        # 조사 관점 (쉼표 구분)
 ```
@@ -84,7 +84,7 @@ cd ~/my-project && claude
 | 설치 | `claude plugin install` | curl 원라이너 |
 | 업데이트 | 자동 (플러그인 관리자) | `update.sh` 수동 실행 |
 | 여러 프로젝트 | 한 번 설치로 공유 | 프로젝트마다 설치 |
-| 커스터마이징 | `.claude/engine.config` | `.claude/settings.local.json` |
+| 커스터마이징 | `.claude/engine.env` | `.claude/settings.local.json` |
 | 스킬 접두사 | `/engine:deep-study` | `/deep-study` |
 
 사전 요건: Claude Code CLI. 독립 설치 시 추가로 curl, tar, jq 필요. 상세 설치 방법은 [Getting Started](.claude/docs/GETTING-STARTED.md#1-사전-준비) 참조.
@@ -173,7 +173,7 @@ cd ~/my-project && claude
 
 ```
 .claude/
-  engine.config          # 플러그인 설정 (선택, 리뷰/조사 관점 등)
+  engine.env          # 플러그인 설정 (선택, 리뷰/조사 관점 등)
   settings.json          # 훅 설정 (시스템 관리, 수정 불필요)
   settings.local.json    # 프로젝트별 권한/훅 커스터마이징
   scripts/               # 9개 자동화 스크립트
@@ -184,7 +184,7 @@ cd ~/my-project && claude
   sessions/              # 세션 스냅샷 (자동 생성)
 ```
 
-직접 편집이 필요한 파일은 **3개뿐**: `CLAUDE.md`(프로젝트 규칙), `.claude/settings.local.json`(권한 설정), `.claude/engine.config`(플러그인 설정, 선택).
+직접 편집이 필요한 파일은 **3개뿐**: `CLAUDE.md`(프로젝트 규칙), `.claude/settings.local.json`(권한 설정), `.claude/engine.env`(플러그인 설정, 선택).
 
 ---
 
