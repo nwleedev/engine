@@ -25,70 +25,32 @@ Claude Code에 자동 규칙, 품질 게이트, 도메인 지식을 설치하는
 
 | 대상 | 예시 프로젝트 | 상세 안내 |
 |------|-------------|----------|
-| **프론트엔드 개발자** | React/Next.js 웹앱, UI 컴포넌트 라이브러리 | [Quick Start](.claude/docs/GETTING-STARTED.md#41-개발-프로젝트-프론트엔드) |
-| **백엔드 개발자** | FastAPI REST API, Go 마이크로서비스 | [Quick Start](.claude/docs/GETTING-STARTED.md#42-개발-프로젝트-백엔드-python) |
-| **리서처** | 시장조사, 경쟁사 분석, 기술 트렌드 | [Quick Start](.claude/docs/GETTING-STARTED.md#43-시장-조사-프로젝트) |
-| **마케터** | 캠페인 기획, A/B 테스트 설계, 광고 카피 | [Quick Start](.claude/docs/GETTING-STARTED.md#44-마케팅-프로젝트) |
-| **설계자** | 시스템 아키텍처 문서, RFC, ADR | [Quick Start](.claude/docs/GETTING-STARTED.md#45-설계-문서-프로젝트) |
-| **학습자** | Kubernetes 입문, React 학습, ML 기초 | [Quick Start](.claude/docs/GETTING-STARTED.md#46-학습-프로젝트) |
+| **프론트엔드 개발자** | React/Next.js 웹앱, UI 컴포넌트 라이브러리 | [Quick Start](docs/GETTING-STARTED.ko.md#프론트엔드) |
+| **백엔드 개발자** | FastAPI REST API, Go 마이크로서비스 | [Quick Start](docs/GETTING-STARTED.ko.md#백엔드-python) |
+| **리서처** | 시장조사, 경쟁사 분석, 기술 트렌드 | [Quick Start](docs/GETTING-STARTED.ko.md#리서치) |
+| **학습자** | Kubernetes 입문, React 학습, ML 기초 | [Quick Start](docs/GETTING-STARTED.ko.md#학습) |
 
 ---
 
 ## 설치
 
-### 방법 1: 플러그인 설치 (권장)
-
-> 프로젝트 파일 복사 없이 Claude Code 플러그인으로 설치합니다.
+Claude Code 플러그인으로 배포됩니다.
 
 ```bash
-claude plugin install nwleedev/engine
+claude plugin marketplace add nwleedev/engine
+claude plugin install engine@engine
 ```
 
-프로젝트별 설정이 필요하면 `.claude/engine.env`를 생성하세요 (선택):
+프로젝트별 설정이 필요하면 `.claude/engine.env` 를 생성하세요 (선택):
 
 ```bash
 # .claude/engine.env
-WORK_REVIEW_PERSPECTIVES="도메인,구조"              # 작업 리뷰 관점 (Write/Edit 시)
-PLAN_REVIEW_PERSPECTIVES="플랜구조,작업단계"        # 플랜 리뷰 관점 (ExitPlanMode 시)
-RESEARCH_PERSPECTIVES="찬성,반대"                   # 조사 관점
+WORK_REVIEW_PERSPECTIVES="도메인,구조,요구사항"
+PLAN_REVIEW_PERSPECTIVES="플랜구조,작업단계,요구사항"
+RESEARCH_PERSPECTIVES="pro,con"
 ```
 
-### 방법 2: 독립 설치
-
-> 프로젝트 `.claude/` 디렉토리에 전체 파일을 복사합니다.
-
-```bash
-# 프로젝트에 하네스 설치 (한 줄, git 불필요)
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/nwleedev/engine/main/install.sh)" -- ~/my-project
-
-# Claude Code 실행
-cd ~/my-project && claude
-```
-
-업데이트: `bash .claude/scripts/update.sh` 또는 같은 명령을 재실행하면 됩니다.
-
-<details>
-<summary>수동 설치 (git 사용)</summary>
-
-```bash
-git clone https://github.com/nwleedev/engine.git /tmp/engine
-/tmp/engine/.claude/scripts/bootstrap.sh --source /tmp/engine --target ~/my-project
-rm -rf /tmp/engine
-cd ~/my-project && claude
-```
-</details>
-
-### 비교
-
-| 항목 | 플러그인 | 독립 설치 |
-|------|---------|----------|
-| 설치 | `claude plugin install` | curl 원라이너 |
-| 업데이트 | 자동 (플러그인 관리자) | `update.sh` 수동 실행 |
-| 여러 프로젝트 | 한 번 설치로 공유 | 프로젝트마다 설치 |
-| 커스터마이징 | `.claude/engine.env` | `.claude/settings.local.json` |
-| 스킬 접두사 | `/engine:deep-study` | `/deep-study` |
-
-사전 요건: Claude Code CLI. 독립 설치 시 추가로 curl, tar, jq 필요. 상세 설치 방법은 [Getting Started](.claude/docs/GETTING-STARTED.md#1-사전-준비) 참조.
+사전 요건: Claude Code CLI. 상세 설치 방법은 [Getting Started](docs/GETTING-STARTED.ko.md#사전-준비) 참조. 팀/조직 자동 설치 설정은 [DISTRIBUTION.md](DISTRIBUTION.md) 참조.
 
 ---
 
@@ -128,21 +90,6 @@ cd ~/my-project && claude
 | harness-researcher | `/harness-engine` 내부 | 하네스 생성용 도메인 조사 |
 | project-researcher | 수동 | 기술 선택, 아키텍처 결정 조사 (관점 모드 지원) |
 
-### Scripts (자동화)
-
-| 스크립트 | 용도 |
-|---------|------|
-| `bootstrap.sh` | 새 프로젝트에 하네스 환경 설치 |
-| `sync.sh` | 코어 저장소 업데이트를 프로젝트에 반영 |
-| `promote.sh` | 프로젝트 하네스를 코어 저장소로 승격 |
-| `check-plan.sh` | 플랜 없이 편집 차단 (훅용) |
-| `check-plan-review.sh` | 플랜 품질 검증 (훅용) |
-| `suggest-harness.sh` | 파일 내용 기반 하네스 자동 제안 (훅용) |
-| `track-edits.sh` | 편집 파일 수 추적, 리뷰어 트리거 (훅용) |
-| `snapshot.sh` | 세션 스냅샷 저장 (훅용) |
-| `update.sh` | 설치된 하네스를 최신 엔진 버전으로 업데이트 |
-| `migrate.sh` | v1→v2 마이그레이션 |
-
 ---
 
 ## 핵심 개념
@@ -165,61 +112,18 @@ cd ~/my-project && claude
 
 | 문서 | 내용 |
 |------|------|
-| [Getting Started](.claude/docs/GETTING-STARTED.md) | 설치, 일상 사용법, 커스터마이징, 트러블슈팅, 아키텍처 |
-| [Migration Guide](.claude/docs/MIGRATION.md) | v1→v2 마이그레이션 안내 |
-| [CLAUDE.md](CLAUDE.md) | 프로젝트 규칙 (Claude가 읽는 파일) |
-| [CLAUDE.md.example](.claude/CLAUDE.md.example) | 새 프로젝트용 CLAUDE.md 템플릿 |
+| [Getting Started](docs/GETTING-STARTED.ko.md) | 설치, 일상 사용법, 커스터마이징, 트러블슈팅, 참고 |
+| [DISTRIBUTION.md](DISTRIBUTION.ko.md) | 개인·팀·조직 단위 플러그인 배포 옵션 |
 
 ---
 
-## 프로젝트 구조
+## 업데이트
 
-```
-.claude/
-  engine.env          # 플러그인 설정 (선택, 리뷰/조사 관점 등)
-  settings.json          # 훅 설정 (시스템 관리, 수정 불필요)
-  settings.local.json    # 프로젝트별 권한/훅 커스터마이징
-  scripts/               # 9개 자동화 스크립트
-  skills/                # 6개 스킬 + harness-engine 서브시스템
-  agents/                # 6개 전문 에이전트
-  docs/                  # Getting Started, Migration
-  plans/                 # 작업 계획 (자동 생성)
-  sessions/              # 세션 스냅샷 (자동 생성)
-```
-
-직접 편집이 필요한 파일은 **3개뿐**: `CLAUDE.md`(프로젝트 규칙), `.claude/settings.local.json`(권한 설정), `.claude/engine.env`(플러그인 설정, 선택).
-
----
-
-## 업데이트 및 동기화
-
-### 방법 1: 프로젝트에서 직접 업데이트 (권장)
+플러그인 매니저가 업데이트를 담당합니다.
 
 ```bash
-# 업데이트 확인만
-bash .claude/scripts/update.sh --check
-
-# 변경 미리보기
-bash .claude/scripts/update.sh --dry-run
-
-# 업데이트 실행
-bash .claude/scripts/update.sh
-
-# 로컬 엔진 레포에서 오프라인 업데이트
-bash .claude/scripts/update.sh --source ~/engine
-
-# 특정 버전으로 업데이트
-bash .claude/scripts/update.sh --version v1.2.0
+claude plugin update engine@engine
 ```
-
-### 방법 2: install.sh 재실행
-
-```bash
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/nwleedev/engine/main/install.sh)" -- ~/my-project
-```
-
-업데이트가 관리하는 것: 훅 스크립트, settings.json, 범용 스킬, 에이전트, CLAUDE.md 코어 영역.
-업데이트가 건드리지 않는 것: 프로젝트 규칙, 도메인 하네스, 세션/플랜 데이터, settings.local.json.
 
 ---
 

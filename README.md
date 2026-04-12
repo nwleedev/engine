@@ -27,70 +27,32 @@ Applies to **all work using Claude Code** — not just coding, but research, mar
 
 | Audience | Example Projects | Details |
 |----------|-----------------|---------|
-| **Frontend Developers** | React/Next.js web apps, UI component libraries | [Quick Start](.claude/docs/GETTING-STARTED.md#41-개발-프로젝트-프론트엔드) |
-| **Backend Developers** | FastAPI REST API, Go microservices | [Quick Start](.claude/docs/GETTING-STARTED.md#42-개발-프로젝트-백엔드-python) |
-| **Researchers** | Market research, competitor analysis, tech trends | [Quick Start](.claude/docs/GETTING-STARTED.md#43-시장-조사-프로젝트) |
-| **Marketers** | Campaign planning, A/B test design, ad copy | [Quick Start](.claude/docs/GETTING-STARTED.md#44-마케팅-프로젝트) |
-| **Architects** | System architecture docs, RFCs, ADRs | [Quick Start](.claude/docs/GETTING-STARTED.md#45-설계-문서-프로젝트) |
-| **Learners** | Kubernetes intro, React learning, ML basics | [Quick Start](.claude/docs/GETTING-STARTED.md#46-학습-프로젝트) |
+| **Frontend Developers** | React/Next.js web apps, UI component libraries | [Quick Start](docs/GETTING-STARTED.md#frontend) |
+| **Backend Developers** | FastAPI REST API, Go microservices | [Quick Start](docs/GETTING-STARTED.md#backend-python) |
+| **Researchers** | Market research, competitor analysis, tech trends | [Quick Start](docs/GETTING-STARTED.md#research) |
+| **Learners** | Kubernetes intro, React learning, ML basics | [Quick Start](docs/GETTING-STARTED.md#learning) |
 
 ---
 
 ## Installation
 
-### Method 1: Plugin Install (Recommended)
-
-> Install as a Claude Code plugin without copying files to your project.
+Distributed as a Claude Code plugin.
 
 ```bash
-claude plugin install nwleedev/engine
+claude plugin marketplace add nwleedev/engine
+claude plugin install engine@engine
 ```
 
-For per-project settings, create `.claude/engine.env` (optional):
+Per-project settings (optional) go in `.claude/engine.env`:
 
 ```bash
 # .claude/engine.env
-WORK_REVIEW_PERSPECTIVES="domain,structure"         # Work review perspectives (on Write/Edit)
-PLAN_REVIEW_PERSPECTIVES="structure,steps"          # Plan review perspectives (on ExitPlanMode)
-RESEARCH_PERSPECTIVES="pro,con"                     # Research perspectives
+WORK_REVIEW_PERSPECTIVES="domain,structure,requirements"
+PLAN_REVIEW_PERSPECTIVES="structure,steps,requirements"
+RESEARCH_PERSPECTIVES="pro,con"
 ```
 
-### Method 2: Standalone Install
-
-> Copies all files to your project's `.claude/` directory.
-
-```bash
-# Install harness to project (one-liner, no git needed)
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/nwleedev/engine/main/install.sh)" -- ~/my-project
-
-# Run Claude Code
-cd ~/my-project && claude
-```
-
-Update: `bash .claude/scripts/update.sh` or re-run the same command.
-
-<details>
-<summary>Manual install (using git)</summary>
-
-```bash
-git clone https://github.com/nwleedev/engine.git /tmp/engine
-/tmp/engine/.claude/scripts/bootstrap.sh --source /tmp/engine --target ~/my-project
-rm -rf /tmp/engine
-cd ~/my-project && claude
-```
-</details>
-
-### Comparison
-
-| Item | Plugin | Standalone |
-|------|--------|-----------|
-| Install | `claude plugin install` | curl one-liner |
-| Update | Automatic (plugin manager) | `update.sh` manual |
-| Multiple projects | One install, shared | Install per project |
-| Customization | `.claude/engine.env` | `.claude/settings.local.json` |
-| Skill prefix | `/engine:deep-study` | `/deep-study` |
-
-Prerequisites: Claude Code CLI. Standalone install additionally requires curl, tar, jq. See [Getting Started](.claude/docs/GETTING-STARTED.md#1-사전-준비) for detailed setup.
+Prerequisites: Claude Code CLI. See [Getting Started](docs/GETTING-STARTED.md#prerequisites) for detailed setup and [DISTRIBUTION.md](DISTRIBUTION.md) for team/organization install options.
 
 ---
 
@@ -130,21 +92,6 @@ Prerequisites: Claude Code CLI. Standalone install additionally requires curl, t
 | harness-researcher | Internal: `/harness-engine` | Domain research for harness generation |
 | project-researcher | Manual | Technology selection, architecture research (perspective mode supported) |
 
-### Scripts (Automation)
-
-| Script | Purpose |
-|--------|---------|
-| `bootstrap.sh` | Install harness environment to new project |
-| `sync.sh` | Sync core repository updates to project |
-| `promote.sh` | Promote project harness to core repository |
-| `check-plan.sh` | Block editing without plan (hook) |
-| `check-plan-review.sh` | Plan quality validation (hook) |
-| `suggest-harness.sh` | Auto-suggest harness based on file content (hook) |
-| `track-edits.sh` | Track edit count, trigger reviewer (hook) |
-| `snapshot.sh` | Save session snapshot (hook) |
-| `update.sh` | Update installed harness to latest engine version |
-| `migrate.sh` | v1→v2 migration |
-
 ---
 
 ## Core Concepts
@@ -167,61 +114,18 @@ When conversations get long, Claude Code may compress or lose previous context. 
 
 | Document | Content |
 |----------|---------|
-| [Getting Started](.claude/docs/GETTING-STARTED.md) | Install, daily usage, customization, troubleshooting, architecture |
-| [Migration Guide](.claude/docs/MIGRATION.md) | v1→v2 migration guide |
-| [CLAUDE.md](CLAUDE.md) | Project rules (file read by Claude) |
-| [CLAUDE.md.example](.claude/CLAUDE.md.example) | CLAUDE.md template for new projects |
+| [Getting Started](docs/GETTING-STARTED.md) | Install, first use, customization, troubleshooting, reference |
+| [DISTRIBUTION.md](DISTRIBUTION.md) | Plugin distribution options for individuals, teams, organizations |
 
 ---
 
-## Project Structure
+## Updates
 
-```
-.claude/
-  engine.env          # Plugin settings (optional, review/research perspectives, etc.)
-  settings.json          # Hook settings (system-managed, no editing needed)
-  settings.local.json    # Per-project permission/hook customization
-  scripts/               # 9 automation scripts
-  skills/                # 6 skills + harness-engine subsystem
-  agents/                # 6 specialized agents
-  docs/                  # Getting Started, Migration
-  plans/                 # Work plans (auto-generated)
-  sessions/              # Session snapshots (auto-generated)
-```
-
-Only **3 files** need direct editing: `CLAUDE.md` (project rules), `.claude/settings.local.json` (permissions), `.claude/engine.env` (plugin settings, optional).
-
----
-
-## Updates and Sync
-
-### Method 1: Direct Update from Project (Recommended)
+The plugin manager handles updates.
 
 ```bash
-# Check for updates only
-bash .claude/scripts/update.sh --check
-
-# Preview changes
-bash .claude/scripts/update.sh --dry-run
-
-# Run update
-bash .claude/scripts/update.sh
-
-# Offline update from local engine repo
-bash .claude/scripts/update.sh --source ~/engine
-
-# Update to specific version
-bash .claude/scripts/update.sh --version v1.2.0
+claude plugin update engine@engine
 ```
-
-### Method 2: Re-run install.sh
-
-```bash
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/nwleedev/engine/main/install.sh)" -- ~/my-project
-```
-
-What updates manage: hook scripts, settings.json, generic skills, agents, CLAUDE.md core sections.
-What updates don't touch: project rules, domain harnesses, session/plan data, settings.local.json.
 
 ---
 
