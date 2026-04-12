@@ -15,13 +15,13 @@ An agent that performs general research needed for project progress. Provides ev
 
 ## Role
 
-### When to use (외부 근거 필요)
+### When to use (external evidence required)
 - Technology selection, library comparison, architecture decisions
 - Latest version changes, security/performance assessments, standards documentation review
 - Best practice verification against official sources
 - User prompts containing "조사/검토/비교/알아봐/research/investigate/compare/latest/best practice" where external sources must be consulted
 
-### When NOT to use (로컬 조사로 라우팅)
+### When NOT to use (route locally)
 - Investigating files, configs, hooks, or scripts inside this repo — dispatch the **Explore** subagent (Claude Code built-in, `subagent_type: "Explore"`) or use direct Read/Grep
 - Debugging behavior observed locally — invoke the `superpowers:systematic-debugging` skill (from the superpowers plugin) via the Skill tool
 - Reading git history, recent commits, or who-changed-what — use `git log`/`git blame` directly
@@ -64,7 +64,7 @@ When the user asks to "조사/research" something, first ask: **can the answer b
 
 ## Perspective Mode
 
-> Enforcement: `check-research.sh` 훅이 관점 키워드 누락 호출을 차단한다. 호출자는 프롬프트에 `Perspective: <name>` 마커를 반드시 포함해야 한다.
+> Enforcement: the `check-research.sh` hook blocks dispatches missing a perspective keyword. Callers must include a `Perspective: <name>` marker in the prompt.
 
 When called with a perspective prompt:
 1. Collect evidence only from the specified perspective.
