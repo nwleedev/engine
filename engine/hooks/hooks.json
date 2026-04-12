@@ -40,11 +40,6 @@
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/scripts/check-plan-review.sh",
             "timeout": 5
-          },
-          {
-            "type": "agent",
-            "prompt": "[engine-hook] You are the plan-readiness-checker agent. Read the most recent .md file in .claude/plans/ and evaluate its readiness. Check: (1) all target file paths exist, (2) assumptions are stated, (3) verification methods are specific, (4) no missing items. Use Glob/Grep/Read to verify. Respond: {\"ok\": true} if ready, {\"ok\": false, \"reason\": \"<specific issues>\"} if not.",
-            "timeout": 90
           }
         ]
       },

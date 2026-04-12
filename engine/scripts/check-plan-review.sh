@@ -1,6 +1,7 @@
 #!/bin/bash
 # PreToolUse(ExitPlanMode) hook: enforce plan review before exiting
-# First call: block + present checklist, second call: allow
+# First call: block + present checklist (+ perspective dispatch if configured)
+# Second call: allow
 
 INPUT=$(cat)
 SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // empty')
@@ -16,9 +17,21 @@ COUNTER_FILE="$SESSION_DIR/.plan-review-count"
 
 mkdir -p "$SESSION_DIR"
 
-# Find plan file path
+# Load engine config for PLAN_REVIEW_PERSPECTIVES
+ENGINE_CONFIG="$PROJECT_DIR/.claude/engine.env"
+if [ -f "$ENGINE_CONFIG" ]; then
+  # shellcheck source=/dev/null
+  . "$ENGINE_CONFIG"
+fi
+
+# Resolve plan file: prefer session pointer (parallel-terminal safe), fallback to most-recent
 PLANS_DIR="$PROJECT_DIR/.claude/plans"
-PLAN_FILE=$(ls -t "$PLANS_DIR"/*.md 2>/dev/null | head -1)
+PLAN_FILE=""
+if [ -f "$SESSION_DIR/.current-plan" ]; then
+  PTR=$(cat "$SESSION_DIR/.current-plan" 2>/dev/null)
+  [ -n "$PTR" ] && [ -f "$PTR" ] && PLAN_FILE="$PTR"
+fi
+[ -z "$PLAN_FILE" ] && PLAN_FILE=$(ls -t "$PLANS_DIR"/*.md 2>/dev/null | head -1)
 
 # Detect unresolved options (checked regardless of counter)
 if [ -n "$PLAN_FILE" ]; then
@@ -75,6 +88,21 @@ if [ "$COUNT" -eq 0 ]; then
     MSG="${MSG}
 
 Required section check:$(echo -e "$MISSING")"
+  fi
+
+  # Perspective-based parallel review (when PLAN_REVIEW_PERSPECTIVES is set)
+  if [ -n "${PLAN_REVIEW_PERSPECTIVES:-}" ]; then
+    AGENT_LINES=""
+    IFS=',' read -r -a PERSPECTIVES <<< "$PLAN_REVIEW_PERSPECTIVES"
+    for P in "${PERSPECTIVES[@]}"; do
+      P_TRIM=$(echo "$P" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+      AGENT_LINES="${AGENT_LINES}
+- plan-readiness-checker (perspective: ${P_TRIM})"
+    done
+    PLAN_PATH_DISPLAY="${PLAN_FILE:-.claude/plans/<most recent>}"
+    MSG="${MSG}
+
+Before retrying ExitPlanMode, dispatch the following perspective-based parallel reviews on ${PLAN_PATH_DISPLAY} and reflect their feedback in the plan:${AGENT_LINES}"
   fi
 
   echo "$MSG" >&2
