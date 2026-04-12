@@ -3,4 +3,5 @@
 .claude/sessions/
 .claude/plans/
 .claude/meta/
+.claude/engine.env
 temps/
