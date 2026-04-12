@@ -1,6 +1,6 @@
 {
   "name": "engine",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Claude Code Harness System — plan enforcement, quality gates, domain knowledge, and session continuity",
   "author": {
     "name": "nwleedev"
