@@ -62,6 +62,16 @@
             "timeout": 5
           }
         ]
+      },
+      {
+        "matcher": "Write|Edit|Task|mcp__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/inject-harness.sh",
+            "timeout": 10
+          }
+        ]
       }
     ],
     "PostToolUse": [

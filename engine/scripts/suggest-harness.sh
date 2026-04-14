@@ -4,6 +4,9 @@
 # No external config file needed — falls back to description keywords if matchPatterns is absent
 # Injects suggestions into Claude context via additionalContext JSON
 
+# Only run when HARNESS_LEGACY_SUGGEST=1 (inject-harness.sh is the default path)
+[ "${HARNESS_LEGACY_SUGGEST:-0}" = "1" ] || exit 0
+
 # shellcheck source=lib/harness-match.sh
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck disable=SC1091
