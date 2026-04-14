@@ -133,7 +133,7 @@ harness-research-qualitative.md (qualitative research: interviews, user research
 Each harness is generated as an **individual `.claude/skills/harness-<domain>-<name>.md` skill file**. When using concern-group splitting, multiple files may be generated for the same domain (see "Harness File Splitting Strategy" section).
 
 Required sections to include in the file:
-- YAML frontmatter (name, description, user-invocable: true, matchPatterns (fileGlob, regex, toolNames, taskPrompt — verify with dry-run), enforcement: advisory|ask|inject (default: advisory if absent))
+- YAML frontmatter (name, description, user-invocable: true, matchPatterns (fileGlob, regex, toolNames, taskPrompt — verify with dry-run), enforcement: advisory|ask|inject (default: advisory if absent), applicable_skills (optional — include engine:completion-gate for all harnesses))
 - Core rules (architecture, workflows)
 - Anti-patterns (Anti/Good pairs)
 - Validation criteria (completion conditions, checklists)
@@ -180,6 +180,17 @@ Each harness skill file (`.claude/skills/harness-<domain>-<name>.md`) is self-co
       - `inject` — for Task tool: prepends harness content to prompt; for Write/Edit: downgrades to ask; for mcp__*: advisory
     - `enforcementReason`: Human-readable reason shown in the ask prompt (required when enforcement: ask/inject)
     - `enforcementBypass`: How to bypass the enforcement gate (required when enforcement: ask/inject)
+  - `applicable_skills` (optional): Skills recommended when working in this domain. Claude should invoke these during the relevant workflow stage.
+    ```yaml
+    applicable_skills:           # skills to invoke for this domain
+      - "engine:completion-gate"  # always include — enforces verification before claiming done
+      - "superpowers:..."         # add domain-specific skills when applicable
+    workflow_sequence:           # optional: map workflow stages to skills
+      planning: []
+      implementation: []
+      review: ["engine:completion-gate"]
+    ```
+    `engine:completion-gate` must be included for all harnesses.
 - **Core rules** (required)
   - Official documentation/standard-based rules: Workflows, hierarchies, and patterns recommended by official documentation. Each rule cites its official documentation source
     - Software domains: Workflows, hierarchies, separation of concerns, design rationale

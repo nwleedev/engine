@@ -310,6 +310,7 @@ Each final deliverable is an individual `.claude/skills/harness-<domain>-<name>.
   - matchPatterns.fileGlob: Target file path regex (e.g., `"^.*/src/.*\.(ts|tsx)$"`)
   - matchPatterns.regex: File content matching regex array (e.g., `- "useQuery|useMutation"`)
   - Skills based on work intent rather than code content (refactoring, UX exploration, etc.) may omit matchPatterns
+  - `applicable_skills` (optional): List skills the implementer should use in this domain. Always include `engine:completion-gate`. For TDD-applicable domains (software, testing), add `superpowers:test-driven-development`. The harness-researcher identifies domain-specific skills during Stage 8 (Domain Research) — record them in session notes under `skills_to_reference`.
 - Core rules (architecture, workflows) — intersection rules include reference markers
 - Anti-patterns (Anti/Good pairs) — authority-specific distribution rules applied to intersection pairs
 - Validation criteria (completion conditions, checklists)
@@ -331,6 +332,15 @@ Minimum section contract:
 ### 13. Record Research Evidence
 
 Record researched evidence in session `notes/`. Add entries to the notes/ folder under `session_path`.
+
+### 13.5. Populate Applicable Skills
+
+Before writing the final deliverable, confirm the `applicable_skills` list:
+
+1. Always include `engine:completion-gate` — no exceptions
+2. If the domain involves writing and testing code: add `superpowers:test-driven-development`
+3. If domain research (Step 8) identified skills referenced in notes under `skills_to_reference`: add them
+4. Record final `applicable_skills` list in the deliverable's YAML frontmatter
 
 ## Deliverable Format
 
