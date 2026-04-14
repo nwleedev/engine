@@ -40,6 +40,73 @@ Verify that a harness created by `harness-engine` is in a referenceable state be
 - Intersection rules include reference markers appropriate to their authority.
 - The Intersection Metadata section is included in the harness file (regardless of whether intersections exist, including concept_keywords).
 - Declared Intersections in the Intersection Metadata match the Intersection Map.
+- `description` follows the format `Use when [verb+object] — [3-6 comma-separated keywords]`; verify keyword count is 3–6
+- `matchPatterns` dry-run: at least one of 3–5 representative scenarios hits MATCH for each applicable pattern type (fileGlob, regex, toolNames, taskPrompt)
+- Each Anti/Good pair contains all three elements: Scenario, Concrete example, Detection signal
+- Each validation checklist item is YES/NO answerable from the output artifact alone
+- Enforcement level is declared for each major rule (`enforcement: advisory|ask|inject`); absence is treated as `advisory` (acceptable for legacy harnesses, required for new ones)
+- For `enforcement: ask` or `inject` rules: `enforcementReason` and `enforcementBypass` are present in frontmatter
+
+## Quality Gate Validation Procedures
+
+Run these checks during validation. Each gate is a HARD GATE — failing any item means the harness needs revision before use.
+
+### Q1: Trigger Reliability Check
+
+1. Read the frontmatter `description` field
+2. Verify it matches: `Use when [verb+object] — [keyword1, keyword2, ...]`
+   - Does it start with "Use when"?
+   - Does it contain ` — ` (space-dash-dash-space) separating description from keywords?
+   - Are there 3–6 keywords after the ` — `?
+3. If `toolNames` is present: verify each pattern would match the intended tool names using `case` glob matching
+   - Example: does `mcp__*_figma__*` match `mcp__plugin_figma_figma__get_design_context`?
+4. If `taskPrompt` is present: verify each regex matches representative Task prompt text for the domain
+5. **Dry-run procedure**: For each matchPattern type present, construct 3 hypothetical inputs and verify at least 1 hits:
+   - fileGlob: test 3 file paths (2 should match, 1 should not match)
+   - regex: test file content containing target keywords
+   - toolNames: test the exact tool names the harness targets
+   - taskPrompt: test a Task prompt that would trigger this harness
+
+### Q2: Anti/Good Pair Three-Element Check
+
+For each Anti/Good pair in the harness:
+1. **Scenario**: Is there a concrete situation described? (who is doing what, in what context)
+2. **Concrete example**: Are there specific code/output examples for BOTH Anti case and Good case?
+3. **Detection signal**: Is there a description of what to look for in the output artifact to identify the Anti pattern?
+
+Checklist:
+- [ ] Anti case has scenario + example + detection signal
+- [ ] Good case has scenario + example (detection signal may reference the Anti signal as the inverse)
+- [ ] The pair has a unique case name that links Anti and Good together
+
+### Q3: Checklist Observability Check
+
+For each item in the harness's validation checklist:
+1. Can you answer YES or NO by looking at the produced output artifact (file content, API response, screenshot)?
+2. Is the question specific enough to avoid ambiguity? (e.g., names a specific property, pattern, or value)
+3. Is it process-based? (checking what the developer DID vs. what the artifact IS)
+
+Flag items that are:
+- Subjective: "Is the design consistent?" → Fail
+- Process-based: "Did you check the Figma file?" → Fail
+- Measurable: "Does the component use `var(--color-*)` tokens for all color values?" → Pass
+
+### Q4: Enforcement Level Consistency Check
+
+1. For each major rule (especially Anti/Good pairs), is an enforcement level declared?
+   - `enforcement: advisory` — present or absent (absent = advisory, OK for legacy)
+   - `enforcement: ask` or `inject` — must have `enforcementReason` and `enforcementBypass` in frontmatter
+2. Is the declared enforcement level consistent with the rule's importance?
+   - Hard blockers (security, data loss) should be `ask` or `inject`
+   - Best practices should be `advisory`
+3. Is the frontmatter `enforcement` field consistent with the skill-level enforcement needed?
+
+### Q5: matchPatterns Coherence Check
+
+Verify that the matchPatterns fields are consistent with each other and with the domain:
+- If `toolNames` is set to MCP tool patterns: does the harness also cover the MCP tool's workflow (not just file editing)?
+- If both `fileGlob` and `regex` are set: does the combination make sense? (fileGlob restricts, regex confirms)
+- If `taskPrompt` is set: is the harness suitable for non-file Task-based workflows?
 
 ## Validation Sub-Agent
 
@@ -164,3 +231,9 @@ This is the cross-harness validation performed by the main agent after the valid
 - Declared Intersections in both harnesses are asymmetric (A's `this` ≠ B's `other`).
 - An undeclared intersection was discovered in Cross-Harness Validation (Step 14.5) but was not resolved.
 - A contradictory intersection was left unresolved when the harness was generated.
+- `description` does not follow `Use when [verb+object] — [keywords]` format (fallback matching will fail)
+- An Anti/Good pair exists but lacks a Scenario, Concrete example, or Detection signal (Three-Element requirement violated)
+- A validation checklist item cannot be answered YES/NO from the output artifact alone
+- `enforcement: ask` or `inject` declared but `enforcementReason` or `enforcementBypass` is missing from frontmatter
+- `matchPatterns.toolNames` set but none of the patterns match the actual tool names the harness targets
+- No enforcement level declared for any rule in a newly generated harness (acceptable for legacy, not for new)
