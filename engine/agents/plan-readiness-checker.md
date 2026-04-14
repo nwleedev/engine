@@ -37,7 +37,7 @@ An agent that performs deep analysis of whether a plan is ready for immediate ex
    - **Why will this plan fail?** — list exactly 3 specific failure modes (not generic risks like "scope creep")
    - **What familiar pattern am I defaulting to?** — name the pattern (e.g., "shell script for everything", "agent-per-concern"), then ask if a better alternative exists for this specific context
    - **What would someone who has never seen this codebase misunderstand?** — surface hidden assumptions the plan author may have taken for granted
-   - Completion criterion: 3 failure modes and 1 named alternative approach must be explicitly stated. Responding "No issues" is prohibited — at minimum 1 potential failure mode must be identified.
+   - Completion criterion: 3 failure modes and 1 named alternative approach must be explicitly stated. Responding "No issues" is prohibited.
 
 5. **Exploration Attempt** — mandatory before generating questions:
    - For each ambiguous/missing item found in steps 2-4, explore answers using Glob/Grep/Read.
