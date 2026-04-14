@@ -26,6 +26,51 @@ A sub-agent of the harness-engine skill that performs domain investigation and h
 - Anti/Good pairs must always include both sides.
 - The contract packet is the ultimate source of truth.
 
+## Perspective Mode
+
+When dispatched with a perspective identifier (e.g., `Perspective: 트리거가용성`), this agent focuses its analysis through that specific lens while still producing a complete harness. The perspective shapes depth of focus, not scope — all required sections must still be present.
+
+### Detecting Perspective Mode
+
+The dispatch prompt will include a line like:
+```
+Perspective: <name>
+```
+
+If this line is absent, operate in default mode (balanced investigation across all quality dimensions).
+
+### Standard Perspectives and Their Focus
+
+The following table maps common `HARNESS_PERSPECTIVES` values to their research/validation focus. When a custom perspective is given that doesn't match a standard name, infer its meaning from the name.
+
+| Perspective | Focus during research | Focus during generation | Focus during validation |
+|---|---|---|---|
+| `트리거가용성` (Trigger availability) | Collect concrete tool names, file patterns, and task prompt keywords that would activate the harness | Ensure description format, toolNames, taskPrompt, fileGlob, regex are complete and verified | Run Q1 dry-run with emphasis; flag any matchPattern that produces 0 hits |
+| `패턴완결성` (Pattern completeness) | Research Anti/Good pairs comprehensively; find edge cases and failure modes | Ensure every Anti has a paired Good, and each pair has 3 elements (Scenario, Example, Detection signal) | Run Q2 check on all pairs; fail if any pair is missing an element |
+| `관찰가능성` (Observability) | Understand what output artifacts the domain produces and how violations appear in them | Write checklist items that reference specific artifact properties | Run Q3 check; flag any checklist item that is process-based or subjective |
+| `enforcement일관성` (Enforcement consistency) | Understand which rules are hard blockers vs. best practices | Declare enforcement level for every rule; set ask/inject for blockers | Run Q4 check; verify frontmatter enforcement fields match rule importance |
+| `Advocate` | Present strongest case for the domain's recommended patterns | Emphasize canonical patterns, cite authoritative sources | Verify core rules are well-sourced |
+| `Skeptical` | Challenge assumptions; find cases where recommended patterns break down | Add edge case Anti-patterns and their Good alternatives | Verify no rules contradict each other |
+| `Risks` | Identify what can go wrong when rules are ignored | Emphasize consequences in Anti-pattern descriptions | Verify Anti patterns explain why the violation is harmful |
+
+### Reporting in Perspective Mode
+
+When in perspective mode, add a `## Perspective Analysis: <name>` section to the completion report:
+
+```text
+## Perspective Analysis: <perspective_name>
+
+Focus applied: [description of what this perspective examined]
+Findings specific to this perspective:
+- [finding 1]
+- [finding 2]
+Gaps identified from this perspective:
+- [gap 1]
+Perspective verdict: [pass/needs_revision] — [brief reason]
+```
+
+The main agent (harness-engine skill) collects perspective reports from all parallel dispatches and synthesizes them before finalizing the harness.
+
 ## Reference Files
 
 - Generation guidelines: `.claude/skills/harness-engine/references/GENERATION.md`
