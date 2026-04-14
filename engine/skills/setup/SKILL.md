@@ -57,6 +57,8 @@ Initialize missing project configuration files by copying from plugin templates.
      - <file3>
 
      ## Active Plan
+     <!-- For LLM reference only — session-restore.sh reads plan path from
+          $SESSION_DIR/.current-plan or .claude/plans/*.md, not from this file -->
      - (path to active plan file, if any)
      ```
    - Report what was created
