@@ -45,7 +45,7 @@ This skill is neither a fully static rule engine nor a fully dynamic engine that
 14. **Run the validation sub-agent.**
 14.5. **Perform Cross-Harness Validation.** Compare newly generated harness against all existing harnesses in the project. Block progress until undeclared intersections or contradictory rules are resolved (HARD GATE). If existing harnesses need updates, generate Pending Harness Update directives.
 15. Reflect validation results in the contract packet first, then reinforce the harness. **If Pending Harness Updates exist, apply minimal edits to existing harnesses after user confirmation.**
-16. If a new harness skill was created, update the domain harness list in `.claude/skills/use-repo-skills.md`. (Skip this step if the file doesn't exist — suggest-harness.sh directly scans individual harness-*.md files, so the central catalog is optional.)
+16. If a new harness skill was created, update the domain harness list in `.claude/skills/use-repo-skills.md`. (Skip this step if the file doesn't exist — inject-harness.sh directly scans individual harness-*.md files, so the central catalog is optional.)
 17. Update the session record (SESSION.md). **Verify that Intersection Metadata section is finalized in the new harness.**
 
 ## Pre-Work Checks
@@ -444,7 +444,7 @@ Sub-agents do not update session files. The main agent handles:
 - "Sufficient harness" means only cases that satisfy both minimum contract and validation pass.
 - Reinforce only insufficient sections.
 - Create new harness only when existing harness repeatedly cannot cover.
-- If a new harness was created and `.claude/skills/use-repo-skills.md` exists, update the domain harness list. (Since suggest-harness.sh directly scans individual files, catalog non-update doesn't block discovery.)
+- If a new harness was created and `.claude/skills/use-repo-skills.md` exists, update the domain harness list. (Since inject-harness.sh directly scans individual files, catalog non-update doesn't block discovery.)
 - When reinforcing existing harness, do not mix portable core and local evidence.
 
 ## Prohibitions

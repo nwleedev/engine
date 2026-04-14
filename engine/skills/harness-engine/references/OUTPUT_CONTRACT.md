@@ -157,7 +157,7 @@ Each harness skill file (`.claude/skills/harness-<domain>-<name>.md`) is self-co
 - **frontmatter** (required)
   - name, description, user-invocable: true
   - description describes auto-activation trigger conditions in "Use when..." format
-  - `matchPatterns` (recommended): Matching rules for the suggest-harness.sh hook to auto-suggest on file reads
+  - `matchPatterns` (recommended): Matching rules for the inject-harness.sh hook to auto-inject on Write/Edit/Task/mcp__* tool calls
     - `fileGlob`: File path filter regex (optional). Files that don't match are skipped
       - Frontend: `"^.*/src/.*\.(ts|tsx)$"`
       - Backend Python: `"^.*/src/.*\.py$"`

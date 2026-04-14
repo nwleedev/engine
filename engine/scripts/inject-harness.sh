@@ -185,6 +185,12 @@ ${context_text}
 ${TASK_PROMPT}"
       updated_input=$(printf '%s' "$INPUT" | jq --arg p "$injected_prompt" '.tool_input + {prompt: $p}')
       printf '{"hookSpecificOutput":{"hookEventName":"PreToolUse","updatedInput":%s}}\n' "$updated_input"
+      # Record injection in cache to prevent double-injection on repeated Task calls
+      if [ -n "$LOG_DIR" ] && [ -f "$LOG_DIR/.harness-cache" ]; then
+        for injected_skill in "${MATCHED_SKILLS[@]}"; do
+          printf 'INJECTED=%s:%s\n' "$CACHE_KEY" "$injected_skill" >> "$LOG_DIR/.harness-cache"
+        done
+      fi
       exit 0
       ;;
     Write|Edit)

@@ -306,7 +306,7 @@ Each final deliverable is an individual `.claude/skills/harness-<domain>-<name>.
 
 - YAML frontmatter (name, description, user-invocable: true, matchPatterns)
   - description must follow the format `Use when working with X — keyword1, keyword2`
-  - Include matchPatterns so the suggest-harness.sh hook can auto-suggest on file reads
+  - Include matchPatterns so the inject-harness.sh hook can auto-inject on Write/Edit/Task/mcp__* tool calls
   - matchPatterns.fileGlob: Target file path regex (e.g., `"^.*/src/.*\.(ts|tsx)$"`)
   - matchPatterns.regex: File content matching regex array (e.g., `- "useQuery|useMutation"`)
   - Skills based on work intent rather than code content (refactoring, UX exploration, etc.) may omit matchPatterns

@@ -4,9 +4,6 @@
 # No external config file needed — falls back to description keywords if matchPatterns is absent
 # Injects suggestions into Claude context via additionalContext JSON
 
-# Only run when HARNESS_LEGACY_SUGGEST=1 (inject-harness.sh is the default path)
-[ "${HARNESS_LEGACY_SUGGEST:-0}" = "1" ] || exit 0
-
 # shellcheck source=lib/harness-match.sh
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck disable=SC1091
@@ -16,6 +13,16 @@ INPUT=$(cat)
 FILE_PATH=$(echo "$INPUT" | jq -r '.tool_input.file_path // empty')
 SESSION_ID_VAL=$(echo "$INPUT" | jq -r '.session_id // empty')
 PROJECT_DIR_VAL="${CLAUDE_PROJECT_DIR:-$(echo "$INPUT" | jq -r '.cwd // empty')}"
+
+# Load engine config so HARNESS_LEGACY_SUGGEST can be set in .claude/engine.env
+ENGINE_CONFIG="$PROJECT_DIR_VAL/.claude/engine.env"
+if [ -f "$ENGINE_CONFIG" ]; then
+  # shellcheck source=/dev/null
+  . "$ENGINE_CONFIG"
+fi
+
+# Only run when HARNESS_LEGACY_SUGGEST=1 (inject-harness.sh is the default path)
+[ "${HARNESS_LEGACY_SUGGEST:-0}" = "1" ] || exit 0
 
 # Track read files — used by snapshot.sh for mini-snapshot decisions
 if [ -n "$SESSION_ID_VAL" ] && [ -n "$PROJECT_DIR_VAL" ] && [ -n "$FILE_PATH" ]; then
