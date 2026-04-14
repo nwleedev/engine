@@ -38,6 +38,35 @@ if [ -n "$CLAUDE_VERSION" ]; then
   fi
 fi
 
+# --- Cache check ---
+
+SKILLS_MTIME=$(stat -f %m "$SKILLS_DIR" 2>/dev/null || stat -c %Y "$SKILLS_DIR" 2>/dev/null)
+
+LOG_DIR=""
+if [ -n "$SESSION_ID" ]; then
+  LOG_DIR="$PROJECT_DIR/.claude/sessions/$SESSION_ID"
+  mkdir -p "$LOG_DIR"
+fi
+
+FILE_PATH_EARLY=$(echo "$INPUT" | jq -r '.tool_input.file_path // empty')
+CACHE_KEY="$TOOL_NAME:$FILE_PATH_EARLY"
+
+if [ -n "$LOG_DIR" ] && [ -f "$LOG_DIR/.harness-cache" ]; then
+  CACHED_MTIME=$(grep '^SKILLS_MTIME=' "$LOG_DIR/.harness-cache" | cut -d= -f2 | head -1)
+  if [ "$CACHED_MTIME" = "$SKILLS_MTIME" ]; then
+    # Skills unchanged — check if already injected for this context
+    if grep -qF "INJECTED=$CACHE_KEY:" "$LOG_DIR/.harness-cache" 2>/dev/null; then
+      exit 0  # Already injected for this tool/file combo
+    fi
+  else
+    # Skills changed — invalidate cache
+    printf 'SKILLS_MTIME=%s\n' "$SKILLS_MTIME" > "$LOG_DIR/.harness-cache"
+  fi
+elif [ -n "$LOG_DIR" ]; then
+  # Initialize cache file
+  printf 'SKILLS_MTIME=%s\n' "$SKILLS_MTIME" > "$LOG_DIR/.harness-cache"
+fi
+
 # --- Source matching library ---
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -70,12 +99,6 @@ HIGHEST_ENFORCEMENT=0
 HIGHEST_ENFORCEMENT_SKILL=""
 HIGHEST_ENFORCEMENT_REASON=""
 HIGHEST_ENFORCEMENT_BYPASS=""
-
-LOG_DIR=""
-if [ -n "$SESSION_ID" ]; then
-  LOG_DIR="$PROJECT_DIR/.claude/sessions/$SESSION_ID"
-  mkdir -p "$LOG_DIR"
-fi
 
 for skill_file in "$SKILLS_DIR"/harness-*.md; do
   [ -f "$skill_file" ] || continue
@@ -193,5 +216,12 @@ fi
 additional_context_json=$(printf '%s' "$context_text" | jq -Rs .) || exit 0
 
 printf '{"hookSpecificOutput":{"hookEventName":"PreToolUse","additionalContext":%s}}\n' "$additional_context_json"
+
+# Record injections in cache
+if [ -n "$LOG_DIR" ] && [ -f "$LOG_DIR/.harness-cache" ]; then
+  for injected_skill in "${MATCHED_SKILLS[@]}"; do
+    printf 'INJECTED=%s:%s\n' "$CACHE_KEY" "$injected_skill" >> "$LOG_DIR/.harness-cache"
+  done
+fi
 
 exit 0
