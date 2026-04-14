@@ -38,6 +38,14 @@ if [ -f "$READ_FILES" ] && [ -s "$READ_FILES" ]; then
   HAS_READS=true
 fi
 
+HARNESS_USAGE_FILE="$SESSION_DIR/.harness-usage"
+HARNESS_USED=""
+if [ -f "$HARNESS_USAGE_FILE" ] && [ -s "$HARNESS_USAGE_FILE" ]; then
+  # Extract MATCH, ASK, INJECT entries (exclude NOMATCH)
+  HARNESS_USED=$(grep -E '^\[(MATCH|ASK|INJECT)\]' "$HARNESS_USAGE_FILE" 2>/dev/null | \
+    awk '{print $3}' | sort -u | tr '\n' ',' | sed 's/,$//')
+fi
+
 # Skip if no edits and no reads (simple Q&A turn)
 # Always create snapshot for --pre-compact
 if [ "$1" != "--pre-compact" ] && [ "$HAS_EDITS" = false ] && [ "$HAS_READS" = false ]; then
@@ -197,6 +205,11 @@ fi
   echo ""
   echo "## Active plan"
   echo "${PLAN_FILE:-(none)}"
+  if [ -n "$HARNESS_USED" ]; then
+    echo ""
+    echo "## Harnesses used"
+    echo "$HARNESS_USED"
+  fi
   if [ -n "$NOTES" ]; then
     echo ""
     echo "## Notes"
@@ -218,6 +231,7 @@ fi
 REQUEST_LINE=$(echo "$USER_REQUEST" | tr '\n' ' ' | head -c 100)
 [ -z "$REQUEST_LINE" ] && REQUEST_LINE="(no request captured)"
 DONE_LINE=$(echo "$SUMMARY_LINE" | head -c 120)
+[ -n "$HARNESS_USED" ] && DONE_LINE="$DONE_LINE. Harnesses: $HARNESS_USED"
 
 SUMMARY="### $TIMESTAMP — $TITLE
 - Request: $REQUEST_LINE
@@ -254,5 +268,6 @@ fi
 # Reset file lists
 [ -f "$EDITED_FILES" ] && > "$EDITED_FILES"
 [ -f "$READ_FILES" ] && > "$READ_FILES"
+[ -f "$HARNESS_USAGE_FILE" ] && > "$HARNESS_USAGE_FILE"
 
 exit 0
