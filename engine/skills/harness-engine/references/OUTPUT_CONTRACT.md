@@ -133,7 +133,7 @@ harness-research-qualitative.md (qualitative research: interviews, user research
 Each harness is generated as an **individual `.claude/skills/harness-<domain>-<name>.md` skill file**. When using concern-group splitting, multiple files may be generated for the same domain (see "Harness File Splitting Strategy" section).
 
 Required sections to include in the file:
-- YAML frontmatter (name, description, user-invocable: true, matchPatterns)
+- YAML frontmatter (name, description, user-invocable: true, matchPatterns (fileGlob, regex, toolNames, taskPrompt — verify with dry-run), enforcement: advisory|ask|inject (default: advisory if absent))
 - Core rules (architecture, workflows)
 - Anti-patterns (Anti/Good pairs)
 - Validation criteria (completion conditions, checklists)
@@ -165,8 +165,21 @@ Each harness skill file (`.claude/skills/harness-<domain>-<name>.md`) is self-co
       - FSD layers: `"^.*/src/(app|pages|widgets|features|entities|shared)/.*"`
     - `regex`: File content matching regex array. If any match, the harness is suggested
       - Example: `- "useQuery|useMutation|queryClient"`
+    - `toolNames`: Tool name glob patterns. If set, only fires when the called tool matches at least one pattern
+      - Example: `- "mcp__*_figma__*"` (Figma MCP tools)
+      - Example: `- "Write"` (Write tool)
+    - `taskPrompt`: Regex patterns matched against Task tool prompt content. Supplements regex matching for Task invocations
+      - Example: `- "figma|피그마|design|디자인"`
     - If matchPatterns is absent, fallback matching uses keywords after `— ` in the description
-    - description must follow the format `Use when working with X — keyword1, keyword2` (fallback compatible)
+    - description must follow the format `Use when [verb+object] — [3-6 comma-separated trigger keywords]`
+      - Bad: `Use when working with React components`
+      - Good: `Use when implementing React components — useQuery, useMutation, queryClient, invalidate, staleTime`
+    - `enforcement` (top-level frontmatter field, default: `advisory`): Skill-level enforcement level
+      - `advisory` — additionalContext injection only (default, backward compatible)
+      - `ask` — triggers `permissionDecision: "ask"` before tool execution; requires `enforcementReason` and `enforcementBypass`
+      - `inject` — for Task tool: prepends harness content to prompt; for Write/Edit: downgrades to ask; for mcp__*: advisory
+    - `enforcementReason`: Human-readable reason shown in the ask prompt (required when enforcement: ask/inject)
+    - `enforcementBypass`: How to bypass the enforcement gate (required when enforcement: ask/inject)
 - **Core rules** (required)
   - Official documentation/standard-based rules: Workflows, hierarchies, and patterns recommended by official documentation. Each rule cites its official documentation source
     - Software domains: Workflows, hierarchies, separation of concerns, design rationale
@@ -181,6 +194,56 @@ Each harness skill file (`.claude/skills/harness-<domain>-<name>.md`) is self-co
   - Lint/static analysis rule mappings for auto-detectable items among anti-patterns
 - **Combination patterns** (optional)
   - Integration patterns with other libraries (when applicable)
+
+## Quality Gate Requirements
+
+Generated harnesses must pass the following quality gates before being considered complete.
+
+### Q1: Trigger Reliability
+
+- description must follow `Use when [verb+object] — [keyword1, keyword2, ...]` format (3–6 keywords)
+- `matchPatterns.fileGlob` and `regex` must produce at least one hit in a dry-run against 3–5 representative files/tools
+- `toolNames` patterns must be verified: if the harness targets MCP tools (e.g., figma), toolNames must include the MCP tool pattern
+- `taskPrompt` patterns must be verified if the harness targets non-file workflows (research, analysis, etc.)
+
+### Q2: Anti/Good Pair Completeness (Three-Element Requirement)
+
+Each Anti/Good pair must include all three elements:
+1. **Scenario**: A concrete situation where the pattern applies (who, what, when)
+2. **Concrete example**: Specific code, output, or artifact showing the Anti case and the Good case
+3. **Detection signal**: How to recognize the Anti pattern in actual output (what to look for in the produced artifact)
+
+Missing any of the three elements fails Q2 for that pair.
+
+### Q3: Checklist Observability
+
+Each validation checklist item must be answerable YES/NO by examining the task output artifact:
+- Good: "Does the component use a design token variable (e.g. `var(--color-primary)`) instead of a hex value?"
+- Bad: "Was the design system followed?" (subjective, cannot be YES/NO from artifact alone)
+- Bad: "Did the developer check the Figma file?" (process-based, not observable in artifact)
+
+### Q4: Enforcement Level Declaration
+
+Each major rule (especially Anti/Good pairs) must declare its enforcement level:
+- `enforcement: advisory` — informational, observed by work-reviewer post-hoc
+- `enforcement: ask` — triggers user confirmation before the tool runs; must include `enforcementReason` and `enforcementBypass` in frontmatter
+- `enforcement: inject` — active injection into tool input; same frontmatter requirements as ask
+
+**For `enforcement: ask` or `inject`**: The harness frontmatter must include:
+```yaml
+enforcement: ask
+enforcementReason: "Brief reason why this requires explicit confirmation"
+enforcementBypass: "Steps to bypass: [description]"
+```
+
+**Rules without an enforcement level default to `advisory`**. This is backward compatible with existing harnesses.
+
+### Q5: Dry-Run Matching Verification
+
+Before finalizing a harness, verify that `matchPatterns` actually matches its intended domain:
+- Create 3–5 hypothetical tool invocation scenarios (file paths, tool names, or Task prompts)
+- Run each through the pattern: does fileGlob match? Does regex match content? Does toolNames match tool?
+- At least one scenario must produce a MATCH; if all produce NOMATCH, the patterns need revision
 
 ## Minimum Section Contract
 
