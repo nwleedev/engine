@@ -33,6 +33,12 @@ An agent that performs deep analysis of whether a plan is ready for immediate ex
    - Assumptions requiring user confirmation
    - Need for external system/API information
 
+**4.5. Devil's Advocate Analysis** — explicitly adopt an adversarial stance before exploration:
+   - **Why will this plan fail?** — list exactly 3 specific failure modes (not generic risks like "scope creep")
+   - **What familiar pattern am I defaulting to?** — name the pattern (e.g., "shell script for everything", "agent-per-concern"), then ask if a better alternative exists for this specific context
+   - **What would someone who has never seen this codebase misunderstand?** — surface hidden assumptions the plan author may have taken for granted
+   - Completion criterion: 3 failure modes and 1 named alternative approach must be explicitly stated. Responding "No issues" is prohibited — at minimum 1 potential failure mode must be identified.
+
 5. **Exploration Attempt** — mandatory before generating questions:
    - For each ambiguous/missing item found in steps 2-4, explore answers using Glob/Grep/Read.
    - Recover artifacts from code, config, tests, existing plans/session records.
@@ -72,6 +78,11 @@ An agent that performs deep analysis of whether a plan is ready for immediate ex
     - Skip conditions — skip the split check if any apply:
       - Plan already has explicit subtask/phase divisions
       - Analysis/investigation-only plan (no code changes)
+    - **Granularity verification** — for each change unit in the plan, check:
+      - Is each Change/Step completable as a single commit? (target: 2–5 min of work)
+      - Are code snippets, commands, and expected outputs explicitly stated? (TBD/placeholders are not acceptable)
+      - Can each change unit be mapped back to a numbered original requirement? (reference by number or explicit mention)
+      - Flag any change unit that fails these checks as "under-specified"
     - When recommending a split: suggest an ordered subtask list with dependencies.
     - When no split needed: record "split not needed".
 
@@ -99,6 +110,13 @@ An agent that performs deep analysis of whether a plan is ready for immediate ex
 
 ### Unverified Dependencies
 - [List of assumptions requiring verification]
+
+### Devil's Advocate Analysis
+| Question | Finding |
+|----------|---------|
+| Why will this plan fail? (3 modes) | 1. ... 2. ... 3. ... |
+| What familiar pattern am I defaulting to? | Pattern: ... Alternative: ... |
+| What would a newcomer misunderstand? | Hidden assumption: ... |
 
 ### Key Question (max 1)
 - **Question**: [Question that most significantly changes implementation direction]
