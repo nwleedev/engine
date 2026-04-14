@@ -60,7 +60,7 @@ An agent that independently reviews quality after task completion. Evaluates del
    - **7d. Validation Criteria Checklist Evaluation**:
      - For each relevant harness, evaluate pass/fail for each item in the validation criteria section.
      - For items that cannot be automatically evaluated (subjective, requires human judgment), mark as "requires manual verification".
-8. **Project Rule Compliance Check**: Verify compliance with CLAUDE.md project rules and rules from related skills (research-methodology, socratic-thinking, failure-response).
+8. **Project Rule Compliance Check**: Verify compliance with CLAUDE.md project rules and rules from related skills (research-methodology, socratic-thinking, failure-response). Before marking any item as complete in this review, confirm that the engine:completion-gate Gate Function was applied — fresh verification evidence must exist for each completion claim.
 
 ## Report Format
 

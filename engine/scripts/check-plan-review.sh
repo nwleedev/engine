@@ -82,7 +82,8 @@ if [ "$COUNT" -eq 0 ]; then
 1. All target file paths actually exist
 2. Assumptions are explicitly stated
 3. Verification methods are specific
-4. No items are missing"
+4. No items are missing
+Before retrying, run engine:completion-gate to verify all completion claims have evidence."
 
   if [ -n "$MISSING" ]; then
     MSG="${MSG}
