@@ -54,16 +54,6 @@
         ]
       },
       {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/block-dangerous-commands.sh",
-            "timeout": 5
-          }
-        ]
-      },
-      {
         "matcher": "Write|Edit|Task|mcp__.*",
         "hooks": [
           {
@@ -75,16 +65,6 @@
       }
     ],
     "PostToolUse": [
-      {
-        "matcher": "Read",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/suggest-harness.sh",
-            "timeout": 5
-          }
-        ]
-      },
       {
         "matcher": "Write|Edit",
         "hooks": [
@@ -118,17 +98,6 @@
         ]
       }
     ],
-    "SessionEnd": [
-      {
-        "matcher": "clear",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/session-end-backup.sh",
-            "timeout": 10
-          }
-        ]
-      }
-    ]
+    "SessionEnd": []
   }
 }
