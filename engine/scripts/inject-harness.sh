@@ -18,8 +18,11 @@ CLAUDE_VERSION=$(echo "$INPUT" | jq -r '.claude_version // empty')
 SKILLS_DIR="$PROJECT_DIR/.claude/skills"
 [ -d "$SKILLS_DIR" ] || exit 0
 
-harness_count=$(ls "$SKILLS_DIR"/harness-*.md 2>/dev/null | wc -l)
-[ "$harness_count" -gt 0 ] || exit 0
+found_harness=false
+for _f in "$SKILLS_DIR"/harness-*.md; do
+  [ -f "$_f" ] && { found_harness=true; break; }
+done
+[ "$found_harness" = true ] || exit 0
 
 # --- Version check ---
 
@@ -63,6 +66,11 @@ fi
 MATCHED_SKILLS=()
 MATCHED_EXCERPTS=()
 
+HIGHEST_ENFORCEMENT=0
+HIGHEST_ENFORCEMENT_SKILL=""
+HIGHEST_ENFORCEMENT_REASON=""
+HIGHEST_ENFORCEMENT_BYPASS=""
+
 LOG_DIR=""
 if [ -n "$SESSION_ID" ]; then
   LOG_DIR="$PROJECT_DIR/.claude/sessions/$SESSION_ID"
@@ -75,22 +83,43 @@ for skill_file in "$SKILLS_DIR"/harness-*.md; do
 
   harness_match_skill "$skill_file" "$TOOL_NAME" "$MATCH_CONTENT" "$MATCH_FILE_PATH"
 
-  if [ -n "$LOG_DIR" ]; then
-    if [ "$HARNESS_MATCHED" = "true" ]; then
-      printf '[MATCH] %s %s\n' "$TOOL_NAME" "$skill_name" >> "$LOG_DIR/.harness-usage"
-    else
-      printf '[NOMATCH] %s %s\n' "$TOOL_NAME" "$skill_name" >> "$LOG_DIR/.harness-usage"
-    fi
-  fi
-
   if [ "$HARNESS_MATCHED" = "true" ]; then
+    enforcement=$(printf '%s\n' "$HARNESS_FRONTMATTER" | sed -n 's/^enforcement: *//p' | head -1 | tr -d '"' | tr -d "'")
+    enforcement_reason=$(printf '%s\n' "$HARNESS_FRONTMATTER" | sed -n 's/^enforcementReason: *//p' | head -1 | sed 's/^"//; s/"$//')
+    enforcement_bypass=$(printf '%s\n' "$HARNESS_FRONTMATTER" | sed -n 's/^enforcementBypass: *//p' | head -1 | sed 's/^"//; s/"$//')
+    [ -z "$enforcement" ] && enforcement="advisory"
+
+    enf_level=0
+    case "$enforcement" in
+      ask) enf_level=1 ;;
+      inject) enf_level=2 ;;
+    esac
+    if [ "$enf_level" -gt "$HIGHEST_ENFORCEMENT" ]; then
+      HIGHEST_ENFORCEMENT=$enf_level
+      HIGHEST_ENFORCEMENT_SKILL="$skill_name"
+      HIGHEST_ENFORCEMENT_REASON="$enforcement_reason"
+      HIGHEST_ENFORCEMENT_BYPASS="$enforcement_bypass"
+    fi
+
+    if [ -n "$LOG_DIR" ]; then
+      case "$enforcement" in
+        ask)    printf '[ASK] %s %s\n' "$TOOL_NAME" "$skill_name" >> "$LOG_DIR/.harness-usage" ;;
+        inject) printf '[INJECT] %s %s\n' "$TOOL_NAME" "$skill_name" >> "$LOG_DIR/.harness-usage" ;;
+        *)      printf '[MATCH] %s %s\n' "$TOOL_NAME" "$skill_name" >> "$LOG_DIR/.harness-usage" ;;
+      esac
+    fi
+
     MATCHED_SKILLS+=("$skill_name")
     excerpt=$(head -n 50 "$skill_file")
     MATCHED_EXCERPTS+=("$excerpt")
+  else
+    if [ -n "$LOG_DIR" ]; then
+      printf '[NOMATCH] %s %s\n' "$TOOL_NAME" "$skill_name" >> "$LOG_DIR/.harness-usage"
+    fi
   fi
 done
 
-# --- Compose and output additionalContext ---
+# --- Compose context_text (used by inject and advisory paths) ---
 
 [ "${#MATCHED_SKILLS[@]}" -gt 0 ] || exit 0
 
@@ -118,6 +147,47 @@ if [ "${#context_text}" -gt "$MAX_LEN" ]; then
   context_text="$context_text
 [... truncated, see full file at .claude/skills/$last_skill.md]"
 fi
+
+# --- Enforcement handling ---
+
+if [ "$HIGHEST_ENFORCEMENT" -ge 2 ]; then
+  # inject: prepend harness content into prompt for Task; downgrade to ask for Write/Edit; additionalContext for mcp__*
+  case "$TOOL_NAME" in
+    Task)
+      injected_prompt="=== HARNESS INJECTION: $HIGHEST_ENFORCEMENT_SKILL ===
+[Harness rules active — follow strictly]
+${context_text}
+=== END HARNESS ===
+
+${TASK_PROMPT}"
+      updated_input=$(printf '%s' "$INPUT" | jq --arg p "$injected_prompt" '.tool_input + {prompt: $p}')
+      printf '{"hookSpecificOutput":{"hookEventName":"PreToolUse","updatedInput":%s}}\n' "$updated_input"
+      exit 0
+      ;;
+    Write|Edit)
+      # Modifying file content is risky; downgrade inject to ask for these tools
+      reason="Harness enforcement active (inject downgraded to ask for file edits) — $HIGHEST_ENFORCEMENT_SKILL"
+      [ -n "$HIGHEST_ENFORCEMENT_REASON" ] && reason="$reason: $HIGHEST_ENFORCEMENT_REASON"
+      [ -n "$HIGHEST_ENFORCEMENT_BYPASS" ] && reason="$reason. To bypass: $HIGHEST_ENFORCEMENT_BYPASS"
+      reason_json=$(printf '%s' "$reason" | jq -Rs .)
+      printf '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"ask","permissionDecisionReason":%s}}\n' "$reason_json"
+      exit 0
+      ;;
+    *)
+      # mcp__* and others: fall through to additionalContext output
+      ;;
+  esac
+elif [ "$HIGHEST_ENFORCEMENT" -ge 1 ]; then
+  # ask: output permissionDecision
+  reason="Harness enforcement active — $HIGHEST_ENFORCEMENT_SKILL"
+  [ -n "$HIGHEST_ENFORCEMENT_REASON" ] && reason="$reason: $HIGHEST_ENFORCEMENT_REASON"
+  [ -n "$HIGHEST_ENFORCEMENT_BYPASS" ] && reason="$reason. To bypass: $HIGHEST_ENFORCEMENT_BYPASS"
+  reason_json=$(printf '%s' "$reason" | jq -Rs .)
+  printf '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"ask","permissionDecisionReason":%s}}\n' "$reason_json"
+  exit 0
+fi
+
+# --- Advisory: output additionalContext ---
 
 # Output JSON with additionalContext
 additional_context_json=$(printf '%s' "$context_text" | jq -Rs .) || exit 0
