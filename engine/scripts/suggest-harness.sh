@@ -4,6 +4,11 @@
 # No external config file needed — falls back to description keywords if matchPatterns is absent
 # Injects suggestions into Claude context via additionalContext JSON
 
+# shellcheck source=lib/harness-match.sh
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck disable=SC1091
+source "$SCRIPT_DIR/lib/harness-match.sh"
+
 INPUT=$(cat)
 FILE_PATH=$(echo "$INPUT" | jq -r '.tool_input.file_path // empty')
 SESSION_ID_VAL=$(echo "$INPUT" | jq -r '.session_id // empty')
@@ -38,58 +43,10 @@ for skill_file in "$SKILLS_DIR"/harness-*.md; do
 
   skill_name=$(basename "$skill_file" .md)
 
-  # Extract YAML frontmatter (between first --- and second ---)
-  frontmatter=$(sed -n '2,/^---$/p' "$skill_file" | sed '$d')
+  harness_match_skill "$skill_file" "" "$CONTENT" "$FILE_PATH"
 
-  # Extract matchPatterns.fileGlob
-  file_glob=$(echo "$frontmatter" | sed -n 's/^  fileGlob: *"\(.*\)"/\1/p' | head -1)
-
-  # Filter by file path if fileGlob is present
-  if [ -n "$file_glob" ]; then
-    if ! echo "$FILE_PATH" | grep -qE "$file_glob"; then
-      continue
-    fi
-  fi
-
-  # Extract matchPatterns.regex array
-  regexes=$(echo "$frontmatter" | sed -n '/^  regex:/,/^[^ ]/p' | grep '^ *- ' | sed 's/^ *- *"\(.*\)"/\1/' | sed "s/^ *- *'\(.*\)'/\1/" | sed 's/^ *- *//')
-
-  matched=false
-
-  if [ -n "$regexes" ]; then
-    # Match using matchPatterns.regex
-    while IFS= read -r regex; do
-      [ -n "$regex" ] || continue
-      if echo "$CONTENT" | grep -qE "$regex"; then
-        matched=true
-        break
-      fi
-    done <<EOF_REGEX
-$regexes
-EOF_REGEX
-  else
-    # Fallback: extract keywords from description if matchPatterns is absent
-    description=$(echo "$frontmatter" | sed -n 's/^description: *//p' | head -1)
-    keywords=$(echo "$description" | sed 's/.*— //; s/\. .*//' | tr ',' '\n' | sed 's/^ *//; s/ *$//' | grep -v '^$')
-
-    if [ -n "$keywords" ]; then
-      while IFS= read -r kw; do
-        [ -n "$kw" ] || continue
-        if echo "$CONTENT" | grep -qi "$kw"; then
-          matched=true
-          break
-        fi
-      done <<EOF_KW
-$keywords
-EOF_KW
-    fi
-  fi
-
-  if [ "$matched" = true ]; then
-    # Extract label
-    label=$(echo "$frontmatter" | sed -n 's/^description: *Use when working with \(.*\) —.*/\1/p' | head -1)
-    [ -z "$label" ] && label="$skill_name"
-    SUGGESTIONS="${SUGGESTIONS}$(printf '• /%s (%s detected)\n' "$skill_name" "$label")"
+  if [ "$HARNESS_MATCHED" = true ]; then
+    SUGGESTIONS="${SUGGESTIONS}$(printf '• /%s (%s detected)\n' "$skill_name" "$HARNESS_SKILL_LABEL")"
     SUGGESTIONS="${SUGGESTIONS}
 "
   fi
@@ -101,7 +58,7 @@ SUGGESTIONS=$(echo "$SUGGESTIONS" | sed '/^$/d')
 # Output suggestions as additionalContext if any were found
 if [ -n "$SUGGESTIONS" ]; then
   MSG="Related harness skills detected. Please invoke the relevant skill before editing:\n${SUGGESTIONS}\n"
-  ESCAPED_MSG=$(echo -e "$MSG" | jq -Rs .)
+  ESCAPED_MSG=$(printf '%b' "$MSG" | jq -Rs .)
   cat <<EOF
 {
   "hookSpecificOutput": {
