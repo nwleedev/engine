@@ -48,11 +48,18 @@ COMPACT_MODE=false
 
 if [ "$COMPACT_MODE" = true ]; then
   echo '## Session State (after compaction)'
+  # Compact mode: inject context-essentials.md first (50-line cap)
+  ESSENTIALS="$PROJECT_DIR/.claude/context-essentials.md"
+  if [ -f "$ESSENTIALS" ]; then
+    head -50 "$ESSENTIALS"
+  else
+    # Fallback: top 50 lines of SESSION.md
+    [ -f "$SESSION_DIR/SESSION.md" ] && head -50 "$SESSION_DIR/SESSION.md"
+  fi
 else
   echo '## Session State'
+  [ -f "$SESSION_DIR/SESSION.md" ] && cat "$SESSION_DIR/SESSION.md"
 fi
-
-[ -f "$SESSION_DIR/SESSION.md" ] && cat "$SESSION_DIR/SESSION.md"
 
 LATEST=$(ls -t "$SESSION_DIR/contexts/"CONTEXT-*.md 2>/dev/null | head -1)
 if [ -n "$LATEST" ]; then

@@ -17,6 +17,7 @@ Initialize missing project configuration files by copying from plugin templates.
 | `.claude/CLAUDE.md` | `CLAUDE.md.example` (default) or `CLAUDE.md.ko.example` (Korean) | Project rules for Claude Code |
 | `.claude/engine.env` | `engine.env.example` | Engine plugin settings (review/research perspectives) |
 | `.gitignore` (patterns) | — | Harness-generated paths (sessions, memory, meta, feeds, temps) |
+| `.claude/context-essentials.md` | — (created fresh) | Compact-safe context summary (≤50 lines) |
 
 ## Procedure
 
@@ -36,12 +37,38 @@ Initialize missing project configuration files by copying from plugin templates.
    - If `.gitignore` exists: Read the file, then for each pattern check exact-line match (`grep -Fxq "$pattern" .gitignore`). Skip if present, append if absent. When appending, ensure the file ends with a newline before the new line (read the last byte; if it is not `\n`, add one first) to prevent the pattern from being glued to the final existing line
    - Report: list of patterns that were appended; if the file was newly created, mark "created"
    - Never remove, reorder, or modify existing `.gitignore` entries
+7. Initialize `.claude/context-essentials.md` if it does not exist:
+   - Check if `.claude/context-essentials.md` exists
+   - If missing: create it with the following template (adapt `<branch>`, `<goal>`, `<file1>`–`<file3>` to the project):
+     ```markdown
+     # Context Essentials
+     <!-- Max 50 lines. Injected on compact events. Keep this file concise. -->
+
+     ## Branch / Goal
+     - Branch: <branch>
+     - Goal: <goal>
+
+     ## Forbidden Patterns
+     - (add up to 5 project-specific forbidden patterns here)
+
+     ## Key Files
+     - <file1>
+     - <file2>
+     - <file3>
+
+     ## Active Plan
+     - (path to active plan file, if any)
+     ```
+   - Report what was created
+   - If it already exists: skip and report
 
 ## Important
 
 - **Never overwrite** existing files — only copy when the target is missing
 - After creating `CLAUDE.md`, suggest the user review the `## Project-Specific Rules` section to add their own rules
 - After creating `engine.env`, suggest the user uncomment and customize the settings they need
+- `context-essentials.md` must stay ≤50 lines — it is injected verbatim on compact events and must not overflow context
+- After creating `context-essentials.md`, suggest the user fill in their branch/goal, forbidden patterns, and key file paths
 - `.gitignore` edits are append-only — never remove or reorder existing lines
 - When `.gitignore` is missing, create it; when present, only append new patterns
 - Template locations (plugin root):
