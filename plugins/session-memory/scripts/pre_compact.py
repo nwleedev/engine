@@ -10,6 +10,8 @@ import handwrite_context as hw
 
 
 def main():
+    if os.environ.get("CLAUDE_WRITING_CONTEXT"):
+        sys.exit(0)
     try:
         payload = json.load(sys.stdin)
     except Exception:
