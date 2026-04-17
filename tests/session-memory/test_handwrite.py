@@ -104,7 +104,6 @@ def test_create_index_writes_file(tmp_path):
     assert (session_dir / "INDEX.md").exists()
     assert data["session_id"] == "sess2"
     assert data.get("last_processed_uuid", "") == ""
-    assert data.get("last_compact_handled", "MISSING") == ""
     assert data.get("last_context_written_at", "MISSING") == ""
 
 def test_update_index_appends_context_entry(tmp_path):

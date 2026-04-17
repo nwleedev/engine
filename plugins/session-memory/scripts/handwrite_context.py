@@ -122,7 +122,6 @@ def create_index(session_dir, session_id, cwd):
         "last_updated": now,
         "last_processed_uuid": "",
         "context_head": "",
-        "last_compact_handled": "",
         "last_context_written_at": "",
     }
     body = f"\n# 세션 요약\n\n(진행 중)\n\n## 컨텍스트 목록\n\n---\n이 세션 재개: `claude -r {session_id}`\n"
