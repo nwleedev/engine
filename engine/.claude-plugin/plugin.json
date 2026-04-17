@@ -5,5 +5,16 @@
   "author": {
     "name": "nwleedev"
   },
-  "repository": "https://github.com/nwleedev/engine"
+  "homepage": "https://github.com/nwleedev/engine",
+  "repository": "https://github.com/nwleedev/engine",
+  "license": "MIT",
+  "keywords": [
+    "harness",
+    "hooks",
+    "planning",
+    "quality-gates",
+    "session",
+    "workflow",
+    "automation"
+  ]
 }

@@ -1,6 +1,6 @@
 ---
 name: setup
-description: "Initialize project files for the engine plugin. Copies CLAUDE.md.example -> CLAUDE.md and engine.env.example -> engine.env when missing."
+description: "Initialize project files for the engine plugin. Copies templates/CLAUDE.md.example -> CLAUDE.md and templates/engine.env.example -> engine.env when missing."
 user-invocable: true
 ---
 
@@ -12,20 +12,20 @@ Initialize missing project configuration files by copying from plugin templates.
 
 ## Files
 
-| Target | Template (plugin root) | Purpose |
+| Target | Template (templates/) | Purpose |
 |--------|----------------------|---------|
-| `.claude/CLAUDE.md` | `CLAUDE.md.example` (default) or `CLAUDE.md.ko.example` (Korean) | Project rules for Claude Code |
-| `.claude/engine.env` | `engine.env.example` | Engine plugin settings (review/research perspectives) |
+| `.claude/CLAUDE.md` | `templates/CLAUDE.md.example` (default) or `templates/CLAUDE.md.ko.example` (Korean) | Project rules for Claude Code |
+| `.claude/engine.env` | `templates/engine.env.example` | Engine plugin settings (review/research perspectives) |
 | `.gitignore` (patterns) | — | Harness-generated paths (sessions, memory, meta, feeds, temps) |
 | `.claude/context-essentials.md` | — (created fresh) | Compact-safe context summary (≤50 lines) |
 
 ## Procedure
 
-0. Resolve language: if the skill was invoked with an argument `ko` (e.g. `/engine:setup ko`), set `CLAUDE_TEMPLATE=CLAUDE.md.ko.example`. Otherwise (no arg, `en`, or anything else), use `CLAUDE_TEMPLATE=CLAUDE.md.example`
+0. Resolve language: if the skill was invoked with an argument `ko` (e.g. `/engine:setup ko`), set `CLAUDE_TEMPLATE=templates/CLAUDE.md.ko.example`. Otherwise (no arg, `en`, or anything else), use `CLAUDE_TEMPLATE=templates/CLAUDE.md.example`
 1. Check if `.claude/CLAUDE.md` exists (use Glob for `**/.claude/CLAUDE.md` or Read)
 2. Check if `.claude/engine.env` exists
 3. For each **missing** file:
-   - Read the corresponding `.example` template from the plugin root (`${CLAUDE_TEMPLATE}` for `CLAUDE.md`, `engine.env.example` for `engine.env`)
+   - Read the corresponding `.example` template from the `templates/` subdirectory (`${CLAUDE_TEMPLATE}` for `CLAUDE.md`, `templates/engine.env.example` for `engine.env`)
    - Write it to the target path
    - Report what was created (include the resolved template name)
 4. For each **existing** file: skip and report that it already exists
@@ -73,8 +73,8 @@ Initialize missing project configuration files by copying from plugin templates.
 - After creating `context-essentials.md`, suggest the user fill in their branch/goal, forbidden patterns, and key file paths
 - `.gitignore` edits are append-only — never remove or reorder existing lines
 - When `.gitignore` is missing, create it; when present, only append new patterns
-- Template locations (plugin root):
-  - `${CLAUDE_PLUGIN_ROOT}/CLAUDE.md.example` (default, English)
-  - `${CLAUDE_PLUGIN_ROOT}/CLAUDE.md.ko.example` (Korean variant, selected when invoked as `/engine:setup ko`)
-  - `${CLAUDE_PLUGIN_ROOT}/engine.env.example`
+- Template locations (`templates/` subdirectory):
+  - `${CLAUDE_PLUGIN_ROOT}/templates/CLAUDE.md.example` (default, English)
+  - `${CLAUDE_PLUGIN_ROOT}/templates/CLAUDE.md.ko.example` (Korean variant, selected when invoked as `/engine:setup ko`)
+  - `${CLAUDE_PLUGIN_ROOT}/templates/engine.env.example`
 - Language selection applies only to `CLAUDE.md` creation. It has no effect when `.claude/CLAUDE.md` already exists or when only `engine.env` / `.gitignore` work is performed
