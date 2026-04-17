@@ -1,4 +1,4 @@
-import json, os, sys
+import io, json, os, sys
 from datetime import datetime, timedelta
 from pathlib import Path
 from unittest import mock
@@ -63,4 +63,24 @@ def test_main_exits_silently_when_no_compact(tmp_path):
 
     assert captured.getvalue().strip() == ""
 
+
+def test_main_advances_cursor_when_delta_empty(tmp_path):
+    fixture = str(FIXTURES_DIR / "sample_transcript.jsonl")
+    _, messages = hw.parse_transcript(fixture)
+    expected_uuid = messages[-1]["uuid"]  # "msg-004"
+
+    payload = json.dumps({"transcript_path": fixture, "session_id": "cursor-test"})
+    with mock.patch("subprocess.run") as mock_run:
+        mock_run.return_value = mock.Mock(returncode=0, stdout=f"{tmp_path}\n")
+        with mock.patch("handwrite_context.extract_delta", return_value=[]):
+            sys.stdin = io.StringIO(payload)
+            try:
+                ch.main()
+            except SystemExit:
+                pass
+            finally:
+                sys.stdin = sys.__stdin__
+
+    session_dir = tmp_path / ".claude" / "sessions" / "cursor-test"
+    assert hw.read_index(session_dir)["last_processed_uuid"] == expected_uuid
 
