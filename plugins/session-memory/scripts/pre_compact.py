@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""PreCompact hook: writes CONTEXT before compaction and injects INDEX.md into compaction prompt."""
+"""PreCompact hook: writes CONTEXT file before compaction."""
 import json
 import os
 import sys
@@ -7,23 +7,6 @@ from datetime import datetime
 from pathlib import Path
 
 import handwrite_context as hw
-
-
-def build_custom_instructions(index_content):
-    """Format INDEX.md content into custom instructions for the compaction summary prompt.
-
-    Returns empty string when index_content is empty — caller should skip stdout output.
-    """
-    if not index_content:
-        return ""
-    return (
-        "When summarizing this conversation, you MUST preserve the following\n"
-        "session context recorded in INDEX.md. Include it verbatim at the\n"
-        'end of your summary under a "## Session Index" heading.\n\n'
-        "--- INDEX.md ---\n"
-        f"{index_content}\n"
-        "--- END INDEX.md ---"
-    )
 
 
 def main():
@@ -65,14 +48,6 @@ def main():
                     hw.update_index(session_dir, index_data, last_uuid, new_head, num, title, one_liner)
             except Exception as e:
                 print(f"[pre_compact] narration failed: {e}", file=sys.stderr)
-
-        # Output INDEX.md content as custom instructions for the compaction prompt
-        index_path = session_dir / "INDEX.md"
-        if index_path.exists():
-            index_content = index_path.read_text(encoding="utf-8")
-            instructions = build_custom_instructions(index_content)
-            if instructions:
-                print(instructions)
     except Exception as e:
         print(f"[pre_compact] error: {e}", file=sys.stderr)
 

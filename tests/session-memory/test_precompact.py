@@ -18,19 +18,6 @@ MOCK_NARRATION = json.dumps({
 })
 
 
-def test_build_custom_instructions_with_index():
-    content = "## 작업\n- task 1 완료\n- task 2 진행 중"
-    result = pc.build_custom_instructions(content)
-    assert "--- INDEX.md ---" in result
-    assert content in result
-    assert "--- END INDEX.md ---" in result
-
-
-def test_build_custom_instructions_empty_index():
-    result = pc.build_custom_instructions("")
-    assert result == ""
-
-
 def test_precompact_writes_context_before_compact(tmp_path):
     fixture = str(FIXTURES_DIR / "compact_transcript.jsonl")
     payload = json.dumps({"transcript_path": fixture, "session_id": "precompact-write-test"})
