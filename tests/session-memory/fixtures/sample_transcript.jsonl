@@ -1,0 +1,6 @@
+{"type":"system","permissionMode":"default","sessionId":"test-session-abc123"}
+{"parentUuid":null,"isSidechain":false,"type":"attachment","uuid":"entry-001","timestamp":"2026-04-16T10:00:00Z","cwd":"/Users/test/myproject","sessionId":"test-session-abc123","version":"1.0","gitBranch":"main"}
+{"parentUuid":"entry-001","isSidechain":false,"type":"say","uuid":"msg-001","timestamp":"2026-04-16T10:00:01Z","message":{"role":"user","content":"JWT 인증을 구현해줘"},"sessionId":"test-session-abc123"}
+{"parentUuid":"msg-001","isSidechain":false,"type":"say","uuid":"msg-002","timestamp":"2026-04-16T10:00:10Z","message":{"role":"assistant","content":[{"type":"text","text":"JWT 토큰 발급 로직을 구현하겠습니다."}]},"sessionId":"test-session-abc123"}
+{"parentUuid":"msg-002","isSidechain":false,"type":"say","uuid":"msg-003","timestamp":"2026-04-16T10:01:00Z","message":{"role":"user","content":"만료 시간은 15분으로 해줘"},"sessionId":"test-session-abc123"}
+{"parentUuid":"msg-003","isSidechain":false,"type":"say","uuid":"msg-004","timestamp":"2026-04-16T10:01:30Z","message":{"role":"assistant","content":[{"type":"text","text":"토큰 만료 시간을 15분으로 설정했습니다. 갱신 로직은 아직 구현되지 않았습니다."}]},"sessionId":"test-session-abc123"}
