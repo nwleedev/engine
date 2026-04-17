@@ -51,6 +51,10 @@ def main():
     # ── Stage 2: time/size checkpoint ──
     delta = hw.extract_delta(messages, index_data.get("last_processed_uuid") or "")
     if not delta:
+        if messages:
+            index_data["last_processed_uuid"] = messages[-1].get("uuid", "")
+            hw._write_index_file(session_dir, index_data,
+                                 hw.parse_frontmatter((session_dir / "INDEX.md").read_text())[1])
         sys.exit(0)
     delta_text, was_truncated = hw.truncate_messages(delta)
     if not should_checkpoint(index_data, delta_text):
