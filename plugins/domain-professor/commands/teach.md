@@ -1,12 +1,12 @@
 ---
-description: 도메인 또는 개념에 대한 학습 자료를 생성합니다
+description: Generate learning materials for a domain or concept
 ---
 
-`domain-professor` 스킬을 참고해 다음 요청을 처리합니다: $ARGUMENTS
+Refer to the `domain-professor` skill and handle the following request: $ARGUMENTS
 
-처리 순서:
-1. 프로젝트 루트의 `.claude/textbooks/` 확인
-2. 요청된 도메인/개념에 대한 파일 생성 또는 기존 범위 파악
-3. 생성된 파일 경로와 다음 학습 단계를 사용자에게 안내
+Processing order:
+1. Check `.claude/textbooks/` in the project root
+2. Create files for the requested domain/concept, or review existing coverage
+3. Inform the user of the generated file paths and suggest the next learning step
 
-도메인이 명시되지 않으면 사용자에게 어떤 도메인을 배우고 싶은지 물어봅니다.
+If no domain is specified, ask the user which domain they want to learn.

@@ -1,12 +1,12 @@
 ---
-description: 특정 개념의 심화 학습 자료를 생성합니다
+description: Generate in-depth learning materials for a specific concept
 ---
 
-`domain-professor` 스킬의 드릴다운 방법론을 참고해 다음 개념을 심화합니다: $ARGUMENTS
+Refer to the drill-down methodology in the `domain-professor` skill and deepen the following concept: $ARGUMENTS
 
-처리 순서:
-1. 지정된 파일 또는 개념 특정 (경로가 없으면 현재 텍스트북에서 추론)
-2. 해당 파일명과 동일한 하위 폴더 생성
-3. 세부 개념 파일 3~5개 생성
-4. 원본 파일 하단에 "심화 학습" 섹션 추가
-5. INDEX.md 업데이트 후 생성된 파일 목록 안내
+Processing order:
+1. Identify the specified file or concept (infer from the current textbook if no path given)
+2. Create a subfolder with the same name as the file
+3. Generate 3–5 detail concept files
+4. Append a "Further Reading" section to the original file
+5. Update INDEX.md and list the generated files
