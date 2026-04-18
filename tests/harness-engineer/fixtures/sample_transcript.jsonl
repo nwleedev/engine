@@ -1,0 +1,4 @@
+{"uuid":"1","message":{"role":"user","content":"Button 컴포넌트에 any 타입 써도 되나요?"}}
+{"uuid":"2","message":{"role":"assistant","content":[{"type":"text","text":"네, 다음처럼 작성하시면 됩니다:\n```typescript\nconst handleClick = (e: any) => { e.preventDefault(); }\n```"}]}}
+{"uuid":"3","message":{"role":"user","content":"감사합니다"}}
+{"uuid":"4","message":{"role":"assistant","content":[{"type":"text","text":"도움이 됐으면 좋겠습니다."}]}}
