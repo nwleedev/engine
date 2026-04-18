@@ -45,8 +45,8 @@ def test_build_toc_context_single_domain(tmp_path):
     (overview / "what-is-kubernetes.md").write_text("content")
     result = it.build_toc_context(textbooks_dir)
     assert "kubernetes" in result
-    assert "1개 개념" in result
-    assert "학습 텍스트북" in result
+    assert "1 concepts" in result
+    assert "Textbooks" in result
 
 
 def test_build_toc_context_multiple_domains(tmp_path):

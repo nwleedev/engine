@@ -32,7 +32,7 @@ def resolve_cwd(payload: dict) -> str:
 def build_toc_context(textbooks_dir: Path) -> str:
     if not textbooks_dir.exists():
         return ""
-    parts = ["## 학습 텍스트북", ""]
+    parts = ["## Textbooks", ""]
     found = False
     for domain_dir in sorted(textbooks_dir.iterdir()):
         if not domain_dir.is_dir():
@@ -48,7 +48,7 @@ def build_toc_context(textbooks_dir: Path) -> str:
                 break
             elif "02-core-concepts" in p_str:
                 stage = "02-core-concepts"
-        parts.append(f"- {domain_dir.name}: {len(concepts)}개 개념 ({stage}까지)")
+        parts.append(f"- {domain_dir.name}: {len(concepts)} concepts (up to {stage})")
         found = True
     if not found:
         return ""
