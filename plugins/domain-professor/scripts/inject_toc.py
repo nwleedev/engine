@@ -48,7 +48,9 @@ def build_toc_context(textbooks_dir: Path) -> str:
                 break
             elif "02-core-concepts" in p_str:
                 stage = "02-core-concepts"
-        parts.append(f"- {domain_dir.name}: {len(concepts)} concepts (up to {stage})")
+        count = len(concepts)
+        concept_label = "concept" if count == 1 else "concepts"
+        parts.append(f"- {domain_dir.name}: {count} {concept_label} (up to {stage})")
         found = True
     if not found:
         return ""
