@@ -268,7 +268,7 @@ _NARRATION_PROMPT = """\
 
 
 _INSIGHT_RE = re.compile(
-    r'`★ Insight[─\s]+`\n(.*?)\n`[─]+`',
+    r'`★ Insight[ ─]+`\n(.*?)\n`[─]+`',
     re.DOTALL,
 )
 
