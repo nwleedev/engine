@@ -29,7 +29,7 @@ def test_json_in_code_fence_with_prefix_text(monkeypatch):
 
 
 def test_fallback_title_is_not_untitled(monkeypatch):
-    """Bug fix 3: When JSON parsing fails, title must be a timestamp slug, not 'untitled'."""
+    """Bug fix 3: When JSON parsing fails, return None — no garbage checkpoint written."""
     outer_json = json.dumps({"result": "이것은 JSON이 아닙니다"})
     mock_result = MagicMock()
     mock_result.returncode = 0
@@ -37,9 +37,7 @@ def test_fallback_title_is_not_untitled(monkeypatch):
     monkeypatch.setattr("subprocess.run", lambda *a, **kw: mock_result)
 
     result = handwrite_context.call_claude_narration("delta", False)
-    assert result["title"] != "untitled"
-    assert result["title"].startswith("checkpoint-")
-    assert result["narration"] == "이것은 JSON이 아닙니다"
+    assert result is None
 
 
 def test_race_condition_guard_skips_when_timestamp_changed(tmp_path, monkeypatch):
