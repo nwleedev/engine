@@ -41,13 +41,15 @@ def test_parse_frontmatter_empty():
 def test_load_harness_files(tmp_path):
     react_file = tmp_path / "react-frontend.md"
     react_file.write_text(
-        "---\ndomain: react-frontend\nkeywords: [tsx, component]\n---\n# Content",
+        '---\ndomain: react-frontend\nkeywords: [tsx, component]\nfile_patterns: ["*.tsx", "src/**"]\n---\n# Content',
         encoding="utf-8"
     )
     result = dd.load_harness_files(tmp_path)
     assert len(result) == 1
     assert result[0]["domain"] == "react-frontend"
     assert "tsx" in result[0]["keywords"]
+    assert "*.tsx" in result[0]["file_patterns"]
+    assert "src/**" in result[0]["file_patterns"]
 
 
 def test_load_harness_files_skips_violations_log(tmp_path):
@@ -90,36 +92,70 @@ def test_detect_domains_from_prompt_max_three():
     assert len(result) <= 3
 
 
-# --- detect_domain_from_file_path ---
+# --- _matches_pattern ---
 
-def test_detect_domain_from_tsx_path():
-    files = [{"domain": "react-frontend", "keywords": [], "content": "x"}]
+def test_matches_extension_pattern():
+    assert dd._matches_pattern("Button.tsx", "*.tsx") is True
+
+
+def test_matches_extension_pattern_in_path():
+    assert dd._matches_pattern("src/components/Button.tsx", "*.tsx") is True
+
+
+def test_matches_full_path_double_star():
+    assert dd._matches_pattern("src/components/Button.tsx", "src/components/**") is True
+
+
+def test_matches_double_star_prefix():
+    assert dd._matches_pattern("app/dashboard/page.tsx", "app/**") is True
+
+
+def test_matches_double_star_suffix():
+    assert dd._matches_pattern("apps/web/src/Button.tsx", "**/*.tsx") is True
+
+
+def test_no_match_wrong_extension():
+    assert dd._matches_pattern("Button.py", "*.tsx") is False
+
+
+def test_no_match_wrong_prefix():
+    assert dd._matches_pattern("pages/index.tsx", "app/**") is False
+
+
+def test_matches_exact_filename():
+    assert dd._matches_pattern("src/config.py", "*.py") is True
+
+
+# --- detect_domain_from_file_path (new: reads from file_patterns) ---
+
+def test_detect_domain_uses_file_patterns():
+    files = [{"domain": "react-frontend", "keywords": [], "content": "x",
+              "file_patterns": ["*.tsx", "src/components/**"]}]
     result = dd.detect_domain_from_file_path("src/components/Button.tsx", files)
     assert result is not None
     assert result["domain"] == "react-frontend"
 
 
-def test_detect_domain_from_jsx_path():
-    files = [{"domain": "react-frontend", "keywords": [], "content": "x"}]
-    result = dd.detect_domain_from_file_path("components/Card.jsx", files)
-    assert result is not None
-
-
-def test_detect_domain_from_python_path():
-    files = [{"domain": "python-backend", "keywords": [], "content": "x"}]
-    result = dd.detect_domain_from_file_path("app/api/users.py", files)
-    assert result is not None
-    assert result["domain"] == "python-backend"
-
-
-def test_detect_domain_from_unrecognized_path():
-    files = [{"domain": "react-frontend", "keywords": [], "content": "x"}]
-    result = dd.detect_domain_from_file_path("README.md", files)
+def test_detect_domain_no_file_patterns_returns_none():
+    files = [{"domain": "react-frontend", "keywords": [], "content": "x",
+              "file_patterns": []}]
+    result = dd.detect_domain_from_file_path("Button.tsx", files)
     assert result is None
 
 
-def test_detect_domain_from_research_path():
-    files = [{"domain": "market-research", "keywords": [], "content": "x"}]
-    result = dd.detect_domain_from_file_path("docs/research/competitor.md", files)
-    assert result is not None
-    assert result["domain"] == "market-research"
+def test_detect_domain_multiple_harness_files_first_match_wins():
+    files = [
+        {"domain": "frontend", "keywords": [], "content": "x",
+         "file_patterns": ["*.tsx"]},
+        {"domain": "backend", "keywords": [], "content": "x",
+         "file_patterns": ["*.tsx", "*.py"]},
+    ]
+    result = dd.detect_domain_from_file_path("Button.tsx", files)
+    assert result["domain"] == "frontend"
+
+
+def test_detect_domain_unrecognized_path_returns_none():
+    files = [{"domain": "react-frontend", "keywords": [], "content": "x",
+              "file_patterns": ["*.tsx"]}]
+    result = dd.detect_domain_from_file_path("README.md", files)
+    assert result is None

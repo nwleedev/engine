@@ -1,4 +1,5 @@
-import re
+import fnmatch
+import os
 from pathlib import Path
 
 
@@ -37,6 +38,7 @@ def load_harness_files(harness_dir: Path) -> list[dict]:
                 "domain": fm.get("domain", path.stem),
                 "keywords": fm.get("keywords", []),
                 "language": fm.get("language", "auto"),
+                "file_patterns": fm.get("file_patterns", []),
             })
         except OSError:
             continue
@@ -49,21 +51,25 @@ def detect_domains_from_prompt(prompt: str, harness_files: list[dict]) -> list[d
     return matched[:3]
 
 
-_FILE_PATH_PATTERNS = [
-    (r"\.(tsx|jsx)$", "react-frontend"),
-    (r"src/(components|hooks|pages|features)/", "react-frontend"),
-    (r"\.(py)$", "python-backend"),
-    (r"(app|api)/.*\.(py)$", "python-backend"),
-    (r"docs/(research|market|competitive)/", "market-research"),
-    (r"(?<!x)\.ts$", "typescript"),
-    (r"\.go$", "go-backend"),
-]
+def _matches_pattern(file_path: str, pattern: str) -> bool:
+    fp = file_path.replace("\\", "/")
+    if "**" not in pattern:
+        return fnmatch.fnmatch(fp, pattern) or fnmatch.fnmatch(os.path.basename(fp), pattern)
+    before, _, after = pattern.partition("**")
+    prefix = before.rstrip("/")
+    suffix = after.lstrip("/")
+    if prefix and not (fp.startswith(prefix + "/") or fp == prefix):
+        return False
+    if not suffix:
+        return True
+    if fnmatch.fnmatch(os.path.basename(fp), suffix):
+        return True
+    return fnmatch.fnmatch(fp, f"*/{suffix}") or fnmatch.fnmatch(fp, suffix)
 
 
 def detect_domain_from_file_path(file_path: str, harness_files: list[dict]) -> dict | None:
-    for pattern, domain in _FILE_PATH_PATTERNS:
-        if re.search(pattern, file_path, re.IGNORECASE):
-            for f in harness_files:
-                if f["domain"] == domain:
-                    return f
+    for f in harness_files:
+        for pattern in f.get("file_patterns", []):
+            if _matches_pattern(file_path, pattern):
+                return f
     return None
