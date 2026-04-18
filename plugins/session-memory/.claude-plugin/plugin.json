@@ -4,6 +4,5 @@
   "description": "Generates and injects session context narrations via hooks",
   "author": {
     "name": "nwleedev"
-  },
-  "hooks": "./hooks/hooks.json"
+  }
 }
