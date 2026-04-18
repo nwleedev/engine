@@ -93,6 +93,15 @@ def test_build_harness_frontmatter_no_file_patterns():
     assert "file_patterns" not in result
 
 
+def test_build_harness_frontmatter_empty_file_patterns():
+    result = gh.build_harness_frontmatter(
+        "react-frontend", "en",
+        keywords=[], file_patterns=[]
+    )
+    assert "keywords: []" in result
+    assert "file_patterns: []" in result
+
+
 # --- generate_harness_file preserves file_patterns ---
 
 def test_generate_harness_file_preserves_file_patterns():

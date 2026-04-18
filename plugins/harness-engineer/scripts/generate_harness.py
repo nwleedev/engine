@@ -54,10 +54,10 @@ def build_harness_frontmatter(
         f"domain: {domain}",
         f"language: {language}",
     ]
-    if keywords:
+    if keywords is not None:
         kw_str = ", ".join(keywords)
         lines.append(f"keywords: [{kw_str}]")
-    if file_patterns:
+    if file_patterns is not None:
         quoted = [f'"{p}"' for p in file_patterns]
         lines.append(f"file_patterns: [{', '.join(quoted)}]")
     lines.append(f"updated: {today}")
