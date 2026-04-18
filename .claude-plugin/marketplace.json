@@ -10,6 +10,11 @@
       "name": "session-memory",
       "description": "세션 컨텍스트 나레이션 자동 생성 및 주입",
       "source": "./plugins/session-memory"
+    },
+    {
+      "name": "domain-professor",
+      "description": "작업 중 낯선 도메인 자동 감지 및 학습 자료 생성",
+      "source": "./plugins/domain-professor"
     }
   ]
 }

@@ -1,0 +1,12 @@
+{
+  "name": "domain-professor",
+  "displayName": "Domain Professor",
+  "description": "작업 중 낯선 도메인을 자동 감지해 기초부터 현업 수준까지 학습 자료를 생성합니다",
+  "version": "1.0.0",
+  "author": {
+    "name": "nwleedev"
+  },
+  "skills": "./skills/",
+  "commands": "./commands/",
+  "hooks": "./hooks/hooks.json"
+}
