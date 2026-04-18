@@ -154,7 +154,8 @@ def check_violations_with_llm(
         "Compare the following harness rules with the code and return violations as a JSON array.\n\n"
         f"Harness rules:\n{harness_summary}\n\n"
         f"Written code:\n{code_sample}\n\n"
-        '{"domain":"react-frontend","rule":"using any type","location":"filename:lineno","count":1}\n'
+        "Example format:\n"
+        '[{"domain":"react-frontend","rule":"using any type","location":"filename:lineno","count":1}]\n'
         "Return [] if no violations. Output JSON only."
     )
     env = {**os.environ, "CLAUDE_WRITING_CONTEXT": "1"}
