@@ -290,19 +290,11 @@ def call_claude_narration(delta_text, was_truncated):
             return None
         outer = json.loads(r.stdout)
         inner_text = outer.get("result", "")
-        # Extract JSON: handle plain JSON, code-fenced JSON (even with prefix text), bare fences
         stripped = inner_text.strip()
-        # Attempt 1: triple-backtick fenced JSON (```json ... ``` or ``` ... ```)
-        if not stripped.startswith("{"):
-            m = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', stripped, re.DOTALL)
-            if m:
-                try:
-                    return json.loads(m.group(1).strip())
-                except json.JSONDecodeError:
-                    pass
-        # Attempt 2: iterate every { position with raw_decode.
-        # Handles Mode 1 (JSON after preamble), Mode 2 (JSON before trailing),
-        # and skips stray { inside code blocks before reaching real JSON.
+        # Iterate every { position with raw_decode — handles:
+        # Mode 1: ★ Insight preamble before JSON (json_start > 0)
+        # Mode 2: trailing content after JSON (raw_decode stops at end of object)
+        # Mode 3: no valid JSON at all (returns None)
         pos = 0
         while True:
             json_start = stripped.find('{', pos)
