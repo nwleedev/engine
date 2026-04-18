@@ -10,33 +10,6 @@ sys.path.insert(0, str(SCRIPTS_DIR))
 import generate_harness as gh
 
 
-# --- detect_project_domains ---
-
-def test_detect_project_domains_tsx(tmp_path):
-    (tmp_path / "src").mkdir()
-    (tmp_path / "src" / "App.tsx").write_text("export default function App() {}", encoding="utf-8")
-    result = gh.detect_project_domains(str(tmp_path))
-    assert "react-frontend" in result
-
-
-def test_detect_project_domains_python(tmp_path):
-    (tmp_path / "app.py").write_text("print('hello')", encoding="utf-8")
-    result = gh.detect_project_domains(str(tmp_path))
-    assert "python-backend" in result
-
-
-def test_detect_project_domains_empty(tmp_path):
-    result = gh.detect_project_domains(str(tmp_path))
-    assert result == []
-
-
-def test_detect_project_domains_no_duplicates(tmp_path):
-    (tmp_path / "a.tsx").write_text("", encoding="utf-8")
-    (tmp_path / "b.tsx").write_text("", encoding="utf-8")
-    result = gh.detect_project_domains(str(tmp_path))
-    assert result.count("react-frontend") == 1
-
-
 # --- get_template ---
 
 def test_get_template_react_exists():
@@ -76,3 +49,53 @@ def test_generate_harness_file_replaces_frontmatter_date():
     today = date.today().strftime("%Y-%m-%d")
     content = gh.generate_harness_file("react-frontend", "/tmp/proj", "en", str(PLUGIN_ROOT))
     assert f"updated: {today}" in content
+
+
+# --- _parse_frontmatter_list (generic) ---
+
+def test_parse_frontmatter_list_keywords():
+    template = "---\ndomain: react-frontend\nkeywords: [tsx, jsx]\n---\n# body"
+    result = gh._parse_frontmatter_list(template, "keywords")
+    assert result == ["tsx", "jsx"]
+
+
+def test_parse_frontmatter_list_file_patterns():
+    template = '---\ndomain: react-frontend\nfile_patterns: ["*.tsx", "src/**"]\n---\n# body'
+    result = gh._parse_frontmatter_list(template, "file_patterns")
+    assert "*.tsx" in result
+    assert "src/**" in result
+
+
+def test_parse_frontmatter_list_missing_field():
+    template = "---\ndomain: react-frontend\n---\n# body"
+    result = gh._parse_frontmatter_list(template, "file_patterns")
+    assert result == []
+
+
+def test_parse_frontmatter_list_no_frontmatter():
+    result = gh._parse_frontmatter_list("# No frontmatter", "keywords")
+    assert result == []
+
+
+# --- build_harness_frontmatter with file_patterns ---
+
+def test_build_harness_frontmatter_with_file_patterns():
+    result = gh.build_harness_frontmatter(
+        "react-frontend", "ko",
+        keywords=["tsx", "component"],
+        file_patterns=["*.tsx", "src/**"],
+    )
+    assert 'file_patterns: ["*.tsx", "src/**"]' in result
+
+
+def test_build_harness_frontmatter_no_file_patterns():
+    result = gh.build_harness_frontmatter("react-frontend", "en")
+    assert "file_patterns" not in result
+
+
+# --- generate_harness_file preserves file_patterns ---
+
+def test_generate_harness_file_preserves_file_patterns():
+    content = gh.generate_harness_file("react-frontend", "/tmp/proj", "ko", str(PLUGIN_ROOT))
+    assert "file_patterns" in content
+    assert "*.tsx" in content
