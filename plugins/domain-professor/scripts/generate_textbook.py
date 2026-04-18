@@ -107,14 +107,17 @@ def generate_file(
         prereq = f"prerequisites: [01-overview/what-is-{domain}.md]"
     elif stage == "03-advanced":
         prereq = f"prerequisites: [02-core-concepts/{slug}.md]"
+    lang = os.environ.get("DOMAIN_PROFESSOR_LANGUAGE", "English").strip()
+    lang_instruction = f"Write all section headers and body content in {lang}."
     prompt = (
         f"You are a domain teaching expert. Follow these educational principles:\n\n"
         f"{skill_content}\n\n"
+        f"{lang_instruction}\n\n"
         f'Generate a textbook markdown file for the concept "{concept}" in the domain "{domain}".\n\n'
         f"Output ONLY the markdown content (no explanation), following this exact template:\n\n"
         f"---\nstage: {stage}\n{prereq}\nrelated: []\n---\n\n"
-        f"# {concept}\n\n[← 목차로](../INDEX.md)\n\n"
-        f"## 한 줄 설명\n\n## 핵심 개념\n\n## 실제 예시\n\n## 연관 개념\n"
+        f"# {concept}\n\n[← Back to Index](../INDEX.md)\n\n"
+        f"## One-Line Summary\n\n## Key Concepts\n\n## Real-World Example\n\n## Related Concepts\n"
     )
     content = call_claude(prompt)
     if not content:

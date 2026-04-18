@@ -1,4 +1,5 @@
 import json
+import os
 import sys
 from pathlib import Path
 from unittest import mock
@@ -106,3 +107,28 @@ def test_get_existing_concepts(tmp_path):
     concepts = gt.get_existing_concepts(tmp_path)
     assert "pods" in concepts
     assert "INDEX" not in concepts
+
+
+def test_generate_file_injects_language_instruction(tmp_path):
+    fake_content = "---\nstage: 02-core-concepts\n---\n\n# Pods\n\nContent"
+    captured = {}
+    def capture(prompt):
+        captured["prompt"] = prompt
+        return fake_content
+    with mock.patch.dict("os.environ", {"DOMAIN_PROFESSOR_LANGUAGE": "Korean"}):
+        with mock.patch("generate_textbook.call_claude", side_effect=capture):
+            gt.generate_file("kubernetes", "02-core-concepts", "pods", tmp_path, "skill")
+    assert "Korean" in captured["prompt"]
+
+
+def test_generate_file_defaults_to_english(tmp_path):
+    fake_content = "---\nstage: 02-core-concepts\n---\n\n# Pods\n\nContent"
+    captured = {}
+    def capture(prompt):
+        captured["prompt"] = prompt
+        return fake_content
+    env = {k: v for k, v in os.environ.items() if k != "DOMAIN_PROFESSOR_LANGUAGE"}
+    with mock.patch.dict("os.environ", env, clear=True):
+        with mock.patch("generate_textbook.call_claude", side_effect=capture):
+            gt.generate_file("kubernetes", "02-core-concepts", "pods", tmp_path, "skill")
+    assert "English" in captured["prompt"]
