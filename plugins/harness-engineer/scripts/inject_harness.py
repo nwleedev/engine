@@ -29,4 +29,4 @@ def build_pre_tool_context(harness_file: dict) -> str:
     rules = extract_core_rules(harness_file["content"])
     if not rules:
         return ""
-    return f"[harness 체크] {domain}\n{rules}"
+    return f"[harness check] {domain}\n{rules}"

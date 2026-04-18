@@ -48,7 +48,7 @@ def main() -> None:
     drift_warnings = detect_drift(log_path, harness_dir)
     if drift_warnings:
         summary = "\n".join(f"- {w}" for w in drift_warnings)
-        sys.stderr.write(f"[harness-engineer] 드리프트 감지:\n{summary}\n")
+        sys.stderr.write(f"[harness-engineer] Drift detected:\n{summary}\n")
 
 
 if __name__ == "__main__":

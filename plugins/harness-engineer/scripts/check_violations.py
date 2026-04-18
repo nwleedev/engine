@@ -53,7 +53,7 @@ def parse_violation_line(line: str) -> dict | None:
     if len(parts) != 5:
         return None
     try:
-        count_str = parts[4].replace("회 반복", "").strip()
+        count_str = parts[4].replace(" times", "").replace("회 반복", "").strip()
         count = int(count_str)
     except ValueError:
         return None
@@ -73,7 +73,7 @@ def append_violations(violations: list[dict], log_path: Path) -> None:
     lines = []
     for v in violations:
         date = v.get("date", today)
-        line = f"{date} | {v['domain']} | {v['rule']} | {v['location']} | {v['count']}회 반복"
+        line = f"{date} | {v['domain']} | {v['rule']} | {v['location']} | {v['count']} times"
         lines.append(line)
     with open(log_path, "a", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")
@@ -101,7 +101,7 @@ def detect_drift(log_path: Path, harness_dir: Path) -> list[str]:
     for key, count in rule_counts.items():
         if count >= 3:
             domain, rule = key.split("::", 1)
-            warnings.append(f"[{domain}] '{rule}' 위반 {count}회 반복 → /update-harness {domain} 권고")
+            warnings.append(f"[{domain}] '{rule}' violated {count} times → recommend /update-harness {domain}")
 
     cutoff = datetime.now() - timedelta(days=30)
     for md_file in harness_dir.glob("*.md"):
@@ -113,7 +113,7 @@ def detect_drift(log_path: Path, harness_dir: Path) -> list[str]:
                     updated = datetime.strptime(date_str, "%Y-%m-%d")
                     if updated < cutoff:
                         warnings.append(
-                            f"[{md_file.stem}] harness 파일 마지막 갱신 {date_str} → /update-harness {md_file.stem} 권고"
+                            f"[{md_file.stem}] harness file last updated {date_str} → recommend /update-harness {md_file.stem}"
                         )
                     break
         except (OSError, ValueError):
@@ -151,11 +151,11 @@ def check_violations_with_llm(
     )
     code_sample = "\n---\n".join(code_blocks[:5])[:3000]
     prompt = (
-        "다음 harness 규칙과 코드를 비교해서 위반 사항을 JSON 배열로 반환하세요.\n\n"
-        f"Harness 규칙:\n{harness_summary}\n\n"
-        f"작성된 코드:\n{code_sample}\n\n"
-        '응답 형식: [{"domain":"react-frontend","rule":"any 타입 사용","location":"파일명:줄번호","count":1}]\n'
-        "위반이 없으면 [] 를 반환하세요. JSON만 출력하세요."
+        "Compare the following harness rules with the code and return violations as a JSON array.\n\n"
+        f"Harness rules:\n{harness_summary}\n\n"
+        f"Written code:\n{code_sample}\n\n"
+        '{"domain":"react-frontend","rule":"using any type","location":"filename:lineno","count":1}\n'
+        "Return [] if no violations. Output JSON only."
     )
     env = {**os.environ, "CLAUDE_WRITING_CONTEXT": "1"}
     try:

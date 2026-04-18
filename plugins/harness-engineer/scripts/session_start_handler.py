@@ -32,11 +32,11 @@ def build_violation_summary(log_path: Path) -> str:
     if not repeated:
         return ""
 
-    lines = ["## Harness 주의사항", "지난 세션에서 반복된 위반:"]
+    lines = ["## Harness Warnings", "Repeated violations from previous sessions:"]
     for key, count in sorted(repeated.items(), key=lambda x: -x[1]):
         domain, rule = key.split("::", 1)
-        lines.append(f"- [{domain}] {rule} ({count}회)")
-    lines.append("→ 오늘 작업 시 위 패턴을 특히 주의하세요.")
+        lines.append(f"- [{domain}] {rule} ({count} times)")
+    lines.append("→ Pay special attention to these patterns in today's work.")
     return "\n".join(lines)
 
 

@@ -45,7 +45,7 @@ def test_extract_claude_code_blocks_str_content(tmp_path):
 # --- parse_violation_line ---
 
 def test_parse_violation_line_valid():
-    line = "2026-04-18 | react-frontend | any 타입 사용 | Button.tsx:14 | 3회 반복"
+    line = "2026-04-18 | react-frontend | any 타입 사용 | Button.tsx:14 | 3 times"
     result = cv.parse_violation_line(line)
     assert result["domain"] == "react-frontend"
     assert result["rule"] == "any 타입 사용"
@@ -61,9 +61,9 @@ def test_parse_violation_line_invalid():
 def test_detect_drift_repeated_violation(tmp_path):
     log = tmp_path / "violations.log"
     lines = [
-        "2026-04-17 | react-frontend | any 타입 사용 | A.tsx:1 | 2회 반복",
-        "2026-04-18 | react-frontend | any 타입 사용 | B.tsx:2 | 3회 반복",
-        "2026-04-18 | react-frontend | any 타입 사용 | C.tsx:3 | 1회 반복",
+        "2026-04-17 | react-frontend | any 타입 사용 | A.tsx:1 | 2 times",
+        "2026-04-18 | react-frontend | any 타입 사용 | B.tsx:2 | 3 times",
+        "2026-04-18 | react-frontend | any 타입 사용 | C.tsx:3 | 1 times",
     ]
     log.write_text("\n".join(lines), encoding="utf-8")
     harness_file = tmp_path / "react-frontend.md"
@@ -78,7 +78,7 @@ def test_detect_drift_stale_harness(tmp_path):
     harness_file = tmp_path / "react-frontend.md"
     harness_file.write_text("---\ndomain: react-frontend\nupdated: 2025-01-01\n---", encoding="utf-8")
     warnings = cv.detect_drift(log, tmp_path)
-    assert any("react-frontend" in w and "갱신" in w for w in warnings)
+    assert any("react-frontend" in w and "last updated" in w for w in warnings)
 
 
 def test_detect_drift_no_issues(tmp_path):
@@ -120,8 +120,8 @@ def test_append_violations_appends_to_existing(tmp_path):
 def test_trim_old_violations_removes_entries_older_than_90_days(tmp_path):
     log_path = tmp_path / "violations.log"
     log_path.write_text(
-        "2020-01-01 | react-frontend | old rule | A.tsx:1 | 1회 반복\n"
-        "2026-04-18 | react-frontend | new rule | B.tsx:2 | 1회 반복\n",
+        "2020-01-01 | react-frontend | old rule | A.tsx:1 | 1 times\n"
+        "2026-04-18 | react-frontend | new rule | B.tsx:2 | 1 times\n",
         encoding="utf-8"
     )
     cv.trim_old_violations(log_path)
