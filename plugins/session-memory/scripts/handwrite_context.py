@@ -292,18 +292,28 @@ def call_claude_narration(delta_text, was_truncated):
         inner_text = outer.get("result", "")
         # Extract JSON: handle plain JSON, code-fenced JSON (even with prefix text), bare fences
         stripped = inner_text.strip()
+        # Attempt 1: triple-backtick fenced JSON (```json ... ``` or ``` ... ```)
         if not stripped.startswith("{"):
-            match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', stripped, re.DOTALL)
-            if match:
-                stripped = match.group(1).strip()
-            elif stripped.startswith("```"):
-                stripped = re.sub(r'^```[a-z]*\n?', '', stripped)
-                stripped = re.sub(r'\n?```$', '', stripped.strip()).strip()
-        try:
-            return json.loads(stripped)
-        except json.JSONDecodeError:
-            fallback_title = "checkpoint-" + datetime.utcnow().strftime("%m%d-%H%M")
-            return {"title": fallback_title, "narration": stripped}
+            m = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', stripped, re.DOTALL)
+            if m:
+                try:
+                    return json.loads(m.group(1).strip())
+                except json.JSONDecodeError:
+                    pass
+        # Attempt 2: iterate every { position with raw_decode.
+        # Handles Mode 1 (JSON after preamble), Mode 2 (JSON before trailing),
+        # and skips stray { inside code blocks before reaching real JSON.
+        pos = 0
+        while True:
+            json_start = stripped.find('{', pos)
+            if json_start < 0:
+                break
+            try:
+                obj, _ = json.JSONDecoder().raw_decode(stripped[json_start:])
+                return obj
+            except json.JSONDecodeError:
+                pos = json_start + 1
+        return None  # Mode 3: no valid JSON — do not store garbage
     except Exception:
         return None
 

@@ -231,9 +231,7 @@ def test_call_claude_narration_invalid_json():
     with mock.patch("subprocess.run") as mock_run:
         mock_run.return_value = mock.Mock(returncode=0, stdout='{"result": "not json"}')
         result = hw.call_claude_narration("대화 내역", was_truncated=False)
-    # fallback title uses "checkpoint-MMDD-HHMM" when result is not valid JSON
-    assert result["title"].startswith("checkpoint-")
-    assert result["narration"] == "not json"
+    assert result is None
 
 def test_call_claude_narration_strips_code_fences():
     inner = '{"title": "jwt-setup", "narration": "JWT를 구현했습니다."}'
@@ -304,6 +302,69 @@ def test_main_creates_context_file(tmp_path):
     contexts = list((session_dir / "contexts").glob("CONTEXT-*.md"))
     assert len(contexts) == 1
     assert "jwt-setup" in contexts[0].name
+
+def test_narration_parses_json_with_insight_prefix():
+    """Mode 1: ★ Insight block appears BEFORE the JSON."""
+    inner = (
+        "`★ Insight ─────────────────────────────────────`\n"
+        "some insight text\n"
+        "`─────────────────────────────────────────────────`\n\n"
+        '{"title": "my-work", "narration": "작업 완료"}'
+    )
+    with mock.patch("subprocess.run") as mock_run:
+        mock_run.return_value = mock.Mock(
+            returncode=0,
+            stdout=json.dumps({"type": "result", "subtype": "success", "result": inner}),
+        )
+        result = hw.call_claude_narration("대화", was_truncated=False)
+    assert result == {"title": "my-work", "narration": "작업 완료"}
+
+
+def test_narration_parses_json_with_insight_suffix():
+    """Mode 2: ★ Insight block appears AFTER the JSON (trailing content)."""
+    inner = (
+        '{"title": "my-work", "narration": "작업 완료"}\n\n'
+        "`★ Insight ─────────────────────────────────────`\n"
+        "some insight text\n"
+        "`─────────────────────────────────────────────────`"
+    )
+    with mock.patch("subprocess.run") as mock_run:
+        mock_run.return_value = mock.Mock(
+            returncode=0,
+            stdout=json.dumps({"type": "result", "subtype": "success", "result": inner}),
+        )
+        result = hw.call_claude_narration("대화", was_truncated=False)
+    assert result == {"title": "my-work", "narration": "작업 완료"}
+
+
+def test_narration_returns_none_when_no_json():
+    """Mode 3: No JSON in response — return None, not a garbage dict."""
+    inner = "파일 쓰기 권한을 허용해 주세요."
+    with mock.patch("subprocess.run") as mock_run:
+        mock_run.return_value = mock.Mock(
+            returncode=0,
+            stdout=json.dumps({"type": "result", "subtype": "success", "result": inner}),
+        )
+        result = hw.call_claude_narration("대화", was_truncated=False)
+    assert result is None
+
+
+def test_narration_skips_curly_braces_in_code():
+    """{ inside a Python code block are skipped; the real JSON found after."""
+    inner = (
+        "```python\n"
+        "re.compile(r'{pattern}')\n"
+        "```\n\n"
+        '{"title": "code-task", "narration": "코드 작업"}'
+    )
+    with mock.patch("subprocess.run") as mock_run:
+        mock_run.return_value = mock.Mock(
+            returncode=0,
+            stdout=json.dumps({"type": "result", "subtype": "success", "result": inner}),
+        )
+        result = hw.call_claude_narration("대화", was_truncated=False)
+    assert result == {"title": "code-task", "narration": "코드 작업"}
+
 
 def test_main_exits_when_recursive_guard_set():
     with mock.patch.dict(os.environ, {"CLAUDE_WRITING_CONTEXT": "1"}):
