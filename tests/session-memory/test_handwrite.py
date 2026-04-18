@@ -374,3 +374,29 @@ def test_main_exits_when_recursive_guard_set():
             except SystemExit:
                 pass
             mock_exit.assert_called_with(0)
+
+
+
+_SAMPLE_INSIGHT_MSG = (
+    "`★ Insight ─────────────────────────────────────────────`\n"
+    "핵심 인사이트 내용입니다.\n"
+    "`─────────────────────────────────────────────────`"
+)
+
+
+def test_extract_insights_finds_blocks():
+    messages = [{"role": "assistant", "text": _SAMPLE_INSIGHT_MSG}]
+    result = hw.extract_insights(messages)
+    assert result == ["핵심 인사이트 내용입니다."]
+
+
+def test_extract_insights_skips_user_messages():
+    messages = [{"role": "user", "text": _SAMPLE_INSIGHT_MSG}]
+    result = hw.extract_insights(messages)
+    assert result == []
+
+
+def test_extract_insights_empty_when_no_blocks():
+    messages = [{"role": "assistant", "text": "일반 텍스트입니다."}]
+    result = hw.extract_insights(messages)
+    assert result == []

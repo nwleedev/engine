@@ -267,6 +267,24 @@ _NARRATION_PROMPT = """\
 """
 
 
+_INSIGHT_RE = re.compile(
+    r'`★ Insight[─\s]+`\n(.*?)\n`[─]+`',
+    re.DOTALL,
+)
+
+
+def extract_insights(messages):
+    """Return ★ Insight block contents from assistant messages in delta."""
+    out = []
+    for msg in messages:
+        if msg.get("role") == "assistant":
+            for m in _INSIGHT_RE.finditer(msg.get("text", "")):
+                content = m.group(1).strip()
+                if content:
+                    out.append(content)
+    return out
+
+
 def build_prompt(delta_text, was_truncated):
     """Build the prompt string for claude -p."""
     note = "※ 앞부분 생략: 대화가 길어 최근 메시지만 포함했습니다.\n\n" if was_truncated else ""
