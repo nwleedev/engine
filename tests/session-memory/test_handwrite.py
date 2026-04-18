@@ -419,6 +419,10 @@ def test_append_insights_deduplicates(tmp_path):
 
 
 def test_append_insights_silent_on_write_error(tmp_path):
+    # Pre-create the file so read_text is exercised before the write fails
+    insight_path = tmp_path / ".claude" / "INSIGHT.md"
+    insight_path.parent.mkdir(parents=True)
+    insight_path.write_text("")
     with mock.patch("builtins.open", side_effect=OSError("permission denied")):
         # Must not raise — errors are silently swallowed
         hw.append_insights_to_project(str(tmp_path), ["insight A"], "sess-001")
