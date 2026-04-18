@@ -7,6 +7,12 @@ from pathlib import Path
 CHAR_LIMIT = 80_000
 
 
+def _debug(msg):
+    """Write a debug message to stderr when SESSION_MEMORY_DEBUG is set."""
+    if os.environ.get("SESSION_MEMORY_DEBUG"):
+        print(f"[session-memory] {msg}", file=sys.stderr)
+
+
 def extract_text(content):
     """Extract plain text from message content (str or list)."""
     if isinstance(content, str):
@@ -304,8 +310,8 @@ def append_insights_to_project(cwd, insights, session_id):
             path.parent.mkdir(parents=True, exist_ok=True)
             with open(path, "a", encoding="utf-8") as f:
                 f.write("".join(new_lines))
-    except Exception:
-        pass
+    except Exception as e:
+        _debug(f"append_insights_to_project failed: {e}")
 
 
 def build_prompt(delta_text, was_truncated):
@@ -328,6 +334,7 @@ def call_claude_narration(delta_text, was_truncated):
             env=env,
         )
         if r.returncode != 0:
+            _debug(f"claude -p failed (rc={r.returncode}): {r.stderr[:300]}")
             return None
         outer = json.loads(r.stdout)
         inner_text = outer.get("result", "")
@@ -346,8 +353,10 @@ def call_claude_narration(delta_text, was_truncated):
                 return obj
             except json.JSONDecodeError:
                 pos = json_start + 1
+        _debug(f"Mode 3: no JSON in claude -p response: {stripped[:300]}")
         return None  # Mode 3: no valid JSON — do not store garbage
-    except Exception:
+    except Exception as e:
+        _debug(f"exception in call_claude_narration: {e}")
         return None
 
 
