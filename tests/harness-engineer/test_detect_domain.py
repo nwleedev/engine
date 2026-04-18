@@ -159,3 +159,19 @@ def test_detect_domain_unrecognized_path_returns_none():
               "file_patterns": ["*.tsx"]}]
     result = dd.detect_domain_from_file_path("README.md", files)
     assert result is None
+
+
+def test_matches_double_star_alone():
+    assert dd._matches_pattern("any/file.tsx", "**") is True
+
+
+def test_matches_double_star_suffix_flat_file():
+    # flat file (no directory) against **/*.tsx
+    assert dd._matches_pattern("Button.tsx", "**/*.tsx") is True
+
+
+def test_detect_domain_missing_file_patterns_key():
+    # harness dict with no file_patterns key at all (not just empty list)
+    files = [{"domain": "test", "keywords": [], "content": "x"}]
+    result = dd.detect_domain_from_file_path("Button.tsx", files)
+    assert result is None
