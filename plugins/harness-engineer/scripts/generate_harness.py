@@ -66,9 +66,37 @@ updated: {date.today().strftime("%Y-%m-%d")}
 """
 
 
-def build_harness_frontmatter(domain: str, language: str) -> str:
+def build_harness_frontmatter(domain: str, language: str, keywords: list[str] | None = None) -> str:
     today = date.today().strftime("%Y-%m-%d")
-    return f"---\ndomain: {domain}\nlanguage: {language}\nupdated: {today}\n---"
+    lines = [
+        "---",
+        f"domain: {domain}",
+        f"language: {language}",
+    ]
+    if keywords:
+        kw_str = ", ".join(keywords)
+        lines.append(f"keywords: [{kw_str}]")
+    lines.append(f"updated: {today}")
+    lines.append("---")
+    return "\n".join(lines)
+
+
+def _parse_frontmatter_keywords(template: str) -> list[str]:
+    """Extract keywords list from template frontmatter."""
+    if not template.startswith("---"):
+        return []
+    end = template.find("---", 3)
+    if end == -1:
+        return []
+    fm_text = template[3:end].strip()
+    for line in fm_text.splitlines():
+        key, _, val = line.partition(":")
+        if key.strip() == "keywords":
+            val = val.strip()
+            if val.startswith("["):
+                items = [x.strip().strip('"\'') for x in val.strip("[]").split(",")]
+                return [x for x in items if x]
+    return []
 
 
 def generate_harness_file(
@@ -78,10 +106,11 @@ def generate_harness_file(
     plugin_root: str,
 ) -> str:
     template = get_template(domain, plugin_root)
+    keywords = _parse_frontmatter_keywords(template)
     if template.startswith("---"):
         end = template.find("---", 3)
         if end != -1:
             body = template[end + 3:]
-            new_fm = build_harness_frontmatter(domain, language)
+            new_fm = build_harness_frontmatter(domain, language, keywords)
             return new_fm + body
-    return build_harness_frontmatter(domain, language) + "\n\n" + template
+    return build_harness_frontmatter(domain, language, keywords) + "\n\n" + template
