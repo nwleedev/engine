@@ -1,61 +1,62 @@
 ---
 domain: market-research
 language: auto
-keywords: [시장, market, 경쟁사, competitor, TAM, SAM, SOM, 분석, analysis, 전략, strategy, 고객, customer]
+keywords: [market, competitor, TAM, SAM, SOM, analysis, strategy, customer, research]
+file_patterns: ["docs/research/**", "docs/market/**", "research/**", "competitive/**"]
 updated: 2026-04-18
 ---
 
 # Market Research Harness
 
-## 이 파일의 용도
-현재 문서 상태가 아닌 **이상적인 리서치 기준**입니다.
+## Purpose
+This file defines the **ideal research standard**, not the current document state.
 
-## 핵심 규칙
+## Core Rules
 
-- [ ] 주장에는 출처 또는 데이터 근거 제시 (날짜·기관 포함)
-- [ ] 시장 규모 추정 시 TAM/SAM/SOM 명확히 구분
-- [ ] 경쟁사 비교는 단일 기준이 아닌 다차원 매트릭스
-- [ ] 추정치는 근거 방법론 명시 (Bottom-up / Top-down)
-- [ ] 인용 없는 주관적 단정 금지 ("시장이 크다" → "TAM $X, 출처: Y")
+- [ ] Every claim backed by source or data (include date and organization)
+- [ ] Market size estimates clearly split into TAM / SAM / SOM
+- [ ] Competitor comparisons use multi-dimensional matrix, not a single criterion
+- [ ] Estimates include methodology (Bottom-up / Top-down)
+- [ ] No unsourced assertions ("the market is large" → "TAM $X, source: Y")
 
-## 패턴 사례
+## Pattern Examples
 
-### 시장 규모
+### Market Size
 
 <Good>
-TAM: 글로벌 SaaS HR 시장 $195B (Gartner, 2025)
-SAM: 국내 중소기업 HR SaaS $1.2B (중기부 통계 기반 추정)
-SOM: 초기 3년 목표 0.5% = $6M
-근거 방법론: Top-down (글로벌 시장 점유율 × 국내 비중)
+TAM: Global SaaS HR market $195B (Gartner, 2025)
+SAM: Domestic SMB HR SaaS $1.2B (estimated from SMBA statistics)
+SOM: 3-year target 0.5% = $6M
+Methodology: Top-down (global market share × domestic ratio)
 </Good>
 
 <Bad>
-"시장이 크고 성장 가능성이 있습니다."
-구체적 수치·출처·범위 구분 없음
+"The market is large and has growth potential."
+No specific figures, sources, or scope breakdown
 </Bad>
 
 ---
 
-### 경쟁사 비교
+### Competitor Comparison
 
 <Good>
-| 항목 | 자사 | 경쟁사 A | 경쟁사 B |
-|------|------|---------|---------|
-| 가격 | $29/월 | $49/월 | $19/월 |
-| 핵심 기능 | AI 자동화 | 수동 입력 | 기본 관리 |
-| 고객군 | 스타트업 | 대기업 | 개인 |
+| Item       | Us      | Competitor A | Competitor B |
+|------------|---------|--------------|--------------|
+| Price      | $29/mo  | $49/mo       | $19/mo       |
+| Core feat  | AI auto | Manual entry | Basic mgmt   |
+| Segment    | Startup | Enterprise   | Individual   |
 </Good>
 
 <Bad>
-"경쟁사 A보다 기능이 좋습니다."
-단일 차원 비교, 근거 없음
+"We have better features than Competitor A."
+Single-dimension comparison, no evidence
 </Bad>
 
-## 안티패턴 게이트
+## Anti-Pattern Gate
 
 ```
-수치 없이 "크다/좋다"를 쓰려는가?  → 구체적 데이터로 교체
-출처 없는 시장 규모 추정인가?      → 출처·날짜·기관 추가
-TAM만 있고 SAM/SOM이 없는가?      → 세 단계 모두 명시
-단일 기준 경쟁사 비교인가?         → 다차원 매트릭스로 교체
+Using "large/good" without figures?  → Replace with specific data
+Market size without source?          → Add source, date, and organization
+TAM only, no SAM/SOM?               → Specify all three levels
+Single-criterion competitor compare? → Replace with multi-dimensional matrix
 ```
