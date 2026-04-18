@@ -60,12 +60,12 @@ def detect_domains_with_llm(messages: list[dict], domains: list[str]) -> list[st
     text_parts = [m.get("text", "") for m in messages[-20:]]
     transcript_sample = "\n".join(text_parts)[:4000]
     prompt = (
-        "다음 대화 기록을 읽고, 아래 도메인 목록 중 이 대화에서 실질적으로 다루어진 도메인만 골라서 "
-        "JSON 배열로 반환하세요.\n\n"
-        f"도메인 목록: {json.dumps(domains, ensure_ascii=False)}\n\n"
-        f"대화 기록:\n{transcript_sample}\n\n"
-        "실질적으로 다루어진 도메인만 포함하세요. 단순히 언급만 된 것은 제외하세요.\n"
-        "응답 형식: [\"domain1\", \"domain2\"] 형태의 JSON 배열만 출력하세요. 다른 텍스트는 포함하지 마세요."
+        "Read the following conversation transcript and return a JSON array containing only "
+        "the domains from the list below that were substantively discussed.\n\n"
+        f"Domain list: {json.dumps(domains, ensure_ascii=False)}\n\n"
+        f"Transcript:\n{transcript_sample}\n\n"
+        "Include only domains that were actively worked on, not just briefly mentioned.\n"
+        "Output ONLY a JSON array like [\"domain1\", \"domain2\"]. No other text."
     )
     env = {**os.environ, "CLAUDE_WRITING_CONTEXT": "1"}
     try:
