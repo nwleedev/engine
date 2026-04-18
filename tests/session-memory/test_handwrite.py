@@ -426,3 +426,38 @@ def test_append_insights_silent_on_write_error(tmp_path):
     with mock.patch("builtins.open", side_effect=OSError("permission denied")):
         # Must not raise — errors are silently swallowed
         hw.append_insights_to_project(str(tmp_path), ["insight A"], "sess-001")
+
+
+def test_main_appends_insights_to_project_insight_md(tmp_path):
+    """Stop hook writes extracted insights to {cwd}/.claude/INSIGHT.md."""
+    fixture = str(FIXTURES_DIR / "sample_transcript.jsonl")
+    mock_narration = json.dumps({
+        "type": "result",
+        "subtype": "success",
+        "result": json.dumps({
+            "title": "test-insights",
+            "narration": "테스트 작업을 완료했습니다.",
+        }),
+    })
+    payload = json.dumps({"transcript_path": fixture, "session_id": "insight-test"})
+
+    with mock.patch("subprocess.run") as mock_run:
+        mock_run.side_effect = [
+            mock.Mock(returncode=0, stdout=f"{tmp_path}\n"),  # find_project_root
+            mock.Mock(returncode=0, stdout=mock_narration),   # call_claude_narration
+            mock.Mock(returncode=128, stdout=""),              # get_git_commits
+            mock.Mock(returncode=128, stdout=""),              # get_git_head
+        ]
+        with mock.patch.object(hw, "extract_insights", return_value=["테스트 인사이트"]):
+            import io
+            sys.stdin = io.StringIO(payload)
+            try:
+                hw.main()
+            except SystemExit:
+                pass
+            finally:
+                sys.stdin = sys.__stdin__
+
+    insight_md = tmp_path / ".claude" / "INSIGHT.md"
+    assert insight_md.exists()
+    assert "테스트 인사이트" in insight_md.read_text()

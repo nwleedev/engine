@@ -382,6 +382,9 @@ def main():
                               parse_frontmatter((session_dir / "INDEX.md").read_text())[1])
         sys.exit(0)
 
+    # Extract insights before narration so the variable exists for later use
+    insights = extract_insights(delta)
+
     delta_text, was_truncated = truncate_messages(delta)
     result = call_claude_narration(delta_text, was_truncated)
     if not result:
@@ -399,6 +402,9 @@ def main():
     new_head = get_git_head(cwd)
     last_uuid = delta[-1].get("uuid", "")
     update_index(session_dir, index_data, last_uuid, new_head, num, title, one_liner)
+
+    if insights:
+        append_insights_to_project(cwd, insights, session_id)
 
 
 if __name__ == "__main__":
