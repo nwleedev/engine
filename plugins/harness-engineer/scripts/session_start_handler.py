@@ -41,6 +41,8 @@ def build_violation_summary(log_path: Path) -> str:
 
 
 def main() -> None:
+    if os.environ.get("CLAUDE_WRITING_CONTEXT") == "1":
+        return
     try:
         payload = json.loads(sys.stdin.read())
     except (json.JSONDecodeError, EOFError):

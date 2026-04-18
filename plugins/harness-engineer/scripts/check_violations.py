@@ -105,8 +105,6 @@ def detect_drift(log_path: Path, harness_dir: Path) -> list[str]:
 
     cutoff = datetime.now() - timedelta(days=30)
     for md_file in harness_dir.glob("*.md"):
-        if md_file.name == "violations.log":
-            continue
         try:
             content = md_file.read_text(encoding="utf-8")
             for line in content.splitlines():

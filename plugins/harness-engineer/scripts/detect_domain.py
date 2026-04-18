@@ -28,8 +28,6 @@ def load_harness_files(harness_dir: Path) -> list[dict]:
     if not harness_dir.exists():
         return files
     for path in sorted(harness_dir.glob("*.md")):
-        if path.name == "violations.log":
-            continue
         try:
             content = path.read_text(encoding="utf-8")
             fm = parse_harness_frontmatter(content)
@@ -57,6 +55,8 @@ _FILE_PATH_PATTERNS = [
     (r"\.(py)$", "python-backend"),
     (r"(app|api)/.*\.(py)$", "python-backend"),
     (r"docs/(research|market|competitive)/", "market-research"),
+    (r"(?<!x)\.ts$", "typescript"),
+    (r"\.go$", "go-backend"),
 ]
 
 
