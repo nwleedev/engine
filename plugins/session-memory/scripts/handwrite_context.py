@@ -285,6 +285,29 @@ def extract_insights(messages):
     return out
 
 
+def append_insights_to_project(cwd, insights, session_id):
+    """Append new insights to {cwd}/.claude/INSIGHT.md, skipping duplicates."""
+    if not insights:
+        return
+    try:
+        path = Path(cwd) / ".claude" / "INSIGHT.md"
+        existing = path.read_text(encoding="utf-8") if path.exists() else ""
+        now = datetime.utcnow().strftime("%Y-%m-%d %H:%M")
+        sid_short = session_id[:8]
+        new_lines = []
+        for insight in insights:
+            if insight not in existing:
+                new_lines.append(
+                    f"\n---\n**{now}** · `{sid_short}`\n\n{insight}\n"
+                )
+        if new_lines:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            with open(path, "a", encoding="utf-8") as f:
+                f.write("".join(new_lines))
+    except Exception:
+        pass
+
+
 def build_prompt(delta_text, was_truncated):
     """Build the prompt string for claude -p."""
     note = "※ 앞부분 생략: 대화가 길어 최근 메시지만 포함했습니다.\n\n" if was_truncated else ""

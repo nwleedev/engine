@@ -400,3 +400,25 @@ def test_extract_insights_empty_when_no_blocks():
     messages = [{"role": "assistant", "text": "일반 텍스트입니다."}]
     result = hw.extract_insights(messages)
     assert result == []
+
+
+def test_append_insights_creates_file(tmp_path):
+    hw.append_insights_to_project(str(tmp_path), ["insight A"], "sess-001")
+    path = tmp_path / ".claude" / "INSIGHT.md"
+    assert path.exists()
+    content = path.read_text()
+    assert "insight A" in content
+    assert "sess-001" in content
+
+
+def test_append_insights_deduplicates(tmp_path):
+    hw.append_insights_to_project(str(tmp_path), ["insight A"], "sess-001")
+    hw.append_insights_to_project(str(tmp_path), ["insight A"], "sess-002")
+    content = (tmp_path / ".claude" / "INSIGHT.md").read_text()
+    assert content.count("insight A") == 1
+
+
+def test_append_insights_silent_on_write_error(tmp_path):
+    with mock.patch("builtins.open", side_effect=OSError("permission denied")):
+        # Must not raise — errors are silently swallowed
+        hw.append_insights_to_project(str(tmp_path), ["insight A"], "sess-001")
