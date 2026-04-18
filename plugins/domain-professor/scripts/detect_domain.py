@@ -1,20 +1,7 @@
 import json
-import re
-import sys
+import os
+import subprocess
 from pathlib import Path
-
-DOMAIN_KEYWORDS: dict[str, list[str]] = {
-    "kubernetes": ["kubernetes", "kubectl", "k8s", "pod", "pods", "deployment", "namespace", "helm", "ingress", "configmap", "replicaset"],
-    "docker": ["docker", "dockerfile", "container", "containers", "compose", "registry"],
-    "terraform": ["terraform", "hcl", "provider", "resource", "module", "tfstate"],
-    "aws": ["aws", "s3", "ec2", "lambda", "iam", "cloudformation", "dynamodb", "vpc"],
-    "finance": ["dcf", "valuation", "equity", "bond", "option", "hedge", "portfolio", "roi", "irr", "ebitda", "wacc"],
-    "sql": ["select", "join", "index", "transaction", "migration", "constraint", "schema"],
-    "react": ["react", "jsx", "hook", "component", "props", "useeffect", "usestate", "redux"],
-    "python": ["asyncio", "decorator", "generator", "comprehension", "virtualenv", "pytest"],
-}
-
-THRESHOLD = 3
 
 
 def extract_text(content) -> str:
@@ -54,19 +41,57 @@ def parse_transcript(path: str) -> list[dict]:
     return messages
 
 
-def detect_domains(messages: list[dict], threshold: int = THRESHOLD) -> list[str]:
-    text = " ".join(m.get("text", "").lower() for m in messages)
-    domains = []
-    for domain, keywords in DOMAIN_KEYWORDS.items():
-        count = sum(
-            len(re.findall(r"\b" + re.escape(kw) + r"\b", text))
-            for kw in keywords
+def get_user_domains() -> list[str]:
+    raw = os.environ.get("DOMAIN_PROFESSOR_DOMAINS", "").strip()
+    if not raw:
+        return []
+    try:
+        parsed = json.loads(raw)
+        if isinstance(parsed, list):
+            return [str(d).strip() for d in parsed if str(d).strip()]
+    except json.JSONDecodeError:
+        pass
+    return [d.strip() for d in raw.split(",") if d.strip()]
+
+
+def detect_domains_with_llm(messages: list[dict], domains: list[str]) -> list[str]:
+    if not domains or not messages:
+        return []
+    text_parts = [m.get("text", "") for m in messages[-20:]]
+    transcript_sample = "\n".join(text_parts)[:4000]
+    prompt = (
+        "다음 대화 기록을 읽고, 아래 도메인 목록 중 이 대화에서 실질적으로 다루어진 도메인만 골라서 "
+        "JSON 배열로 반환하세요.\n\n"
+        f"도메인 목록: {json.dumps(domains, ensure_ascii=False)}\n\n"
+        f"대화 기록:\n{transcript_sample}\n\n"
+        "실질적으로 다루어진 도메인만 포함하세요. 단순히 언급만 된 것은 제외하세요.\n"
+        "응답 형식: [\"domain1\", \"domain2\"] 형태의 JSON 배열만 출력하세요. 다른 텍스트는 포함하지 마세요."
+    )
+    env = {**os.environ, "CLAUDE_WRITING_CONTEXT": "1"}
+    try:
+        r = subprocess.run(
+            ["claude", "-p", "--no-session-persistence", "--output-format", "json"],
+            input=prompt,
+            capture_output=True,
+            text=True,
+            timeout=60,
+            env=env,
         )
-        if count >= threshold:
-            domains.append(domain)
-    return domains
+        if r.returncode != 0:
+            return []
+        data = json.loads(r.stdout)
+        result_text = data.get("result", "").strip()
+        detected = json.loads(result_text)
+        if isinstance(detected, list):
+            return [d for d in detected if d in domains]
+    except Exception:
+        pass
+    return []
 
 
-def detect_domains_from_transcript(transcript_path: str, threshold: int = THRESHOLD) -> list[str]:
+def detect_domains_from_transcript(transcript_path: str) -> list[str]:
+    domains = get_user_domains()
+    if not domains:
+        return []
     messages = parse_transcript(transcript_path)
-    return detect_domains(messages, threshold)
+    return detect_domains_with_llm(messages, domains)

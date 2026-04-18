@@ -1,3 +1,4 @@
+import json
 import sys
 from pathlib import Path
 from unittest import mock
@@ -35,38 +36,93 @@ def test_parse_transcript_missing_file():
     assert messages == []
 
 
-def test_detect_domains_kubernetes():
-    messages = [
-        {"text": "kubernetes pod를 배포하고 싶어"},
-        {"text": "kubectl apply로 deployment를 만들었어"},
-        {"text": "namespace 설정이 필요해"},
-    ]
-    domains = dd.detect_domains(messages, threshold=3)
-    assert "kubernetes" in domains
+def test_get_user_domains_comma_separated():
+    with mock.patch.dict("os.environ", {"DOMAIN_PROFESSOR_DOMAINS": "kubernetes,finance,market-research"}):
+        domains = dd.get_user_domains()
+    assert domains == ["kubernetes", "finance", "market-research"]
 
 
-def test_detect_domains_below_threshold():
-    messages = [{"text": "kubernetes pod 하나"}]
-    domains = dd.detect_domains(messages, threshold=3)
-    assert "kubernetes" not in domains
+def test_get_user_domains_json_array():
+    raw = json.dumps(["kubernetes", "docker", "finance"])
+    with mock.patch.dict("os.environ", {"DOMAIN_PROFESSOR_DOMAINS": raw}):
+        domains = dd.get_user_domains()
+    assert domains == ["kubernetes", "docker", "finance"]
 
 
-def test_detect_domains_multiple():
-    messages = [
-        {"text": "docker container를 kubernetes pod로 배포"},
-        {"text": "kubectl로 docker image를 실행하는 deployment"},
-        {"text": "docker registry에서 kubernetes namespace로"},
-    ]
-    domains = dd.detect_domains(messages, threshold=3)
-    assert "kubernetes" in domains
-    assert "docker" in domains
+def test_get_user_domains_empty():
+    with mock.patch.dict("os.environ", {}, clear=True):
+        domains = dd.get_user_domains()
+    assert domains == []
 
 
-def test_detect_domains_from_transcript():
+def test_get_user_domains_strips_whitespace():
+    with mock.patch.dict("os.environ", {"DOMAIN_PROFESSOR_DOMAINS": " kubernetes , finance "}):
+        domains = dd.get_user_domains()
+    assert domains == ["kubernetes", "finance"]
+
+
+def test_detect_domains_with_llm_returns_filtered_domains():
+    messages = [{"role": "user", "text": "kubernetes pod 배포 방법을 알아보자"}]
+    domains = ["kubernetes", "finance"]
+    llm_result = json.dumps(["kubernetes"])
+    fake_output = json.dumps({"result": llm_result})
+    fake_proc = mock.MagicMock()
+    fake_proc.returncode = 0
+    fake_proc.stdout = fake_output
+    with mock.patch("subprocess.run", return_value=fake_proc):
+        result = dd.detect_domains_with_llm(messages, domains)
+    assert result == ["kubernetes"]
+
+
+def test_detect_domains_with_llm_filters_invalid_domains():
+    messages = [{"role": "user", "text": "some text"}]
+    domains = ["kubernetes"]
+    # LLM returns a domain not in user's list
+    llm_result = json.dumps(["docker"])
+    fake_output = json.dumps({"result": llm_result})
+    fake_proc = mock.MagicMock()
+    fake_proc.returncode = 0
+    fake_proc.stdout = fake_output
+    with mock.patch("subprocess.run", return_value=fake_proc):
+        result = dd.detect_domains_with_llm(messages, domains)
+    assert result == []
+
+
+def test_detect_domains_with_llm_empty_messages():
+    result = dd.detect_domains_with_llm([], ["kubernetes"])
+    assert result == []
+
+
+def test_detect_domains_with_llm_no_domains():
+    messages = [{"role": "user", "text": "kubernetes pod"}]
+    result = dd.detect_domains_with_llm(messages, [])
+    assert result == []
+
+
+def test_detect_domains_with_llm_subprocess_failure():
+    messages = [{"role": "user", "text": "kubernetes pod"}]
+    fake_proc = mock.MagicMock()
+    fake_proc.returncode = 1
+    with mock.patch("subprocess.run", return_value=fake_proc):
+        result = dd.detect_domains_with_llm(messages, ["kubernetes"])
+    assert result == []
+
+
+def test_detect_domains_from_transcript_no_env():
+    with mock.patch.dict("os.environ", {}, clear=True):
+        result = dd.detect_domains_from_transcript("/any/path.jsonl")
+    assert result == []
+
+
+def test_detect_domains_from_transcript_with_env():
     transcript = str(FIXTURES_DIR / "sample_transcript.jsonl")
-    domains = dd.detect_domains_from_transcript(transcript, threshold=3)
-    assert "kubernetes" in domains
-
-
-def test_detect_domains_empty_messages():
-    assert dd.detect_domains([], threshold=3) == []
+    llm_result = json.dumps(["kubernetes"])
+    fake_output = json.dumps({"result": llm_result})
+    fake_proc = mock.MagicMock()
+    fake_proc.returncode = 0
+    fake_proc.stdout = fake_output
+    env = {"DOMAIN_PROFESSOR_DOMAINS": "kubernetes,finance"}
+    with mock.patch.dict("os.environ", env):
+        with mock.patch("subprocess.run", return_value=fake_proc):
+            result = dd.detect_domains_from_transcript(transcript)
+    assert "kubernetes" in result
