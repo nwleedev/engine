@@ -16,13 +16,13 @@ MARKET_HARNESS = (FIXTURES_DIR / "sample_harness_market.md").read_text(encoding=
 
 def test_extract_core_rules_returns_checklist_section():
     result = ih.extract_core_rules(REACT_HARNESS)
-    assert "핵심 규칙" in result
+    assert "Core Rules" in result
     assert "any" in result
 
 
 def test_extract_core_rules_does_not_include_pattern_section():
     result = ih.extract_core_rules(REACT_HARNESS)
-    assert "패턴 사례" not in result
+    assert "Pattern Examples" not in result
 
 
 def test_extract_core_rules_max_15_lines():
@@ -37,7 +37,7 @@ def test_extract_core_rules_no_section_returns_empty():
 
 def test_extract_core_rules_max_15_lines_at_boundary():
     rules_lines = [f"- [ ] Rule {i}" for i in range(20)]
-    content = "## 핵심 규칙\n\n" + "\n".join(rules_lines) + "\n\n## Next Section\n"
+    content = "## Core Rules\n\n" + "\n".join(rules_lines) + "\n\n## Next Section\n"
     result = ih.extract_core_rules(content)
     assert len(result.splitlines()) <= 15
 
@@ -56,7 +56,7 @@ def test_build_user_prompt_context_single_file():
     files = [{"domain": "react-frontend", "content": REACT_HARNESS}]
     result = ih.build_user_prompt_context(files)
     assert "React Frontend Harness" in result
-    assert "핵심 규칙" in result
+    assert "Core Rules" in result
 
 
 def test_build_user_prompt_context_multiple_files():

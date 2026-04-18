@@ -1,21 +1,22 @@
 ---
 domain: react-frontend
 language: auto
-keywords: [컴포넌트, component, tsx, jsx, 훅, hook, props, tailwind]
+keywords: [component, tsx, jsx, hook, props, tailwind]
+file_patterns: ["*.tsx", "*.jsx", "src/components/**", "src/hooks/**"]
 updated: 2026-04-18
 ---
 
 # React Frontend Harness
 
-## 핵심 규칙
+## Core Rules
 
-- [ ] TypeScript `any` 금지
-- [ ] 서버 상태는 Tanstack Query
-- [ ] `useEffect`는 외부 동기화 목적만
+- [ ] No TypeScript `any` — use exact types or `unknown`
+- [ ] Server state via Tanstack Query
+- [ ] `useEffect` for external synchronization only
 
-## 패턴 사례
+## Pattern Examples
 
-### TypeScript 타입
+### TypeScript Types
 
 <Good>
 ```typescript
@@ -29,8 +30,8 @@ const user: any = fetchUser();
 ```
 </Bad>
 
-## 안티패턴 게이트
+## Anti-Pattern Gate
 
 ```
-any 타입을 쓰려는가? → 정확한 타입으로 교체
+Using `any` type? → Replace with exact type
 ```
