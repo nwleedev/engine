@@ -132,3 +132,36 @@ def test_cmd_check_prints_current_version(tmp_path, capsys):
     bv.cmd_check("my-plugin", plugins_dir)
     out = capsys.readouterr().out
     assert "2.3.1" in out
+
+
+# --- cmd_check_all ---
+
+def test_cmd_check_all_returns_true_when_all_in_sync(tmp_path, capsys):
+    plugins_dir = tmp_path / "plugins"
+    plugins_dir.mkdir()
+    _make_plugin(plugins_dir, "plugin-a", "1.0.0")
+    _make_plugin(plugins_dir, "plugin-b", "2.0.0")
+    result = bv.cmd_check_all(plugins_dir)
+    assert result is True
+    out = capsys.readouterr().out
+    assert "plugin-a" in out
+    assert "plugin-b" in out
+
+def test_cmd_check_all_returns_false_when_one_fails(tmp_path, capsys):
+    plugins_dir = tmp_path / "plugins"
+    plugins_dir.mkdir()
+    _make_plugin(plugins_dir, "plugin-a", "1.0.0")
+    # plugin-b has no .version-bump.json -> skipped
+    other = plugins_dir / "plugin-b"
+    other.mkdir()
+    result = bv.cmd_check_all(plugins_dir)
+    assert result is True  # only plugin-a has config, it's in sync
+
+def test_cmd_check_all_skips_dirs_without_config(tmp_path, capsys):
+    plugins_dir = tmp_path / "plugins"
+    plugins_dir.mkdir()
+    (plugins_dir / "unconfigured").mkdir()
+    result = bv.cmd_check_all(plugins_dir)
+    assert result is True
+    out = capsys.readouterr().out
+    assert "unconfigured" not in out

@@ -96,3 +96,22 @@ def cmd_check(plugin_name: str, plugins_dir: Path) -> bool:
         return False
     print(f"\nIn sync at {versions[0]}")
     return True
+
+
+def cmd_check_all(plugins_dir: Path) -> bool:
+    """Run cmd_check for every plugin that has a .version-bump.json. Returns True if all pass."""
+    all_ok = True
+    found = False
+    for plugin_dir in sorted(plugins_dir.iterdir()):
+        if not plugin_dir.is_dir():
+            continue
+        if not (plugin_dir / ".version-bump.json").exists():
+            continue
+        found = True
+        ok = cmd_check(plugin_dir.name, plugins_dir)
+        if not ok:
+            all_ok = False
+        print()
+    if not found:
+        print("No plugins with .version-bump.json found.")
+    return all_ok
