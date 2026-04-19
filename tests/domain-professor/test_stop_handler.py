@@ -1,3 +1,4 @@
+import importlib.util
 import io
 import json
 import os
@@ -6,9 +7,11 @@ from pathlib import Path
 from unittest import mock
 
 SCRIPTS_DIR = Path(__file__).parent.parent.parent / "plugins/domain-professor/scripts"
-sys.path.insert(0, str(SCRIPTS_DIR))
 
-import stop_handler as sh
+_spec = importlib.util.spec_from_file_location("domain_professor.stop_handler", SCRIPTS_DIR / "stop_handler.py")
+sh = importlib.util.module_from_spec(_spec)
+sys.modules["stop_handler"] = sh  # mock.patch("stop_handler.X") requires this key in sys.modules
+_spec.loader.exec_module(sh)
 
 
 def test_main_skips_when_writing_context_set():

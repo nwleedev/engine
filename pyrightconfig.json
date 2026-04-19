@@ -1,0 +1,12 @@
+{
+  "extraPaths": [
+    "plugins/better-research/scripts",
+    "plugins/domain-professor/scripts",
+    "plugins/harness-engineer/scripts",
+    "plugins/session-memory/scripts",
+    "scripts"
+  ],
+  "exclude": [
+    ".worktrees"
+  ]
+}

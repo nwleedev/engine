@@ -1,3 +1,4 @@
+import importlib.util
 import io
 import json
 import os
@@ -7,9 +8,10 @@ from pathlib import Path
 
 SCRIPTS_DIR = Path(__file__).parent.parent.parent / "plugins/better-research/scripts"
 PLUGIN_ROOT = Path(__file__).parent.parent.parent / "plugins/better-research"
-sys.path.insert(0, str(SCRIPTS_DIR))
 
-import user_prompt_handler as uph
+_spec = importlib.util.spec_from_file_location("better_research.user_prompt_handler", SCRIPTS_DIR / "user_prompt_handler.py")
+uph = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(uph)
 
 
 # --- detect_marker ---
