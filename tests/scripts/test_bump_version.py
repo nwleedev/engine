@@ -165,3 +165,51 @@ def test_cmd_check_all_skips_dirs_without_config(tmp_path, capsys):
     assert result is True
     out = capsys.readouterr().out
     assert "unconfigured" not in out
+
+
+# --- cmd_bump ---
+
+def test_cmd_bump_patch_updates_plugin_json(tmp_path):
+    plugins_dir = tmp_path / "plugins"
+    plugins_dir.mkdir()
+    _make_plugin(plugins_dir, "my-plugin", "1.0.0")
+    bv.cmd_bump("my-plugin", "patch", plugins_dir)
+    plugin_json = plugins_dir / "my-plugin" / ".claude-plugin" / "plugin.json"
+    data = json.loads(plugin_json.read_text())
+    assert data["version"] == "1.0.1"
+
+def test_cmd_bump_minor_updates_correctly(tmp_path):
+    plugins_dir = tmp_path / "plugins"
+    plugins_dir.mkdir()
+    _make_plugin(plugins_dir, "my-plugin", "1.4.9")
+    bv.cmd_bump("my-plugin", "minor", plugins_dir)
+    plugin_json = plugins_dir / "my-plugin" / ".claude-plugin" / "plugin.json"
+    data = json.loads(plugin_json.read_text())
+    assert data["version"] == "1.5.0"
+
+def test_cmd_bump_major_updates_correctly(tmp_path):
+    plugins_dir = tmp_path / "plugins"
+    plugins_dir.mkdir()
+    _make_plugin(plugins_dir, "my-plugin", "2.1.3")
+    bv.cmd_bump("my-plugin", "major", plugins_dir)
+    plugin_json = plugins_dir / "my-plugin" / ".claude-plugin" / "plugin.json"
+    data = json.loads(plugin_json.read_text())
+    assert data["version"] == "3.0.0"
+
+def test_cmd_bump_explicit_version(tmp_path):
+    plugins_dir = tmp_path / "plugins"
+    plugins_dir.mkdir()
+    _make_plugin(plugins_dir, "my-plugin", "1.0.0")
+    bv.cmd_bump("my-plugin", "4.2.0", plugins_dir)
+    plugin_json = plugins_dir / "my-plugin" / ".claude-plugin" / "plugin.json"
+    data = json.loads(plugin_json.read_text())
+    assert data["version"] == "4.2.0"
+
+def test_cmd_bump_missing_plugin_raises(tmp_path):
+    plugins_dir = tmp_path / "plugins"
+    plugins_dir.mkdir()
+    try:
+        bv.cmd_bump("nonexistent", "patch", plugins_dir)
+        assert False, "Should have raised SystemExit"
+    except SystemExit:
+        pass

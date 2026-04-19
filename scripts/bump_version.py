@@ -115,3 +115,24 @@ def cmd_check_all(plugins_dir: Path) -> bool:
     if not found:
         print("No plugins with .version-bump.json found.")
     return all_ok
+
+
+def cmd_bump(plugin_name: str, bump_type: str, plugins_dir: Path) -> None:
+    """Bump version for a single plugin across all its declared files."""
+    plugin_dir = plugins_dir / plugin_name
+    if not plugin_dir.is_dir():
+        print(f"ERROR: Plugin not found: {plugin_name}", file=sys.stderr)
+        sys.exit(1)
+    config = load_config(plugin_dir)
+    current = get_current_version(plugin_dir, config)
+    new_version = bump_semver(current, bump_type)
+
+    print(f"Bumping {plugin_name}: {current} → {new_version}\n")
+    for entry in config["files"]:
+        file_path = plugin_dir / entry["path"]
+        if not file_path.exists():
+            print(f"  SKIP (missing): {entry['path']}")
+            continue
+        write_json_field(file_path, entry["field"], new_version)
+        print(f"  Updated: {entry['path']} ({entry['field']})")
+    print(f"\nDone. Run --check to verify.")
