@@ -53,6 +53,7 @@ def test_race_condition_guard_skips_when_timestamp_changed(tmp_path, monkeypatch
     session_dir = tmp_path / "sessions" / "test-session"
     hw.create_index(session_dir, "test-session", str(tmp_path))
     index_data = hw.read_index(session_dir)
+    assert index_data is not None
     index_data["last_context_written_at"] = "2026-04-17T00:00:00"
 
     # Simulate: another process already updated the timestamp

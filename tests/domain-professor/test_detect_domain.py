@@ -8,6 +8,7 @@ SCRIPTS_DIR = Path(__file__).parent.parent.parent / "plugins/domain-professor/sc
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
 _spec = importlib.util.spec_from_file_location("domain_professor.detect_domain", SCRIPTS_DIR / "detect_domain.py")
+assert _spec is not None and _spec.loader is not None
 dd = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(dd)
 

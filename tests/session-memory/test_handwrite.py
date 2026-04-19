@@ -95,6 +95,7 @@ def test_read_index_returns_frontmatter(tmp_path):
         "---\nsession_id: sess1\nlast_processed_uuid: uuid-x\ncontext_head: abc\n---\n\n# 요약\n"
     )
     data = hw.read_index(session_dir)
+    assert data is not None
     assert data["session_id"] == "sess1"
     assert data["last_processed_uuid"] == "uuid-x"
 

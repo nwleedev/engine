@@ -9,6 +9,7 @@ from unittest import mock
 SCRIPTS_DIR = Path(__file__).parent.parent.parent / "plugins/domain-professor/scripts"
 
 _spec = importlib.util.spec_from_file_location("domain_professor.stop_handler", SCRIPTS_DIR / "stop_handler.py")
+assert _spec is not None and _spec.loader is not None
 sh = importlib.util.module_from_spec(_spec)
 sys.modules["stop_handler"] = sh  # mock.patch("stop_handler.X") requires this key in sys.modules
 _spec.loader.exec_module(sh)
