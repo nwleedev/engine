@@ -1,3 +1,8 @@
+---
+name: research-protocol
+description: Use when conducting research, investigation, or analysis — especially when cross-validation, root cause identification, or multi-source verification is required. Activated via /q, /query, or /research prompt markers.
+---
+
 # Research Protocol
 
 You have received a research request. Execute the following steps before answering.
