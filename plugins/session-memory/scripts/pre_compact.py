@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""PreCompact hook: writes CONTEXT file before compaction."""
+"""PreCompact hook: writes context file before compaction."""
 import json
 import os
 import sys
@@ -7,6 +7,7 @@ from datetime import datetime
 from pathlib import Path
 
 import handwrite_context as hw
+import lang_detect
 
 
 def main():
@@ -27,29 +28,29 @@ def main():
         if not cwd:
             sys.exit(0)
         cwd = hw.find_project_root(cwd)
+
+        lang = lang_detect.detect(cwd)
+
         session_dir = Path(cwd) / ".claude" / "sessions" / session_id
         index_data = hw.read_index(session_dir) or hw.create_index(session_dir, session_id, cwd)
 
-        # Write CONTEXT file capturing work done since last checkpoint
         delta = hw.extract_delta(messages, index_data.get("last_processed_uuid") or "")
-        if delta:
-            delta_text, was_truncated = hw.truncate_messages(delta)
-            try:
-                result = hw.call_claude_narration(delta_text, was_truncated)
-                if result:
-                    commits = hw.get_git_commits(
-                        cwd, index_data.get("context_head"), index_data.get("started")
-                    )
-                    title = result.get("title") or "checkpoint-" + datetime.utcnow().strftime("%m%d-%H%M")
-                    narration = result.get("narration", "")
-                    one_liner = narration.split("。")[0].split(".")[0][:80] if narration else title
-                    num = hw.get_next_context_number(session_dir)
-                    hw.write_context_file(session_dir, num, title, narration, commits, session_id)
-                    new_head = hw.get_git_head(cwd)
-                    last_uuid = delta[-1].get("uuid", "")
-                    hw.update_index(session_dir, index_data, last_uuid, new_head, num, title, one_liner)
-            except Exception as e:
-                print(f"[pre_compact] narration failed: {e}", file=sys.stderr)
+        if not delta:
+            sys.exit(0)
+
+        delta_text, was_truncated = hw.truncate_messages(delta)
+        result = hw.call_claude_narration(delta_text, was_truncated, lang)
+        if not result:
+            sys.exit(0)
+
+        title = result.get("title") or "checkpoint-" + datetime.utcnow().strftime("%m%d-%H%M")
+        what_why = result.get("what_why", "")
+        one_liner = what_why.split("。")[0].split(".")[0][:80] if what_why else title
+
+        filename = hw.write_context_file(str(session_dir), title, lang, result, session_id)
+        new_head = hw.get_git_head(cwd)
+        last_uuid = delta[-1].get("uuid", "")
+        hw.update_index(session_dir, index_data, last_uuid, new_head, filename, one_liner)
     except Exception as e:
         print(f"[pre_compact] error: {e}", file=sys.stderr)
 
