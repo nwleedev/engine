@@ -1,4 +1,5 @@
 import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -213,3 +214,46 @@ def test_cmd_bump_missing_plugin_raises(tmp_path):
         assert False, "Should have raised SystemExit"
     except SystemExit:
         pass
+
+
+# --- main / CLI integration ---
+
+def test_cli_check_exits_zero_when_in_sync(tmp_path):
+    plugins_dir = tmp_path / "plugins"
+    plugins_dir.mkdir()
+    _make_plugin(plugins_dir, "my-plugin", "1.0.0")
+    result = subprocess.run(
+        ["python3", str(SCRIPTS_DIR / "bump_version.py"),
+         "--plugins-dir", str(plugins_dir), "my-plugin", "--check"],
+        capture_output=True, text=True
+    )
+    assert result.returncode == 0
+    assert "1.0.0" in result.stdout
+
+def test_cli_bump_updates_file(tmp_path):
+    plugins_dir = tmp_path / "plugins"
+    plugins_dir.mkdir()
+    _make_plugin(plugins_dir, "my-plugin", "1.0.0")
+    result = subprocess.run(
+        ["python3", str(SCRIPTS_DIR / "bump_version.py"),
+         "--plugins-dir", str(plugins_dir), "my-plugin", "patch"],
+        capture_output=True, text=True
+    )
+    assert result.returncode == 0
+    plugin_json = plugins_dir / "my-plugin" / ".claude-plugin" / "plugin.json"
+    data = json.loads(plugin_json.read_text())
+    assert data["version"] == "1.0.1"
+
+def test_cli_check_all(tmp_path):
+    plugins_dir = tmp_path / "plugins"
+    plugins_dir.mkdir()
+    _make_plugin(plugins_dir, "plugin-a", "1.0.0")
+    _make_plugin(plugins_dir, "plugin-b", "2.0.0")
+    result = subprocess.run(
+        ["python3", str(SCRIPTS_DIR / "bump_version.py"),
+         "--plugins-dir", str(plugins_dir), "--check-all"],
+        capture_output=True, text=True
+    )
+    assert result.returncode == 0
+    assert "plugin-a" in result.stdout
+    assert "plugin-b" in result.stdout

@@ -136,3 +136,60 @@ def cmd_bump(plugin_name: str, bump_type: str, plugins_dir: Path) -> None:
         write_json_field(file_path, entry["field"], new_version)
         print(f"  Updated: {entry['path']} ({entry['field']})")
     print(f"\nDone. Run --check to verify.")
+
+
+_DEFAULT_PLUGINS_DIR = Path(__file__).parent.parent / "plugins"
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="Bump or check plugin versions.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  bump_version.py session-memory patch
+  bump_version.py domain-professor minor
+  bump_version.py better-research 1.2.3
+  bump_version.py harness-engineer --check
+  bump_version.py --check-all
+""",
+    )
+    parser.add_argument(
+        "--plugins-dir",
+        type=Path,
+        default=_DEFAULT_PLUGINS_DIR,
+        help="Path to plugins directory (default: repo root /plugins)",
+    )
+    parser.add_argument("--check-all", action="store_true", help="Check all plugins")
+    parser.add_argument("plugin", nargs="?", help="Plugin name")
+    parser.add_argument(
+        "bump_or_flag",
+        nargs="?",
+        help="major | minor | patch | x.y.z | --check",
+    )
+
+    args, remaining = parser.parse_known_args()
+
+    plugins_dir: Path = args.plugins_dir
+
+    if args.check_all:
+        ok = cmd_check_all(plugins_dir)
+        sys.exit(0 if ok else 1)
+
+    if not args.plugin:
+        parser.print_help()
+        sys.exit(1)
+
+    if args.bump_or_flag == "--check" or "--check" in remaining:
+        ok = cmd_check(args.plugin, plugins_dir)
+        sys.exit(0 if ok else 1)
+
+    if not args.bump_or_flag:
+        parser.print_help()
+        sys.exit(1)
+
+    cmd_bump(args.plugin, args.bump_or_flag, plugins_dir)
+
+
+if __name__ == "__main__":
+    main()
