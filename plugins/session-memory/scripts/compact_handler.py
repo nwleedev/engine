@@ -21,7 +21,7 @@ def should_checkpoint(index_data: dict, delta_text: str) -> bool:
         return False
     try:
         last_dt = datetime.fromisoformat(last_written)
-        return (datetime.utcnow() - last_dt).total_seconds() >= CHECKPOINT_INTERVAL
+        return (hw._utcnow() - last_dt).total_seconds() >= CHECKPOINT_INTERVAL
     except Exception:
         return False
 
@@ -70,7 +70,7 @@ def main():
     if not result:
         sys.exit(0)
 
-    title = result.get("title") or "checkpoint-" + datetime.utcnow().strftime("%m%d-%H%M")
+    title = result.get("title") or "checkpoint-" + hw._utcnow().strftime("%m%d-%H%M")
     what_why = result.get("what_why", "")
     one_liner = what_why.split("。")[0].split(".")[0][:80] if what_why else title
 

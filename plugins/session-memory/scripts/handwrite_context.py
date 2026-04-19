@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
 """Stop hook: generates narration context after each Claude turn."""
 import json, os, re, subprocess, sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import lang_detect
 
 CHAR_LIMIT = 80_000
+
+
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 def _debug(msg):
@@ -37,7 +41,7 @@ def get_hourly_context_path(session_dir: str, title: str):
     If a CONTEXT-YYYYMMDD-HH00-*.md already exists for this hour,
     return it (append mode). Otherwise return a new path using title.
     """
-    prefix = "CONTEXT-" + datetime.utcnow().strftime("%Y%m%d-%H00-")
+    prefix = "CONTEXT-" + _utcnow().strftime("%Y%m%d-%H00-")
     contexts_dir = Path(session_dir) / "contexts"
     existing = sorted(contexts_dir.glob(f"{prefix}*.md"))
     if existing:
@@ -152,7 +156,7 @@ def create_index(session_dir, session_id, cwd):
     """Create session directory and empty INDEX.md. Returns initial frontmatter dict."""
     session_dir = Path(session_dir)
     (session_dir / "contexts").mkdir(parents=True, exist_ok=True)
-    now = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S")
+    now = _utcnow().strftime("%Y-%m-%dT%H:%M:%S")
     fm = {
         "session_id": session_id,
         "cwd": cwd,
@@ -183,8 +187,8 @@ def update_index(session_dir, fm, last_uuid, new_head, filename: str, one_liner:
     _, body = parse_frontmatter(index_path.read_text(encoding="utf-8"))
 
     fm["last_processed_uuid"] = last_uuid
-    fm["last_updated"] = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S")
-    fm["last_context_written_at"] = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S")
+    fm["last_updated"] = _utcnow().strftime("%Y-%m-%dT%H:%M:%S")
+    fm["last_context_written_at"] = _utcnow().strftime("%Y-%m-%dT%H:%M:%S")
     if new_head:
         fm["context_head"] = new_head
 
@@ -208,7 +212,7 @@ def write_context_file(session_dir: str, title: str, lang: str, result: dict, se
 
     headers = SECTION_HEADERS.get(lang, SECTION_HEADERS["en"])
     none_label = "없음" if lang == "ko" else "None"
-    now = datetime.utcnow().strftime("%Y-%m-%d %H:%M")
+    now = _utcnow().strftime("%Y-%m-%d %H:%M")
     sid_short = session_id[:8]
 
     decisions = result.get("decisions") or []
@@ -347,7 +351,7 @@ def append_insights_to_project(cwd, insights, session_id):
     try:
         path = Path(cwd) / ".claude" / "INSIGHT.md"
         existing = path.read_text(encoding="utf-8") if path.exists() else ""
-        now = datetime.utcnow().strftime("%Y-%m-%d %H:%M")
+        now = _utcnow().strftime("%Y-%m-%d %H:%M")
         sid_short = session_id[:8]
         new_lines = []
         for insight in insights:
@@ -452,7 +456,7 @@ def main():
     if not result:
         sys.exit(0)
 
-    title = result.get("title") or "checkpoint-" + datetime.utcnow().strftime("%m%d-%H%M")
+    title = result.get("title") or "checkpoint-" + _utcnow().strftime("%m%d-%H%M")
     what_why = result.get("what_why", "")
     one_liner = what_why.split("。")[0].split(".")[0][:80] if what_why else title
 

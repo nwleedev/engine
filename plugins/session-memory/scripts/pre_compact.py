@@ -3,7 +3,6 @@
 import json
 import os
 import sys
-from datetime import datetime
 from pathlib import Path
 
 import handwrite_context as hw
@@ -43,7 +42,7 @@ def main():
         if not result:
             sys.exit(0)
 
-        title = result.get("title") or "checkpoint-" + datetime.utcnow().strftime("%m%d-%H%M")
+        title = result.get("title") or "checkpoint-" + hw._utcnow().strftime("%m%d-%H%M")
         what_why = result.get("what_why", "")
         one_liner = what_why.split("。")[0].split(".")[0][:80] if what_why else title
 
