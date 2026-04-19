@@ -1,13 +1,15 @@
 # tests/harness-engineer/test_detect_domain.py
+import importlib.util
 import sys
 from pathlib import Path
 import pytest
 
 SCRIPTS_DIR = Path(__file__).parent.parent.parent / "plugins/harness-engineer/scripts"
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
-sys.path.insert(0, str(SCRIPTS_DIR))
 
-import detect_domain as dd
+_spec = importlib.util.spec_from_file_location("harness_engineer.detect_domain", SCRIPTS_DIR / "detect_domain.py")
+dd = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(dd)
 
 
 # --- parse_harness_frontmatter ---
