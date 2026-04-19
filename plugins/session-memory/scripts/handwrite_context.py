@@ -13,6 +13,22 @@ def _debug(msg):
         print(f"[session-memory] {msg}", file=sys.stderr)
 
 
+SECTION_HEADERS = {
+    "ko": {
+        "what_why": "## 무엇을 왜",
+        "decisions": "## 주요 결정",
+        "incomplete": "## 미완료",
+        "next_instructions": "## 다음 세션 지침",
+    },
+    "en": {
+        "what_why": "## What & Why",
+        "decisions": "## Key Decisions",
+        "incomplete": "## Incomplete",
+        "next_instructions": "## Instructions for Next Session",
+    },
+}
+
+
 def extract_text(content):
     """Extract plain text from message content (str or list)."""
     if isinstance(content, str):
@@ -260,15 +276,18 @@ def get_git_commits(cwd, context_head, session_started):
 
 
 _NARRATION_PROMPT = """\
-다음은 Claude Code 작업 턴의 대화 내역입니다.
-{truncation_note}아래 형식의 JSON으로만 응답하세요. 다른 텍스트는 출력하지 마세요.
+You are reviewing a Claude Code work turn. Respond ONLY with valid JSON matching this schema exactly. No other text.
+Write title in English. Write what_why, decisions, incomplete, and next_instructions in {language}.
 
 {{
-  "title": "2-3단어 영어 슬러그. 공백 대신 하이픈. 소문자. 예: jwt-token-setup",
-  "narration": "비개발자도 이해할 수 있는 한국어 나레이션. 파일명·함수명 나열 금지. 무엇을 왜 했는지 중심. 완료된 것과 미완료인 것 명시. 작업 규모에 비례한 길이(간단한 턴: 3-5문장, 보통: 8-12문장, 복잡한 턴: 15-20문장)"
+  "title": "2-3 word english slug, hyphens, lowercase. e.g. jwt-token-setup",
+  "what_why": "Plain prose. What was done and WHY. No filenames or function names. Distinguish completed vs incomplete work. Scale length to complexity (simple: 3-5 sentences, moderate: 8-12, complex: 15-20).",
+  "decisions": ["Key decision with rationale. Include rejected alternatives and reasons."],
+  "incomplete": ["Unfinished item"],
+  "next_instructions": "Imperative directives for the next session. e.g. When working on X, verify Y first."
 }}
 
-대화 내역:
+{truncation_note}Conversation:
 {delta_text}
 """
 
@@ -314,15 +333,19 @@ def append_insights_to_project(cwd, insights, session_id):
         _debug(f"append_insights_to_project failed: {e}")
 
 
-def build_prompt(delta_text, was_truncated):
+def build_prompt(delta_text: str, was_truncated: bool, language: str = "en") -> str:
     """Build the prompt string for claude -p."""
-    note = "※ 앞부분 생략: 대화가 길어 최근 메시지만 포함했습니다.\n\n" if was_truncated else ""
-    return _NARRATION_PROMPT.format(truncation_note=note, delta_text=delta_text)
+    note = "Note: earlier messages omitted due to length.\n\n" if was_truncated else ""
+    return _NARRATION_PROMPT.format(
+        language=language,
+        truncation_note=note,
+        delta_text=delta_text,
+    )
 
 
-def call_claude_narration(delta_text, was_truncated):
-    """Call claude -p to generate narration. Returns {title, narration} or None."""
-    prompt = build_prompt(delta_text, was_truncated)
+def call_claude_narration(delta_text: str, was_truncated: bool, language: str = "en"):
+    """Call claude -p to generate structured narration. Returns dict or None."""
+    prompt = build_prompt(delta_text, was_truncated, language)
     env = {**os.environ, "CLAUDE_WRITING_CONTEXT": "1"}
     try:
         r = subprocess.run(
