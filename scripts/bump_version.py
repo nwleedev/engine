@@ -27,3 +27,27 @@ def bump_semver(current: str, bump_type: str) -> str:
     elif bump_type == 'patch':
         return f"{major}.{minor}.{patch + 1}"
     raise ValueError(f"Invalid bump type '{bump_type}'. Use major, minor, patch, or x.y.z")
+
+
+def read_json_field(file_path: Path, field: str) -> str:
+    """Read a dotted field path from a JSON file. e.g. 'plugins.0.version'"""
+    data = json.loads(file_path.read_text(encoding="utf-8"))
+    node = data
+    for key in field.split('.'):
+        node = node[int(key)] if key.isdigit() else node[key]
+    return node
+
+
+def write_json_field(file_path: Path, field: str, value: str) -> None:
+    """Write a value at a dotted field path, preserving 2-space JSON formatting."""
+    data = json.loads(file_path.read_text(encoding="utf-8"))
+    keys = field.split('.')
+    node = data
+    for key in keys[:-1]:
+        node = node[int(key)] if key.isdigit() else node[key]
+    last = keys[-1]
+    if last.isdigit():
+        node[int(last)] = value
+    else:
+        node[last] = value
+    file_path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
