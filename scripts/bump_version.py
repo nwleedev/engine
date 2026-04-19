@@ -51,3 +51,17 @@ def write_json_field(file_path: Path, field: str, value: str) -> None:
     else:
         node[last] = value
     file_path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
+def load_config(plugin_dir: Path) -> dict:
+    """Load .version-bump.json from plugin directory."""
+    config_path = plugin_dir / ".version-bump.json"
+    if not config_path.exists():
+        raise FileNotFoundError(f"No .version-bump.json in {plugin_dir}")
+    return json.loads(config_path.read_text(encoding="utf-8"))
+
+
+def get_current_version(plugin_dir: Path, config: dict) -> str:
+    """Read version from the first declared file in config."""
+    first = config["files"][0]
+    return read_json_field(plugin_dir / first["path"], first["field"])

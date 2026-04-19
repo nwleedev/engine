@@ -66,3 +66,33 @@ def test_write_json_field_preserves_other_fields(tmp_path):
     data = json.loads(f.read_text())
     assert data["name"] == "keep-me"
     assert data["author"]["name"] == "dev"
+
+
+# --- load_config ---
+
+def test_load_config_reads_version_bump_json(tmp_path):
+    plugin_dir = tmp_path / "my-plugin"
+    plugin_dir.mkdir()
+    config = {"files": [{"path": ".claude-plugin/plugin.json", "field": "version"}]}
+    (plugin_dir / ".version-bump.json").write_text(json.dumps(config))
+    result = bv.load_config(plugin_dir)
+    assert result["files"][0]["field"] == "version"
+
+def test_load_config_missing_file_raises(tmp_path):
+    plugin_dir = tmp_path / "no-config"
+    plugin_dir.mkdir()
+    try:
+        bv.load_config(plugin_dir)
+        assert False, "Should have raised FileNotFoundError"
+    except FileNotFoundError:
+        pass
+
+# --- get_current_version ---
+
+def test_get_current_version_reads_first_file(tmp_path):
+    plugin_dir = tmp_path / "my-plugin"
+    claude_dir = plugin_dir / ".claude-plugin"
+    claude_dir.mkdir(parents=True)
+    (claude_dir / "plugin.json").write_text('{"version": "3.1.4"}')
+    config = {"files": [{"path": ".claude-plugin/plugin.json", "field": "version"}]}
+    assert bv.get_current_version(plugin_dir, config) == "3.1.4"
