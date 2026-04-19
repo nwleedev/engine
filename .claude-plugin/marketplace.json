@@ -8,13 +8,23 @@
   "plugins": [
     {
       "name": "session-memory",
-      "description": "세션 컨텍스트 나레이션 자동 생성 및 주입",
+      "description": "Automatic session context narration and injection",
       "source": "./plugins/session-memory"
     },
     {
       "name": "domain-professor",
-      "description": "작업 중 낯선 도메인 자동 감지 및 학습 자료 생성",
+      "description": "Automatic detection of unfamiliar domains and generation of learning materials",
       "source": "./plugins/domain-professor"
+    },
+    {
+      "name": "better-research",
+      "description": "Enforces cross-validation, root cause analysis, and multi-perspective research quality in Claude Code sessions",
+      "source": "./plugins/better-research"
+    },
+    {
+      "name": "harness-engineer",
+      "description": "Automated plan enforcement and quality gate checks for Claude Code sessions",
+      "source": "./plugins/harness-engineer"
     }
   ]
 }
