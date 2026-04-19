@@ -360,8 +360,7 @@ def call_claude_narration(delta_text: str, was_truncated: bool, language: str = 
             _debug(f"claude -p failed (rc={r.returncode}): {r.stderr[:300]}")
             return None
         outer = json.loads(r.stdout)
-        inner_text = outer.get("result", "")
-        stripped = inner_text.strip()
+        stripped = outer.get("result", "").strip()
         # Iterate every { position with raw_decode — handles:
         # Mode 1: ★ Insight preamble before JSON (json_start > 0)
         # Mode 2: trailing content after JSON (raw_decode stops at end of object)

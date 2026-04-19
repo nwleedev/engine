@@ -22,7 +22,7 @@ def test_section_headers_en():
 
 def test_build_prompt_includes_language():
     prompt = hw.build_prompt("test conversation", False, "ko")
-    assert "ko" in prompt
+    assert "in ko" in prompt
     assert "test conversation" in prompt
 
 
