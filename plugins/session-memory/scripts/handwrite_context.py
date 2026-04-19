@@ -430,6 +430,9 @@ def main():
         sys.exit(0)
     cwd = find_project_root(cwd)
 
+    import lang_detect
+    lang = lang_detect.detect(cwd)
+
     session_dir = Path(cwd) / ".claude" / "sessions" / session_id
     index_data = read_index(session_dir) or create_index(session_dir, session_id, cwd)
 
@@ -441,26 +444,22 @@ def main():
                               parse_frontmatter((session_dir / "INDEX.md").read_text())[1])
         sys.exit(0)
 
-    # Extract insights before narration so the variable exists for later use
     insights = extract_insights(delta)
 
     delta_text, was_truncated = truncate_messages(delta)
-    result = call_claude_narration(delta_text, was_truncated)
+    result = call_claude_narration(delta_text, was_truncated, lang)
     if not result:
         sys.exit(0)
 
-    commits = get_git_commits(cwd, index_data.get("context_head"), index_data.get("started"))
-
     title = result.get("title") or "checkpoint-" + datetime.utcnow().strftime("%m%d-%H%M")
-    narration = result.get("narration", "")
-    one_liner = narration.split("。")[0].split(".")[0][:80] if narration else title
+    what_why = result.get("what_why", "")
+    one_liner = what_why.split("。")[0].split(".")[0][:80] if what_why else title
 
-    num = get_next_context_number(session_dir)
-    write_context_file(session_dir, num, title, narration, commits, session_id)
+    filename = write_context_file(str(session_dir), title, lang, result, session_id)
 
     new_head = get_git_head(cwd)
     last_uuid = delta[-1].get("uuid", "")
-    update_index(session_dir, index_data, last_uuid, new_head, num, title, one_liner)
+    update_index(session_dir, index_data, last_uuid, new_head, filename, one_liner)
 
     if insights:
         append_insights_to_project(cwd, insights, session_id)
