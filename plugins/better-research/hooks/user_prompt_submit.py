@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 import sys
-import os
+from pathlib import Path
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'scripts'))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 from user_prompt_handler import main
 
 main()

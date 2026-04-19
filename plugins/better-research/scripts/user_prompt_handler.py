@@ -6,7 +6,8 @@ import sys
 sys.path.insert(0, os.path.dirname(__file__))
 from inject_research import load_skill_md, build_perspective_context, assemble_context
 
-_MARKER_RE = re.compile(r'(?<!\S)/(q|query|research)(?!\S)', re.IGNORECASE)
+_MARKER_RE = re.compile(r'(?<![a-zA-Z0-9_/])/(q|query|research)(?=\s|[^\w/]|$)', re.IGNORECASE)
+_WS_RE = re.compile(r' {2,}')
 
 
 def detect_marker(prompt: str) -> bool:
@@ -14,7 +15,8 @@ def detect_marker(prompt: str) -> bool:
 
 
 def strip_marker(prompt: str) -> str:
-    return _MARKER_RE.sub(" ", prompt).strip()
+    result = _MARKER_RE.sub(" ", prompt)
+    return _WS_RE.sub(" ", result).strip()
 
 
 def extract_perspectives() -> str:
@@ -22,6 +24,8 @@ def extract_perspectives() -> str:
 
 
 def main_with_payload(payload: dict) -> None:
+    if not isinstance(payload, dict):
+        return
     prompt = payload.get("prompt", "")
     if not prompt:
         return
@@ -58,7 +62,7 @@ def main_with_payload(payload: dict) -> None:
 def main() -> None:
     try:
         payload = json.loads(sys.stdin.read())
-    except (json.JSONDecodeError, EOFError):
+    except json.JSONDecodeError:
         return
     main_with_payload(payload)
 

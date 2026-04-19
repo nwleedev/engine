@@ -41,6 +41,12 @@ def test_detect_marker_no_marker():
 def test_detect_marker_empty_prompt():
     assert uph.detect_marker("") is False
 
+def test_detect_marker_q_with_trailing_paren():
+    assert uph.detect_marker("analyze (/q) why") is True
+
+def test_detect_marker_q_with_trailing_bracket():
+    assert uph.detect_marker("see [/q] this") is True
+
 
 # --- strip_marker ---
 
@@ -64,6 +70,11 @@ def test_strip_marker_does_not_alter_url():
     original = "see example.com/query for details"
     result = uph.strip_marker(original)
     assert result == original
+
+def test_strip_marker_no_double_spaces():
+    result = uph.strip_marker("analyze /q this topic")
+    assert "  " not in result
+    assert result == "analyze this topic"
 
 
 # --- main_with_payload: D path ---

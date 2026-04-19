@@ -5,7 +5,7 @@ def load_skill_md(plugin_root: str) -> str:
     path = Path(plugin_root) / "skills" / "research-protocol" / "SKILL.md"
     try:
         return path.read_text(encoding="utf-8")
-    except OSError:
+    except (OSError, UnicodeDecodeError):
         return ""
 
 
