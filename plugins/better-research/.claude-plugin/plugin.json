@@ -1,0 +1,5 @@
+{
+  "name": "better-research",
+  "version": "1.0.0",
+  "description": "Enforces cross-validation, root cause analysis, and multi-perspective research quality in Claude Code sessions"
+}
