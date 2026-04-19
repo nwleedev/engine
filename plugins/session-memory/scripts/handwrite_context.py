@@ -4,6 +4,8 @@ import json, os, re, subprocess, sys
 from datetime import datetime
 from pathlib import Path
 
+import lang_detect
+
 CHAR_LIMIT = 80_000
 
 
@@ -430,7 +432,6 @@ def main():
         sys.exit(0)
     cwd = find_project_root(cwd)
 
-    import lang_detect
     lang = lang_detect.detect(cwd)
 
     session_dir = Path(cwd) / ".claude" / "sessions" / session_id
