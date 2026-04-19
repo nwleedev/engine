@@ -65,3 +65,34 @@ def get_current_version(plugin_dir: Path, config: dict) -> str:
     """Read version from the first declared file in config."""
     first = config["files"][0]
     return read_json_field(plugin_dir / first["path"], first["field"])
+
+
+def cmd_check(plugin_name: str, plugins_dir: Path) -> bool:
+    """Print version info for a plugin. Returns True if all files are in sync."""
+    plugin_dir = plugins_dir / plugin_name
+    if not plugin_dir.is_dir():
+        print(f"ERROR: Plugin directory not found: {plugin_dir}", file=sys.stderr)
+        return False
+    try:
+        config = load_config(plugin_dir)
+    except FileNotFoundError as e:
+        print(f"ERROR: {e}", file=sys.stderr)
+        return False
+
+    print(f"Version check: {plugin_name}")
+    versions = []
+    for entry in config["files"]:
+        file_path = plugin_dir / entry["path"]
+        if not file_path.exists():
+            print(f"  MISSING: {entry['path']} ({entry['field']})")
+            return False
+        ver = read_json_field(file_path, entry["field"])
+        print(f"  {entry['path']} ({entry['field']}): {ver}")
+        versions.append(ver)
+
+    unique = set(versions)
+    if len(unique) > 1:
+        print(f"\nDRIFT DETECTED — versions not in sync: {sorted(unique)}")
+        return False
+    print(f"\nIn sync at {versions[0]}")
+    return True

@@ -96,3 +96,39 @@ def test_get_current_version_reads_first_file(tmp_path):
     (claude_dir / "plugin.json").write_text('{"version": "3.1.4"}')
     config = {"files": [{"path": ".claude-plugin/plugin.json", "field": "version"}]}
     assert bv.get_current_version(plugin_dir, config) == "3.1.4"
+
+
+# --- cmd_check ---
+
+def _make_plugin(tmp_path, name, version):
+    """Helper: create a minimal plugin with .version-bump.json and plugin.json."""
+    plugin_dir = tmp_path / name
+    claude_dir = plugin_dir / ".claude-plugin"
+    claude_dir.mkdir(parents=True)
+    (claude_dir / "plugin.json").write_text(json.dumps({"version": version}, indent=2))
+    config = {"files": [{"path": ".claude-plugin/plugin.json", "field": "version"}]}
+    (plugin_dir / ".version-bump.json").write_text(json.dumps(config))
+    return plugin_dir
+
+def test_cmd_check_returns_true_when_in_sync(tmp_path, capsys):
+    plugins_dir = tmp_path / "plugins"
+    plugins_dir.mkdir()
+    _make_plugin(plugins_dir, "my-plugin", "1.0.0")
+    result = bv.cmd_check("my-plugin", plugins_dir)
+    assert result is True
+    out = capsys.readouterr().out
+    assert "1.0.0" in out
+
+def test_cmd_check_returns_false_when_plugin_missing(tmp_path, capsys):
+    plugins_dir = tmp_path / "plugins"
+    plugins_dir.mkdir()
+    result = bv.cmd_check("nonexistent", plugins_dir)
+    assert result is False
+
+def test_cmd_check_prints_current_version(tmp_path, capsys):
+    plugins_dir = tmp_path / "plugins"
+    plugins_dir.mkdir()
+    _make_plugin(plugins_dir, "my-plugin", "2.3.1")
+    bv.cmd_check("my-plugin", plugins_dir)
+    out = capsys.readouterr().out
+    assert "2.3.1" in out
