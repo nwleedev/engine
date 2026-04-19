@@ -29,6 +29,20 @@ SECTION_HEADERS = {
 }
 
 
+def get_hourly_context_path(session_dir: str, title: str):
+    """Return Path for the current-hour context file.
+
+    If a CONTEXT-YYYYMMDD-HH00-*.md already exists for this hour,
+    return it (append mode). Otherwise return a new path using title.
+    """
+    prefix = "CONTEXT-" + datetime.utcnow().strftime("%Y%m%d-%H00-")
+    contexts_dir = Path(session_dir) / "contexts"
+    existing = sorted(contexts_dir.glob(f"{prefix}*.md"))
+    if existing:
+        return existing[0]
+    return contexts_dir / f"{prefix}{title}.md"
+
+
 def extract_text(content):
     """Extract plain text from message content (str or list)."""
     if isinstance(content, str):
@@ -160,7 +174,7 @@ def _write_index_file(session_dir, fm, body):
     (Path(session_dir) / "INDEX.md").write_text(content, encoding="utf-8")
 
 
-def update_index(session_dir, fm, last_uuid, new_head, context_num, title, one_liner):
+def update_index(session_dir, fm, last_uuid, new_head, filename: str, one_liner: str):
     """Update INDEX.md with new context entry and updated frontmatter."""
     session_dir = Path(session_dir)
     index_path = session_dir / "INDEX.md"
@@ -172,7 +186,7 @@ def update_index(session_dir, fm, last_uuid, new_head, context_num, title, one_l
     if new_head:
         fm["context_head"] = new_head
 
-    entry = f"- [{context_num:04d}] {title} — {one_liner}\n"
+    entry = f"- [{filename}] — {one_liner}\n"
     if "\n---\n" in body:
         body = body.replace("\n---\n", f"\n{entry}---\n", 1)
     else:
@@ -181,39 +195,53 @@ def update_index(session_dir, fm, last_uuid, new_head, context_num, title, one_l
     _write_index_file(session_dir, fm, body)
 
 
-def get_next_context_number(session_dir):
-    """Return next sequential number for CONTEXT file."""
-    contexts_dir = Path(session_dir) / "contexts"
-    existing = list(contexts_dir.glob("CONTEXT-*.md"))
-    return len(existing) + 1
+def write_context_file(session_dir: str, title: str, lang: str, result: dict, session_id: str) -> str:
+    """Append structured 4-section entry to the hourly context file.
 
-
-def write_context_file(session_dir, num, title, narration, commits, session_id):
-    """Write CONTEXT-####-<title>.md to session contexts directory."""
+    Returns the filename (e.g. 'CONTEXT-20260419-1400-jwt-auth.md').
+    """
     contexts_dir = Path(session_dir) / "contexts"
     contexts_dir.mkdir(parents=True, exist_ok=True)
-    filename = f"CONTEXT-{num:04d}-{title}.md"
+    path = get_hourly_context_path(session_dir, title)
+
+    headers = SECTION_HEADERS.get(lang, SECTION_HEADERS["en"])
+    none_label = "없음" if lang == "ko" else "None"
     now = datetime.utcnow().strftime("%Y-%m-%d %H:%M")
+    sid_short = session_id[:8]
+
+    decisions = result.get("decisions") or []
+    incomplete = result.get("incomplete") or []
 
     lines = [
-        f"# CONTEXT-{num:04d}: {title}",
+        f"<!-- session: {sid_short} · {now} -->",
         "",
-        f"**날짜**: {now}  ",
-        f"**세션**: {session_id}",
+        headers["what_why"],
+        result.get("what_why", ""),
         "",
-        "## 작업 나레이션",
+        headers["decisions"],
+    ]
+    for d in decisions:
+        lines.append(f"- {d}")
+    if not decisions:
+        lines.append(f"- {none_label}")
+    lines += ["", headers["incomplete"]]
+    for i in incomplete:
+        lines.append(f"- {i}")
+    if not incomplete:
+        lines.append(f"- {none_label}")
+    lines += [
         "",
-        narration,
+        headers["next_instructions"],
+        result.get("next_instructions", ""),
+        "",
+        "---",
         "",
     ]
-    if commits:
-        lines += ["## 관련 커밋", ""]
-        for c in commits:
-            lines.append(f"- `{c}`")
-        lines.append("")
-    lines += ["---", "", f"이 세션 재개: `claude -r {session_id}`", ""]
 
-    (contexts_dir / filename).write_text("\n".join(lines), encoding="utf-8")
+    with open(path, "a", encoding="utf-8") as f:
+        f.write("\n".join(lines))
+
+    return path.name
 
 
 def find_project_root(cwd):
