@@ -147,7 +147,7 @@ def test_cmd_check_all_returns_true_when_all_in_sync(tmp_path, capsys):
     assert "plugin-a" in out
     assert "plugin-b" in out
 
-def test_cmd_check_all_returns_false_when_one_fails(tmp_path, capsys):
+def test_cmd_check_all_skips_unconfigured_plugin(tmp_path, capsys):
     plugins_dir = tmp_path / "plugins"
     plugins_dir.mkdir()
     _make_plugin(plugins_dir, "plugin-a", "1.0.0")
