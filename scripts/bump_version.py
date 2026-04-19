@@ -145,6 +145,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description="Bump or check plugin versions.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
+        allow_abbrev=False,
         epilog="""
 Examples:
   bump_version.py session-memory patch
