@@ -70,7 +70,7 @@ def main():
     if not result:
         sys.exit(0)
 
-    title = result.get("title", "untitled")
+    title = result.get("title") or "checkpoint-" + datetime.utcnow().strftime("%m%d-%H%M")
     what_why = result.get("what_why", "")
     one_liner = what_why.split("。")[0].split(".")[0][:80] if what_why else title
 

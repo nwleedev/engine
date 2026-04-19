@@ -23,22 +23,22 @@ def main():
     if not transcript_path or not session_id:
         sys.exit(0)
 
+    cwd, messages = hw.parse_transcript(transcript_path)
+    if not cwd:
+        sys.exit(0)
+    cwd = hw.find_project_root(cwd)
+
+    lang = lang_detect.detect(cwd)
+
+    session_dir = Path(cwd) / ".claude" / "sessions" / session_id
+    index_data = hw.read_index(session_dir) or hw.create_index(session_dir, session_id, cwd)
+
+    delta = hw.extract_delta(messages, index_data.get("last_processed_uuid") or "")
+    if not delta:
+        sys.exit(0)
+
+    delta_text, was_truncated = hw.truncate_messages(delta)
     try:
-        cwd, messages = hw.parse_transcript(transcript_path)
-        if not cwd:
-            sys.exit(0)
-        cwd = hw.find_project_root(cwd)
-
-        lang = lang_detect.detect(cwd)
-
-        session_dir = Path(cwd) / ".claude" / "sessions" / session_id
-        index_data = hw.read_index(session_dir) or hw.create_index(session_dir, session_id, cwd)
-
-        delta = hw.extract_delta(messages, index_data.get("last_processed_uuid") or "")
-        if not delta:
-            sys.exit(0)
-
-        delta_text, was_truncated = hw.truncate_messages(delta)
         result = hw.call_claude_narration(delta_text, was_truncated, lang)
         if not result:
             sys.exit(0)
