@@ -218,3 +218,21 @@ def test_generate_skill_file_overwrites_existing(tmp_path):
     content = skill_path.read_text(encoding="utf-8")
     assert "Rule v2" in content
     assert "Rule v1" not in content
+
+
+# --- non-dev templates ---
+
+@pytest.mark.parametrize("domain", [
+    "prd-writing", "pitch-deck", "technical-writing",
+    "data-analysis", "okr-planning", "risk-assessment",
+])
+def test_get_template_nondev_exists(domain):
+    content = gh.get_template(domain, str(PLUGIN_ROOT))
+    assert "## Core Rules" in content
+    assert "## Anti-Pattern Gate" in content
+    assert "domain_type: document" in content
+
+
+def test_market_research_template_has_domain_type():
+    content = gh.get_template("market-research", str(PLUGIN_ROOT))
+    assert "domain_type: document" in content

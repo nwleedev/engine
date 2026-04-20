@@ -1,9 +1,10 @@
 ---
 domain: market-research
+domain_type: document
 language: auto
 keywords: [market, competitor, TAM, SAM, SOM, analysis, strategy, customer, research]
-file_patterns: ["docs/research/**", "docs/market/**", "research/**", "competitive/**"]
-updated: 2026-04-18
+file_patterns: []
+updated: 2026-04-20
 ---
 
 # Market Research Harness
