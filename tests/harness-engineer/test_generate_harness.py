@@ -108,3 +108,31 @@ def test_generate_harness_file_preserves_file_patterns():
     content = gh.generate_harness_file("react-frontend", "/tmp/proj", "ko", str(PLUGIN_ROOT))
     assert "file_patterns" in content
     assert "*.tsx" in content
+
+
+# --- domain_type in frontmatter ---
+
+def test_build_harness_frontmatter_document_type():
+    result = gh.build_harness_frontmatter(
+        "market-research", "auto", domain_type="document"
+    )
+    assert "domain_type: document" in result
+
+
+def test_build_harness_frontmatter_code_type_is_default():
+    result = gh.build_harness_frontmatter("react-frontend", "en")
+    # default: domain_type: code or omitted — either is acceptable
+    # but if included it must be "code"
+    if "domain_type" in result:
+        assert "domain_type: code" in result
+
+
+def test_build_harness_frontmatter_document_empty_file_patterns():
+    result = gh.build_harness_frontmatter(
+        "market-research", "auto",
+        keywords=["market", "TAM"],
+        file_patterns=[],
+        domain_type="document",
+    )
+    assert "file_patterns: []" in result
+    assert "domain_type: document" in result

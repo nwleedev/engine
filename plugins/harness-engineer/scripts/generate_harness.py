@@ -47,11 +47,13 @@ def build_harness_frontmatter(
     language: str,
     keywords: list[str] | None = None,
     file_patterns: list[str] | None = None,
+    domain_type: str = "code",
 ) -> str:
     today = date.today().strftime("%Y-%m-%d")
     lines = [
         "---",
         f"domain: {domain}",
+        f"domain_type: {domain_type}",
         f"language: {language}",
     ]
     if keywords is not None:
@@ -82,6 +84,20 @@ def _parse_frontmatter_list(template: str, field: str) -> list[str]:
     return []
 
 
+def _parse_frontmatter_str(template: str, field: str, default: str = "") -> str:
+    if not template.startswith("---"):
+        return default
+    end = template.find("---", 3)
+    if end == -1:
+        return default
+    fm_text = template[3:end].strip()
+    for line in fm_text.splitlines():
+        key, _, val = line.partition(":")
+        if key.strip() == field:
+            return val.strip().strip('"\'') or default
+    return default
+
+
 def generate_harness_file(
     domain: str,
     project_root: str,
@@ -91,10 +107,11 @@ def generate_harness_file(
     template = get_template(domain, plugin_root)
     keywords = _parse_frontmatter_list(template, "keywords")
     file_patterns = _parse_frontmatter_list(template, "file_patterns")
+    domain_type = _parse_frontmatter_str(template, "domain_type", "code")
     if template.startswith("---"):
         end = template.find("---", 3)
         if end != -1:
             body = template[end + 3:]
-            new_fm = build_harness_frontmatter(domain, language, keywords, file_patterns)
+            new_fm = build_harness_frontmatter(domain, language, keywords, file_patterns, domain_type)
             return new_fm + body
-    return build_harness_frontmatter(domain, language, keywords, file_patterns) + "\n\n" + template
+    return build_harness_frontmatter(domain, language, keywords, file_patterns, domain_type) + "\n\n" + template
