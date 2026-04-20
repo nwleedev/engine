@@ -72,3 +72,57 @@ def test_assemble_context_single_part_no_separator():
 
 def test_assemble_context_all_empty_returns_empty():
     assert ir.assemble_context(["", "", ""]) == ""
+
+
+# --- build_anti_frame_bias_context ---
+
+def test_build_anti_frame_bias_context_is_xml_block():
+    result = ir.build_anti_frame_bias_context()
+    assert result.startswith("<cognitive-debiasing>")
+    assert result.strip().endswith("</cognitive-debiasing>")
+
+def test_build_anti_frame_bias_context_contains_four_steps():
+    result = ir.build_anti_frame_bias_context()
+    assert "SUSPEND" in result
+    assert "ENUMERATE" in result
+    assert "MULTI-AXIS" in result
+    assert "VERIFY" in result
+
+def test_build_anti_frame_bias_context_is_deterministic():
+    assert ir.build_anti_frame_bias_context() == ir.build_anti_frame_bias_context()
+
+
+# --- detect_design_keyword ---
+
+def test_detect_design_keyword_korean_design():
+    assert ir.detect_design_keyword("어떻게 설계할까요?") is True
+
+def test_detect_design_keyword_korean_method():
+    assert ir.detect_design_keyword("방법을 알려주세요") is True
+
+def test_detect_design_keyword_korean_approach():
+    assert ir.detect_design_keyword("접근법이 뭔가요") is True
+
+def test_detect_design_keyword_korean_implement():
+    assert ir.detect_design_keyword("구현 방식을 논의합시다") is True
+
+def test_detect_design_keyword_korean_how():
+    assert ir.detect_design_keyword("어떻게 하면 될까요") is True
+
+def test_detect_design_keyword_english_design():
+    assert ir.detect_design_keyword("how should we design this?") is True
+
+def test_detect_design_keyword_english_approach():
+    assert ir.detect_design_keyword("what approach should we take?") is True
+
+def test_detect_design_keyword_english_implement():
+    assert ir.detect_design_keyword("let's implement the feature") is True
+
+def test_detect_design_keyword_english_architect():
+    assert ir.detect_design_keyword("architect the new system") is True
+
+def test_detect_design_keyword_no_match():
+    assert ir.detect_design_keyword("what is the capital of France?") is False
+
+def test_detect_design_keyword_empty():
+    assert ir.detect_design_keyword("") is False
