@@ -2,7 +2,7 @@ import re
 from pathlib import Path
 
 _DESIGN_KEYWORD_RE = re.compile(
-    r'(설계|방법|접근법|구현|어떻게|design|approach|architect|implement|strategy)',
+    r'(설계|방법|접근법|구현|어떻게|전략|design|approach|architect|implement|strategy)',
     re.IGNORECASE,
 )
 

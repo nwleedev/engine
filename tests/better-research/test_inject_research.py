@@ -88,8 +88,10 @@ def test_build_anti_frame_bias_context_contains_four_steps():
     assert "MULTI-AXIS" in result
     assert "VERIFY" in result
 
-def test_build_anti_frame_bias_context_is_deterministic():
-    assert ir.build_anti_frame_bias_context() == ir.build_anti_frame_bias_context()
+def test_build_anti_frame_bias_context_has_four_numbered_steps():
+    result = ir.build_anti_frame_bias_context()
+    for i in range(1, 5):
+        assert f"{i}." in result
 
 
 # --- detect_design_keyword ---
@@ -108,6 +110,9 @@ def test_detect_design_keyword_korean_implement():
 
 def test_detect_design_keyword_korean_how():
     assert ir.detect_design_keyword("어떻게 하면 될까요") is True
+
+def test_detect_design_keyword_korean_strategy():
+    assert ir.detect_design_keyword("전략을 세워봅시다") is True
 
 def test_detect_design_keyword_english_design():
     assert ir.detect_design_keyword("how should we design this?") is True
