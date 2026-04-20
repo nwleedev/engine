@@ -20,11 +20,6 @@
       "name": "better-research",
       "description": "Enforces cross-validation, root cause analysis, and multi-perspective research quality in Claude Code sessions",
       "source": "./plugins/better-research"
-    },
-    {
-      "name": "harness-engineer",
-      "description": "Automated plan enforcement and quality gate checks for Claude Code sessions",
-      "source": "./plugins/harness-engineer"
     }
   ]
 }
