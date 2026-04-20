@@ -163,3 +163,54 @@ def test_check_violations_with_llm_returns_empty_on_failure(mock_run):
 def test_check_violations_with_llm_returns_empty_for_no_input():
     result = cv.check_violations_with_llm([], [], "t.jsonl")
     assert result == []
+
+
+DOC_TRANSCRIPT_PATH = str(FIXTURES_DIR / "sample_document_transcript.jsonl")
+
+
+# --- extract_document_sections ---
+
+def test_extract_document_sections_finds_text():
+    sections = cv.extract_document_sections(DOC_TRANSCRIPT_PATH)
+    assert len(sections) >= 1
+    assert any("시장" in s for s in sections)
+
+
+def test_extract_document_sections_excludes_code_fences():
+    sections = cv.extract_document_sections(DOC_TRANSCRIPT_PATH)
+    assert not any("print(" in s for s in sections)
+
+
+def test_extract_document_sections_missing_file():
+    sections = cv.extract_document_sections("/nonexistent/path.jsonl")
+    assert sections == []
+
+
+def test_extract_document_sections_min_length_filter(tmp_path):
+    jsonl = tmp_path / "transcript.jsonl"
+    entry = {
+        "uuid": "1",
+        "message": {
+            "role": "assistant",
+            "content": "ok"  # too short — under 50 chars
+        }
+    }
+    jsonl.write_text(json.dumps(entry) + "\n", encoding="utf-8")
+    sections = cv.extract_document_sections(str(jsonl))
+    assert sections == []
+
+
+def test_extract_document_sections_list_content(tmp_path):
+    jsonl = tmp_path / "transcript.jsonl"
+    long_text = "이 시장 분석 결과는 상당히 긴 텍스트로 구성되어 있으며, 실제로 50자를 초과하는 충분히 긴 문장입니다."
+    entry = {
+        "uuid": "1",
+        "message": {
+            "role": "assistant",
+            "content": [{"type": "text", "text": long_text}]
+        }
+    }
+    jsonl.write_text(json.dumps(entry) + "\n", encoding="utf-8")
+    sections = cv.extract_document_sections(str(jsonl))
+    assert len(sections) >= 1
+    assert any("분석" in s for s in sections)

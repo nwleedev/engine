@@ -178,3 +178,51 @@ def check_violations_with_llm(
     except Exception:
         pass
     return []
+
+
+def extract_document_sections(transcript_path: str) -> list[str]:
+    """Extract non-code assistant text paragraphs from transcript.
+    Excludes content inside ``` fences. Minimum 50 characters per section."""
+    sections = []
+    try:
+        with open(transcript_path, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    entry = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                msg = entry.get("message", {})
+                if msg.get("role") != "assistant":
+                    continue
+                content = msg.get("content", "")
+                text = ""
+                if isinstance(content, str):
+                    text = content
+                elif isinstance(content, list):
+                    text = "\n".join(
+                        c.get("text", "") for c in content
+                        if isinstance(c, dict) and c.get("type") == "text"
+                    )
+                in_code = False
+                current_lines: list[str] = []
+                for text_line in text.splitlines():
+                    if text_line.strip().startswith("```"):
+                        if in_code:
+                            in_code = False
+                        else:
+                            section = "\n".join(current_lines).strip()
+                            if len(section) >= 50:
+                                sections.append(section)
+                            current_lines = []
+                            in_code = True
+                    elif not in_code:
+                        current_lines.append(text_line)
+                section = "\n".join(current_lines).strip()
+                if len(section) >= 50:
+                    sections.append(section)
+    except (FileNotFoundError, OSError):
+        pass
+    return sections
