@@ -178,3 +178,37 @@ def test_detect_domain_missing_file_patterns_key():
     files = [{"domain": "test", "keywords": [], "content": "x"}]
     result = dd.detect_domain_from_file_path("Button.tsx", files)
     assert result is None
+
+
+# --- domain_type parsing ---
+
+def test_parse_frontmatter_domain_type_document():
+    content = "---\ndomain: market-research\ndomain_type: document\n---\n# Body"
+    result = dd.parse_harness_frontmatter(content)
+    assert result["domain_type"] == "document"
+
+
+def test_parse_frontmatter_domain_type_defaults_to_code():
+    content = "---\ndomain: react-frontend\n---\n# Body"
+    result = dd.parse_harness_frontmatter(content)
+    assert result.get("domain_type", "code") == "code"
+
+
+def test_load_harness_files_includes_domain_type(tmp_path):
+    f = tmp_path / "market-research.md"
+    f.write_text(
+        "---\ndomain: market-research\ndomain_type: document\nkeywords: [market]\n---\n# Body",
+        encoding="utf-8"
+    )
+    result = dd.load_harness_files(tmp_path)
+    assert result[0]["domain_type"] == "document"
+
+
+def test_load_harness_files_domain_type_defaults_code(tmp_path):
+    f = tmp_path / "react-frontend.md"
+    f.write_text(
+        "---\ndomain: react-frontend\nkeywords: [tsx]\n---\n# Body",
+        encoding="utf-8"
+    )
+    result = dd.load_harness_files(tmp_path)
+    assert result[0]["domain_type"] == "code"

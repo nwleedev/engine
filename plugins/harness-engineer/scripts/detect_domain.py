@@ -39,6 +39,7 @@ def load_harness_files(harness_dir: Path) -> list[dict]:
                 "keywords": fm.get("keywords", []),
                 "language": fm.get("language", "auto"),
                 "file_patterns": fm.get("file_patterns", []) if isinstance(fm.get("file_patterns"), list) else [],
+                "domain_type": fm.get("domain_type", "code"),
             })
         except OSError:
             continue
