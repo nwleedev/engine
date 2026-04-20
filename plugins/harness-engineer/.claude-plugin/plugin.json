@@ -2,7 +2,7 @@
   "name": "harness-engineer",
   "displayName": "Harness Engineer",
   "description": "Injects domain-specific pattern guides into every work turn and detects violations at session end",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "author": {
     "name": "nwleedev"
   },
