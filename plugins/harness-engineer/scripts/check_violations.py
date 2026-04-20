@@ -226,3 +226,48 @@ def extract_document_sections(transcript_path: str) -> list[str]:
     except (FileNotFoundError, OSError):
         pass
     return sections
+
+
+def check_document_violations_with_llm(
+    sections: list[str],
+    harness_files: list[dict],
+    transcript_path: str,
+) -> list[dict]:
+    if not sections or not harness_files:
+        return []
+    harness_summary = "\n\n".join(
+        f"[{f['domain']}]\n{f['content'][:1000]}" for f in harness_files
+    )
+    doc_sample = "\n---\n".join(sections[:5])[:3000]
+    prompt = (
+        "Compare the following quality standards with the document output and "
+        "return violations as a JSON array.\n\n"
+        "Violation criteria: unsourced claims, unmeasurable expressions "
+        "('large', 'good', 'better'), single-direction evidence, patterns "
+        "listed in ## Anti-Pattern Gate.\n\n"
+        f"Quality standards:\n{harness_summary}\n\n"
+        f"Document output:\n{doc_sample}\n\n"
+        'Format: [{"domain":"market-research",'
+        '"rule":"unsourced claim","location":"paragraph 2","count":1}]\n'
+        "Return [] if no violations. Output JSON only."
+    )
+    env = {**os.environ, "CLAUDE_WRITING_CONTEXT": "1"}
+    try:
+        r = subprocess.run(
+            ["claude", "-p", "--no-session-persistence", "--output-format", "json"],
+            input=prompt,
+            capture_output=True,
+            text=True,
+            timeout=60,
+            env=env,
+        )
+        if r.returncode != 0:
+            return []
+        data = json.loads(r.stdout)
+        result_text = data.get("result", "").strip()
+        violations = json.loads(result_text)
+        if isinstance(violations, list):
+            return violations
+    except Exception:
+        pass
+    return []

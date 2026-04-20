@@ -214,3 +214,49 @@ def test_extract_document_sections_list_content(tmp_path):
     sections = cv.extract_document_sections(str(jsonl))
     assert len(sections) >= 1
     assert any("분석" in s for s in sections)
+
+
+# --- check_document_violations_with_llm ---
+
+@mock.patch("subprocess.run")
+def test_check_document_violations_with_llm_sets_writing_context(mock_run):
+    mock_run.return_value = mock.Mock(returncode=0, stdout='{"result": "[]"}')
+    cv.check_document_violations_with_llm(
+        ["some text"], [{"domain": "d", "content": "c"}], "t.jsonl"
+    )
+    _, kwargs = mock_run.call_args
+    assert kwargs["env"]["CLAUDE_WRITING_CONTEXT"] == "1"
+
+
+@mock.patch("subprocess.run")
+def test_check_document_violations_with_llm_correct_cli_flags(mock_run):
+    mock_run.return_value = mock.Mock(returncode=0, stdout='{"result": "[]"}')
+    cv.check_document_violations_with_llm(
+        ["text"], [{"domain": "d", "content": "c"}], "t.jsonl"
+    )
+    cmd = mock_run.call_args[0][0]
+    assert cmd == ["claude", "-p", "--no-session-persistence", "--output-format", "json"]
+
+
+@mock.patch("subprocess.run")
+def test_check_document_violations_with_llm_returns_empty_on_failure(mock_run):
+    mock_run.return_value = mock.Mock(returncode=1, stdout="")
+    result = cv.check_document_violations_with_llm(
+        ["text"], [{"domain": "d", "content": "c"}], "t.jsonl"
+    )
+    assert result == []
+
+
+def test_check_document_violations_with_llm_empty_input():
+    result = cv.check_document_violations_with_llm([], [], "t.jsonl")
+    assert result == []
+
+
+@mock.patch("subprocess.run")
+def test_check_document_violations_prompt_contains_quality_criteria(mock_run):
+    mock_run.return_value = mock.Mock(returncode=0, stdout='{"result": "[]"}')
+    cv.check_document_violations_with_llm(
+        ["some document text"], [{"domain": "market-research", "content": "rules"}], "t.jsonl"
+    )
+    prompt_input = mock_run.call_args[1]["input"]
+    assert "unsourced" in prompt_input or "unmeasurable" in prompt_input
