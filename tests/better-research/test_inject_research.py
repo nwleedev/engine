@@ -126,6 +126,9 @@ def test_detect_design_keyword_english_implement():
 def test_detect_design_keyword_english_architect():
     assert ir.detect_design_keyword("architect the new system") is True
 
+def test_detect_design_keyword_english_strategy():
+    assert ir.detect_design_keyword("the strategy should be reconsidered") is True
+
 def test_detect_design_keyword_no_match():
     assert ir.detect_design_keyword("what is the capital of France?") is False
 

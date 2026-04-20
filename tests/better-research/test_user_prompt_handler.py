@@ -1,8 +1,6 @@
 import importlib.util
 import io
 import json
-import os
-import sys
 from contextlib import redirect_stdout
 from pathlib import Path
 
