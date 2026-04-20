@@ -136,3 +136,85 @@ def test_build_harness_frontmatter_document_empty_file_patterns():
     )
     assert "file_patterns: []" in result
     assert "domain_type: document" in result
+
+
+# --- _extract_section ---
+
+def test_extract_section_core_rules():
+    content = (
+        "---\ndomain: test\n---\n"
+        "## Core Rules\n\n- [ ] Rule one\n- [ ] Rule two\n\n"
+        "## Pattern Examples\n\nsome examples"
+    )
+    result = gh._extract_section(content, "## Core Rules")
+    assert "Rule one" in result
+    assert "Pattern Examples" not in result
+
+
+def test_extract_section_anti_pattern_gate():
+    content = (
+        "## Anti-Pattern Gate\n\n```\nUsing X? → Fix Y\n```\n\n"
+        "## Something Else\n\nother content"
+    )
+    result = gh._extract_section(content, "## Anti-Pattern Gate")
+    assert "Using X?" in result
+    assert "Something Else" not in result
+
+
+def test_extract_section_missing_returns_empty():
+    content = "## Core Rules\n\n- [ ] Rule one\n"
+    result = gh._extract_section(content, "## Anti-Pattern Gate")
+    assert result == ""
+
+
+# --- generate_skill_file ---
+
+def test_generate_skill_file_creates_skill_md(tmp_path):
+    harness_content = (
+        "---\ndomain: market-research\ndomain_type: document\n"
+        "keywords: [market, TAM]\n---\n"
+        "## Core Rules\n\n- [ ] Every claim backed by source\n\n"
+        "## Anti-Pattern Gate\n\n```\nUsing 'large'? → Add TAM figure\n```\n"
+    )
+    path = gh.generate_skill_file("market-research", harness_content, str(tmp_path))
+    skill_path = tmp_path / ".claude" / "skills" / "market-research-harness" / "SKILL.md"
+    assert skill_path.exists()
+    assert path == str(skill_path)
+
+
+def test_generate_skill_file_embeds_core_rules(tmp_path):
+    harness_content = (
+        "## Core Rules\n\n- [ ] Every claim backed by source\n\n"
+        "## Anti-Pattern Gate\n\n```\nUsing 'large'? → Add TAM figure\n```\n"
+    )
+    gh.generate_skill_file("market-research", harness_content, str(tmp_path))
+    skill_path = tmp_path / ".claude" / "skills" / "market-research-harness" / "SKILL.md"
+    content = skill_path.read_text(encoding="utf-8")
+    assert "Every claim backed by source" in content
+    assert "Using 'large'?" in content
+
+
+def test_generate_skill_file_frontmatter_name(tmp_path):
+    harness_content = "## Core Rules\n\n- [ ] Rule\n\n## Anti-Pattern Gate\n\n```\nQ? → A\n```\n"
+    gh.generate_skill_file("prd-writing", harness_content, str(tmp_path))
+    skill_path = tmp_path / ".claude" / "skills" / "prd-writing-harness" / "SKILL.md"
+    content = skill_path.read_text(encoding="utf-8")
+    assert "name: prd-writing-harness" in content
+    assert "description:" in content
+
+
+def test_generate_skill_file_overwrites_existing(tmp_path):
+    harness_v1 = (
+        "## Core Rules\n\n- [ ] Rule v1\n\n"
+        "## Anti-Pattern Gate\n\n```\nQ? → A\n```\n"
+    )
+    harness_v2 = (
+        "## Core Rules\n\n- [ ] Rule v2\n\n"
+        "## Anti-Pattern Gate\n\n```\nQ? → A\n```\n"
+    )
+    gh.generate_skill_file("market-research", harness_v1, str(tmp_path))
+    gh.generate_skill_file("market-research", harness_v2, str(tmp_path))
+    skill_path = tmp_path / ".claude" / "skills" / "market-research-harness" / "SKILL.md"
+    content = skill_path.read_text(encoding="utf-8")
+    assert "Rule v2" in content
+    assert "Rule v1" not in content
