@@ -156,3 +156,58 @@ def test_marker_only_prompt_no_output(monkeypatch, tmp_path):
     with redirect_stdout(f):
         uph.main_with_payload({"prompt": "/q"})
     assert f.getvalue() == ""
+
+
+# --- Layer 1b: anti-frame-bias on design keywords ---
+
+def test_layer1b_injects_debiasing_on_korean_keyword(monkeypatch, tmp_path):
+    monkeypatch.delenv("RESEARCH_PERSPECTIVES", raising=False)
+    monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(tmp_path))
+    f = io.StringIO()
+    with redirect_stdout(f):
+        uph.main_with_payload({"prompt": "어떻게 설계할까요?"})
+    output = json.loads(f.getvalue())
+    context = output["hookSpecificOutput"]["additionalContext"]
+    assert "<cognitive-debiasing>" in context
+    assert "SUSPEND" in context
+
+def test_layer1b_injects_debiasing_on_english_keyword(monkeypatch, tmp_path):
+    monkeypatch.delenv("RESEARCH_PERSPECTIVES", raising=False)
+    monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(tmp_path))
+    f = io.StringIO()
+    with redirect_stdout(f):
+        uph.main_with_payload({"prompt": "what approach should we take?"})
+    output = json.loads(f.getvalue())
+    context = output["hookSpecificOutput"]["additionalContext"]
+    assert "<cognitive-debiasing>" in context
+
+def test_layer1b_no_injection_without_keyword(monkeypatch, tmp_path):
+    monkeypatch.delenv("RESEARCH_PERSPECTIVES", raising=False)
+    monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(tmp_path))
+    f = io.StringIO()
+    with redirect_stdout(f):
+        uph.main_with_payload({"prompt": "what is the capital of France?"})
+    assert f.getvalue() == ""
+
+def test_layer1b_and_layer2_both_inject_on_keyword_plus_marker(monkeypatch):
+    monkeypatch.delenv("RESEARCH_PERSPECTIVES", raising=False)
+    monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(PLUGIN_ROOT))
+    f = io.StringIO()
+    with redirect_stdout(f):
+        uph.main_with_payload({"prompt": "설계 방법을 알려줘 /q"})
+    output = json.loads(f.getvalue())
+    context = output["hookSpecificOutput"]["additionalContext"]
+    assert "<cognitive-debiasing>" in context
+    assert "Research Protocol" in context
+    assert "\n\n---\n\n" in context
+
+def test_layer1b_only_debiasing_when_keyword_no_marker(monkeypatch, tmp_path):
+    monkeypatch.delenv("RESEARCH_PERSPECTIVES", raising=False)
+    monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(tmp_path))
+    f = io.StringIO()
+    with redirect_stdout(f):
+        uph.main_with_payload({"prompt": "구현 방식 논의"})
+    output = json.loads(f.getvalue())
+    context = output["hookSpecificOutput"]["additionalContext"]
+    assert "<cognitive-debiasing>" in context
+    assert "Research Protocol" not in context

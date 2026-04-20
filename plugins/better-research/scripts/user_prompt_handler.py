@@ -4,7 +4,13 @@ import re
 import sys
 
 sys.path.insert(0, os.path.dirname(__file__))
-from inject_research import load_skill_md, build_perspective_context, assemble_context
+from inject_research import (
+    assemble_context,
+    build_anti_frame_bias_context,
+    build_perspective_context,
+    detect_design_keyword,
+    load_skill_md,
+)
 
 _MARKER_RE = re.compile(r'(?<![a-zA-Z0-9_/])/(q|query|research)(?=\s|[^\w/]|$)', re.IGNORECASE)
 _WS_RE = re.compile(r' {2,}')
@@ -38,7 +44,11 @@ def main_with_payload(payload: dict) -> None:
     if perspectives:
         context_parts.append(build_perspective_context(perspectives))
 
-    # C path: independent of D — inject SKILL.md when marker detected
+    # Layer 1b: inject anti-frame-bias when design/brainstorming keywords detected
+    if detect_design_keyword(prompt):
+        context_parts.append(build_anti_frame_bias_context())
+
+    # Layer 2 / C path: inject SKILL.md when research marker detected
     if detect_marker(prompt):
         cleaned = strip_marker(prompt)
         if cleaned:
