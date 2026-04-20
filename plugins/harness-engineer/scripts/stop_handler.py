@@ -9,7 +9,7 @@ from detect_domain import load_harness_files
 from check_violations import (
     extract_claude_code_blocks,
     extract_document_sections,
-    check_violations_with_llm,
+    check_code_violations_with_llm,
     check_document_violations_with_llm,
     append_violations,
     detect_drift,
@@ -36,7 +36,7 @@ def main_with_payload(payload: dict, harness_files: list[dict]) -> None:
 
     if code_harnesses:
         code_blocks = extract_claude_code_blocks(transcript_path)
-        violations = check_violations_with_llm(code_blocks, code_harnesses, transcript_path)
+        violations = check_code_violations_with_llm(code_blocks, code_harnesses, transcript_path)
         all_violations.extend(violations)
 
     if doc_harnesses:

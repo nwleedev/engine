@@ -139,7 +139,7 @@ def trim_old_violations(log_path: Path, days: int = 90) -> None:
     log_path.write_text("\n".join(kept) + ("\n" if kept else ""), encoding="utf-8")
 
 
-def check_violations_with_llm(
+def check_code_violations_with_llm(
     code_blocks: list[str],
     harness_files: list[dict],
     transcript_path: str,

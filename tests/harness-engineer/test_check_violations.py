@@ -135,33 +135,33 @@ def test_trim_old_violations_noop_if_no_file(tmp_path):
     cv.trim_old_violations(log_path)  # must not raise
 
 
-# --- check_violations_with_llm ---
+# --- check_code_violations_with_llm ---
 
 @mock.patch("subprocess.run")
-def test_check_violations_with_llm_sets_writing_context_env(mock_run):
+def test_check_code_violations_with_llm_sets_writing_context_env(mock_run):
     mock_run.return_value = mock.Mock(returncode=0, stdout='{"result": "[]"}')
-    cv.check_violations_with_llm(["some code"], [{"domain": "d", "content": "c"}], "t.jsonl")
+    cv.check_code_violations_with_llm(["some code"], [{"domain": "d", "content": "c"}], "t.jsonl")
     _, kwargs = mock_run.call_args
     assert kwargs["env"]["CLAUDE_WRITING_CONTEXT"] == "1"
 
 
 @mock.patch("subprocess.run")
-def test_check_violations_with_llm_correct_cli_flags(mock_run):
+def test_check_code_violations_with_llm_correct_cli_flags(mock_run):
     mock_run.return_value = mock.Mock(returncode=0, stdout='{"result": "[]"}')
-    cv.check_violations_with_llm(["code"], [{"domain": "d", "content": "c"}], "t.jsonl")
+    cv.check_code_violations_with_llm(["code"], [{"domain": "d", "content": "c"}], "t.jsonl")
     cmd = mock_run.call_args[0][0]
     assert cmd == ["claude", "-p", "--no-session-persistence", "--output-format", "json"]
 
 
 @mock.patch("subprocess.run")
-def test_check_violations_with_llm_returns_empty_on_failure(mock_run):
+def test_check_code_violations_with_llm_returns_empty_on_failure(mock_run):
     mock_run.return_value = mock.Mock(returncode=1, stdout="")
-    result = cv.check_violations_with_llm(["code"], [{"domain": "d", "content": "c"}], "t.jsonl")
+    result = cv.check_code_violations_with_llm(["code"], [{"domain": "d", "content": "c"}], "t.jsonl")
     assert result == []
 
 
-def test_check_violations_with_llm_returns_empty_for_no_input():
-    result = cv.check_violations_with_llm([], [], "t.jsonl")
+def test_check_code_violations_with_llm_returns_empty_for_no_input():
+    result = cv.check_code_violations_with_llm([], [], "t.jsonl")
     assert result == []
 
 

@@ -28,7 +28,7 @@ DOC_HARNESS = {
 # We omit `cwd` from payload so harness_dir resolves to None — keeps tests
 # focused on routing logic only, not log-writing side effects.
 
-@mock.patch("stop_handler.check_violations_with_llm", return_value=[])
+@mock.patch("stop_handler.check_code_violations_with_llm", return_value=[])
 @mock.patch("stop_handler.extract_claude_code_blocks", return_value=["code"])
 def test_code_domain_uses_code_blocks(mock_extract, mock_check):
     payload = {"transcript_path": str(FIXTURES_DIR / "sample_transcript.jsonl")}
@@ -46,7 +46,7 @@ def test_document_domain_uses_document_sections(mock_sections, mock_check):
     mock_check.assert_called_once()
 
 
-@mock.patch("stop_handler.check_violations_with_llm", return_value=[])
+@mock.patch("stop_handler.check_code_violations_with_llm", return_value=[])
 @mock.patch("stop_handler.extract_claude_code_blocks", return_value=[])
 def test_missing_domain_type_defaults_to_code(mock_extract, mock_check):
     harness_no_type = {k: v for k, v in CODE_HARNESS.items() if k != "domain_type"}
@@ -57,7 +57,7 @@ def test_missing_domain_type_defaults_to_code(mock_extract, mock_check):
 
 @mock.patch("stop_handler.check_document_violations_with_llm", return_value=[])
 @mock.patch("stop_handler.extract_document_sections", return_value=[])
-@mock.patch("stop_handler.check_violations_with_llm", return_value=[])
+@mock.patch("stop_handler.check_code_violations_with_llm", return_value=[])
 @mock.patch("stop_handler.extract_claude_code_blocks", return_value=["code"])
 def test_mixed_domains_routes_both(mock_code_ext, mock_code_check, mock_doc_sections, mock_doc_check):
     payload = {"transcript_path": str(FIXTURES_DIR / "sample_transcript.jsonl")}
