@@ -10,7 +10,16 @@ They do NOT reflect the current codebase — they define what it should become.
 
 ## /create-harness
 
-When the user runs `/create-harness` with a natural language description of their tech stack:
+When the user runs `/create-harness` with a description:
+
+### Step 0: Classify domain type
+
+- **Code domain**: input contains framework or library names (React, FastAPI, Next.js, SQLAlchemy, etc.)
+  → Follow Steps 1–8 below (tech stack extraction flow)
+- **Document domain**: no framework names — input describes a work type (market research, PRD, pitch deck, OKR, etc.)
+  → Skip Steps 1–2. Follow the Document domain flow below.
+
+### Code domain: Steps 1–8
 
 1. **Extract tech stack from the user's prompt**
    - Identify frameworks, libraries, and folder structure hints
@@ -45,6 +54,31 @@ When the user runs `/create-harness` with a natural language description of thei
 8. **Show `file_patterns` to user**
    - "If this doesn't match your project structure, edit the `file_patterns:` list in `.claude/harness/<domain>.md`"
 
+### Document domain flow
+
+1. **Ask**: "What work does this domain cover? Give one example task."
+2. **Ask**: "What makes output _good_ vs _bad_ in this domain? One example of each."
+3. **Select the closest built-in template** from `skills/harness-engineer/templates/`:
+   - `market-research.md` — market sizing, competitive analysis
+   - `prd-writing.md` — product requirements, user stories
+   - `pitch-deck.md` — investor pitch, fundraising materials
+   - `technical-writing.md` — API docs, architecture docs, README
+   - `data-analysis.md` — KPI reports, A/B test results
+   - `okr-planning.md` — objectives and key results
+   - `risk-assessment.md` — project and product risk
+   - Generic template if no match
+4. **Customize** the template with the user's examples from Steps 1–2
+5. **Set frontmatter**: `domain_type: document`, `file_patterns: []`, keywords from domain terminology
+6. **Write to `.claude/harness/<domain>.md`**
+7. **Generate `.claude/skills/<domain>-harness/SKILL.md`**:
+   - Extract `## Core Rules` and `## Anti-Pattern Gate` from the harness file
+   - Embed them in the skill frontmatter and body
+   - Write to `.claude/skills/<domain>-harness/SKILL.md`
+8. **Report both file paths** to the user:
+   - "Harness source: `.claude/harness/<domain>.md` — edit here to change rules"
+   - "Skill: `.claude/skills/<domain>-harness/SKILL.md` — invoke with `/<domain>-harness`"
+   - "To update after editing rules, run `/update-harness <domain>`"
+
 ### Writing Rules
 
 - `## Core Rules` section: checklist format, 5-8 items max
@@ -64,6 +98,12 @@ When the user runs `/update-harness [domain]`:
 4. For abstract rules without code examples: propose adding `<Good>/<Bad>` pairs
 5. Confirm each change before writing
 6. Update `updated:` date in frontmatter
+7. **Regenerate `.claude/skills/<domain>-harness/SKILL.md`** (if it exists):
+   - Extract `## Core Rules` and `## Anti-Pattern Gate` from the updated harness
+   - Overwrite `.claude/skills/<domain>-harness/SKILL.md`
+   - Report: "Skill updated at `.claude/skills/<domain>-harness/SKILL.md`"
+   - Applies to both code and document domain harnesses
+   - **Skip** if `.claude/skills/<domain>-harness/SKILL.md` does not exist
 
 ## /evaluate-harness
 
