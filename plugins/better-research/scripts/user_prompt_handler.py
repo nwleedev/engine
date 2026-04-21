@@ -6,9 +6,8 @@ import sys
 sys.path.insert(0, os.path.dirname(__file__))
 from inject_research import (
     assemble_context,
-    build_anti_frame_bias_context,
+    build_criterion_guided_evaluation,
     build_perspective_context,
-    detect_design_keyword,
     load_skill_md,
 )
 
@@ -44,11 +43,10 @@ def main_with_payload(payload: object) -> None:
     if perspectives:
         context_parts.append(build_perspective_context(perspectives))
 
-    # Layer 1b: inject anti-frame-bias when design/brainstorming keywords detected
-    if detect_design_keyword(prompt):
-        context_parts.append(build_anti_frame_bias_context())
+    # A+C block: always inject for every prompt
+    context_parts.append(build_criterion_guided_evaluation())
 
-    # Layer 2 / C path: inject SKILL.md when research marker detected
+    # Research protocol: additionally inject SKILL.md when marker is present
     if detect_marker(prompt):
         cleaned = strip_marker(prompt)
         if cleaned:
