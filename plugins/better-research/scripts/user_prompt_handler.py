@@ -38,24 +38,18 @@ def main_with_payload(payload: object) -> None:
     plugin_root = os.environ.get("CLAUDE_PLUGIN_ROOT", "")
     context_parts = []
 
-    # D path: inject active research perspectives from env
     perspectives = extract_perspectives()
     if perspectives:
         context_parts.append(build_perspective_context(perspectives))
 
-    # A+C block: always inject for every prompt
     context_parts.append(build_criterion_guided_evaluation())
 
-    # Research protocol: additionally inject SKILL.md when marker is present
     if detect_marker(prompt):
         cleaned = strip_marker(prompt)
         if cleaned:
             skill_content = load_skill_md(plugin_root)
             if skill_content:
                 context_parts.append(skill_content)
-
-    if not context_parts:
-        return
 
     context = assemble_context(context_parts)
     output = {
