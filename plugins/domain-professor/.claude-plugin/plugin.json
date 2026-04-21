@@ -2,7 +2,7 @@
   "name": "domain-professor",
   "displayName": "Domain Professor",
   "description": "Automatically detects unfamiliar domains while you work and generates learning materials from basics to professional level",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "author": {
     "name": "nwleedev"
   },
