@@ -1,17 +1,12 @@
-import importlib.util
 import io
 import json
+import sys
 from contextlib import redirect_stdout
 from pathlib import Path
 
 SCRIPTS_DIR = Path(__file__).parent.parent.parent / "plugins/harness-builder/scripts"
-
-_spec = importlib.util.spec_from_file_location(
-    "harness_builder.session_start_handler", SCRIPTS_DIR / "session_start_handler.py"
-)
-assert _spec is not None and _spec.loader is not None
-ssh = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(ssh)
+sys.path.insert(0, str(SCRIPTS_DIR))
+import inject_harness as ssh
 
 
 def test_no_harness_injects_setup_reminder(tmp_path):

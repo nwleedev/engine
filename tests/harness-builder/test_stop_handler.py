@@ -1,17 +1,12 @@
-import importlib.util
 import io
 import json
+import sys
 from contextlib import redirect_stdout
 from pathlib import Path
 
 SCRIPTS_DIR = Path(__file__).parent.parent.parent / "plugins/harness-builder/scripts"
-
-_spec = importlib.util.spec_from_file_location(
-    "harness_builder.stop_handler", SCRIPTS_DIR / "stop_handler.py"
-)
-assert _spec is not None and _spec.loader is not None
-sh = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(sh)
+sys.path.insert(0, str(SCRIPTS_DIR))
+import harness_audit as sh
 
 
 def _make_transcript(tmp_path: Path, tool_calls: list[dict]) -> str:
