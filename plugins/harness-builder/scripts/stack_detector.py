@@ -141,14 +141,20 @@ def detect_stack(project_root: str) -> dict[str, Any]:
     # Monorepo: standard files found in subdirectories but not (only) at root
     monorepo = False
     standard_names = {t[0] for t in DETECTION_TABLE}
-    for subdir in root.iterdir():
-        if subdir.is_dir() and not subdir.name.startswith("."):
-            sub_files = {f.name for f in subdir.iterdir() if f.is_file()}
-            if sub_files & standard_names:
-                monorepo = True
-                for fname, lang in DETECTION_TABLE:
-                    if fname in sub_files:
-                        languages.add(lang)
+    try:
+        for subdir in root.iterdir():
+            if subdir.is_dir() and not subdir.name.startswith("."):
+                try:
+                    sub_files = {f.name for f in subdir.iterdir() if f.is_file()}
+                except OSError:
+                    continue
+                if sub_files & standard_names:
+                    monorepo = True
+                    for fname, lang in DETECTION_TABLE:
+                        if fname in sub_files:
+                            languages.add(lang)
+    except OSError:
+        pass
 
     pkg = _parse_package_json(root)
     frameworks = _detect_frameworks(pkg)
@@ -164,7 +170,7 @@ def detect_stack(project_root: str) -> dict[str, Any]:
         "linters_missing": linters_missing,
         "monorepo": monorepo,
         "package_managers": package_managers,
-        "confidence": "high" if root_file_count >= 2 else "low",
+        "confidence": "high" if root_file_count >= 2 or monorepo else "low",
     }
     if eslint_version:
         result["eslint_version"] = eslint_version
