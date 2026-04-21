@@ -1,0 +1,22 @@
+PYTEST = python3 -m pytest -q
+
+.PHONY: test test-better-research test-domain-professor test-session-memory test-scripts test-harness-builder
+
+# Run each plugin test suite in its own process to prevent sys.modules collision
+# between plugins that share script filenames (e.g. session_start_handler.py).
+test: test-better-research test-domain-professor test-session-memory test-scripts
+
+test-better-research:
+	$(PYTEST) tests/better-research/
+
+test-domain-professor:
+	$(PYTEST) tests/domain-professor/
+
+test-session-memory:
+	$(PYTEST) tests/session-memory/
+
+test-scripts:
+	$(PYTEST) tests/scripts/
+
+test-harness-builder:
+	$(PYTEST) tests/harness-builder/

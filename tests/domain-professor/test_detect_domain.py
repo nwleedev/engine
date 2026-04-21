@@ -1,4 +1,3 @@
-import importlib.util
 import json
 import sys
 from pathlib import Path
@@ -7,10 +6,8 @@ from unittest import mock
 SCRIPTS_DIR = Path(__file__).parent.parent.parent / "plugins/domain-professor/scripts"
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
-_spec = importlib.util.spec_from_file_location("domain_professor.detect_domain", SCRIPTS_DIR / "detect_domain.py")
-assert _spec is not None and _spec.loader is not None
-dd = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(dd)
+sys.path.insert(0, str(SCRIPTS_DIR))
+import detect_domain as dd
 
 
 def test_extract_text_string():

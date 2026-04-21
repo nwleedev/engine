@@ -1,16 +1,14 @@
-import importlib.util
 import io
 import json
+import sys
 from contextlib import redirect_stdout
 from pathlib import Path
 
 SCRIPTS_DIR = Path(__file__).parent.parent.parent / "plugins/better-research/scripts"
 PLUGIN_ROOT = Path(__file__).parent.parent.parent / "plugins/better-research"
 
-_spec = importlib.util.spec_from_file_location("better_research.user_prompt_handler", SCRIPTS_DIR / "user_prompt_handler.py")
-assert _spec is not None and _spec.loader is not None
-uph = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(uph)
+sys.path.insert(0, str(SCRIPTS_DIR))
+import user_prompt_handler as uph
 
 
 # --- detect_marker ---

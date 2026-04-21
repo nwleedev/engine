@@ -1,17 +1,12 @@
-import importlib.util
 import io
 import json
+import sys
 from contextlib import redirect_stdout
 from pathlib import Path
 
 SCRIPTS_DIR = Path(__file__).parent.parent.parent / "plugins/better-research/scripts"
-
-_spec = importlib.util.spec_from_file_location(
-    "better_research.session_start_handler", SCRIPTS_DIR / "session_start_handler.py"
-)
-assert _spec is not None and _spec.loader is not None
-ssh = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(ssh)
+sys.path.insert(0, str(SCRIPTS_DIR))
+import inject_debiasing as ssh
 
 
 def test_session_start_injects_debiasing():

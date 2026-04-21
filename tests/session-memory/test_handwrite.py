@@ -115,49 +115,38 @@ def test_update_index_appends_context_entry(tmp_path):
         hw.read_index(session_dir),
         last_uuid="uuid-new",
         new_head="def456",
-        context_num=1,
-        title="test-work",
+        filename="CONTEXT-20260421-1200-test-work.md",
         one_liner="테스트 작업을 완료했다",
     )
     content = (session_dir / "INDEX.md").read_text()
     assert "uuid-new" in content
-    assert "[0001] test-work" in content
-
-def test_get_next_context_number_empty_dir(tmp_path):
-    contexts_dir = tmp_path / "contexts"
-    contexts_dir.mkdir()
-    assert hw.get_next_context_number(tmp_path) == 1
-
-def test_get_next_context_number_with_existing(tmp_path):
-    contexts_dir = tmp_path / "contexts"
-    contexts_dir.mkdir()
-    (contexts_dir / "CONTEXT-0001-foo.md").write_text("")
-    (contexts_dir / "CONTEXT-0002-bar.md").write_text("")
-    assert hw.get_next_context_number(tmp_path) == 3
+    assert "CONTEXT-20260421-1200-test-work.md" in content
 
 def test_write_context_file_creates_file(tmp_path):
     (tmp_path / "contexts").mkdir()
     hw.write_context_file(
-        session_dir=tmp_path,
-        num=1,
+        session_dir=str(tmp_path),
         title="jwt-setup",
-        narration="JWT를 구현했습니다.",
-        commits=["abc1234 feat: add jwt"],
+        lang="en",
+        result={"what_why": "JWT를 구현했습니다.", "decisions": [], "incomplete": [], "next_instructions": ""},
         session_id="sess-abc",
     )
-    files = list((tmp_path / "contexts").glob("CONTEXT-0001-*.md"))
+    files = list((tmp_path / "contexts").glob("CONTEXT-*.md"))
     assert len(files) == 1
     content = files[0].read_text()
     assert "JWT를 구현했습니다." in content
-    assert "abc1234" in content
-    assert "claude -r sess-abc" in content
+    assert "sess-abc" in content
 
 def test_write_context_file_no_commits(tmp_path):
     (tmp_path / "contexts").mkdir()
-    hw.write_context_file(tmp_path, 1, "quick-fix", "간단히 수정했습니다.", [], "sess-xyz")
-    files = list((tmp_path / "contexts").glob("CONTEXT-0001-*.md"))
-    content = files[0].read_text()
-    assert "관련 커밋" not in content
+    hw.write_context_file(
+        str(tmp_path), "quick-fix", "en",
+        {"what_why": "간단히 수정했습니다.", "decisions": [], "incomplete": [], "next_instructions": ""},
+        "sess-xyz",
+    )
+    files = list((tmp_path / "contexts").glob("CONTEXT-*.md"))
+    assert len(files) == 1
+    assert "간단히 수정했습니다." in files[0].read_text()
 
 def test_find_project_root_uses_git_root(tmp_path):
     sub = tmp_path / "web"
@@ -254,7 +243,7 @@ def test_call_claude_narration_subprocess_error():
 
 def test_build_prompt_includes_truncation_note():
     prompt = hw.build_prompt("메시지", was_truncated=True)
-    assert "앞부분 생략" in prompt
+    assert "earlier messages omitted" in prompt
 
 def test_call_claude_sets_env_var():
     captured_env = {}
