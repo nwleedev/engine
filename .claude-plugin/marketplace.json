@@ -20,6 +20,11 @@
       "name": "better-research",
       "description": "Enforces cross-validation, root cause analysis, and multi-perspective research quality in Claude Code sessions",
       "source": "./plugins/better-research"
+    },
+    {
+      "name": "harness-builder",
+      "description": "Generates and improves Claude Code harnesses based on tech stack, project type, and testing goals",
+      "source": "./plugins/harness-builder"
     }
   ]
 }
