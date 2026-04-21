@@ -1,4 +1,5 @@
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -69,7 +70,8 @@ def _detect_eslint_version(pkg: dict[str, Any]) -> str | None:
     spec = all_deps.get("eslint")
     if not spec:
         return None
-    return spec.lstrip("^~>=< ").split(" ")[0] or None
+    stripped = spec.lstrip("^~>=< ").split(" ")[0]
+    return stripped if stripped and re.match(r"^\d", stripped) else None
 
 
 def _detect_existing_linters(root: Path) -> list[str]:

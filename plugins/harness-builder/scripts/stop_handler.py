@@ -47,9 +47,11 @@ def main_with_payload(payload: dict) -> None:
     written = extract_written_files(transcript_path)
     if not written:
         return
-    file_list = "\n".join(f"  - {f}" for f in written[:20])
+    capped = written[:20]
+    truncation = f" (showing first 20 of {len(written)})" if len(written) > 20 else ""
+    file_list = "\n".join(f"  - {f}" for f in capped)
     context = (
-        f"Files written or edited this turn:\n{file_list}\n\n"
+        f"Files written or edited this turn{truncation}:\n{file_list}\n\n"
         "Please review these files against the harness standards in "
         "`.claude/harness/`. Report any violations with severity "
         "(error/warning), file location, and improvement suggestion."
