@@ -144,9 +144,10 @@ def test_build_criterion_guided_evaluation_is_xml_block():
     assert result.strip().endswith("</cognitive-debiasing>")
 
 def test_build_criterion_guided_evaluation_has_six_steps():
+    import re
     result = ir.build_criterion_guided_evaluation()
-    for i in range(1, 7):
-        assert f"{i}." in result
+    step_labels = re.findall(r'^\d+\.', result, re.MULTILINE)
+    assert len(step_labels) == 6
 
 def test_build_criterion_guided_evaluation_contains_evaluate_step():
     result = ir.build_criterion_guided_evaluation()
