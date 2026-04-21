@@ -37,7 +37,7 @@ def extract_written_files(transcript_path: str) -> list[str]:
     return written
 
 
-def main_with_payload(payload: dict) -> None:
+def main_with_payload(payload: object) -> None:
     if not isinstance(payload, dict):
         return
     cwd = payload.get("cwd") or os.getcwd()

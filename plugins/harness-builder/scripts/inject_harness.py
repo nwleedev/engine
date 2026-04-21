@@ -23,7 +23,7 @@ def build_context(cwd: str) -> str:
     return f"## Active Harness Standards\n\n{content}"
 
 
-def main_with_payload(payload: dict) -> None:
+def main_with_payload(payload: object) -> None:
     if not isinstance(payload, dict):
         return
     cwd = payload.get("cwd") or os.getcwd()

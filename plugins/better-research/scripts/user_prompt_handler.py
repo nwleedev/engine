@@ -29,7 +29,7 @@ def extract_perspectives() -> str:
     return os.environ.get("RESEARCH_PERSPECTIVES", "").strip()
 
 
-def main_with_payload(payload: dict) -> None:
+def main_with_payload(payload: object) -> None:
     if not isinstance(payload, dict):
         return
     prompt = payload.get("prompt", "")

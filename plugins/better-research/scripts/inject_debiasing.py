@@ -6,7 +6,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 from inject_research import build_anti_frame_bias_context
 
 
-def main_with_payload(payload: dict) -> None:
+def main_with_payload(payload: object) -> None:
     if not isinstance(payload, dict):
         return
     context = build_anti_frame_bias_context()
