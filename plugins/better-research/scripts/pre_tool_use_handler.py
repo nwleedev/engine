@@ -1,6 +1,7 @@
 import json
 import os
 import sys
+from collections.abc import Callable
 
 _EDIT_PROMPT = """\
 Evaluate this code change for implementation quality.
@@ -86,16 +87,13 @@ def should_block(verdict: str, confidence: str) -> bool:
 
 def _emit_block(reason: str) -> None:
     output = {
-        "hookSpecificOutput": {
-            "hookEventName": "PreToolUse",
-            "decision": "block",
-            "reason": _BLOCK_MESSAGE.format(reason=reason),
-        }
+        "decision": "block",
+        "reason": _BLOCK_MESSAGE.format(reason=reason),
     }
     print(json.dumps(output, ensure_ascii=False))
 
 
-def main_with_payload(payload: object, llm_fn=None) -> None:
+def main_with_payload(payload: object, llm_fn: Callable[[str], str] | None = None) -> None:
     if not isinstance(payload, dict):
         return
     if llm_fn is None:

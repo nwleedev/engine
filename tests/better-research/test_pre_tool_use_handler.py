@@ -77,9 +77,9 @@ def test_edit_superficial_high_outputs_block():
             }
         }, llm_fn=fake_llm)
     output = json.loads(f.getvalue())
-    assert output["hookSpecificOutput"]["decision"] == "block"
-    assert "[better-research]" in output["hookSpecificOutput"]["reason"]
-    assert "silences exception without fixing cause" in output["hookSpecificOutput"]["reason"]
+    assert output["decision"] == "block"
+    assert "[better-research]" in output["reason"]
+    assert "silences exception without fixing cause" in output["reason"]
 
 def test_edit_structural_high_produces_no_output():
     def fake_llm(_prompt):
@@ -169,7 +169,7 @@ def test_write_existing_file_superficial_high_outputs_block(tmp_path):
             "tool_input": {"file_path": str(existing), "content": "x = 42"}
         }, llm_fn=fake_llm)
     output = json.loads(f.getvalue())
-    assert output["hookSpecificOutput"]["decision"] == "block"
+    assert output["decision"] == "block"
 
 def test_write_new_file_skips_llm_call(tmp_path):
     new_file = tmp_path / "new_module.py"
