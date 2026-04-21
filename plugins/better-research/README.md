@@ -1,47 +1,42 @@
 # better-research
 
-Enforces structured, bias-resistant research in Claude Code. Registers two hooks to combat frame bias at session start and during prompts.
+Enforces structured, bias-resistant research and implementation in Claude Code. Registers three hooks to combat frame bias at session start, during prompts, and at the implementation boundary.
 
 ## How it works
 
-better-research registers two hooks:
+better-research registers three hooks:
 
 | Hook | When it fires | What it does |
 |---|---|---|
-| `SessionStart` | Once at session start | Injects anti-frame-bias XML block unconditionally (Layer 1a) |
-| `UserPromptSubmit` | Before Claude processes your message | Two paths: keyword-triggered debiasing (Layer 1b) and marker-triggered research protocol (Layer 2) |
+| `SessionStart` | Once at session start | Injects 4-step anti-frame-bias block unconditionally |
+| `UserPromptSubmit` | Before Claude processes your message | Injects 6-step A+C criterion-guided evaluation block unconditionally; additionally injects research protocol when `/q` marker is present |
+| `PreToolUse` | Before every Edit or Write tool call | Calls `claude-haiku-4-5-20251001` to evaluate whether the change is structural or superficial; blocks if verdict is superficial with high confidence |
 
-### Layer 1a — Session-level anti-frame-bias
+### SessionStart — Session-level anti-frame-bias
 
-Injected once at session start, regardless of the prompt. Primes Claude to suspend framing, enumerate alternatives, and verify assumptions before every response.
+Injected once at session start. Primes Claude to suspend framing, enumerate alternatives, and verify assumptions.
 
-### Layer 1b — Keyword-triggered cognitive debiasing
+### UserPromptSubmit — Criterion-guided evaluation
 
-When the prompt contains design or brainstorming keywords, the `<cognitive-debiasing>` block is injected automatically:
+Injected on every prompt unconditionally. The 6-step `<cognitive-debiasing>` block adds two steps beyond the session-level block:
 
-- **Korean:** 설계, 방법, 접근법, 구현, 어떻게, 전략
-- **English:** design, approach, architect, implement, strategy
+- **Step 5 — EVALUATE:** Select from enumerated options using only Correctness, Standard compliance, or Maintainability. PROHIBITED criteria: fewer changes required / faster to implement / more familiar.
+- **Step 6 — DECLARE:** Commit to a root cause, structural fix, and confirm no prohibited criteria influenced the selection — before writing any code.
 
-No marker required — detection is automatic.
+When a `/q`, `/query`, or `/research` marker is present, the research protocol (SKILL.md) is additionally injected on top of the A+C block — the two are additive, not mutually exclusive.
 
-### Layer 2 — Marker-triggered research protocol
+### PreToolUse — Superficial implementation blocker
 
-**Trigger markers:** `/q`, `/query`, `/research` — case-insensitive, anywhere in the prompt.
+Intercepts every `Edit` and `Write` tool call. Sends the diff to `claude-haiku-4-5-20251001` via `claude -p` and blocks the call if the verdict is `superficial` with `high` confidence. Ambiguous changes (medium/low confidence, or `unclear` verdict) pass through.
 
-```
-/q why does React re-render when state hasn't changed?
-/research what causes connection pool exhaustion in PostgreSQL?
-/query difference between optimistic and pessimistic locking
-```
-
-The marker is stripped before Claude sees the question. Claude then executes a 6-step protocol:
-
-- **Step 0 — Expansive Framing** — restate the question broadly; list 3+ alternative interpretations
-- **Step 1 — Initial Hypothesis** — draft answer, not a conclusion
-- **Step 2 — Source Validation** — 2+ independent sources (official docs, specs, or source code preferred); any claim with fewer than 2 sources is marked `[UNVERIFIED]`
-- **Step 3 — Counter-Argument Check** — at least one limitation or condition where the answer does not hold
-- **Step 4 — Root Cause Analysis** — recursive "why" chain (minimum 3 levels); no solution is proposed until the root cause is identified
-- **Step 5 — Final Answer** — conclusion → evidence → limitations → sources
+Blocked if the change is one of:
+- Silencing exceptions without fixing the cause
+- Adding bypass flags or conditional routing around broken logic
+- Only renaming/reformatting with no behavioral change
+- Adding an abstraction layer over broken code
+- Hardcoding values that belong in configuration or logic
+- Adding special-case branches to work around general logic failures
+- Catching exceptions to hide errors instead of fixing them
 
 ## Installation
 
@@ -57,7 +52,7 @@ Or install the full engine marketplace:
 
 ## Usage
 
-Prefix any question with `/q`, `/query`, or `/research`:
+Prefix any question with `/q`, `/query`, or `/research` to activate the research protocol:
 
 ```
 /q what is the difference between concurrency and parallelism?
@@ -65,7 +60,7 @@ Prefix any question with `/q`, `/query`, or `/research`:
 /query should I use Redis or Memcached for session storage?
 ```
 
-Without the marker, Claude answers normally (though Layer 1a and Layer 1b still apply). With the marker, Claude works through all 6 steps before giving a final answer.
+Without the marker, Claude still applies the 6-step A+C evaluation block. With the marker, the research protocol runs on top of it.
 
 ## Configuration
 
@@ -73,12 +68,10 @@ Without the marker, Claude answers normally (though Layer 1a and Layer 1b still 
 |---|---|---|
 | `RESEARCH_PERSPECTIVES` | _(empty)_ | Comma-separated list of viewpoints injected into every research request |
 
-When `RESEARCH_PERSPECTIVES` is set, Claude considers each listed perspective even without a `/q` marker. Use this to enforce multi-angle analysis on all responses.
+When `RESEARCH_PERSPECTIVES` is set, Claude considers each listed perspective even without a `/q` marker.
 
 Example `.env`:
 
 ```
 RESEARCH_PERSPECTIVES=security,performance,maintainability
 ```
-
-With this set, every Claude response considers security, performance, and maintainability implications.

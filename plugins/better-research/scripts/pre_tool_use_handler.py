@@ -1,5 +1,6 @@
 import json
 import os
+import subprocess
 import sys
 from collections.abc import Callable
 
@@ -56,14 +57,23 @@ _BLOCK_MESSAGE = (
 
 
 def _call_llm(prompt: str) -> str:
-    import anthropic
-    client = anthropic.Anthropic()
-    message = client.messages.create(
-        model="claude-haiku-4-5-20251001",
-        max_tokens=100,
-        messages=[{"role": "user", "content": prompt}],
-    )
-    return message.content[0].text
+    try:
+        result = subprocess.run(
+            [
+                "claude", "-p", prompt,
+                "--model", "claude-haiku-4-5-20251001",
+                "--tools", "",
+                "--no-session-persistence",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=25,
+        )
+    except Exception:
+        return ""
+    if result.returncode != 0:
+        return ""
+    return result.stdout.strip()
 
 
 def parse_verdict(response: str) -> tuple[str, str, str]:
@@ -115,7 +125,10 @@ def main_with_payload(payload: object, llm_fn: Callable[[str], str] | None = Non
             old_content=old_string,
             new_content=new_string,
         )
-        verdict, reason, confidence = parse_verdict(llm_fn(prompt))
+        try:
+            verdict, reason, confidence = parse_verdict(llm_fn(prompt))
+        except Exception:
+            return
 
     elif tool_name == "Write":
         file_path = tool_input.get("file_path", "")
@@ -125,7 +138,10 @@ def main_with_payload(payload: object, llm_fn: Callable[[str], str] | None = Non
         if not os.path.exists(file_path):
             return
         prompt = _WRITE_PROMPT.format(file_path=file_path, content=content)
-        verdict, reason, confidence = parse_verdict(llm_fn(prompt))
+        try:
+            verdict, reason, confidence = parse_verdict(llm_fn(prompt))
+        except Exception:
+            return
 
     else:
         return

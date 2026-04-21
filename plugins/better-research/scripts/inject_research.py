@@ -1,10 +1,4 @@
-import re
 from pathlib import Path
-
-_DESIGN_KEYWORD_RE = re.compile(
-    r'(설계|방법|접근법|구현|어떻게|전략|design|approach|architect|implement|strategy)',
-    re.IGNORECASE,
-)
 
 _ANTI_FRAME_BIAS_CONTEXT = """\
 <cognitive-debiasing>
@@ -43,10 +37,6 @@ Before responding, execute in order:
 
 def build_criterion_guided_evaluation() -> str:
     return _CRITERION_GUIDED_EVALUATION_CONTEXT
-
-
-def detect_design_keyword(prompt: str) -> bool:
-    return bool(_DESIGN_KEYWORD_RE.search(prompt))
 
 
 def load_skill_md(plugin_root: str) -> str:
