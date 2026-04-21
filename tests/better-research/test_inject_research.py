@@ -134,3 +134,45 @@ def test_detect_design_keyword_no_match():
 
 def test_detect_design_keyword_empty():
     assert ir.detect_design_keyword("") is False
+
+
+# --- build_criterion_guided_evaluation ---
+
+def test_build_criterion_guided_evaluation_is_xml_block():
+    result = ir.build_criterion_guided_evaluation()
+    assert result.startswith("<cognitive-debiasing>")
+    assert result.strip().endswith("</cognitive-debiasing>")
+
+def test_build_criterion_guided_evaluation_has_six_steps():
+    result = ir.build_criterion_guided_evaluation()
+    for i in range(1, 7):
+        assert f"{i}." in result
+
+def test_build_criterion_guided_evaluation_contains_evaluate_step():
+    result = ir.build_criterion_guided_evaluation()
+    assert "EVALUATE" in result
+    assert "PROHIBITED" in result
+    assert "fewer changes required" in result
+    assert "faster to implement" in result
+    assert "more familiar" in result
+
+def test_build_criterion_guided_evaluation_contains_declare_step():
+    result = ir.build_criterion_guided_evaluation()
+    assert "DECLARE" in result
+    assert "Root cause" in result
+    assert "hardcoding" in result
+    assert "special-casing" in result
+    assert "exception hiding" in result
+
+def test_build_criterion_guided_evaluation_contains_required_criteria():
+    result = ir.build_criterion_guided_evaluation()
+    assert "Correctness" in result
+    assert "Standard compliance" in result
+    assert "Maintainability" in result
+
+def test_build_criterion_guided_evaluation_preserves_original_four_steps():
+    result = ir.build_criterion_guided_evaluation()
+    assert "SUSPEND" in result
+    assert "ENUMERATE" in result
+    assert "MULTI-AXIS" in result
+    assert "VERIFY" in result
