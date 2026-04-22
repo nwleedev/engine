@@ -106,13 +106,15 @@ def test_no_output_when_no_raw_entries_and_no_marker(monkeypatch, tmp_path):
     assert f.getvalue() == ""
 
 
-def test_does_not_inject_cognitive_debiasing_in_userpromptsubmit(monkeypatch, tmp_path):
+def test_does_not_inject_cognitive_debiasing_in_userpromptsubmit(monkeypatch):
     monkeypatch.delenv("RESEARCH_PERSPECTIVES", raising=False)
-    monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(tmp_path))
+    monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(PLUGIN_ROOT))
     f = io.StringIO()
     with redirect_stdout(f):
-        uph.main_with_payload({"prompt": "normal question", "cwd": str(tmp_path)})
-    assert f.getvalue() == ""
+        uph.main_with_payload({"prompt": "explain /q", "cwd": "/tmp"})
+    output = json.loads(f.getvalue())
+    context = output["hookSpecificOutput"]["additionalContext"]
+    assert "<cognitive-debiasing>" not in context
 
 
 # --- main_with_payload: research marker ---
@@ -154,28 +156,23 @@ def test_perspectives_injected_even_without_marker_or_raw(monkeypatch, tmp_path)
 
 # --- main_with_payload: combined ---
 
-def test_raw_entries_and_marker_both_injected(monkeypatch):
+def test_raw_entries_and_marker_both_injected(monkeypatch, tmp_path):
     monkeypatch.delenv("RESEARCH_PERSPECTIVES", raising=False)
     monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(PLUGIN_ROOT))
-    raw = PLUGIN_ROOT.parent.parent / "tests" / "tmp_raw_test"
-    raw_md = raw / ".claude" / "feedback" / "raw.md"
-    raw_md.parent.mkdir(parents=True, exist_ok=True)
+    raw_md = tmp_path / ".claude" / "feedback" / "raw.md"
+    raw_md.parent.mkdir(parents=True)
     raw_md.write_text(
         "<!-- checkpoint: 2000-01-01T00:00:00Z -->\n\n"
         '---\nts: 2026-04-22T10:00:00Z\ntext: "observed bias"\n---\n',
         encoding="utf-8",
     )
-    try:
-        f = io.StringIO()
-        with redirect_stdout(f):
-            uph.main_with_payload({"prompt": "explain /q", "cwd": str(raw)})
-        output = json.loads(f.getvalue())
-        context = output["hookSpecificOutput"]["additionalContext"]
-        assert "observed bias" in context
-        assert "Research Protocol" in context
-    finally:
-        import shutil
-        shutil.rmtree(str(raw), ignore_errors=True)
+    f = io.StringIO()
+    with redirect_stdout(f):
+        uph.main_with_payload({"prompt": "explain /q", "cwd": str(tmp_path)})
+    output = json.loads(f.getvalue())
+    context = output["hookSpecificOutput"]["additionalContext"]
+    assert "observed bias" in context
+    assert "Research Protocol" in context
 
 
 # --- edge cases ---
