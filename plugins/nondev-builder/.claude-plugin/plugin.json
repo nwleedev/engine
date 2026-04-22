@@ -1,0 +1,10 @@
+{
+  "name": "nondev-builder",
+  "displayName": "Nondev Builder",
+  "description": "Builds professional-grade domain environments for non-development work via brainstorming-style setup, parallel web research, and independent output evaluation",
+  "version": "0.1.0",
+  "author": {
+    "name": "nwleedev"
+  },
+  "skills": "./skills/"
+}
