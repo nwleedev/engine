@@ -1,6 +1,17 @@
+import fcntl
 import json
 from datetime import date
 from pathlib import Path
+
+__all__ = [
+    "ensure_dirs",
+    "read_index",
+    "upsert_domain",
+    "read_skill",
+    "write_skill",
+    "read_rubric",
+    "write_rubric",
+]
 
 _NONDEV_DIR = ".claude/nondev"
 _COMMANDS_DIR = ".claude/commands"
@@ -35,28 +46,37 @@ def read_index(cwd: str) -> dict | None:
 
 
 def upsert_domain(cwd: str, domain_entry: dict) -> None:
+    task_name = domain_entry.get("task_name")
+    if not task_name:
+        raise ValueError(f"domain_entry missing required 'task_name' key: {domain_entry!r}")
+
     p = _index_path(cwd)
     p.parent.mkdir(parents=True, exist_ok=True)
-    if p.exists():
+    lock_path = p.with_suffix(".lock")
+    with open(lock_path, "w") as lock_file:
+        fcntl.flock(lock_file, fcntl.LOCK_EX)
         try:
-            index = json.loads(p.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            index = {"version": "1", "domains": []}
-    else:
-        index = {"version": "1", "domains": []}
+            if p.exists():
+                try:
+                    index = json.loads(p.read_text(encoding="utf-8"))
+                except (OSError, json.JSONDecodeError):
+                    index = {"version": "1", "domains": []}
+            else:
+                index = {"version": "1", "domains": []}
 
-    task_name = domain_entry["task_name"]
-    domains = index.get("domains", [])
-    for i, d in enumerate(domains):
-        if d.get("task_name") == task_name:
-            domains[i] = domain_entry
-            break
-    else:
-        domains.append(domain_entry)
+            domains = index.get("domains", [])
+            for i, d in enumerate(domains):
+                if d.get("task_name") == task_name:
+                    domains[i] = domain_entry
+                    break
+            else:
+                domains.append(domain_entry)
 
-    index["domains"] = domains
-    index["updated"] = date.today().isoformat()
-    p.write_text(json.dumps(index, ensure_ascii=False, indent=2), encoding="utf-8")
+            index["domains"] = domains
+            index["updated"] = date.today().isoformat()
+            p.write_text(json.dumps(index, ensure_ascii=False, indent=2), encoding="utf-8")
+        finally:
+            fcntl.flock(lock_file, fcntl.LOCK_UN)
 
 
 def read_skill(cwd: str, task_name: str) -> str | None:
