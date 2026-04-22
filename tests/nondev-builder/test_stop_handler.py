@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 from unittest.mock import patch
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "plugins/nondev-builder/scripts"))
 from nondev_io import read_index, upsert_domain, write_rubric
 from stop_handler import build_evaluation_prompt, main_with_payload
 
