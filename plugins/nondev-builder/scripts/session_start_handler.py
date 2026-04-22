@@ -3,7 +3,7 @@ import os
 import sys
 from pathlib import Path
 
-sys.path.insert(0, os.path.dirname(__file__))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 from nondev_io import read_index
 
 
@@ -20,7 +20,19 @@ def build_context(cwd: str) -> str:
             "No nondev domain configured. "
             "Run /nondev-setup to set up a professional domain environment."
         )
-    names = [d["task_name"] for d in domains]
+    # Validate each domain conforms to schema (enforced at write-time by upsert_domain).
+    # If corruption detected, index is unusable—treat as unconfigured.
+    names = []
+    for d in domains:
+        if not isinstance(d, dict) or not d.get("task_name"):
+            # Corruption detected: domain missing task_name or malformed.
+            # Treat entire index as corrupted.
+            return (
+                "Nondev domain index corrupted. "
+                "Run /nondev-setup to rebuild your professional domain environment."
+            )
+        names.append(d["task_name"])
+
     command_list = ", ".join(f"/{n}" for n in names)
     return (
         f"Configured nondev domains: {', '.join(names)}\n"
