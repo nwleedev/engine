@@ -24,7 +24,7 @@ def test_build_compression_prompt_includes_existing_rules():
 
 def test_build_compression_prompt_empty_rules_shows_none():
     result = cf.build_compression_prompt(["quote"], "")
-    assert "(없음)" in result
+    assert "(none)" in result
 
 
 # --- parse_rules_from_result ---
