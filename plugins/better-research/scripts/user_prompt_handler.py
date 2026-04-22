@@ -32,7 +32,7 @@ def build_raw_feedback_context(entries: list[str]) -> str:
     if not entries:
         return ""
     lines = "\n".join(f'- "{e}"' for e in entries)
-    return f"<session-feedback-observations>\n이 세션에서 관찰된 편향 패턴 (사용자가 직접 기록):\n{lines}\n</session-feedback-observations>"
+    return f"<session-feedback-observations>\nBias patterns observed this session (recorded by user)::\n{lines}\n</session-feedback-observations>"
 
 
 def main_with_payload(payload: object) -> None:

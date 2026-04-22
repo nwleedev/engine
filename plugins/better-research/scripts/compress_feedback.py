@@ -11,19 +11,19 @@ from feedback_io import load_raw_since_checkpoint, load_feedback_rules, reset_ra
 
 def build_compression_prompt(entries: list[str], existing_rules: str) -> str:
     quoted = "\n".join(f'- "{e}"' for e in entries)
-    rules_section = existing_rules.strip() if existing_rules.strip() else "(없음)"
+    rules_section = existing_rules.strip() if existing_rules.strip() else "(none)"
     return f"""\
-다음은 Claude Code 세션에서 관찰된 편향 발화 인용문들입니다:
+The following are bias utterance quotes observed in a Claude Code session:
 
 {quoted}
 
-기존 규칙:
+Existing rules:
 {rules_section}
 
-위 인용문들과 기존 규칙을 통합하여 최대 10개의 행동 규칙을 작성하세요.
-- 유사한 내용은 하나로 합칠 것
-- 관찰 날짜를 [YYYY-MM-DD] 형식으로 포함할 것
-- 반드시 JSON으로만 응답: {{"rules": ["규칙1 [날짜]", ...]}}
+Merge the quotes above with the existing rules into at most 10 behavioral rules.
+- Merge similar items into one rule
+- Include the observation date in [YYYY-MM-DD] format
+- Reply with JSON only: {{"rules": ["rule1 [date]", ...]}}
 """
 
 
