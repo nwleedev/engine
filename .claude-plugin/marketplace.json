@@ -25,6 +25,11 @@
       "name": "harness-builder",
       "description": "Generates and improves Claude Code harnesses based on tech stack, project type, and testing goals",
       "source": "./plugins/harness-builder"
+    },
+    {
+      "name": "nondev-builder",
+      "description": "Professional non-development work (market research, stock analysis, PRD writing) via brainstorming-style setup, parallel web research, and independent output evaluation",
+      "source": "./plugins/nondev-builder"
     }
   ]
 }
