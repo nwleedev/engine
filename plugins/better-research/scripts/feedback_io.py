@@ -30,7 +30,7 @@ def load_raw_since_checkpoint(cwd: str) -> list[str]:
     entries = []
     for ts, text in _ENTRY_RE.findall(content):
         if not checkpoint or ts > checkpoint:
-            entries.append(text)
+            entries.append(text.replace('\\"', '"'))
     return entries
 
 
@@ -39,9 +39,10 @@ def append_raw_entry(cwd: str, text: str) -> None:
     path = _raw_path(cwd)
     path.parent.mkdir(parents=True, exist_ok=True)
     if not path.exists():
-        path.write_text(f"<!-- checkpoint: {_utcnow_iso()} -->\n", encoding="utf-8")
+        path.write_text("<!-- checkpoint: 1970-01-01T00:00:00Z -->\n", encoding="utf-8")
     ts = _utcnow_iso()
-    entry = f'\n---\nts: {ts}\ntext: "{text}"\n---\n'
+    escaped = text.replace('"', '\\"')
+    entry = f'\n---\nts: {ts}\ntext: "{escaped}"\n---\n'
     with open(path, "a", encoding="utf-8") as f:
         f.write(entry)
 

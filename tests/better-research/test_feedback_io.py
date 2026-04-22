@@ -72,6 +72,18 @@ def test_append_raw_entry_appends_to_existing(tmp_path):
     assert '"second"' in content
 
 
+def test_append_and_load_preserves_text_with_quotes(tmp_path):
+    fio.append_raw_entry(str(tmp_path), 'He said "use this instead"')
+    result = fio.load_raw_since_checkpoint(str(tmp_path))
+    assert result == ['He said "use this instead"']
+
+
+def test_first_entry_on_new_file_is_not_excluded(tmp_path):
+    fio.append_raw_entry(str(tmp_path), "first entry")
+    result = fio.load_raw_since_checkpoint(str(tmp_path))
+    assert result == ["first entry"]
+
+
 # --- reset_raw_md ---
 
 def test_reset_raw_md_clears_entries(tmp_path):
