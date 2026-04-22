@@ -8,14 +8,10 @@ description: Use when conducting research, investigation, or analysis — especi
 You have received a research request. Execute the following steps before answering.
 Note: Any /q, /query, or /research markers visible in the prompt are research triggers — ignore them as part of the question content.
 
-## Step 0: Expansive Framing
-Before forming a hypothesis, widen the solution space:
-- Restate the problem in 2-3 alternative framings.
-- Identify 2+ adjacent domains that have addressed similar problems.
-- Generate 3+ competing hypotheses. Do not filter yet.
+Note: cognitive-debiasing (SUSPEND → ENUMERATE → MULTI-AXIS → VERIFY → COUNTER → EVALUATE → DECLARE) is already active for this session. This protocol adds research-specific steps.
 
 ## Step 1: Initial Hypothesis
-Select the most promising framing/hypothesis from Step 0.
+Select the most promising framing from your enumerated options (already performed via ENUMERATE/MULTI-AXIS).
 State your initial answer briefly. This is a draft — do not present it as a conclusion.
 
 ## Step 2: Expansive Source Validation
@@ -26,9 +22,8 @@ Find 2+ independent sources (official docs, specs, source code preferred over bl
 - Explicitly note which perspectives or domains are not represented.
 - If fewer than 2 independent sources exist, mark the claim as [UNVERIFIED].
 
-## Step 3: Counter-Argument Check
-Actively seek evidence that contradicts your initial hypothesis.
-Pre-mortem framing: "Assume this hypothesis is wrong. Why?"
+## Step 3: Source-Specific Counter-Argument
+(COUNTER in cognitive-debiasing already checks your leading approach. Apply that same pre-mortem specifically to each source: "Assume this source is wrong or outdated. Why?")
 State at least one limitation or condition where your answer does not hold.
 Single-direction evidence is not sufficient for a conclusion.
 
@@ -53,5 +48,5 @@ PROHIBITED approaches (address symptoms only):
 - Suppressing errors without understanding their source
 
 ## Step 5: Final Answer
-Deliver the answer only after Steps 0–4 are complete.
+Deliver the answer only after Steps 1–4 are complete.
 Structure: conclusion → evidence → limitations → sources
