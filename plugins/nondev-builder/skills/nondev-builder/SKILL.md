@@ -250,14 +250,19 @@ if not plugin_root:
     raise SystemExit("CLAUDE_PLUGIN_ROOT not set")
 sys.path.insert(0, os.path.join(plugin_root, "scripts"))
 from nondev_io import upsert_domain
+
+# SET THESE VARIABLES — replace each value with the computed result from Steps 1-4
+task_name    = "<task-name>"       # e.g. "market-research"
+display_name = "<display-name>"   # e.g. "Market Research"
+ko_keywords  = ["<kw1>", "<kw2>", "<kw3>", "<kw4>", "<kw5>"]
+en_keywords  = ["<kw1>", "<kw2>", "<kw3>", "<kw4>", "<kw5>"]
+# END OF VARIABLES
+
 upsert_domain(os.getcwd(), {
-    "task_name": "<task-name>",
-    "display_name": "<display-name>",
-    "command": "/<task-name>",
-    "keywords": {
-        "ko": ["<kw1>", "<kw2>", "<kw3>", "<kw4>", "<kw5>"],
-        "en": ["<kw1>", "<kw2>", "<kw3>", "<kw4>", "<kw5>"]
-    }
+    "task_name": task_name,
+    "display_name": display_name,
+    "command": f"/{task_name}",
+    "keywords": {"ko": ko_keywords, "en": en_keywords}
 })
 print("index.json updated")
 EOF
@@ -280,6 +285,8 @@ Report the three file paths and remind the user to run `/<task-name> [goal]` to 
 ---
 
 ## Sync Rules (`/nondev-sync <task-name>`)
+
+If `<task-name>` argument is absent, stop and reply: "Usage: `/nondev-sync <task-name>` — provide an existing domain name. Run `/nondev-setup` to create a new domain."
 
 Before syncing, verify `.claude/nondev/<task-name>/skill.md` exists.
 If it does not exist, stop and reply: "Domain `<task-name>` not found. Run `/nondev-setup <task-name>` first."
