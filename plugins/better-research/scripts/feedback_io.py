@@ -4,7 +4,7 @@ from pathlib import Path
 
 
 _CHECKPOINT_RE = re.compile(r'<!--\s*checkpoint:\s*(\S+)\s*-->')
-_ENTRY_RE = re.compile(r'---\nts:\s*(\S+)\ntext:\s*"(.+?)"\n---', re.DOTALL)
+_ENTRY_RE = re.compile(r'---\nts:\s*(\S+)\ntext:\s*"([^"\\]*(?:\\.[^"\\]*)*)"\n---')
 
 
 def _utcnow_iso() -> str:
