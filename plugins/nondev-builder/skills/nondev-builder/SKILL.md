@@ -59,7 +59,7 @@ If `.claude/nondev/<task-name>/skill.md` already exists:
 ## Step 3: Brainstorming loop
 
 Ask exactly **one question per turn** from this checklist. Do not proceed to the next question
-until the user answers. Do not generate artifacts until all 6 items are complete.
+until the user answers. If the user's answer covers multiple checklist items, mark all covered items complete — the one-question rule constrains what you ask, not how much the user answers. Do not generate artifacts until all 6 items are complete.
 
 Checklist (track completion internally):
 - [ ] **Work goal**: What does this task aim to achieve? (1-2 sentences)
@@ -157,10 +157,8 @@ domain_type: document
 
 ## Anti-Pattern Gate
 
-```
-<Anti-pattern 1>  →  <Corrective action>
-<Anti-pattern 2>  →  <Corrective action>
-```
+    <Anti-pattern 1>  →  <Corrective action>
+    <Anti-pattern 2>  →  <Corrective action>
 
 ## Pass Criteria
 - 0 violations: PASS
@@ -242,7 +240,30 @@ After all three files are written, update `.claude/nondev/index.json`:
 }
 ```
 
-Write this entry using the `nondev_io.py upsert_domain` function.
+Run the following Bash command to write the entry (replace placeholder values with actual computed values):
+
+```bash
+python3 - <<'EOF'
+import sys, os
+plugin_root = os.environ.get("CLAUDE_PLUGIN_ROOT", "")
+if not plugin_root:
+    raise SystemExit("CLAUDE_PLUGIN_ROOT not set")
+sys.path.insert(0, os.path.join(plugin_root, "scripts"))
+from nondev_io import upsert_domain
+upsert_domain(os.getcwd(), {
+    "task_name": "<task-name>",
+    "display_name": "<display-name>",
+    "command": "/<task-name>",
+    "keywords": {
+        "ko": ["<kw1>", "<kw2>", "<kw3>", "<kw4>", "<kw5>"],
+        "en": ["<kw1>", "<kw2>", "<kw3>", "<kw4>", "<kw5>"]
+    }
+})
+print("index.json updated")
+EOF
+```
+
+This uses the file-locking `upsert_domain` for multi-terminal safety.
 
 ---
 
@@ -259,6 +280,9 @@ Report the three file paths and remind the user to run `/<task-name> [goal]` to 
 ---
 
 ## Sync Rules (`/nondev-sync <task-name>`)
+
+Before syncing, verify `.claude/nondev/<task-name>/skill.md` exists.
+If it does not exist, stop and reply: "Domain `<task-name>` not found. Run `/nondev-setup <task-name>` first."
 
 When invoked via `/nondev-sync`:
 - **Regenerate** (via fresh web search): `## Core Framework`, `## Working Principles`, `## Good Example / Bad Example`
