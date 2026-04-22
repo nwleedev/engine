@@ -76,70 +76,106 @@ def test_strip_marker_no_double_spaces():
     assert result == "analyze this topic"
 
 
-# --- main_with_payload: D path ---
+# --- main_with_payload: raw feedback injection ---
 
-def test_d_path_injects_perspectives(monkeypatch, tmp_path):
+def test_injects_raw_entries_when_present(monkeypatch, tmp_path):
+    monkeypatch.delenv("RESEARCH_PERSPECTIVES", raising=False)
+    monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(tmp_path))
+    raw = tmp_path / ".claude" / "feedback" / "raw.md"
+    raw.parent.mkdir(parents=True)
+    raw.write_text(
+        "<!-- checkpoint: 2000-01-01T00:00:00Z -->\n\n"
+        '---\nts: 2026-04-22T10:00:00Z\ntext: "bias quote here"\n---\n',
+        encoding="utf-8",
+    )
+    f = io.StringIO()
+    with redirect_stdout(f):
+        uph.main_with_payload({"prompt": "normal question", "cwd": str(tmp_path)})
+    output = json.loads(f.getvalue())
+    context = output["hookSpecificOutput"]["additionalContext"]
+    assert "bias quote here" in context
+    assert "<session-feedback-observations>" in context
+
+
+def test_no_output_when_no_raw_entries_and_no_marker(monkeypatch, tmp_path):
+    monkeypatch.delenv("RESEARCH_PERSPECTIVES", raising=False)
+    monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(tmp_path))
+    f = io.StringIO()
+    with redirect_stdout(f):
+        uph.main_with_payload({"prompt": "normal question", "cwd": str(tmp_path)})
+    assert f.getvalue() == ""
+
+
+def test_does_not_inject_cognitive_debiasing_in_userpromptsubmit(monkeypatch, tmp_path):
+    monkeypatch.delenv("RESEARCH_PERSPECTIVES", raising=False)
+    monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(tmp_path))
+    f = io.StringIO()
+    with redirect_stdout(f):
+        uph.main_with_payload({"prompt": "normal question", "cwd": str(tmp_path)})
+    assert f.getvalue() == ""
+
+
+# --- main_with_payload: research marker ---
+
+def test_research_marker_injects_skill_without_debiasing(monkeypatch):
+    monkeypatch.delenv("RESEARCH_PERSPECTIVES", raising=False)
+    monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(PLUGIN_ROOT))
+    f = io.StringIO()
+    with redirect_stdout(f):
+        uph.main_with_payload({"prompt": "analyze /q", "cwd": "/tmp"})
+    output = json.loads(f.getvalue())
+    context = output["hookSpecificOutput"]["additionalContext"]
+    assert "Research Protocol" in context
+    assert "<cognitive-debiasing>" not in context
+
+
+def test_research_marker_missing_skill_file_no_output(monkeypatch, tmp_path):
+    monkeypatch.delenv("RESEARCH_PERSPECTIVES", raising=False)
+    monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(tmp_path))
+    f = io.StringIO()
+    with redirect_stdout(f):
+        uph.main_with_payload({"prompt": "analyze /q", "cwd": str(tmp_path)})
+    assert f.getvalue() == ""
+
+
+# --- main_with_payload: perspectives ---
+
+def test_perspectives_injected_even_without_marker_or_raw(monkeypatch, tmp_path):
     monkeypatch.setenv("RESEARCH_PERSPECTIVES", "validity,cross_check")
     monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(tmp_path))
     f = io.StringIO()
     with redirect_stdout(f):
-        uph.main_with_payload({"prompt": "normal question"})
+        uph.main_with_payload({"prompt": "normal question", "cwd": str(tmp_path)})
     output = json.loads(f.getvalue())
     context = output["hookSpecificOutput"]["additionalContext"]
     assert "validity" in context
     assert "cross_check" in context
 
-def test_default_path_injects_ac_block_when_no_perspectives(monkeypatch, tmp_path):
-    monkeypatch.setenv("RESEARCH_PERSPECTIVES", "")
-    monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(tmp_path))
-    f = io.StringIO()
-    with redirect_stdout(f):
-        uph.main_with_payload({"prompt": "normal question"})
-    output = json.loads(f.getvalue())
-    context = output["hookSpecificOutput"]["additionalContext"]
-    assert "<cognitive-debiasing>" in context
-    assert "EVALUATE" in context
-    assert "DECLARE" in context
 
+# --- main_with_payload: combined ---
 
-# --- main_with_payload: C path ---
-
-def test_c_path_injects_skill_content(monkeypatch):
+def test_raw_entries_and_marker_both_injected(monkeypatch):
     monkeypatch.delenv("RESEARCH_PERSPECTIVES", raising=False)
     monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(PLUGIN_ROOT))
-    f = io.StringIO()
-    with redirect_stdout(f):
-        uph.main_with_payload({"prompt": "analyze this /q"})
-    output = json.loads(f.getvalue())
-    context = output["hookSpecificOutput"]["additionalContext"]
-    assert "Research Protocol" in context
-    assert "Root Cause" in context
-
-def test_c_path_missing_skill_file_still_injects_ac_block(monkeypatch, tmp_path):
-    monkeypatch.delenv("RESEARCH_PERSPECTIVES", raising=False)
-    monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(tmp_path))
-    f = io.StringIO()
-    with redirect_stdout(f):
-        uph.main_with_payload({"prompt": "analyze this /q"})
-    output = json.loads(f.getvalue())
-    context = output["hookSpecificOutput"]["additionalContext"]
-    assert "<cognitive-debiasing>" in context
-    assert "Research Protocol" not in context
-
-
-# --- main_with_payload: D + C combined ---
-
-def test_d_and_c_both_inject(monkeypatch):
-    monkeypatch.setenv("RESEARCH_PERSPECTIVES", "validity,root_cause_solution")
-    monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(PLUGIN_ROOT))
-    f = io.StringIO()
-    with redirect_stdout(f):
-        uph.main_with_payload({"prompt": "why is this slow /q"})
-    output = json.loads(f.getvalue())
-    context = output["hookSpecificOutput"]["additionalContext"]
-    assert "validity" in context
-    assert "Research Protocol" in context
-    assert "\n\n---\n\n" in context
+    raw = PLUGIN_ROOT.parent.parent / "tests" / "tmp_raw_test"
+    raw_md = raw / ".claude" / "feedback" / "raw.md"
+    raw_md.parent.mkdir(parents=True, exist_ok=True)
+    raw_md.write_text(
+        "<!-- checkpoint: 2000-01-01T00:00:00Z -->\n\n"
+        '---\nts: 2026-04-22T10:00:00Z\ntext: "observed bias"\n---\n',
+        encoding="utf-8",
+    )
+    try:
+        f = io.StringIO()
+        with redirect_stdout(f):
+            uph.main_with_payload({"prompt": "explain /q", "cwd": str(raw)})
+        output = json.loads(f.getvalue())
+        context = output["hookSpecificOutput"]["additionalContext"]
+        assert "observed bias" in context
+        assert "Research Protocol" in context
+    finally:
+        import shutil
+        shutil.rmtree(str(raw), ignore_errors=True)
 
 
 # --- edge cases ---
@@ -149,54 +185,5 @@ def test_empty_prompt_no_output(monkeypatch, tmp_path):
     monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(tmp_path))
     f = io.StringIO()
     with redirect_stdout(f):
-        uph.main_with_payload({"prompt": ""})
+        uph.main_with_payload({"prompt": "", "cwd": str(tmp_path)})
     assert f.getvalue() == ""
-
-def test_marker_only_prompt_injects_ac_block(monkeypatch, tmp_path):
-    monkeypatch.delenv("RESEARCH_PERSPECTIVES", raising=False)
-    monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(tmp_path))
-    f = io.StringIO()
-    with redirect_stdout(f):
-        uph.main_with_payload({"prompt": "/q"})
-    output = json.loads(f.getvalue())
-    context = output["hookSpecificOutput"]["additionalContext"]
-    assert "<cognitive-debiasing>" in context
-    assert "EVALUATE" in context
-
-
-def test_default_path_injects_ac_block_for_any_non_research_prompt(monkeypatch, tmp_path):
-    monkeypatch.delenv("RESEARCH_PERSPECTIVES", raising=False)
-    monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(tmp_path))
-    f = io.StringIO()
-    with redirect_stdout(f):
-        uph.main_with_payload({"prompt": "what is the capital of France?"})
-    output = json.loads(f.getvalue())
-    context = output["hookSpecificOutput"]["additionalContext"]
-    assert "<cognitive-debiasing>" in context
-    assert "EVALUATE" in context
-    assert "DECLARE" in context
-
-def test_research_marker_injects_both_ac_block_and_skill(monkeypatch):
-    monkeypatch.delenv("RESEARCH_PERSPECTIVES", raising=False)
-    monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(PLUGIN_ROOT))
-    f = io.StringIO()
-    with redirect_stdout(f):
-        uph.main_with_payload({"prompt": "설계 방법을 알려줘 /q"})
-    output = json.loads(f.getvalue())
-    context = output["hookSpecificOutput"]["additionalContext"]
-    assert "<cognitive-debiasing>" in context
-    assert "EVALUATE" in context
-    assert "DECLARE" in context
-    assert "Research Protocol" in context
-    assert "\n\n---\n\n" in context
-
-def test_no_marker_prompt_injects_ac_block_without_skill(monkeypatch, tmp_path):
-    monkeypatch.delenv("RESEARCH_PERSPECTIVES", raising=False)
-    monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(tmp_path))
-    f = io.StringIO()
-    with redirect_stdout(f):
-        uph.main_with_payload({"prompt": "구현 방식 논의"})
-    output = json.loads(f.getvalue())
-    context = output["hookSpecificOutput"]["additionalContext"]
-    assert "<cognitive-debiasing>" in context
-    assert "Research Protocol" not in context
