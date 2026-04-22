@@ -1,9 +1,10 @@
 import json
 import sys
 from pathlib import Path
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
-from nondev_io import upsert_domain
+from nondev_io import upsert_domain, read_index
 from user_prompt_handler import match_domain, main_with_payload
 
 
@@ -16,17 +17,17 @@ def _make_domain(task_name: str, ko: list[str], en: list[str]) -> dict:
     }
 
 
-def test_match_korean_keyword(tmp_path):
+def test_match_korean_keyword():
     domains = [_make_domain("market-research", ["시장 규모", "경쟁사"], ["market size"])]
     assert match_domain("경쟁사 분석 해줘", domains) is not None
 
 
-def test_match_english_keyword(tmp_path):
+def test_match_english_keyword():
     domains = [_make_domain("market-research", ["시장"], ["market size", "competitor"])]
     assert match_domain("what is the market size?", domains) is not None
 
 
-def test_no_match_returns_none(tmp_path):
+def test_no_match_returns_none():
     domains = [_make_domain("market-research", ["시장"], ["market"])]
     assert match_domain("오늘 날씨가 좋네요", domains) is None
 
@@ -71,3 +72,11 @@ def test_main_with_payload_silent_on_non_dict(capsys):
     main_with_payload("not a dict")
     captured = capsys.readouterr()
     assert captured.out == ""
+
+
+def test_read_index_called_exactly_once(tmp_path):
+    upsert_domain(str(tmp_path), _make_domain("market-research", ["시장"], ["market"]))
+    upsert_domain(str(tmp_path), _make_domain("stock-analysis", ["주식"], ["stock"]))
+    with patch("user_prompt_handler.read_index", wraps=read_index) as mock_read:
+        main_with_payload({"prompt": "시장 분석", "cwd": str(tmp_path)})
+        assert mock_read.call_count == 1
