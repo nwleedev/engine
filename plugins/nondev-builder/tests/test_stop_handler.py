@@ -50,6 +50,19 @@ def test_silent_when_no_rubrics(tmp_path, capsys):
     assert capsys.readouterr().out == ""
 
 
+def test_silent_when_domains_list_empty(tmp_path, capsys):
+    # Write index.json with empty domains list
+    import json as _json
+    index_path = tmp_path / ".claude" / "nondev"
+    index_path.mkdir(parents=True)
+    (index_path / "index.json").write_text(
+        _json.dumps({"version": "1", "updated": "2026-04-22", "domains": []}),
+        encoding="utf-8",
+    )
+    main_with_payload({"cwd": str(tmp_path)})
+    assert capsys.readouterr().out == ""
+
+
 def test_emits_json_when_rubric_present(tmp_path, capsys):
     upsert_domain(str(tmp_path), _make_domain("market-research"))
     write_rubric(str(tmp_path), "market-research", "# Rubric\n## Violation Criteria\n| id | Type |")
