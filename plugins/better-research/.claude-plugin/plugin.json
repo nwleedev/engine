@@ -2,9 +2,10 @@
   "name": "better-research",
   "displayName": "Better Research",
   "description": "Enforces cross-validation, root cause analysis, and multi-perspective research quality in Claude Code sessions",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "author": {
     "name": "nwleedev"
   },
-  "skills": "./skills/"
+  "skills": "./skills/",
+  "commands": "./commands/"
 }
