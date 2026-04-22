@@ -1,42 +1,23 @@
 from pathlib import Path
 
-_ANTI_FRAME_BIAS_CONTEXT = """\
+
+_CORE_DEBIASING_CONTEXT = """\
 <cognitive-debiasing>
 Before responding, execute in order:
-1. SUSPEND: Declare any prior-session assumptions influencing this response, then bracket them.
-2. ENUMERATE: List ALL available primitives/components in this domain before filtering.
+1. SUSPEND: Bracket any prior assumptions influencing this response.
+2. ENUMERATE: List ALL available options before filtering any out.
 3. MULTI-AXIS: Identify 2+ solution axes (not just "how" — also "when", "who", "what triggers").
-4. VERIFY: Do your options cover the full primitive list? If not, reconstruct.
+4. VERIFY: Do your options cover the full option space?
+5. COUNTER: Assume your leading approach is wrong. State at least one reason why.
+   Adjust or explicitly confirm after examining the objection.
+6. EVALUATE: Select using ONLY correctness, standard compliance, and maintainability.
+   Prohibited criteria: fewer changes / faster / more familiar / lower risk to you.
+7. DECLARE: Root cause in one sentence. Confirm this is structural, not symptomatic.
 </cognitive-debiasing>"""
 
 
-def build_anti_frame_bias_context() -> str:
-    return _ANTI_FRAME_BIAS_CONTEXT
-
-
-_CRITERION_GUIDED_EVALUATION_CONTEXT = """\
-<cognitive-debiasing>
-Before responding, execute in order:
-1. SUSPEND: Declare any prior-session assumptions influencing this response, then bracket them.
-2. ENUMERATE: List ALL available primitives/components in this domain before filtering.
-3. MULTI-AXIS: Identify 2+ solution axes (not just "how" — also "when", "who", "what triggers").
-4. VERIFY: Do your options cover the full primitive list? If not, reconstruct.
-5. EVALUATE: Select from enumerated options using ONLY these criteria:
-   - Correctness: does it solve the root cause, not the symptom?
-   - Standard compliance: does it follow current (non-deprecated) practices?
-   - Maintainability: how many places change when requirements shift?
-   PROHIBITED selection criteria: fewer changes required / faster to implement / more familiar
-6. DECLARE (before any implementation):
-   - Root cause being addressed: [one sentence, identify the fault location]
-   - Structural fix: [what changes at the design level, not the symptom level]
-   - Why this is not symptomatic: [rule out hardcoding, special-casing, exception hiding]
-   - Required criterion: [correctness | standard | maintainability]
-   - Confirm: none of the PROHIBITED criteria influenced this selection
-</cognitive-debiasing>"""
-
-
-def build_criterion_guided_evaluation() -> str:
-    return _CRITERION_GUIDED_EVALUATION_CONTEXT
+def build_core_debiasing() -> str:
+    return _CORE_DEBIASING_CONTEXT
 
 
 def load_skill_md(plugin_root: str) -> str:

@@ -74,64 +74,40 @@ def test_assemble_context_all_empty_returns_empty():
     assert ir.assemble_context(["", "", ""]) == ""
 
 
-# --- build_anti_frame_bias_context ---
+# --- build_core_debiasing ---
 
-def test_build_anti_frame_bias_context_is_xml_block():
-    result = ir.build_anti_frame_bias_context()
+def test_build_core_debiasing_is_xml_block():
+    result = ir.build_core_debiasing()
     assert result.startswith("<cognitive-debiasing>")
     assert result.strip().endswith("</cognitive-debiasing>")
 
-def test_build_anti_frame_bias_context_contains_four_steps():
-    result = ir.build_anti_frame_bias_context()
-    assert "SUSPEND" in result
-    assert "ENUMERATE" in result
-    assert "MULTI-AXIS" in result
-    assert "VERIFY" in result
 
-def test_build_anti_frame_bias_context_has_four_numbered_steps():
-    result = ir.build_anti_frame_bias_context()
-    for i in range(1, 5):
-        assert f"{i}." in result
-
-
-# --- build_criterion_guided_evaluation ---
-
-def test_build_criterion_guided_evaluation_is_xml_block():
-    result = ir.build_criterion_guided_evaluation()
-    assert result.startswith("<cognitive-debiasing>")
-    assert result.strip().endswith("</cognitive-debiasing>")
-
-def test_build_criterion_guided_evaluation_has_six_steps():
+def test_build_core_debiasing_has_seven_steps():
     import re
-    result = ir.build_criterion_guided_evaluation()
-    step_labels = re.findall(r'^\d+\.', result, re.MULTILINE)
-    assert len(step_labels) == 6
+    result = ir.build_core_debiasing()
+    steps = re.findall(r'^\d+\.', result, re.MULTILINE)
+    assert len(steps) == 7
 
-def test_build_criterion_guided_evaluation_contains_evaluate_step():
-    result = ir.build_criterion_guided_evaluation()
-    assert "EVALUATE" in result
-    assert "PROHIBITED" in result
-    assert "fewer changes required" in result
-    assert "faster to implement" in result
-    assert "more familiar" in result
 
-def test_build_criterion_guided_evaluation_contains_declare_step():
-    result = ir.build_criterion_guided_evaluation()
-    assert "DECLARE" in result
-    assert "Root cause" in result
-    assert "hardcoding" in result
-    assert "special-casing" in result
-    assert "exception hiding" in result
+def test_build_core_debiasing_contains_all_step_names():
+    result = ir.build_core_debiasing()
+    for name in ("SUSPEND", "ENUMERATE", "MULTI-AXIS", "VERIFY", "COUNTER", "EVALUATE", "DECLARE"):
+        assert name in result
 
-def test_build_criterion_guided_evaluation_contains_required_criteria():
-    result = ir.build_criterion_guided_evaluation()
-    assert "Correctness" in result
-    assert "Standard compliance" in result
-    assert "Maintainability" in result
 
-def test_build_criterion_guided_evaluation_preserves_original_four_steps():
-    result = ir.build_criterion_guided_evaluation()
-    assert "SUSPEND" in result
-    assert "ENUMERATE" in result
-    assert "MULTI-AXIS" in result
-    assert "VERIFY" in result
+def test_build_core_debiasing_contains_counter_step():
+    result = ir.build_core_debiasing()
+    assert "COUNTER" in result
+    assert "wrong" in result.lower()
+
+
+def test_build_core_debiasing_contains_prohibited_criteria():
+    result = ir.build_core_debiasing()
+    assert "Prohibited" in result
+    assert "faster" in result
+    assert "familiar" in result
+
+
+def test_build_core_debiasing_english_only():
+    result = ir.build_core_debiasing()
+    assert not any('가' <= c <= '힣' for c in result)
