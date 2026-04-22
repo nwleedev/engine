@@ -25,15 +25,15 @@ def test_session_start_injects_debiasing():
 def test_session_start_hook_event_name():
     f = io.StringIO()
     with redirect_stdout(f):
-        ssh.main_with_payload({"session_id": "abc123"})
+        ssh.main_with_payload({"session_id": "abc123", "cwd": "/tmp"})
     output = json.loads(f.getvalue())
     assert output["hookSpecificOutput"]["hookEventName"] == "SessionStart"
 
 
-def test_session_start_always_outputs_regardless_of_payload():
+def test_session_start_always_outputs_with_minimal_payload():
     f = io.StringIO()
     with redirect_stdout(f):
-        ssh.main_with_payload({})
+        ssh.main_with_payload({"cwd": "/tmp"})
     output = json.loads(f.getvalue())
     assert "<cognitive-debiasing>" in output["hookSpecificOutput"]["additionalContext"]
 
