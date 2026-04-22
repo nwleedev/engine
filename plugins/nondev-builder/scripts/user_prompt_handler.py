@@ -1,0 +1,65 @@
+import json
+import os
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from nondev_io import read_index
+
+
+def match_domain(prompt: str, domains: list[dict]) -> dict | None:
+    prompt_lower = prompt.lower()
+    for domain in domains:
+        keywords = domain.get("keywords", {})
+        for kw in keywords.get("ko", []):
+            if kw.lower() in prompt_lower:
+                return domain
+        for kw in keywords.get("en", []):
+            if kw.lower() in prompt_lower:
+                return domain
+    return None
+
+
+def main_with_payload(payload: object) -> None:
+    if not isinstance(payload, dict):
+        return
+    prompt = payload.get("prompt", "")
+    if not prompt:
+        return
+    cwd = payload.get("cwd") or os.getcwd()
+    index = read_index(cwd)
+    if not index:
+        return
+    domains = index.get("domains", [])
+    if not domains:
+        return
+    matched = match_domain(prompt, domains)
+    if not matched:
+        return
+    task_name = matched.get("task_name", "")
+    if not task_name:
+        return
+    command = matched.get("command", f"/{task_name}")
+    context = (
+        f"[{task_name} domain detected] "
+        f"Run {command} [goal] for parallel research + independent evaluation."
+    )
+    output = {
+        "hookSpecificOutput": {
+            "hookEventName": "UserPromptSubmit",
+            "additionalContext": context,
+        }
+    }
+    print(json.dumps(output, ensure_ascii=False))
+
+
+def main() -> None:
+    try:
+        payload = json.loads(sys.stdin.read())
+    except json.JSONDecodeError:
+        return
+    main_with_payload(payload)
+
+
+if __name__ == "__main__":
+    main()
