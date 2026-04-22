@@ -84,6 +84,12 @@ def test_first_entry_on_new_file_is_not_excluded(tmp_path):
     assert result == ["first entry"]
 
 
+def test_append_raw_entry_ignores_empty_text(tmp_path):
+    fio.append_raw_entry(str(tmp_path), "")
+    result = fio.load_raw_since_checkpoint(str(tmp_path))
+    assert result == []
+
+
 # --- reset_raw_md ---
 
 def test_reset_raw_md_clears_entries(tmp_path):

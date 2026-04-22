@@ -36,6 +36,8 @@ def load_raw_since_checkpoint(cwd: str) -> list[str]:
 
 def append_raw_entry(cwd: str, text: str) -> None:
     """Append a new entry to raw.md. Create the file with a checkpoint header if absent."""
+    if not text:
+        return
     path = _raw_path(cwd)
     path.parent.mkdir(parents=True, exist_ok=True)
     if not path.exists():
