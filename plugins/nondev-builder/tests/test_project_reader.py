@@ -35,7 +35,7 @@ def test_missing_readme_still_reads_claude_md(tmp_path):
 def test_truncates_large_readme(tmp_path):
     (tmp_path / "README.md").write_text("A" * 5000)
     result = read_project_files(str(tmp_path))
-    assert len(result) < 5000
+    assert len(result) <= 2000 + len("## README.md\n")
 
 
 def test_git_log_included_when_git_repo(tmp_path):
@@ -62,3 +62,4 @@ def test_non_git_dir_skips_git_log(tmp_path):
     (tmp_path / "README.md").write_text("# Test")
     result = read_project_files(str(tmp_path))
     assert "README.md" in result
+    assert "Recent git commits" not in result

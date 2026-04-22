@@ -34,6 +34,7 @@ def read_project_files(cwd: str) -> str:
     root = Path(cwd)
     parts: list[str] = []
 
+    # Empty files are omitted (empty string is falsy — no LLM context to provide)
     readme = _read_file(root / "README.md")
     if readme:
         parts.append(f"## README.md\n{readme}")
