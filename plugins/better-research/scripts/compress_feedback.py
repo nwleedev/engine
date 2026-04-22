@@ -37,9 +37,9 @@ def parse_rules_from_result(result_text: str) -> list[str] | None:
         try:
             obj, _ = json.JSONDecoder().raw_decode(result_text[start:])
             rules = obj.get("rules")
-            if isinstance(rules, list):
+            if isinstance(rules, list) and all(isinstance(r, str) for r in rules):
                 return rules
-            return None
+            pos = start + 1
         except json.JSONDecodeError:
             pos = start + 1
 
@@ -76,6 +76,8 @@ def run_compression(cwd: str) -> None:
         result_text = outer.get("result", "")
         rules = parse_rules_from_result(result_text)
         if rules is None:
+            return
+        if not rules:
             return
         write_rules_md(cwd, rules, source_count=len(entries))
         reset_raw_md(cwd)

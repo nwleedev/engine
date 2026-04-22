@@ -1,8 +1,10 @@
 import sys
+import importlib.util
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
 SCRIPTS_DIR = Path(__file__).parent.parent.parent / "plugins/better-research/scripts"
+HOOKS_DIR = Path(__file__).parent.parent.parent / "plugins/better-research/hooks"
 sys.path.insert(0, str(SCRIPTS_DIR))
 import compress_feedback as cf
 
@@ -113,3 +115,51 @@ def test_run_compression_leaves_raw_unchanged_on_claude_failure(tmp_path):
     with patch("subprocess.run", return_value=mock_result):
         cf.run_compression(str(tmp_path))
     assert raw.read_text(encoding="utf-8") == original
+
+
+# --- parse_rules_from_result: additional cases ---
+
+def test_parse_rules_continues_past_non_rules_json():
+    raw = '{"type": "thinking"}\n{"rules": ["the rule"]}'
+    result = cf.parse_rules_from_result(raw)
+    assert result == ["the rule"]
+
+
+def test_parse_rules_rejects_non_string_items():
+    raw = '{"rules": [1, 2, 3]}'
+    result = cf.parse_rules_from_result(raw)
+    assert result is None
+
+
+def test_run_compression_skips_write_on_empty_rules_list(tmp_path):
+    raw = tmp_path / ".claude" / "feedback" / "raw.md"
+    raw.parent.mkdir(parents=True)
+    original = (
+        "<!-- checkpoint: 2000-01-01T00:00:00Z -->\n\n"
+        '---\nts: 2026-04-22T10:00:00Z\ntext: "quote"\n---\n'
+    )
+    raw.write_text(original, encoding="utf-8")
+    mock_result = MagicMock()
+    mock_result.returncode = 0
+    mock_result.stdout = '{"result": "{\\"rules\\": []}"}'
+    with patch("subprocess.run", return_value=mock_result):
+        cf.run_compression(str(tmp_path))
+    assert raw.read_text(encoding="utf-8") == original
+    assert not (tmp_path / ".claude" / "feedback" / "rules.md").exists()
+
+
+# --- stop_hook: CLAUDE_WRITING_CONTEXT guard ---
+
+def test_stop_hook_exits_when_writing_context_set(monkeypatch):
+    monkeypatch.setenv("CLAUDE_WRITING_CONTEXT", "1")
+    sys.path.insert(0, str(HOOKS_DIR))
+    try:
+        import importlib
+        import stop_hook
+        importlib.reload(stop_hook)
+        import pytest
+        with pytest.raises(SystemExit) as exc_info:
+            stop_hook.main()
+        assert exc_info.value.code == 0
+    finally:
+        sys.path.remove(str(HOOKS_DIR))
