@@ -20,6 +20,15 @@
             "timeout": 15
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/inject_insight.py",
+            "timeout": 10
+          }
+        ]
       }
     ],
     "PreToolUse": [
