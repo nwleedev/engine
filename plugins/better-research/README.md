@@ -75,3 +75,25 @@ Example `.env`:
 ```
 RESEARCH_PERSPECTIVES=security,performance,maintainability
 ```
+
+## Commands
+
+### /antivague
+
+Re-examines the last response for text abbreviation patterns and rewrites vague passages in detail.
+
+```
+/antivague
+/antivague "the paragraph that mentioned 'several approaches' without specifics"
+```
+
+- No argument: re-examines the entire previous response
+- With argument: limits scope to the quoted text
+
+Detected patterns:
+- Vague enumeration: "there are several ways" without listing them
+- Unsupported claims: principles stated with no code, numbers, or examples
+- Skipped steps: procedure explained with intermediate steps missing
+- Decontextualised conclusions: final statements without supporting reasoning
+
+After rewriting, the pattern is recorded in `.claude/feedback/raw.md` and applied from the next session onward.
