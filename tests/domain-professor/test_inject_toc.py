@@ -88,3 +88,17 @@ def test_main_silent_when_no_textbooks(tmp_path):
          mock.patch("inject_toc.find_project_root", return_value=str(tmp_path)):
         it.main()
     assert captured.getvalue().strip() == ""
+
+
+def test_main_clears_professor_flag_on_session_start(tmp_path):
+    flag = tmp_path / ".claude" / "sessions" / "sess-new" / ".professor-active"
+    flag.parent.mkdir(parents=True)
+    flag.touch()
+    assert flag.exists()
+
+    payload = json.dumps({"session_id": "sess-new", "cwd": str(tmp_path)})
+    with mock.patch("sys.stdin", io.StringIO(payload)), \
+         mock.patch("inject_toc.find_project_root", return_value=str(tmp_path)):
+        it.main()
+
+    assert not flag.exists(), "SessionStart must clear the professor-active flag"

@@ -4,6 +4,9 @@ import subprocess
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).parent))
+from session_state import get_flag_path, deactivate, get_textbooks_dir
+
 
 def find_project_root(cwd: str) -> str:
     try:
@@ -66,7 +69,12 @@ def main():
     if not cwd:
         return
     project_root = find_project_root(cwd)
-    textbooks_dir = Path(project_root) / ".claude" / "textbooks"
+
+    flag = get_flag_path(payload, project_root)
+    if flag is not None:
+        deactivate(flag)
+
+    textbooks_dir = get_textbooks_dir(project_root)
     context = build_toc_context(textbooks_dir)
     if not context:
         return
