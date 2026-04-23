@@ -4,12 +4,13 @@ Generates structured learning materials for any domain. Run `/teach` to create a
 
 ## How it works
 
-domain-professor runs two hooks and registers two commands:
+domain-professor runs three hooks and registers three commands:
 
 | Hook | When it fires | What it does |
 |---|---|---|
-| `SessionStart` | Every session open | Scans recent session summaries for unfamiliar domain terms and reports them |
-| `Stop` | Every session end | Detects domains encountered during the session |
+| `SessionStart` | Every session open | Clears the professor flag and injects the textbook table of contents |
+| `UserPromptSubmit` | Every user prompt (when active) | Injects professor SKILL.md into context to keep learning mode alive |
+| `Stop` | Every session end | Detects domains from the transcript and generates textbook files |
 
 Textbooks are created under `.claude/textbooks/<domain>/`:
 
@@ -40,24 +41,34 @@ Or install the full engine marketplace:
 
 ## Usage
 
-### /teach
+### /toggle
+
+Activates or deactivates professor mode for the current session.
 
 ```
-/teach <domain>
-/teach <domain> <concept>
+/domain-professor:toggle
+```
+
+- When **active**: every prompt injects the professor role so Claude continuously teaches while you work.
+- When **inactive**: professor mode is off; the Stop hook still runs but skips textbook generation.
+
+### /teach
+
+Executes a free-form task in professor mode and generates textbook files for all domains encountered.
+
+```
+/teach <any task description>
 ```
 
 Examples:
 
 ```
-/teach kubernetes
-/teach kubernetes pod scheduling
-/teach react server components
+/teach explain how kubernetes pod scheduling works
+/teach help me write a React hook for debounced input
+/teach what is options pricing in finance?
 ```
 
-- If the textbook does not exist: creates `01-overview/what-is-<domain>.md` and `INDEX.md`.
-- If the textbook exists but no concept is given: reviews existing coverage and suggests the next stage.
-- If a concept is given: creates the concept file at the appropriate stage. If it already exists, suggests `/teach-more`.
+Identifies the domain(s), executes the task, and creates or updates files under `.claude/textbooks/<domain>/`.
 
 ### /teach-more
 
@@ -78,11 +89,9 @@ Creates a subfolder with 3–5 detail concept files and appends a "Further Readi
 | Variable | Default | Description |
 |---|---|---|
 | `DOMAIN_PROFESSOR_LANGUAGE` | `English` | Language for generated textbook content |
-| `DOMAIN_PROFESSOR_DOMAINS` | _(empty)_ | Comma-separated list of domains to auto-detect. When empty, all encountered domains are candidates |
 
 Example `.env`:
 
 ```
 DOMAIN_PROFESSOR_LANGUAGE=Korean
-DOMAIN_PROFESSOR_DOMAINS=kubernetes,react,fastapi
 ```
