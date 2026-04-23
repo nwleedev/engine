@@ -1,7 +1,11 @@
 import json
 import os
 import subprocess
+import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent))
+from session_state import _TRANSCRIPT_WINDOW, _TRANSCRIPT_MAX_CHARS
 
 
 def extract_text(content) -> str:
@@ -41,31 +45,16 @@ def parse_transcript(path: str) -> list[dict]:
     return messages
 
 
-def get_user_domains() -> list[str]:
-    raw = os.environ.get("DOMAIN_PROFESSOR_DOMAINS", "").strip()
-    if not raw:
+def detect_domains_free_form(messages: list[dict]) -> list[str]:
+    if not messages:
         return []
-    try:
-        parsed = json.loads(raw)
-        if isinstance(parsed, list):
-            return [str(d).strip() for d in parsed if str(d).strip()]
-    except json.JSONDecodeError:
-        pass
-    return [d.strip() for d in raw.split(",") if d.strip()]
-
-
-def detect_domains_with_llm(messages: list[dict], domains: list[str]) -> list[str]:
-    if not domains or not messages:
-        return []
-    text_parts = [m.get("text", "") for m in messages[-20:]]
-    transcript_sample = "\n".join(text_parts)[:4000]
+    text_parts = [m.get("text", "") for m in messages[-_TRANSCRIPT_WINDOW:]]
+    transcript_sample = "\n".join(text_parts)[:_TRANSCRIPT_MAX_CHARS]
     prompt = (
-        "Read the following conversation transcript and return a JSON array containing only "
-        "the domains from the list below that were substantively discussed.\n\n"
-        f"Domain list: {json.dumps(domains, ensure_ascii=False)}\n\n"
+        "Read the following conversation and return a JSON array of domains "
+        "that were substantively worked on (e.g. kubernetes, finance, rust, pine-script).\n\n"
         f"Transcript:\n{transcript_sample}\n\n"
-        "Include only domains that were actively worked on, not just briefly mentioned.\n"
-        "Output ONLY a JSON array like [\"domain1\", \"domain2\"]. No other text."
+        "Output ONLY a JSON array. No other text."
     )
     env = {**os.environ, "CLAUDE_WRITING_CONTEXT": "1"}
     try:
@@ -83,15 +72,7 @@ def detect_domains_with_llm(messages: list[dict], domains: list[str]) -> list[st
         result_text = data.get("result", "").strip()
         detected = json.loads(result_text)
         if isinstance(detected, list):
-            return [d for d in detected if d in domains]
+            return [str(d).strip() for d in detected if str(d).strip()]
     except Exception:
         pass
     return []
-
-
-def detect_domains_from_transcript(transcript_path: str) -> list[str]:
-    domains = get_user_domains()
-    if not domains:
-        return []
-    messages = parse_transcript(transcript_path)
-    return detect_domains_with_llm(messages, domains)

@@ -32,97 +32,52 @@ def test_parse_transcript_extracts_messages():
 
 
 def test_parse_transcript_missing_file():
-    messages = dd.parse_transcript("/nonexistent/path.jsonl")
-    assert messages == []
+    assert dd.parse_transcript("/nonexistent/path.jsonl") == []
 
 
-def test_get_user_domains_comma_separated():
-    with mock.patch.dict("os.environ", {"DOMAIN_PROFESSOR_DOMAINS": "kubernetes,finance,market-research"}):
-        domains = dd.get_user_domains()
-    assert domains == ["kubernetes", "finance", "market-research"]
-
-
-def test_get_user_domains_json_array():
-    raw = json.dumps(["kubernetes", "docker", "finance"])
-    with mock.patch.dict("os.environ", {"DOMAIN_PROFESSOR_DOMAINS": raw}):
-        domains = dd.get_user_domains()
-    assert domains == ["kubernetes", "docker", "finance"]
-
-
-def test_get_user_domains_empty():
-    with mock.patch.dict("os.environ", {}, clear=True):
-        domains = dd.get_user_domains()
-    assert domains == []
-
-
-def test_get_user_domains_strips_whitespace():
-    with mock.patch.dict("os.environ", {"DOMAIN_PROFESSOR_DOMAINS": " kubernetes , finance "}):
-        domains = dd.get_user_domains()
-    assert domains == ["kubernetes", "finance"]
-
-
-def test_detect_domains_with_llm_returns_filtered_domains():
-    messages = [{"role": "user", "text": "kubernetes pod 배포 방법을 알아보자"}]
-    domains = ["kubernetes", "finance"]
+def test_detect_domains_free_form_returns_list():
+    messages = [{"role": "user", "text": "kubernetes pod를 배포하고 싶어"}]
     llm_result = json.dumps(["kubernetes"])
     fake_output = json.dumps({"result": llm_result})
     fake_proc = mock.MagicMock()
     fake_proc.returncode = 0
     fake_proc.stdout = fake_output
     with mock.patch("subprocess.run", return_value=fake_proc):
-        result = dd.detect_domains_with_llm(messages, domains)
+        result = dd.detect_domains_free_form(messages)
     assert result == ["kubernetes"]
 
 
-def test_detect_domains_with_llm_filters_invalid_domains():
+def test_detect_domains_free_form_empty_messages():
+    assert dd.detect_domains_free_form([]) == []
+
+
+def test_detect_domains_free_form_subprocess_failure():
     messages = [{"role": "user", "text": "some text"}]
-    domains = ["kubernetes"]
-    # LLM returns a domain not in user's list
-    llm_result = json.dumps(["docker"])
-    fake_output = json.dumps({"result": llm_result})
-    fake_proc = mock.MagicMock()
-    fake_proc.returncode = 0
-    fake_proc.stdout = fake_output
-    with mock.patch("subprocess.run", return_value=fake_proc):
-        result = dd.detect_domains_with_llm(messages, domains)
-    assert result == []
-
-
-def test_detect_domains_with_llm_empty_messages():
-    result = dd.detect_domains_with_llm([], ["kubernetes"])
-    assert result == []
-
-
-def test_detect_domains_with_llm_no_domains():
-    messages = [{"role": "user", "text": "kubernetes pod"}]
-    result = dd.detect_domains_with_llm(messages, [])
-    assert result == []
-
-
-def test_detect_domains_with_llm_subprocess_failure():
-    messages = [{"role": "user", "text": "kubernetes pod"}]
     fake_proc = mock.MagicMock()
     fake_proc.returncode = 1
     with mock.patch("subprocess.run", return_value=fake_proc):
-        result = dd.detect_domains_with_llm(messages, ["kubernetes"])
-    assert result == []
+        assert dd.detect_domains_free_form(messages) == []
 
 
-def test_detect_domains_from_transcript_no_env():
-    with mock.patch.dict("os.environ", {}, clear=True):
-        result = dd.detect_domains_from_transcript("/any/path.jsonl")
-    assert result == []
-
-
-def test_detect_domains_from_transcript_with_env():
-    transcript = str(FIXTURES_DIR / "sample_transcript.jsonl")
-    llm_result = json.dumps(["kubernetes"])
-    fake_output = json.dumps({"result": llm_result})
+def test_detect_domains_free_form_invalid_json_result():
+    messages = [{"role": "user", "text": "some text"}]
+    fake_output = json.dumps({"result": "not valid json"})
     fake_proc = mock.MagicMock()
     fake_proc.returncode = 0
     fake_proc.stdout = fake_output
-    env = {"DOMAIN_PROFESSOR_DOMAINS": "kubernetes,finance"}
-    with mock.patch.dict("os.environ", env):
-        with mock.patch("subprocess.run", return_value=fake_proc):
-            result = dd.detect_domains_from_transcript(transcript)
-    assert "kubernetes" in result
+    with mock.patch("subprocess.run", return_value=fake_proc):
+        assert dd.detect_domains_free_form(messages) == []
+
+
+def test_detect_domains_free_form_truncates_window():
+    # 25 messages supplied; only the last 20 should appear in the prompt
+    messages = [{"role": "user", "text": f"msg {i}"} for i in range(25)]
+    fake_output = json.dumps({"result": "[]"})
+    fake_proc = mock.MagicMock()
+    fake_proc.returncode = 0
+    fake_proc.stdout = fake_output
+    with mock.patch("subprocess.run", return_value=fake_proc) as m:
+        dd.detect_domains_free_form(messages)
+    prompt_sent = m.call_args.kwargs.get("input", m.call_args[1].get("input", ""))
+    assert "msg 4" not in prompt_sent   # first 5 messages dropped
+    assert "msg 24" in prompt_sent      # last message included
