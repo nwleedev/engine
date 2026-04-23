@@ -86,7 +86,8 @@ def test_inject_outputs_valid_json(tmp_path):
     payload = json.dumps({"cwd": str(tmp_path), "session_id": "abc"})
     captured = io.StringIO()
     with mock.patch("sys.stdin", io.StringIO(payload)), \
-         mock.patch("sys.stdout", captured):
+         mock.patch("sys.stdout", captured), \
+         mock.patch("inject_insight.hw.find_project_root", return_value=str(tmp_path)):
         ii.main()
 
     out = json.loads(captured.getvalue())
