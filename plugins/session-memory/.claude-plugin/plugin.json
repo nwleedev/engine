@@ -2,7 +2,7 @@
   "name": "session-memory",
   "displayName": "Session Memory",
   "description": "Generates and injects session context narrations via hooks",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "author": {
     "name": "nwleedev"
   }
