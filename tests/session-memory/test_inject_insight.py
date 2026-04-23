@@ -69,6 +69,12 @@ def test_resolve_cwd_from_env():
         assert ii.resolve_cwd({}) == "/env/proj"
 
 
+def test_resolve_cwd_from_pwd():
+    # CLAUDE_PROJECT_DIR must be absent for PWD fallback to be reached
+    with mock.patch.dict(os.environ, {"PWD": "/pwd/proj"}, clear=True):
+        assert ii.resolve_cwd({}) == "/pwd/proj"
+
+
 def test_resolve_cwd_returns_empty_on_bad_payload():
     assert ii.resolve_cwd("not-a-dict") == ""
 
