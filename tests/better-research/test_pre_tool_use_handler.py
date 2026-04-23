@@ -203,6 +203,45 @@ def test_write_empty_content_skips_llm_call(tmp_path):
     assert called == []
 
 
+# --- NOT superficial prompt guidance ---
+
+def test_edit_prompt_includes_not_superficial_guidance():
+    captured = []
+    def fake_llm(prompt):
+        captured.append(prompt)
+        return "VERDICT: structural\nREASON: ok\nCONFIDENCE: high"
+    f = io.StringIO()
+    with redirect_stdout(f):
+        pth.main_with_payload({
+            "tool_name": "Edit",
+            "tool_input": {
+                "file_path": "commands/feedback.md",
+                "old_string": "<!-- checkpoint: <current UTC ISO8601> -->",
+                "new_string": "<!-- checkpoint: 1970-01-01T00:00:00Z -->",
+            }
+        }, llm_fn=fake_llm)
+    assert len(captured) == 1
+    assert "NOT superficial" in captured[0]
+    assert "sentinel value" in captured[0]
+
+def test_write_prompt_includes_not_superficial_guidance(tmp_path):
+    existing = tmp_path / "config.md"
+    existing.write_text("old content", encoding="utf-8")
+    captured = []
+    def fake_llm(prompt):
+        captured.append(prompt)
+        return "VERDICT: structural\nREASON: ok\nCONFIDENCE: high"
+    f = io.StringIO()
+    with redirect_stdout(f):
+        pth.main_with_payload({
+            "tool_name": "Write",
+            "tool_input": {"file_path": str(existing), "content": "new content"}
+        }, llm_fn=fake_llm)
+    assert len(captured) == 1
+    assert "NOT superficial" in captured[0]
+    assert "sentinel value" in captured[0]
+
+
 # --- edge cases ---
 
 def test_non_dict_payload_produces_no_output():

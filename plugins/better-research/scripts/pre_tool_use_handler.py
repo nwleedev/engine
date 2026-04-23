@@ -16,6 +16,12 @@ SUPERFICIAL changes (mask symptoms without fixing root cause):
 - Adding special-case branches to work around general logic failures
 - Catching exceptions to hide errors instead of fixing them
 
+NOT superficial (do not flag these):
+- Changing documentation text, placeholder descriptions, or instruction wording
+- Using a sentinel value (e.g., epoch timestamp, empty string, zero) as an explicit boundary marker
+- Updating a configuration value between two valid options
+- Fixing a typo or wording with no behavioral change intended
+
 File: {file_path}
 Before:
 {old_content}
@@ -39,6 +45,12 @@ SUPERFICIAL changes (mask symptoms without fixing root cause):
 - Hardcoding values that belong in configuration or logic
 - Adding special-case branches to work around general logic failures
 - Catching exceptions to hide errors instead of fixing them
+
+NOT superficial (do not flag these):
+- Changing documentation text, placeholder descriptions, or instruction wording
+- Using a sentinel value (e.g., epoch timestamp, empty string, zero) as an explicit boundary marker
+- Updating a configuration value between two valid options
+- Fixing a typo or wording with no behavioral change intended
 
 File: {file_path}
 Content:
