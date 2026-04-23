@@ -367,6 +367,20 @@ def append_insights_to_project(cwd, insights, session_id):
         _debug(f"append_insights_to_project failed: {e}")
 
 
+def load_recent_insights(cwd: str, max_entries: int = 20) -> str:
+    """Return the last max_entries insight blocks from INSIGHT.md."""
+    path = Path(cwd) / ".claude" / "INSIGHT.md"
+    if not path.exists():
+        return ""
+    try:
+        content = path.read_text(encoding="utf-8")
+        entries = [e.strip() for e in content.split("\n---\n") if e.strip()]
+        recent = entries[-max_entries:]
+        return "\n\n---\n\n".join(recent)
+    except Exception:
+        return ""
+
+
 def build_prompt(delta_text: str, was_truncated: bool, language: str = "en") -> str:
     """Build the prompt string for claude -p."""
     note = "Note: earlier messages omitted due to length.\n\n" if was_truncated else ""
