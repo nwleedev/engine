@@ -26,14 +26,14 @@ Steps:
    - Actual numbers, names, or references where abstract terms were used
    - Full reasoning chains where conclusions were stated without context
 
-5. Append a single entry to `.claude/feedback/raw.md`:
+5. For each pattern found, append one entry to `.claude/feedback/raw.md`:
    - Create `.claude/feedback/` directory and file if they do not exist.
    - If creating a new file, write header: `<!-- checkpoint: 1970-01-01T00:00:00Z -->`
-   - Append the entry block. Use exactly this format (ts then text, no other fields):
+   - For each pattern, append an entry block in exactly this format (ts then text, no other fields):
      ```
      ---
      ts: <current UTC ISO8601, e.g. 2026-04-24T10:00:00Z>
-     text: "[text-abbreviation] <one sentence describing the abbreviation pattern observed>"
+     text: "[text-abbreviation] <one sentence describing this specific pattern>"
      ---
      ```
 
