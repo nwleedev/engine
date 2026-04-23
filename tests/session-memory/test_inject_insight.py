@@ -98,9 +98,12 @@ def test_inject_exits_silently_when_no_file(tmp_path):
         try:
             ii.main()
             exited = False
-        except SystemExit:
+            exit_code = None
+        except SystemExit as e:
             exited = True
+            exit_code = e.code
     assert exited, "main() must call sys.exit(0) when INSIGHT.md does not exist"
+    assert exit_code == 0
 
 
 def test_inject_exits_on_invalid_json():
@@ -108,6 +111,9 @@ def test_inject_exits_on_invalid_json():
         try:
             ii.main()
             exited = False
-        except SystemExit:
+            exit_code = None
+        except SystemExit as e:
             exited = True
+            exit_code = e.code
     assert exited
+    assert exit_code == 0
