@@ -2,9 +2,11 @@ import fcntl
 import json
 import os
 import subprocess
+import sys
 from pathlib import Path
 
-SKILL_MD_PATH = Path(__file__).parent.parent / "skills" / "domain-professor" / "SKILL.md"
+sys.path.insert(0, str(Path(__file__).parent))
+from session_state import read_skill_content, get_textbooks_dir
 
 
 def find_project_root(cwd: str) -> str:
@@ -22,13 +24,6 @@ def find_project_root(cwd: str) -> str:
         if (candidate / ".claude").is_dir():
             return str(candidate)
     return cwd
-
-
-def read_skill_content() -> str:
-    try:
-        return SKILL_MD_PATH.read_text(encoding="utf-8")
-    except OSError:
-        return ""
 
 
 def call_claude(prompt: str) -> str:
@@ -129,7 +124,7 @@ def generate_file(
 
 
 def generate_overview(domain: str, project_root: str, skill_content: str) -> None:
-    domain_dir = Path(project_root) / ".claude" / "textbooks" / domain
+    domain_dir = get_textbooks_dir(project_root) / domain
     domain_dir.mkdir(parents=True, exist_ok=True)
     ensure_index(domain_dir, domain)
     generate_file(domain, "01-overview", f"what-is-{domain}", domain_dir, skill_content)
@@ -138,6 +133,6 @@ def generate_overview(domain: str, project_root: str, skill_content: str) -> Non
 def generate_for_domains(domains: list[str], project_root: str) -> None:
     skill_content = read_skill_content()
     for domain in domains:
-        domain_dir = Path(project_root) / ".claude" / "textbooks" / domain
+        domain_dir = get_textbooks_dir(project_root) / domain
         if not domain_dir.exists():
             generate_overview(domain, project_root, skill_content)
