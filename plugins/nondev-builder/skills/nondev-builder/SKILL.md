@@ -1,3 +1,8 @@
+---
+name: "nondev-builder"
+description: "Builds professional-grade domain environments through a structured brainstorming dialogue, then generates three artifact files: skill.md, rubric.md, and command.md."
+---
+
 # nondev-builder Skill
 
 This skill is invoked by `/nondev-setup` and `/nondev-sync`. It builds a professional-grade
@@ -50,6 +55,7 @@ Prohibited: abbreviations (`mr`), numbers (`domain1`), vague terms (`analysis`).
 ## Step 2: Check for existing domain
 
 If `.claude/nondev/<task-name>/skill.md` already exists:
+
 - Ask: "Domain `<task-name>` already exists. Overwrite? (y/n)"
 - If n: stop.
 - If y: proceed (overwrite on write).
@@ -62,6 +68,7 @@ Ask exactly **one question per turn** from this checklist. Do not proceed to the
 until the user answers. If the user's answer covers multiple checklist items, mark all covered items complete — the one-question rule constrains what you ask, not how much the user answers. Do not generate artifacts until all 6 items are complete.
 
 Checklist (track completion internally):
+
 - [ ] **Work goal**: What does this task aim to achieve? (1-2 sentences)
 - [ ] **Success criteria**: Describe 2-3 conditions that make an output "good"
 - [ ] **Key questions**: What must be answered during this work? (3-5 questions)
@@ -78,11 +85,13 @@ After all 6 are complete, summarize the collected answers and ask: "Ready to gen
 Run in parallel when Tavily and Context7 are both available:
 
 **Tavily search** (3 queries):
+
 1. `"<task-name> professional standards best practices"`
 2. `"<task-name> common mistakes anti-patterns"`
 3. `"<task-name> methodology framework step-by-step"`
 
 **Context7 search** (if official methodology docs exist):
+
 1. Resolve library ID for any official methodology body
 2. Query for core framework and working principles
 
@@ -101,6 +110,8 @@ Use brainstorming answers (Step 3) and web search results (Step 4) to generate:
 
 ```markdown
 ---
+name: <task-name>
+description: <description_of_the_task>
 task_name: <task-name>
 display_name: <display_name>
 domain_type: document
@@ -111,17 +122,21 @@ updated: <YYYY-MM-DD>
 # <Display Name> Expert Methodology
 
 ## Purpose
+
 <Work goal from brainstorming>
 
 ## Core Framework
+
 <Analytical structure from web search — 10-year professional standards>
 
 ## Working Principles
+
 - [ ] <Principle 1 sourced from web search>
 - [ ] <Principle 2 sourced from web search>
 - [ ] <Principle 3 sourced from web search>
 
 ## Good Example / Bad Example
+
 <Good>
 <Correct output example from official methodology guides>
 </Good>
@@ -130,9 +145,11 @@ updated: <YYYY-MM-DD>
 </Bad>
 
 ## Source Collection Strategy
+
 <External data types confirmed during brainstorming>
 
 ## Custom Examples
+
 <!-- User-added section — preserved on /nondev-sync -->
 ```
 
@@ -151,8 +168,9 @@ domain_type: document
 
 ## Violation Criteria
 
-| id | Violation Type | Detection Question |
-|----|---------------|-------------------|
+| id  | Violation Type | Detection Question |
+| --- | -------------- | ------------------ |
+
 <At least 2 rows from brainstorming violation criteria + web search anti-patterns>
 
 ## Anti-Pattern Gate
@@ -161,6 +179,7 @@ domain_type: document
     <Anti-pattern 2>  →  <Corrective action>
 
 ## Pass Criteria
+
 - 0 violations: PASS
 - 1-2 violations: WARN (propose fix, resubmit once)
 - 3+ violations: FAIL (rework required)
@@ -189,16 +208,19 @@ All output must follow its principles.
 Spawn 3 subagents in parallel:
 
 **Researcher-1** (primary data):
+
 - Tools: WebSearch, WebFetch (Tavily preferred)
 - Goal: Figures and authoritative sources for "$ARGUMENTS"
 - Return: { data: [...], sources: [{title, url, date, org}] }
 
 **Researcher-2** (comparative analysis):
+
 - Tools: WebSearch, WebFetch
 - Goal: 3+ subjects, 3+ evaluation axes
 - Return: { items: [...], criteria: [...], sources: [...] }
 
 **Researcher-3** (trends):
+
 - Tools: WebSearch, WebFetch
 - Goal: Industry reports from the past 12 months
 - Return: { trends: [...], sources: [...] }
@@ -214,6 +236,7 @@ Use methodology (Step 1) and sourced data (Step 2). Cite every figure inline wit
 Read `.claude/nondev/<task-name>/rubric.md` and pass to evaluator subagent:
 
 **Evaluator** (isolated context — no self-review bias):
+
 - Input: rubric violation criteria + Step 3 analysis
 - Tools: none
 - Return: { violations: [{id, location, description}], passed: bool }
@@ -275,6 +298,7 @@ This uses the file-locking `upsert_domain` for multi-terminal safety.
 ## Step 7: Final completeness verification
 
 Before reporting success, verify:
+
 - [ ] `skill.md`: no section is empty; `## Core Framework` has content
 - [ ] `rubric.md`: `## Violation Criteria` has ≥ 2 rows
 - [ ] `index.json`: domain entry present with ≥ 3 keywords in each of ko and en
@@ -292,6 +316,7 @@ Before syncing, verify `.claude/nondev/<task-name>/skill.md` exists.
 If it does not exist, stop and reply: "Domain `<task-name>` not found. Run `/nondev-setup <task-name>` first."
 
 When invoked via `/nondev-sync`:
+
 - **Regenerate** (via fresh web search): `## Core Framework`, `## Working Principles`, `## Good Example / Bad Example`
 - **Preserve** (user-edited): `## Source Collection Strategy`, `## Custom Examples`
 - **Do not touch**: `.claude/commands/<task-name>.md` (sync never modifies command files)
