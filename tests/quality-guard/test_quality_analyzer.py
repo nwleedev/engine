@@ -176,6 +176,15 @@ def test_record_detections_multiple_detections_count(tmp_path):
     assert pending.read_text(encoding="utf-8").strip() == "2"
 
 
+def test_record_detections_accumulates_across_calls(tmp_path):
+    pairs = [{"index": 0, "question": "Q", "answer": "A"}]
+    detections = [{"index": 0, "reason": "vague", "confidence": "high"}]
+    qa.record_detections(str(tmp_path), pairs, detections)
+    qa.record_detections(str(tmp_path), pairs, detections)
+    pending = tmp_path / ".claude" / "quality" / "pending_review.txt"
+    assert pending.read_text(encoding="utf-8").strip() == "2"
+
+
 # --- run_quality_analysis (integration with mocked claude -p) ---
 
 def test_run_quality_analysis_full_flow(tmp_path):
@@ -192,7 +201,7 @@ def test_run_quality_analysis_full_flow(tmp_path):
         {"index": 0, "reason": "vague enumeration", "confidence": "high"}
     ])})
     payload = {"cwd": str(tmp_path), "transcript_path": str(transcript_path)}
-    with patch("subprocess.run", return_value=mock_result):
+    with patch("quality_analyzer.subprocess.run", return_value=mock_result):
         qa.run_quality_analysis(payload, str(tmp_path))
     raw = tmp_path / ".claude" / "feedback" / "raw.md"
     assert raw.exists()
@@ -203,19 +212,19 @@ def test_run_quality_analysis_skips_when_writing_context(tmp_path, monkeypatch):
     monkeypatch.setenv("CLAUDE_WRITING_CONTEXT", "1")
     transcript_path = tmp_path / "transcript.jsonl"
     transcript_path.write_text("", encoding="utf-8")
-    with patch("subprocess.run") as mock_sub:
+    with patch("quality_analyzer.subprocess.run") as mock_sub:
         qa.run_quality_analysis({"cwd": str(tmp_path), "transcript_path": str(transcript_path)}, str(tmp_path))
     mock_sub.assert_not_called()
 
 
 def test_run_quality_analysis_no_transcript_path_is_noop(tmp_path):
-    with patch("subprocess.run") as mock_sub:
+    with patch("quality_analyzer.subprocess.run") as mock_sub:
         qa.run_quality_analysis({"cwd": str(tmp_path)}, str(tmp_path))
     mock_sub.assert_not_called()
 
 
 def test_run_quality_analysis_missing_transcript_file_is_noop(tmp_path):
-    with patch("subprocess.run") as mock_sub:
+    with patch("quality_analyzer.subprocess.run") as mock_sub:
         qa.run_quality_analysis(
             {"cwd": str(tmp_path), "transcript_path": str(tmp_path / "nonexistent.jsonl")},
             str(tmp_path),

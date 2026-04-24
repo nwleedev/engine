@@ -117,10 +117,15 @@ def record_detections(cwd: str, pairs: list[dict], detections: list[dict]) -> No
         entry_text = f"[auto-detected] {reason} (Q: {question_snippet!r})"
         append_raw_entry(cwd, entry_text)
 
-    count = len(detections)
     pending_path = Path(cwd) / ".claude" / "quality" / "pending_review.txt"
     pending_path.parent.mkdir(parents=True, exist_ok=True)
-    pending_path.write_text(str(count), encoding="utf-8")
+    existing = 0
+    if pending_path.exists():
+        try:
+            existing = int(pending_path.read_text(encoding="utf-8").strip())
+        except (ValueError, OSError):
+            existing = 0
+    pending_path.write_text(str(existing + len(detections)), encoding="utf-8")
 
 
 def run_quality_analysis(payload: dict, cwd: str) -> None:
