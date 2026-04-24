@@ -33,25 +33,32 @@ def main():
     index_data = hw.read_index(session_dir) or hw.create_index(session_dir, session_id, cwd)
 
     delta = hw.extract_delta(messages, index_data.get("last_processed_uuid") or "")
-    if not delta:
-        sys.exit(0)
+    if delta:
+        delta_text, was_truncated = hw.truncate_messages(delta)
+        try:
+            result = hw.call_claude_narration(delta_text, was_truncated, lang)
+            if result:
+                title = result.get("title") or "checkpoint-" + hw._utcnow().strftime("%m%d-%H%M")
+                what_why = result.get("what_why", "")
+                one_liner = what_why.split("。")[0].split(".")[0][:80] if what_why else title
+                filename = hw.write_context_file(str(session_dir), title, lang, result, session_id)
+                new_head = hw.get_git_head(cwd)
+                last_uuid = delta[-1].get("uuid", "")
+                hw.update_index(session_dir, index_data, last_uuid, new_head, filename, one_liner)
+        except Exception as e:
+            print(f"[pre_compact] error: {e}", file=sys.stderr)
 
-    delta_text, was_truncated = hw.truncate_messages(delta)
+    flag_path = Path(cwd) / ".claude" / "sessions" / f"compacted.{session_id}.flag"
+    flag_path.parent.mkdir(parents=True, exist_ok=True)
     try:
-        result = hw.call_claude_narration(delta_text, was_truncated, lang)
-        if not result:
-            sys.exit(0)
+        flag_path.write_text(session_id, encoding="utf-8")
+    except Exception:
+        pass
 
-        title = result.get("title") or "checkpoint-" + hw._utcnow().strftime("%m%d-%H%M")
-        what_why = result.get("what_why", "")
-        one_liner = what_why.split("。")[0].split(".")[0][:80] if what_why else title
-
-        filename = hw.write_context_file(str(session_dir), title, lang, result, session_id)
-        new_head = hw.get_git_head(cwd)
-        last_uuid = delta[-1].get("uuid", "")
-        hw.update_index(session_dir, index_data, last_uuid, new_head, filename, one_liner)
-    except Exception as e:
-        print(f"[pre_compact] error: {e}", file=sys.stderr)
+    recent = hw.load_recent_context_entries(session_dir)
+    if recent:
+        output = {"systemMessage": f"<session-context>\n{recent}\n</session-context>"}
+        print(json.dumps(output, ensure_ascii=False))
 
     sys.exit(0)
 
