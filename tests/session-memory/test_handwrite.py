@@ -484,3 +484,40 @@ def test_load_recent_context_entries_respects_char_limit(tmp_path):
     result = hw.load_recent_context_entries(tmp_path, max_chars=8000)
     assert "small" in result
     assert "x" * 100 not in result
+
+
+def test_main_skips_narration_when_race_detected(tmp_path):
+    """Race guard: if another async hook updated INDEX.md before narration, skip."""
+    session_id = "race-test-001"
+    index_v1 = {
+        "session_id": session_id, "cwd": str(tmp_path),
+        "last_processed_uuid": "", "last_context_written_at": "2026-04-24T10:00:00",
+        "started": "2026-04-24T09:00:00", "context_head": "", "last_updated": "2026-04-24T10:00:00",
+    }
+    index_v2 = {**index_v1, "last_context_written_at": "2026-04-24T10:05:00"}
+
+    call_count = {"n": 0}
+    def mock_read_index(path):
+        call_count["n"] += 1
+        return index_v1 if call_count["n"] == 1 else index_v2
+
+    messages = [{"uuid": "msg-x", "role": "user", "text": "hello"}]
+    payload = json.dumps({"transcript_path": "unused.jsonl", "session_id": session_id})
+
+    with mock.patch("subprocess.run") as mock_run:
+        mock_run.return_value = mock.Mock(returncode=0, stdout=f"{tmp_path}\n")
+        with mock.patch.object(hw, "read_index", side_effect=mock_read_index):
+            with mock.patch.object(hw, "parse_transcript", return_value=(str(tmp_path), messages)):
+                import io
+                sys.stdin = io.StringIO(payload)
+                try:
+                    hw.main()
+                except SystemExit:
+                    pass
+                finally:
+                    sys.stdin = sys.__stdin__
+
+    # Only git show-toplevel (find_project_root) should be called — not claude -p
+    assert mock_run.call_count == 1
+    called_args = mock_run.call_args_list[0][0][0]
+    assert "git" in called_args

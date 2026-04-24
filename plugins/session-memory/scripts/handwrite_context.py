@@ -486,6 +486,10 @@ def main():
     insights = extract_insights(delta)
 
     delta_text, was_truncated = truncate_messages(delta)
+    # Race guard: re-read INDEX.md to detect concurrent writes from other async hooks
+    fresh = read_index(session_dir)
+    if fresh and fresh.get("last_context_written_at") != index_data.get("last_context_written_at"):
+        sys.exit(0)
     result = call_claude_narration(delta_text, was_truncated, lang)
     if not result:
         sys.exit(0)
