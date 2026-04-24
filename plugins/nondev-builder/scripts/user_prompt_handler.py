@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from nondev_io import read_index
+from nondev_io import read_index, read_rubric
 
 
 def match_domain(prompt: str, domains: list[dict]) -> dict | None:
@@ -18,6 +18,19 @@ def match_domain(prompt: str, domains: list[dict]) -> dict | None:
             if kw.lower() in prompt_lower:
                 return domain
     return None
+
+
+def build_rubric_context(rubrics: list[tuple[str, str]]) -> str:
+    if not rubrics:
+        return ""
+    parts = [
+        "Apply the following nondev quality rubrics when generating your response.",
+        "If your planned response would trigger any violation criteria, revise before outputting.",
+        "",
+    ]
+    for task_name, rubric_content in rubrics:
+        parts.append(f"### {task_name}\n{rubric_content}")
+    return "\n".join(parts)
 
 
 def main_with_payload(payload: object) -> None:
