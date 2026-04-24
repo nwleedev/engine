@@ -102,7 +102,7 @@ def test_session_start_notifies_pending_review_when_count_positive(tmp_path):
         db.main_with_payload({"session_id": "abc", "cwd": str(tmp_path)})
     output = json.loads(f.getvalue())
     context = output["hookSpecificOutput"]["additionalContext"]
-    assert "pending_review" in context or "2" in context
+    assert "2 auto-detected quality issue(s)" in context
 
 
 def test_session_start_no_notification_when_pending_zero(tmp_path):
