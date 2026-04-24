@@ -35,6 +35,15 @@ def ensure_dirs(cwd: str, task_name: str) -> None:
     (Path(cwd) / _COMMANDS_DIR).mkdir(parents=True, exist_ok=True)
 
 
+def _validate_domain_entry(entry: dict) -> None:
+    if not isinstance(entry.get("task_name"), str) or not entry["task_name"]:
+        raise ValueError(f"task_name: non-empty str required, got {entry.get('task_name')!r}")
+    if not isinstance(entry.get("command"), str) or not entry["command"]:
+        raise ValueError(f"command: non-empty str required, got {entry.get('command')!r}")
+    if not isinstance(entry.get("keywords"), dict):
+        raise ValueError(f"keywords: dict required, got {entry.get('keywords')!r}")
+
+
 def read_index(cwd: str) -> dict | None:
     p = _index_path(cwd)
     if not p.exists():
@@ -47,9 +56,8 @@ def read_index(cwd: str) -> dict | None:
 
 
 def upsert_domain(cwd: str, domain_entry: dict) -> None:
-    task_name = domain_entry.get("task_name")
-    if not task_name:
-        raise ValueError(f"domain_entry missing required 'task_name' key: {domain_entry!r}")
+    _validate_domain_entry(domain_entry)
+    task_name = domain_entry["task_name"]
 
     p = _index_path(cwd)
     p.parent.mkdir(parents=True, exist_ok=True)

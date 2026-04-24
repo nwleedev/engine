@@ -1,6 +1,8 @@
 import sys
 from pathlib import Path
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "plugins/nondev-builder/scripts"))
 from nondev_io import (
     ensure_dirs,
@@ -120,3 +122,28 @@ def test_read_index_returns_none_for_string(tmp_path):
     index_dir.mkdir(parents=True)
     (index_dir / "index.json").write_text('"hello"', encoding="utf-8")
     assert read_index(str(tmp_path)) is None
+
+
+def test_upsert_domain_raises_on_missing_task_name(tmp_path):
+    with pytest.raises(ValueError, match="task_name"):
+        upsert_domain(str(tmp_path), {
+            "command": "/test",
+            "keywords": {"ko": [], "en": []},
+        })
+
+
+def test_upsert_domain_raises_on_missing_command(tmp_path):
+    with pytest.raises(ValueError, match="command"):
+        upsert_domain(str(tmp_path), {
+            "task_name": "test",
+            "keywords": {"ko": [], "en": []},
+        })
+
+
+def test_upsert_domain_raises_on_invalid_keywords(tmp_path):
+    with pytest.raises(ValueError, match="keywords"):
+        upsert_domain(str(tmp_path), {
+            "task_name": "test",
+            "command": "/test",
+            "keywords": ["ko", "en"],
+        })
