@@ -170,3 +170,15 @@ def test_silent_when_no_rubrics_configured(tmp_path, capsys):
     upsert_domain(str(tmp_path), _make_domain("market-research", ["시장"], ["market"]))
     main_with_payload({"prompt": "무관한 프롬프트", "cwd": str(tmp_path)})
     assert capsys.readouterr().out == ""
+
+
+def test_main_exception_swallowed(monkeypatch):
+    import user_prompt_handler as uph
+    import io
+
+    def boom(_payload):
+        raise RuntimeError("unexpected error")
+
+    monkeypatch.setattr(uph, "main_with_payload", boom)
+    monkeypatch.setattr("sys.stdin", io.StringIO("{}"))
+    uph.main()  # must not raise

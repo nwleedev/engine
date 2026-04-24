@@ -81,9 +81,9 @@ def main_with_payload(payload: object) -> None:
 def main() -> None:
     try:
         payload = json.loads(sys.stdin.read())
-    except json.JSONDecodeError:
-        return
-    main_with_payload(payload)
+        main_with_payload(payload)
+    except Exception:
+        pass
 
 
 if __name__ == "__main__":
