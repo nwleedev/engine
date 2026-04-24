@@ -203,6 +203,20 @@ def test_write_empty_content_skips_llm_call(tmp_path):
     assert f.getvalue() == ""
     assert called == []
 
+def test_write_empty_file_path_skips_llm_call():
+    called = []
+    def fake_llm(_prompt):
+        called.append(True)
+        return "VERDICT: superficial\nREASON: bad\nCONFIDENCE: high"
+    f = io.StringIO()
+    with redirect_stdout(f):
+        sd.main_with_payload({
+            "tool_name": "Write",
+            "tool_input": {"file_path": "", "content": "x = 1"}
+        }, llm_fn=fake_llm)
+    assert f.getvalue() == ""
+    assert called == []
+
 
 # --- NOT superficial prompt guidance ---
 
