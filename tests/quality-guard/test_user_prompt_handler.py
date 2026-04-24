@@ -69,7 +69,7 @@ def test_user_prompt_with_refs_includes_ref_reminder(tmp_path):
         uph.main_with_payload({"prompt": "Refactor this class", "cwd": str(tmp_path)})
     output = json.loads(f.getvalue())
     context = output["hookSpecificOutput"]["additionalContext"]
-    assert "Read" in context or "ref" in context.lower()
+    assert "Read tool" in context or "read the ref file" in context
 
 
 def test_user_prompt_empty_prompt_produces_no_output(tmp_path):
