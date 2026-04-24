@@ -25,7 +25,7 @@ def load_index(cwd: str) -> list[dict]:
             continue
         if re.match(r"^\|\s*[-:]+", line):
             continue
-        if "Name" in line and "Path" in line and "Tags" in line:
+        if line == "| Name | Path | Tags |":
             continue
         parts = [p.strip() for p in line.strip("|").split("|")]
         if len(parts) < 3:
@@ -58,5 +58,6 @@ def save_index(cwd: str, entries: list[dict]) -> None:
 
 def add_entry(cwd: str, name: str, rel_path: str, tags: list[str]) -> None:
     entries = load_index(cwd)
+    entries = [e for e in entries if e["name"] != name]
     entries.append({"name": name, "path": rel_path, "tags": tags})
     save_index(cwd, entries)
