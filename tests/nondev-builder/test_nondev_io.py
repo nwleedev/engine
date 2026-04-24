@@ -106,3 +106,17 @@ def test_index_has_version_and_updated(tmp_path):
     index = read_index(str(tmp_path))
     assert "version" in index
     assert "updated" in index
+
+
+def test_read_index_returns_none_for_list(tmp_path):
+    index_dir = tmp_path / ".claude" / "nondev"
+    index_dir.mkdir(parents=True)
+    (index_dir / "index.json").write_text("[1, 2, 3]", encoding="utf-8")
+    assert read_index(str(tmp_path)) is None
+
+
+def test_read_index_returns_none_for_string(tmp_path):
+    index_dir = tmp_path / ".claude" / "nondev"
+    index_dir.mkdir(parents=True)
+    (index_dir / "index.json").write_text('"hello"', encoding="utf-8")
+    assert read_index(str(tmp_path)) is None

@@ -40,7 +40,8 @@ def read_index(cwd: str) -> dict | None:
     if not p.exists():
         return None
     try:
-        return json.loads(p.read_text(encoding="utf-8"))
+        data = json.loads(p.read_text(encoding="utf-8"))
+        return data if isinstance(data, dict) else None
     except (OSError, json.JSONDecodeError):
         return None
 
