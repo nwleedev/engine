@@ -84,8 +84,7 @@ def test_harness_present_outputs_reminder(tmp_path):
     with redirect_stdout(f):
         sh.main_with_payload({"cwd": str(tmp_path), "transcript_path": transcript})
     output = json.loads(f.getvalue())
-    context = output["hookSpecificOutput"]["additionalContext"]
-    assert "src/foo.ts" in context
+    assert "src/foo.ts" in output["systemMessage"]
 
 
 def test_no_written_files_produces_no_output(tmp_path):
@@ -97,7 +96,7 @@ def test_no_written_files_produces_no_output(tmp_path):
     assert f.getvalue() == ""
 
 
-def test_output_hook_event_name_is_stop(tmp_path):
+def test_output_uses_system_message_and_continue(tmp_path):
     (tmp_path / ".claude" / "harness").mkdir(parents=True)
     (tmp_path / ".claude" / "harness" / "test.md").write_text("# Test\n")
     transcript = _make_transcript(tmp_path, [{"name": "Write", "file_path": "src/foo.ts"}])
@@ -105,7 +104,8 @@ def test_output_hook_event_name_is_stop(tmp_path):
     with redirect_stdout(f):
         sh.main_with_payload({"cwd": str(tmp_path), "transcript_path": transcript})
     output = json.loads(f.getvalue())
-    assert output["hookSpecificOutput"]["hookEventName"] == "Stop"
+    assert output.get("continue") is True
+    assert "systemMessage" in output
 
 
 def test_invalid_payload_produces_no_output():
