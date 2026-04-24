@@ -479,8 +479,9 @@ def test_load_recent_context_entries_at_most_3_files(tmp_path):
 def test_load_recent_context_entries_respects_char_limit(tmp_path):
     contexts = tmp_path / "contexts"
     contexts.mkdir()
-    (contexts / "CONTEXT-20260424-1200-small.md").write_text("small", encoding="utf-8")
-    (contexts / "CONTEXT-20260424-1300-big.md").write_text("x" * 9000, encoding="utf-8")
+    # Older file is large; newer file is small — newest must be kept, oldest dropped
+    (contexts / "CONTEXT-20260424-1200-big.md").write_text("x" * 9000, encoding="utf-8")
+    (contexts / "CONTEXT-20260424-1300-small.md").write_text("small", encoding="utf-8")
     result = hw.load_recent_context_entries(tmp_path, max_chars=8000)
     assert "small" in result
     assert "x" * 100 not in result

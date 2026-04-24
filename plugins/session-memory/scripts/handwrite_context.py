@@ -389,7 +389,7 @@ def load_recent_context_entries(session_dir: Path, max_chars: int = 8000) -> str
     files = sorted(contexts_dir.glob("CONTEXT-*.md"), reverse=True)[:3]
     parts = []
     total = 0
-    for f in reversed(files):
+    for f in files:  # newest → oldest: prioritize recent context
         try:
             text = f.read_text(encoding="utf-8").strip()
             if total + len(text) > max_chars:
@@ -398,6 +398,7 @@ def load_recent_context_entries(session_dir: Path, max_chars: int = 8000) -> str
             total += len(text)
         except Exception:
             continue
+    parts.reverse()  # restore chronological order for display
     return "\n\n---\n\n".join(parts)
 
 

@@ -37,12 +37,12 @@ def main() -> None:
         sys.exit(0)
 
     session_dir = sessions_dir / session_id
+    recent = hw.load_recent_context_entries(session_dir)
     try:
         flag_path.unlink(missing_ok=True)
     except Exception:
         pass
 
-    recent = hw.load_recent_context_entries(session_dir)
     if not recent:
         sys.exit(0)
 
