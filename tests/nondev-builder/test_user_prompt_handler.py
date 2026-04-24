@@ -100,3 +100,73 @@ def test_build_rubric_context_multiple():
     result = build_rubric_context(rubrics)
     assert "market-research" in result
     assert "stock-analysis" in result
+
+
+def test_rubric_injected_on_no_keyword_match(tmp_path, capsys):
+    upsert_domain(str(tmp_path), _make_domain("market-research", ["시장"], ["market"]))
+    write_rubric(str(tmp_path), "market-research", "# Market Rubric")
+    main_with_payload({"prompt": "오늘 날씨 어때?", "cwd": str(tmp_path)})
+    captured = capsys.readouterr()
+    output = json.loads(captured.out)
+    context = output["hookSpecificOutput"]["additionalContext"]
+    assert "Market Rubric" in context
+    assert "domain detected" not in context
+
+
+def test_rubric_and_hint_combined_on_match(tmp_path, capsys):
+    upsert_domain(str(tmp_path), _make_domain("market-research", ["시장"], ["market"]))
+    write_rubric(str(tmp_path), "market-research", "# Market Rubric")
+    main_with_payload({"prompt": "시장 조사 해줘", "cwd": str(tmp_path)})
+    captured = capsys.readouterr()
+    output = json.loads(captured.out)
+    context = output["hookSpecificOutput"]["additionalContext"]
+    assert "Market Rubric" in context
+    assert "market-research domain detected" in context
+
+
+def test_silent_when_no_rubrics_and_no_match(tmp_path, capsys):
+    upsert_domain(str(tmp_path), _make_domain("market-research", ["시장"], ["market"]))
+    main_with_payload({"prompt": "날씨 알려줘", "cwd": str(tmp_path)})
+    assert capsys.readouterr().out == ""
+
+
+def test_rubric_injected_for_all_domains(tmp_path, capsys):
+    upsert_domain(str(tmp_path), _make_domain("market-research", ["시장"], ["market"]))
+    upsert_domain(str(tmp_path), _make_domain("stock-analysis", ["주식"], ["stock"]))
+    write_rubric(str(tmp_path), "market-research", "# Market Rubric")
+    write_rubric(str(tmp_path), "stock-analysis", "# Stock Rubric")
+    main_with_payload({"prompt": "아무거나", "cwd": str(tmp_path)})
+    captured = capsys.readouterr()
+    output = json.loads(captured.out)
+    context = output["hookSpecificOutput"]["additionalContext"]
+    assert "Market Rubric" in context
+    assert "Stock Rubric" in context
+
+
+def test_skips_domain_without_task_name_in_rubric_load(tmp_path, capsys):
+    import json as _json
+    index_path = tmp_path / ".claude" / "nondev"
+    index_path.mkdir(parents=True)
+    (index_path / "index.json").write_text(
+        _json.dumps({
+            "version": "1",
+            "updated": "2026-04-24",
+            "domains": [
+                {"display_name": "broken"},
+                {"task_name": "stock-analysis", "display_name": "Stock",
+                 "command": "/stock-analysis", "keywords": {"ko": [], "en": []}},
+            ],
+        }),
+        encoding="utf-8",
+    )
+    write_rubric(str(tmp_path), "stock-analysis", "# Stock Rubric")
+    main_with_payload({"prompt": "anything", "cwd": str(tmp_path)})
+    captured = capsys.readouterr()
+    output = json.loads(captured.out)
+    assert "Stock Rubric" in output["hookSpecificOutput"]["additionalContext"]
+
+
+def test_silent_when_no_rubrics_configured(tmp_path, capsys):
+    upsert_domain(str(tmp_path), _make_domain("market-research", ["시장"], ["market"]))
+    main_with_payload({"prompt": "무관한 프롬프트", "cwd": str(tmp_path)})
+    assert capsys.readouterr().out == ""

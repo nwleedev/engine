@@ -37,8 +37,6 @@ def main_with_payload(payload: object) -> None:
     if not isinstance(payload, dict):
         return
     prompt = payload.get("prompt", "")
-    if not prompt:
-        return
     cwd = payload.get("cwd") or os.getcwd()
     index = read_index(cwd)
     if not index:
@@ -46,21 +44,35 @@ def main_with_payload(payload: object) -> None:
     domains = index.get("domains", [])
     if not domains:
         return
-    matched = match_domain(prompt, domains)
-    if not matched:
+
+    rubrics: list[tuple[str, str]] = []
+    for domain in domains:
+        task_name = domain.get("task_name", "")
+        if not task_name:
+            continue
+        rubric = read_rubric(cwd, task_name)
+        if rubric:
+            rubrics.append((task_name, rubric))
+    rubric_context = build_rubric_context(rubrics)
+
+    command_hint = ""
+    if prompt:
+        matched = match_domain(prompt, domains)
+        if matched:
+            task_name = matched.get("task_name", "")
+            command = matched.get("command", f"/{task_name}")
+            command_hint = (
+                f"[{task_name} domain detected] "
+                f"Run {command} [goal] for parallel research + independent evaluation."
+            )
+
+    combined = "\n\n".join(filter(None, [rubric_context, command_hint]))
+    if not combined:
         return
-    task_name = matched.get("task_name", "")
-    if not task_name:
-        return
-    command = matched.get("command", f"/{task_name}")
-    context = (
-        f"[{task_name} domain detected] "
-        f"Run {command} [goal] for parallel research + independent evaluation."
-    )
     output = {
         "hookSpecificOutput": {
             "hookEventName": "UserPromptSubmit",
-            "additionalContext": context,
+            "additionalContext": combined,
         }
     }
     print(json.dumps(output, ensure_ascii=False))
