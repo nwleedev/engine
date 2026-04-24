@@ -451,3 +451,36 @@ def test_main_appends_insights_to_project_insight_md(tmp_path):
     insight_md = tmp_path / ".claude" / "INSIGHT.md"
     assert insight_md.exists()
     assert "테스트 인사이트" in insight_md.read_text()
+
+
+def test_load_recent_context_entries_empty_when_no_dir(tmp_path):
+    result = hw.load_recent_context_entries(tmp_path / "nonexistent_session")
+    assert result == ""
+
+
+def test_load_recent_context_entries_returns_content(tmp_path):
+    contexts = tmp_path / "contexts"
+    contexts.mkdir()
+    (contexts / "CONTEXT-20260424-1200-work-a.md").write_text("content A", encoding="utf-8")
+    result = hw.load_recent_context_entries(tmp_path)
+    assert result == "content A"
+
+
+def test_load_recent_context_entries_at_most_3_files(tmp_path):
+    contexts = tmp_path / "contexts"
+    contexts.mkdir()
+    for i in range(5):
+        (contexts / f"CONTEXT-20260424-{1200+i:04d}-work.md").write_text(f"content {i}", encoding="utf-8")
+    result = hw.load_recent_context_entries(tmp_path)
+    parts = result.split("\n\n---\n\n")
+    assert len(parts) == 3
+
+
+def test_load_recent_context_entries_respects_char_limit(tmp_path):
+    contexts = tmp_path / "contexts"
+    contexts.mkdir()
+    (contexts / "CONTEXT-20260424-1200-small.md").write_text("small", encoding="utf-8")
+    (contexts / "CONTEXT-20260424-1300-big.md").write_text("x" * 9000, encoding="utf-8")
+    result = hw.load_recent_context_entries(tmp_path, max_chars=8000)
+    assert "small" in result
+    assert "x" * 100 not in result

@@ -381,6 +381,26 @@ def load_recent_insights(cwd: str, max_entries: int = 20) -> str:
         return ""
 
 
+def load_recent_context_entries(session_dir: Path, max_chars: int = 8000) -> str:
+    """Return recent context file entries joined by separators, within char limit."""
+    contexts_dir = Path(session_dir) / "contexts"
+    if not contexts_dir.exists():
+        return ""
+    files = sorted(contexts_dir.glob("CONTEXT-*.md"), reverse=True)[:3]
+    parts = []
+    total = 0
+    for f in reversed(files):
+        try:
+            text = f.read_text(encoding="utf-8").strip()
+            if total + len(text) > max_chars:
+                break
+            parts.append(text)
+            total += len(text)
+        except Exception:
+            continue
+    return "\n\n---\n\n".join(parts)
+
+
 def build_prompt(delta_text: str, was_truncated: bool, language: str = "en") -> str:
     """Build the prompt string for claude -p."""
     note = "Note: earlier messages omitted due to length.\n\n" if was_truncated else ""
