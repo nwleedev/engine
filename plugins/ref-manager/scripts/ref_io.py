@@ -27,13 +27,21 @@ def load_index(cwd: str) -> list[dict]:
             continue
         if line == "| Name | Path | Tags |":
             continue
-        parts = [p.strip() for p in line.strip("|").split("|")]
+        parts = [_decode_cell(p.strip()) for p in line.strip("|").split("|")]
         if len(parts) < 3:
             continue
         name, path, tags_raw = parts[0], parts[1], parts[2]
         tags = [t.strip() for t in tags_raw.split(",") if t.strip()] if tags_raw.strip() else []
         entries.append({"name": name, "path": path, "tags": tags})
     return entries
+
+
+def _encode_cell(value: str) -> str:
+    return value.replace("|", "%7C")
+
+
+def _decode_cell(value: str) -> str:
+    return value.replace("%7C", "|")
 
 
 def save_index(cwd: str, entries: list[dict]) -> None:
@@ -47,10 +55,10 @@ def save_index(cwd: str, entries: list[dict]) -> None:
         "|---|---|---|",
     ]
     for entry in entries:
-        name = entry.get("name", "")
-        path = entry.get("path", "")
+        name = _encode_cell(entry.get("name", ""))
+        path = _encode_cell(entry.get("path", ""))
         tags = entry.get("tags", [])
-        tags_str = ", ".join(tags) if tags else ""
+        tags_str = ", ".join(_encode_cell(t) for t in tags) if tags else ""
         lines.append(f"| {name} | {path} | {tags_str} |")
 
     index_path.write_text("\n".join(lines) + "\n", encoding="utf-8")

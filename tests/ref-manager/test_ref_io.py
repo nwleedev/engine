@@ -83,3 +83,19 @@ def test_load_index_handles_empty_tags(tmp_path):
     ref_io.save_index(str(tmp_path), entries)
     loaded = ref_io.load_index(str(tmp_path))
     assert loaded[0]["tags"] == []
+
+
+def test_add_entry_deduplicates_by_name(tmp_path):
+    ref_io.add_entry(str(tmp_path), "dup", ".claude/refs/a/doc.md", ["x"])
+    ref_io.add_entry(str(tmp_path), "dup", ".claude/refs/b/doc.md", ["y"])
+    loaded = ref_io.load_index(str(tmp_path))
+    assert len(loaded) == 1
+    assert loaded[0]["path"] == ".claude/refs/b/doc.md"
+
+
+def test_pipe_character_in_fields_roundtrips_correctly(tmp_path):
+    entries = [{"name": "foo|bar", "path": ".claude/refs/t/doc.md", "tags": ["tag|1"]}]
+    ref_io.save_index(str(tmp_path), entries)
+    loaded = ref_io.load_index(str(tmp_path))
+    assert loaded[0]["name"] == "foo|bar"
+    assert loaded[0]["tags"] == ["tag|1"]
