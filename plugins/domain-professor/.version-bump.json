@@ -1,8 +1,0 @@
-{
-  "files": [
-    { "path": ".claude-plugin/plugin.json", "field": "version" }
-  ],
-  "audit": {
-    "exclude": [".git", "__pycache__"]
-  }
-}
