@@ -5,6 +5,7 @@ import shutil
 import urllib.request
 from html.parser import HTMLParser
 from pathlib import Path
+from urllib.parse import urlparse
 
 SUPPORTED_EXTENSIONS = {".pdf", ".md", ".txt"}
 
@@ -34,7 +35,7 @@ class _TextExtractor(HTMLParser):
         self._parts: list[str] = []
         self._skip_depth = 0
 
-    def handle_starttag(self, tag: str, attrs: object) -> None:
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         if tag.lower() in self._SKIP_TAGS:
             self._skip_depth += 1
 
@@ -54,12 +55,15 @@ class _TextExtractor(HTMLParser):
 
 def _html_to_text(html_bytes: bytes) -> str:
     try:
-        html_str = html_bytes.decode("utf-8", errors="replace")
-    except Exception:
-        html_str = html_bytes.decode("latin-1", errors="replace")
+        html_str = html_bytes.decode("utf-8")
+    except UnicodeDecodeError:
+        html_str = html_bytes.decode("latin-1")
     parser = _TextExtractor()
     parser.feed(html_str)
     return parser.get_text()
+
+
+_MAX_FETCH_BYTES = 50 * 1024 * 1024  # 50 MB guard against runaway responses
 
 
 def fetch_url(url: str, dest_dir: Path) -> Path:
@@ -74,12 +78,13 @@ def fetch_url(url: str, dest_dir: Path) -> Path:
     dest_dir = Path(dest_dir)
     dest_dir.mkdir(parents=True, exist_ok=True)
 
-    url_path = url.rstrip("/").rsplit("/", 1)[-1] or "index"
+    parsed = urlparse(url)
+    url_path = parsed.path.rstrip("/").rsplit("/", 1)[-1] or "index"
     base = slugify(url_path.rsplit(".", 1)[0]) or "page"
 
     with urllib.request.urlopen(url) as resp:  # noqa: S310
         content_type = resp.headers.get("Content-Type", "").split(";")[0].strip().lower()
-        raw = resp.read()
+        raw = resp.read(_MAX_FETCH_BYTES)
 
     if content_type == "text/html":
         html_dest = dest_dir / f"{base}.html"
