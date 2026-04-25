@@ -1,16 +1,10 @@
-PYTEST = uv run pytest -q
+PYTEST = pytest -q
 
-.PHONY: test test-better-research test-domain-professor test-session-memory test-scripts test-harness-builder test-nondev-builder
+.PHONY: test test-session-memory test-scripts test-quality-guard test-ref-manager
 
 # Run each plugin test suite in its own process to prevent sys.modules collision
 # between plugins that share script filenames.
-test: test-better-research test-domain-professor test-session-memory test-scripts test-harness-builder test-nondev-builder
-
-test-better-research:
-	$(PYTEST) tests/better-research/
-
-test-domain-professor:
-	$(PYTEST) tests/domain-professor/
+test: test-session-memory test-scripts test-quality-guard test-ref-manager
 
 test-session-memory:
 	$(PYTEST) tests/session-memory/
@@ -18,8 +12,8 @@ test-session-memory:
 test-scripts:
 	$(PYTEST) tests/scripts/
 
-test-harness-builder:
-	$(PYTEST) tests/harness-builder/
+test-quality-guard:
+	$(PYTEST) tests/quality-guard/
 
-test-nondev-builder:
-	$(PYTEST) tests/nondev-builder/
+test-ref-manager:
+	$(PYTEST) tests/ref-manager/
