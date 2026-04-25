@@ -93,7 +93,7 @@ Steps:
    ```
    urls=["<url>"], format="markdown"
    ```
-   On success: write the returned markdown text to `/tmp/ref_<name>.md` (where `<name>` is the value confirmed in Step 2)
+   On success: write the returned markdown text to `/tmp/ref_<name>_$(date +%s%N).md` (where `<name>` is the value confirmed in Step 2; the timestamp suffix ensures uniqueness across iterations). Delete the temp file after the handler script exits 0.
    using the Write tool, then call the handler script:
    ```bash
    python3 "${CLAUDE_PLUGIN_ROOT}/scripts/add_ref_handler.py" \
@@ -114,7 +114,7 @@ Steps:
    MCP writes files to its own `.playwright-mcp/` output directory — not to
    `.claude/refs/`. Capture the return value as text only.
 
-   Write the returned text to `/tmp/ref_<name>.md` using the Write tool,
+   Write the returned text to `/tmp/ref_<name>_$(date +%s%N).md` using the Write tool. Delete the temp file after the handler script exits 0.
    then call the handler script the same way as Stage 2. If it exits 0, proceed to Step 6.
 
    **Full documentation crawl (opt-in):**
@@ -127,8 +127,7 @@ Steps:
    Default behavior is always single-page.
 
    **All stages fail:**
-   Stop. Report the error. Do NOT create stub, placeholder, or
-   AI-generated content files as a substitute for the real source.
+   Stop processing this source. Report the error for this source. If running in compound command mode with multiple sources, continue to the next source. Do NOT create stub, placeholder, or AI-generated content files as a substitute for the real source.
 
 6. **Report the result.**
    - On success (exit code 0): the script prints the registered relative path.
@@ -177,7 +176,7 @@ and no URL has been provided yet:
    - Do NOT fall back to collecting multiple per-library repos as a substitute.
    - Search for relevant official docs, RFCs, and author blog posts using
      `mcp__tavily-mcp__tavily_search`. Register each found URL as a separate
-     reference using the normal Steps 1–6 flow.
+     reference using the normal Steps 2–6 flow (treating each URL as the confirmed source).
    - Use the Edit tool to append a meta-note to `.claude/refs/INDEX.md` under
      the relevant topic header (create the header if it does not exist):
      ```
