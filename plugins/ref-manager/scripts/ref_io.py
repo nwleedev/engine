@@ -37,11 +37,11 @@ def load_index(cwd: str) -> list[dict]:
 
 
 def _encode_cell(value: str) -> str:
-    return value.replace("|", "%7C")
+    return value.replace("|", "%7C").replace("\n", "%0A").replace("\r", "%0D")
 
 
 def _decode_cell(value: str) -> str:
-    return value.replace("%7C", "|")
+    return value.replace("%7C", "|").replace("%0A", "\n").replace("%0D", "\r")
 
 
 def save_index(cwd: str, entries: list[dict]) -> None:
