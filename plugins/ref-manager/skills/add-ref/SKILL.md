@@ -1,4 +1,5 @@
 ---
+name: add-ref
 description: Add an external reference (URL or local file) to the project's refs index
 ---
 
@@ -31,21 +32,20 @@ Steps:
    If the user provides tags, split them by whitespace. If the user skips, use no tags.
 
 5. **Run the handler script.**
-   Construct the command using `CLAUDE_PLUGIN_ROOT` for the script path and `cwd` for the
-   project root. Build `--tags` arguments from the tags list (one `--tags` flag followed by
-   space-separated tags, or omit entirely if no tags).
+   Construct the command using `CLAUDE_PLUGIN_ROOT` for the script path. Build `--tags`
+   arguments from the tags list (one `--tags` flag followed by space-separated tags, or omit
+   entirely if no tags). Do NOT include `--cwd`; the script resolves the project root from
+   `CLAUDE_PROJECT_DIR` or the current working directory automatically.
 
    ```bash
    python3 "${CLAUDE_PLUGIN_ROOT}/scripts/add_ref_handler.py" \
      "<source>" \
      --name "<name>" \
      --topic "<topic>" \
-     --cwd "<project_cwd>" \
      [--tags tag1 tag2 ...]
    ```
 
-   Use the Bash tool to run this command. The `<project_cwd>` is the project's working
-   directory (the same value as `cwd` from the environment, not the plugin root).
+   Use the Bash tool to run this command.
 
 6. **Report the result.**
    - On success (exit code 0): the script prints the registered relative path.

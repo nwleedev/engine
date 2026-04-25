@@ -1,4 +1,5 @@
 ---
+name: review-quality
 description: Review auto-detected quality issues in raw.md, approve or reject each, and reset the pending count
 ---
 

@@ -1,4 +1,5 @@
 ---
+name: antivague
 description: Re-examine the last response for text abbreviation patterns and rewrite more thoroughly, then record the pattern
 ---
 

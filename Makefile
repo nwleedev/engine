@@ -1,4 +1,4 @@
-PYTEST = uv run pytest -q
+PYTEST = pytest -q
 
 .PHONY: test test-better-research test-domain-professor test-session-memory test-scripts test-harness-builder test-nondev-builder test-quality-guard test-ref-manager
 
