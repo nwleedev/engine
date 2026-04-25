@@ -112,3 +112,43 @@ Steps:
   Always capture content as a text return value and write it yourself
   using the Write tool. The `filename` parameter writes to Playwright's
   own output directory, not to `.claude/refs/`.
+
+**Development repo discovery (when user asks Claude to find a repo):**
+
+This section governs the discovery phase only. Once a repo URL is confirmed,
+the normal Steps 1–6 apply (the URL goes through Step 5's fetch pipeline).
+
+When the user asks Claude to find or discover development reference repos
+(e.g., "find me repos for this stack", "look for best-practice repos for X"),
+and no URL has been provided yet:
+
+1. **Search holistically.** When a tech stack is provided, search for repos
+   that cover the entire stack together — not one repo per library.
+   - Good query: `"Next.js FSD TanStack Query best practices production repo"`
+   - Bad pattern: separate searches for Next.js repo, TanStack Query repo, etc.
+
+   Use the `mcp__tavily-mcp__tavily_search` tool (or WebSearch if unavailable)
+   to run the holistic query. Present the top 3–5 candidate repos to the user
+   with title, stars, and a one-line description. Ask: "Which of these should
+   I add as a reference?" — wait for user selection before proceeding to Step 2.
+
+2. **Evaluate candidates against all three criteria before adding:**
+   - Production-level code: has CI config, has non-trivial tests, has real
+     domain entities beyond TODO/blog examples (not a tutorial or starter kit)
+   - Credibility signal: 500+ GitHub stars, or authored by a well-known
+     organization or library author
+   - Stack coverage: at least 50% of the user's specified stack is present
+
+3. **When no qualifying holistic repo is found:**
+   - Do NOT fall back to collecting multiple per-library repos as a substitute.
+   - Search for relevant official docs, RFCs, and author blog posts using
+     `mcp__tavily-mcp__tavily_search`. Register each found URL as a separate
+     reference using the normal Steps 1–6 flow.
+   - Use the Edit tool to append a meta-note to `.claude/refs/INDEX.md` under
+     the relevant topic header (create the header if it does not exist):
+     ```
+     No comprehensive repo found for this stack.
+     References: [source1 title](url1), [source2 title](url2)
+     ```
+   - Report to the user: "No qualifying comprehensive repo was found for
+     this stack. I've noted alternative references in INDEX.md."
