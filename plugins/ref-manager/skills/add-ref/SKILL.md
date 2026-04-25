@@ -11,10 +11,44 @@ can consult it in future sessions. Does NOT read, summarise, or analyse the file
 Steps:
 
 1. **Determine the source.**
-   - If $ARGUMENTS is non-empty and looks like a URL (starts with `http://` or `https://`)
-     or a file path (absolute or starts with `./`, `../`, or `/`): use it as the source.
-   - Otherwise: ask the user — "What URL or file path do you want to add as a reference?"
-     Wait for the answer before continuing.
+
+   **Compound command detection:**
+   If $ARGUMENTS starts with a `/`-prefixed token where the text after `/` consists
+   only of lowercase letters and hyphens (e.g., `/brainstorming`, `/research`,
+   `/systematic-debugging`) — treat this as a compound command:
+   - Extract the skill name (the `/`-prefixed token).
+   - Extract the remaining text as the prompt for that skill.
+   - Invoke the named skill using the Skill tool: strip the leading `/` from the extracted skill name before passing it to the `skill` parameter (e.g., `/brainstorming` → `skill: "brainstorming"`). Pass the remaining text as the `args` parameter.
+   - Run the skill interactively to completion (it may require multiple turns).
+   - After the skill completes, scan the conversation for identified sources:
+     URLs, GitHub repo URLs, or local file paths the user has agreed to add.
+   - For each identified source, run Steps 2–6 independently as a separate iteration. Each iteration is fully independent — separate name, topic, tags, and fetch for each source.
+   - If no sources are identified after the skill completes, ask:
+     "No sources were identified from the skill session. Would you like to
+     add one manually?" and wait for the user's answer.
+
+   Examples:
+   ```
+   /add-ref /brainstorming "Next.js FSD architecture repo"
+     → invoke brainstorming with "Next.js FSD architecture repo"
+     → after brainstorming, collect agreed-upon URLs/repos
+     → add-ref each one
+
+   /add-ref /research "Tanstack Query v5 official patterns"
+     → invoke research with "Tanstack Query v5 official patterns"
+     → after research, collect identified URLs
+     → add-ref each one
+   ```
+
+   Note: a path containing a second `/` (e.g., `/home/user/file.md`, `/Users/nwlee/…`) is never a skill name — treat it as a file path.
+
+   **Direct source (no compound prefix):**
+   - If $ARGUMENTS is non-empty and looks like a URL (starts with `http://`
+     or `https://`) or a file path (absolute or starts with `./`, `../`,
+     or `/` followed by a non-skill-name character such as a digit, uppercase
+     letter, or additional `/`): use it as the source.
+   - Otherwise: ask the user — "What URL or file path do you want to add
+     as a reference?" Wait for the answer before continuing.
 
 2. **Ask for a short name.**
    Suggest one based on the URL hostname or filename (e.g., for `https://docs.python.org/3/library/typing.html`
