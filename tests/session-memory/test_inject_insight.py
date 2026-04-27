@@ -87,6 +87,7 @@ def test_inject_outputs_valid_json(tmp_path):
     captured = io.StringIO()
     with mock.patch("sys.stdin", io.StringIO(payload)), \
          mock.patch("sys.stdout", captured), \
+         mock.patch("sys.stderr", io.StringIO()), \
          mock.patch("inject_insight.hw.find_project_root", return_value=str(tmp_path)):
         ii.main()
 
