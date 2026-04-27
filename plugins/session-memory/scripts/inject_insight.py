@@ -32,6 +32,9 @@ def main() -> None:
     if not text:
         sys.exit(0)
 
+    entry_count = len([e for e in text.split("\n---\n") if e.strip()])
+    print(f"[session-memory] insight inject: INSIGHT.md ({entry_count} entries)", file=sys.stderr)
+
     output = {
         "hookSpecificOutput": {
             "hookEventName": "SessionStart",

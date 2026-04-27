@@ -124,3 +124,17 @@ def test_inject_exits_on_invalid_json():
             exit_code = e.code
     assert exited
     assert exit_code == 0
+
+
+def test_inject_prints_entry_count_to_stderr(tmp_path, capsys):
+    """Insight injection prints source file and entry count to stderr."""
+    (tmp_path / ".claude").mkdir()
+    make_insight_file(tmp_path / ".claude" / "INSIGHT.md", ["insight one", "insight two"])
+
+    payload = json.dumps({"cwd": str(tmp_path), "session_id": "abc"})
+    with mock.patch("sys.stdin", io.StringIO(payload)), \
+         mock.patch("inject_insight.hw.find_project_root", return_value=str(tmp_path)):
+        ii.main()
+
+    captured = capsys.readouterr()
+    assert "[session-memory] insight inject: INSIGHT.md (2 entries)" in captured.err
