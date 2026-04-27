@@ -37,6 +37,12 @@ def main() -> None:
         sys.exit(0)
 
     session_dir = sessions_dir / session_id
+    contexts_dir = session_dir / "contexts"
+    if contexts_dir.exists():
+        ctx_files = sorted(contexts_dir.glob("CONTEXT-*.md"), reverse=True)[:3]
+        if ctx_files:
+            names = ", ".join(f.name for f in ctx_files)
+            print(f"[session-memory] post-compact inject: {names}", file=sys.stderr)
     recent = hw.load_recent_context_entries(session_dir)
     try:
         flag_path.unlink(missing_ok=True)

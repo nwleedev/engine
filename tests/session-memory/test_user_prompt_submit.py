@@ -133,3 +133,34 @@ def test_malformed_payload_exits_silently():
         sys.stdin = sys.__stdin__
 
     assert captured.getvalue().strip() == ""
+
+
+def test_flag_prints_context_filenames_to_stderr(tmp_path, capsys):
+    """Flag present + context files → stderr shows injected filenames."""
+    session_id = "sess-stderr-log"
+    sessions_dir = tmp_path / ".claude" / "sessions"
+    sessions_dir.mkdir(parents=True)
+
+    flag_path = sessions_dir / f"compacted.{session_id}.flag"
+    flag_path.write_text(session_id, encoding="utf-8")
+
+    session_dir = sessions_dir / session_id
+    contexts_dir = session_dir / "contexts"
+    contexts_dir.mkdir(parents=True)
+    (contexts_dir / "CONTEXT-20260427-1200-foo.md").write_text("content", encoding="utf-8")
+
+    payload = json.dumps({"session_id": session_id, "cwd": str(tmp_path)})
+
+    with mock.patch("subprocess.run") as mock_run:
+        mock_run.return_value = mock.Mock(returncode=0, stdout=f"{tmp_path}\n")
+        sys.stdin = io.StringIO(payload)
+        try:
+            ups.main()
+        except SystemExit:
+            pass
+        finally:
+            sys.stdin = sys.__stdin__
+
+    captured = capsys.readouterr()
+    assert "[session-memory] post-compact inject:" in captured.err
+    assert "CONTEXT-20260427-1200-foo.md" in captured.err
