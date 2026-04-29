@@ -1,12 +1,12 @@
 """Single orchestrator for narration: parse -> gate -> narrate -> write -> log."""
 import json
 import os
-import re
 import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 
 import index_io
+import lang_detect
 import log as lg
 import narration_state
 import one_liner
@@ -150,18 +150,6 @@ def _build_prompt(delta_text: str, truncated: bool, lang: str) -> str:
     return NARRATION_PROMPT.format(language=lang, truncation_note=note, delta_text=delta_text)
 
 
-def _detect_lang(cwd: str) -> str:
-    try:
-        claude_md = Path(cwd) / "CLAUDE.md"
-        if claude_md.exists():
-            content = claude_md.read_text(encoding="utf-8")
-            if re.search(r"[가-힣]", content):
-                return "ko"
-    except Exception:
-        pass
-    return "en"
-
-
 def _hourly_path(session_dir: Path, title: str) -> Path:
     prefix = "CONTEXT-" + datetime.now(timezone.utc).replace(tzinfo=None).strftime("%Y%m%d-%H00-")
     contexts = session_dir / "contexts"
@@ -269,7 +257,7 @@ def run(event: str, payload: dict) -> None:
         return
 
     delta_text, truncated = _truncate_for_input(delta, policy.NARRATION_HARD_CAP)
-    lang = _detect_lang(cwd)
+    lang = lang_detect.detect(cwd)
     prompt = _build_prompt(delta_text, truncated, lang)
 
     use_fallback = narration_state.should_use_fallback(session_dir)
