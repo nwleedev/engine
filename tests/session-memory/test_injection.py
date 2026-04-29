@@ -103,3 +103,21 @@ def test_pollution_warning_emitted_in_startup(tmp_path, capsys):
         obj = json.loads(out)
         sm = obj.get("systemMessage", "")
         assert "subpackage" in sm.lower() or "pkg" in sm
+
+
+def test_compact_systemMessage_lists_filenames(tmp_path, capsys):
+    sd = tmp_path / ".claude" / "sessions" / "id1"
+    contexts = sd / "contexts"
+    contexts.mkdir(parents=True)
+    (contexts / "CONTEXT-20260429-1300-alpha.md").write_text("alpha body" * 50, encoding="utf-8")
+    (contexts / "CONTEXT-20260429-1400-beta.md").write_text("beta body" * 50, encoding="utf-8")
+    (sd / "INDEX.md").write_text("---\nsession_id: id1\n---\n", encoding="utf-8")
+    payload = {"session_id": "id1", "cwd": str(tmp_path), "source": "compact"}
+    inj.handle(payload)
+    out = capsys.readouterr().out
+    obj = json.loads(out)
+    sm = obj.get("systemMessage", "")
+    assert "CONTEXT-20260429-1300-alpha.md" in sm or "alpha" in sm
+    assert "CONTEXT-20260429-1400-beta.md" in sm or "beta" in sm
+    assert "2개" in sm or "2 file" in sm.lower()
+    assert "KB" in sm

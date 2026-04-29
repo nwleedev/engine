@@ -48,12 +48,13 @@ def _load_insight(cwd: Path, max_chars: int) -> str:
         return ""
 
 
-def _load_session_contexts(session_dir: Path, max_chars: int) -> str:
+def _load_session_contexts(session_dir: Path, max_chars: int) -> tuple[str, list[tuple[str, int]]]:
     contexts = session_dir / "contexts"
     if not contexts.exists():
-        return ""
+        return "", []
     files = sorted(contexts.glob("CONTEXT-*.md"), reverse=True)[:3]
     out = []
+    metas = []
     total = 0
     for f in files:
         try:
@@ -63,15 +64,18 @@ def _load_session_contexts(session_dir: Path, max_chars: int) -> str:
                 break
             if len(text) <= remaining:
                 out.append(text)
+                metas.append((f.name, len(text)))
                 total += len(text)
             else:
                 out.append(text[:remaining])
+                metas.append((f.name, remaining))
                 total += remaining
                 break
         except Exception:
             continue
     out.reverse()
-    return "\n\n---\n\n".join(out)
+    metas.reverse()
+    return "\n\n---\n\n".join(out), metas
 
 
 def _load_session_index(session_dir: Path, max_chars: int) -> str:
@@ -214,10 +218,15 @@ def handle(payload: dict) -> None:
         return
 
     if source == "compact":
-        body = _load_session_contexts(session_dir, INJECTION_BUDGET)
+        body, metas = _load_session_contexts(session_dir, INJECTION_BUDGET)
         if body:
-            _emit(f"<session-context>\n{body}\n</session-context>",
-                  system_message="session-memory: 압축 후 컨텍스트 복원")
+            total_kb = sum(s for _, s in metas) / 1024
+            names = ", ".join(name for name, _ in metas)
+            sm = (
+                f"session-memory: 압축 후 컨텍스트 복원 — {len(metas)}개 파일, "
+                f"{total_kb:.1f}KB ({names})"
+            )
+            _emit(f"<session-context>\n{body}\n</session-context>", system_message=sm)
         return
 
     if source == "resume":
