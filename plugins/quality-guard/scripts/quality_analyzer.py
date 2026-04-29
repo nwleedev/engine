@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(__file__))
-from feedback_io import append_raw_entry
+from feedback_io import append_raw_entry, increment_pending_review
 
 _MIN_ANSWER_LEN = 200
 
@@ -117,15 +117,7 @@ def record_detections(cwd: str, pairs: list[dict], detections: list[dict]) -> No
         entry_text = f"[auto-detected] {reason} (Q: {question_snippet!r})"
         append_raw_entry(cwd, entry_text)
 
-    pending_path = Path(cwd) / ".claude" / "quality" / "pending_review.txt"
-    pending_path.parent.mkdir(parents=True, exist_ok=True)
-    existing = 0
-    if pending_path.exists():
-        try:
-            existing = int(pending_path.read_text(encoding="utf-8").strip())
-        except (ValueError, OSError):
-            existing = 0
-    pending_path.write_text(str(existing + len(detections)), encoding="utf-8")
+    increment_pending_review(cwd, len(detections))
 
 
 def run_quality_analysis(payload: dict, cwd: str) -> None:
