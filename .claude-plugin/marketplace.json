@@ -15,11 +15,6 @@
       "name": "quality-guard",
       "description": "Detects superficial code changes and vague language via hooks and skills",
       "source": "./plugins/quality-guard"
-    },
-    {
-      "name": "ref-manager",
-      "description": "Fetches and indexes external references; injects available refs into session context",
-      "source": "./plugins/ref-manager"
     }
   ]
 }

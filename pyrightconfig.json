@@ -6,7 +6,6 @@
     "plugins/harness-builder/scripts",
     "plugins/nondev-builder/scripts",
     "plugins/quality-guard/scripts",
-    "plugins/ref-manager/scripts",
     "plugins/session-memory/scripts",
     "scripts"
   ],
