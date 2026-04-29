@@ -1,4 +1,7 @@
+import datetime
 import json
+import os
+import time
 from pathlib import Path
 
 import injection as inj
@@ -58,3 +61,45 @@ def test_respects_8kb_budget(tmp_path, capsys):
     out = capsys.readouterr().out
     obj = json.loads(out)
     assert len(obj["hookSpecificOutput"]["additionalContext"]) <= 8_500
+
+
+def test_maintenance_runs_on_startup_when_stale(tmp_path, capsys):
+    sessions = tmp_path / ".claude" / "sessions"
+    old_session = sessions / "old"
+    old_session.mkdir(parents=True)
+    (old_session / "INDEX.md").write_text("---\n---\n", encoding="utf-8")
+    old_ts = time.time() - 31 * 86400
+    os.utime(old_session / "INDEX.md", (old_ts, old_ts))
+    os.utime(old_session, (old_ts, old_ts))
+
+    payload = {"session_id": "new-id", "cwd": str(tmp_path), "source": "startup"}
+    inj.handle(payload)
+    assert not old_session.exists()
+    archive_dir = sessions / "_archive"
+    assert any(p.suffix == ".gz" for p in archive_dir.rglob("*"))
+
+
+def test_maintenance_skips_within_24h(tmp_path):
+    sessions = tmp_path / ".claude" / "sessions"
+    sessions.mkdir(parents=True)
+    state = sessions / ".maintenance_state.json"
+    state.write_text(json.dumps({
+        "last_archive_at": datetime.datetime.now(datetime.timezone.utc).isoformat()
+    }))
+    payload = {"session_id": "new-id", "cwd": str(tmp_path), "source": "startup"}
+    inj.handle(payload)
+
+
+def test_pollution_warning_emitted_in_startup(tmp_path, capsys):
+    import subprocess
+    subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True, check=True)
+    polluted = tmp_path / "pkg" / ".claude" / "sessions"
+    polluted.mkdir(parents=True)
+    (tmp_path / ".claude").mkdir()
+    payload = {"session_id": "id1", "cwd": str(tmp_path), "source": "startup"}
+    inj.handle(payload)
+    out = capsys.readouterr().out
+    if out.strip():
+        obj = json.loads(out)
+        sm = obj.get("systemMessage", "")
+        assert "subpackage" in sm.lower() or "pkg" in sm
