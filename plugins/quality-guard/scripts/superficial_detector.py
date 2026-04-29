@@ -3,6 +3,10 @@ import os
 import subprocess
 import sys
 from collections.abc import Callable
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from feedback_io import append_raw_entry, increment_pending_review
 
 _EDIT_PROMPT = """\
 Evaluate this code change for implementation quality.
@@ -61,13 +65,6 @@ VERDICT: structural | superficial | unclear
 REASON: [one sentence]
 CONFIDENCE: high | medium | low"""
 
-_BLOCK_MESSAGE = (
-    "[quality-guard] Superficial implementation detected: {reason}\n"
-    "Please identify the root cause and implement a structural fix.\n"
-    "Use DECLARE (step 6) before calling Edit or Write."
-)
-
-
 def _call_llm(prompt: str) -> str:
     try:
         result = subprocess.run(
@@ -103,16 +100,17 @@ def parse_verdict(response: str) -> tuple[str, str, str]:
     return verdict, reason, confidence
 
 
-def should_block(verdict: str, confidence: str) -> bool:
-    return verdict == "superficial" and confidence == "high"
-
-
-def _emit_block(reason: str) -> None:
-    output = {
-        "decision": "block",
-        "reason": _BLOCK_MESSAGE.format(reason=reason),
-    }
-    print(json.dumps(output, ensure_ascii=False))
+def _emit_warning(cwd: str, file_path: str, reason: str) -> None:
+    print(
+        f"[quality-guard] Possible superficial change at {file_path}: {reason}",
+        file=sys.stderr,
+    )
+    entry_text = f"[auto-detected] superficial-edit: {reason} (file: {file_path})"
+    try:
+        append_raw_entry(cwd, entry_text)
+        increment_pending_review(cwd, 1)
+    except Exception as exc:
+        print(f"[quality-guard] Failed to log warning: {exc}", file=sys.stderr)
 
 
 def main_with_payload(payload: object, llm_fn: Callable[[str], str] | None = None) -> None:
@@ -121,6 +119,7 @@ def main_with_payload(payload: object, llm_fn: Callable[[str], str] | None = Non
     if llm_fn is None:
         llm_fn = _call_llm
 
+    cwd = payload.get("cwd") or os.getcwd()
     tool_name = payload.get("tool_name", "")
     tool_input = payload.get("tool_input")
     if not isinstance(tool_input, dict):
@@ -158,8 +157,8 @@ def main_with_payload(payload: object, llm_fn: Callable[[str], str] | None = Non
     else:
         return
 
-    if should_block(verdict, confidence):
-        _emit_block(reason)
+    if verdict == "superficial" and confidence == "high":
+        _emit_warning(cwd, file_path, reason)
 
 
 def main() -> None:
