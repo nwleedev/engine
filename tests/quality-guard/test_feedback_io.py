@@ -119,3 +119,31 @@ def test_load_feedback_rules_returns_content(tmp_path):
 
 def test_load_feedback_rules_no_file_returns_empty(tmp_path):
     assert fio.load_feedback_rules(str(tmp_path)) == ""
+
+
+def test_increment_pending_review_creates_file_with_count_1(tmp_path):
+    fio.increment_pending_review(str(tmp_path), 1)
+    pending = tmp_path / ".claude" / "quality" / "pending_review.txt"
+    assert pending.read_text(encoding="utf-8") == "1"
+
+
+def test_increment_pending_review_adds_to_existing_count(tmp_path):
+    pending = tmp_path / ".claude" / "quality" / "pending_review.txt"
+    pending.parent.mkdir(parents=True)
+    pending.write_text("3", encoding="utf-8")
+    fio.increment_pending_review(str(tmp_path), 2)
+    assert pending.read_text(encoding="utf-8") == "5"
+
+
+def test_increment_pending_review_handles_corrupt_file(tmp_path):
+    pending = tmp_path / ".claude" / "quality" / "pending_review.txt"
+    pending.parent.mkdir(parents=True)
+    pending.write_text("not-a-number", encoding="utf-8")
+    fio.increment_pending_review(str(tmp_path), 1)
+    assert pending.read_text(encoding="utf-8") == "1"
+
+
+def test_increment_pending_review_zero_amount_noop(tmp_path):
+    fio.increment_pending_review(str(tmp_path), 0)
+    pending = tmp_path / ".claude" / "quality" / "pending_review.txt"
+    assert not pending.exists()

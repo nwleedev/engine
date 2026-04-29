@@ -62,3 +62,18 @@ def load_feedback_rules(cwd: str) -> str:
     if not path.exists():
         return ""
     return path.read_text(encoding="utf-8")
+
+
+def increment_pending_review(cwd: str, amount: int) -> None:
+    """Increment .claude/quality/pending_review.txt by `amount`. Creates file if missing."""
+    if amount <= 0:
+        return
+    path = Path(cwd) / ".claude" / "quality" / "pending_review.txt"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    existing = 0
+    if path.exists():
+        try:
+            existing = int(path.read_text(encoding="utf-8").strip())
+        except (ValueError, OSError):
+            existing = 0
+    path.write_text(str(existing + amount), encoding="utf-8")
