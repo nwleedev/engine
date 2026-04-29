@@ -36,7 +36,7 @@ def find_project_root(cwd: str) -> str:
     return str(path)
 
 
-def assert_root_is_canonical(resolved_root: Path, cwd: Path) -> None:
+def assert_root_is_canonical(resolved_root: "str | Path", cwd: "str | Path") -> None:
     """Refuse to write to non-git-toplevel locations inside a git repo."""
     git_top = _git_toplevel(str(cwd))
     if git_top and Path(git_top).resolve() != Path(resolved_root).resolve():
@@ -45,7 +45,7 @@ def assert_root_is_canonical(resolved_root: Path, cwd: Path) -> None:
         )
 
 
-def detect_subpackage_pollution(repo_root: Path) -> List[Path]:
+def detect_subpackage_pollution(repo_root: "str | Path") -> List[Path]:
     """Find .claude/ directories nested under repo_root (not the root one)."""
     repo_root = Path(repo_root).resolve()
     found = []
