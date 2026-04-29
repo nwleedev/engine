@@ -54,7 +54,7 @@ def main_with_payload(payload: object) -> None:
         context_parts.append(
             f"<quality-guard-notice>\n"
             f"{pending} auto-detected quality issue(s) are pending review. "
-            f"Run /review-quality to inspect and approve or reject them.\n"
+            f"Run /quality-guard:triage to inspect and approve or reject them.\n"
             f"</quality-guard-notice>"
         )
     context = assemble_context(context_parts)
