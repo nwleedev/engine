@@ -12,17 +12,6 @@
         ]
       }
     ],
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/user_prompt_submit.py",
-            "timeout": 15
-          }
-        ]
-      }
-    ],
     "SessionStart": [
       {
         "hooks": [
@@ -32,13 +21,16 @@
             "timeout": 15
           }
         ]
-      },
+      }
+    ],
+    "SessionEnd": [
       {
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/inject_insight.py",
-            "timeout": 10
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/session_end.py",
+            "async": true,
+            "timeout": 150
           }
         ]
       }
@@ -51,17 +43,6 @@
             "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/pre_tool_use.py",
             "async": true,
             "timeout": 120
-          }
-        ]
-      }
-    ],
-    "PreCompact": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/pre_compact.py",
-            "timeout": 100
           }
         ]
       }
