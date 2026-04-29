@@ -2,6 +2,7 @@
 import datetime
 import json
 import os
+import re
 from pathlib import Path
 
 import project_root
@@ -12,6 +13,12 @@ MAINTENANCE_INTERVAL_SECONDS = 24 * 3600
 ARCHIVE_AGE_DAYS = 30
 INSIGHT_CAP = 200
 INSIGHT_MOVE = 50
+
+_SAFE_SESSION_ID_RE = re.compile(r"^[a-zA-Z0-9_-]+$")
+
+
+def _is_safe_session_id(s: str) -> bool:
+    return bool(s) and bool(_SAFE_SESSION_ID_RE.match(s))
 
 
 def _load_insight(cwd: Path, max_chars: int) -> str:
@@ -193,6 +200,8 @@ def _detect_pollution_warning(cwd: Path) -> "str | None":
 def handle(payload: dict) -> None:
     source = payload.get("source", "startup")
     session_id = payload.get("session_id", "")
+    if session_id and not _is_safe_session_id(session_id):
+        return
     cwd_raw = (payload.get("cwd")
                or os.environ.get("CLAUDE_PROJECT_DIR", "")
                or os.environ.get("PWD", ""))

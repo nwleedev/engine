@@ -1,6 +1,7 @@
 """Single orchestrator for narration: parse -> gate -> narrate -> write -> log."""
 import json
 import os
+import re
 import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
@@ -15,6 +16,12 @@ import project_root
 
 NARRATION_TIMEOUT = 90
 HAIKU_MODEL = "claude-haiku-4-5-20251001"
+
+_SAFE_SESSION_ID_RE = re.compile(r"^[a-zA-Z0-9_-]+$")
+
+
+def _is_safe_session_id(s: str) -> bool:
+    return bool(s) and bool(_SAFE_SESSION_ID_RE.match(s))
 
 SECTION_HEADERS = {
     "ko": {
@@ -216,6 +223,8 @@ def run(event: str, payload: dict) -> None:
     transcript_path = payload.get("transcript_path", "")
     session_id = payload.get("session_id", "")
     if not session_id:
+        return
+    if not _is_safe_session_id(session_id):
         return
 
     cwd_raw, messages = _parse_transcript(transcript_path) if transcript_path else ("", [])

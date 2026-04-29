@@ -5,7 +5,7 @@ NARRATION_MIN_DELTA = 1_000
 NARRATION_HARD_CAP = 60_000
 NARRATION_TIME_GAP = 300
 
-LIFECYCLE_EVENTS = {"PreCompact", "SessionEnd", "ManualCheckpoint"}
+LIFECYCLE_EVENTS = {"SessionEnd", "ManualCheckpoint"}
 
 
 def format_messages(messages: list) -> str:

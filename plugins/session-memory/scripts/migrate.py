@@ -13,7 +13,7 @@ def dedup_index(session_dir: "str | Path", dry_run: bool = True) -> bool:
     if not p.exists():
         return False
     content = p.read_text(encoding="utf-8")
-    fm, body = index_io._parse_frontmatter(content)
+    fm, body = index_io.parse_frontmatter(content)
 
     last_one_liner: dict = {}
     order: list = []
@@ -46,7 +46,7 @@ def dedup_index(session_dir: "str | Path", dry_run: bool = True) -> bool:
         return False
     if dry_run:
         return True
-    index_io._atomic_write(p, index_io._serialize(fm, new_body))
+    index_io.atomic_write(p, index_io.serialize(fm, new_body))
     return True
 
 

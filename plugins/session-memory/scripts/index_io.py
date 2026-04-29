@@ -146,3 +146,9 @@ def archive_on_rotation(session_dir: "str | Path") -> Path:
     if p.exists():
         os.replace(p, archive_path)
     return archive_path
+
+
+# Public aliases for cross-module use
+parse_frontmatter = _parse_frontmatter
+atomic_write = _atomic_write
+serialize = _serialize

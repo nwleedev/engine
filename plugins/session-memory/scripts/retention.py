@@ -50,7 +50,7 @@ def rotate_insight(insight_path: "str | Path", cap: int = 200, move: int = 50) -
     entries = [e for e in text.split("\n---\n") if e.strip()]
     if len(entries) <= cap:
         return None
-    move_count = min(move, max(0, len(entries) - (cap - move)))
+    move_count = move
     moved = entries[:move_count]
     kept = entries[move_count:]
 

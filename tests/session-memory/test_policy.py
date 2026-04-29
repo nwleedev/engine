@@ -12,7 +12,6 @@ def _msg(text: str) -> dict:
 
 def test_lifecycle_event_narrates_when_delta_present():
     delta = [_msg("hi")]
-    assert pol.should_narrate("PreCompact", delta, {}) is True
     assert pol.should_narrate("SessionEnd", delta, {}) is True
     assert pol.should_narrate("ManualCheckpoint", delta, {}) is True
 
