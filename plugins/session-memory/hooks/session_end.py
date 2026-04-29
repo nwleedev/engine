@@ -7,5 +7,5 @@ try:
     payload = json.load(sys.stdin)
 except Exception:
     sys.exit(0)
-narration_pipeline.run("PreToolUse", payload)
+narration_pipeline.run("SessionEnd", payload)
 sys.exit(0)
