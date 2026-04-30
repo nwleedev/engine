@@ -45,7 +45,15 @@ def find_project_root(cwd: str) -> str:
 
 
 def assert_root_is_canonical(resolved_root: "str | Path", cwd: "str | Path") -> None:
-    """Refuse to write to non-git-toplevel locations inside a git repo."""
+    """Refuse to write to non-git-toplevel locations inside a git repo.
+
+    Skip the check when CLAUDE_PROJECT_DIR is set, because that env var is
+    the explicit user/Claude Code declaration of the canonical root and
+    legitimately diverges from git toplevel in monorepos with nested git
+    repositories.
+    """
+    if os.environ.get("CLAUDE_PROJECT_DIR", "").strip():
+        return
     git_top = _git_toplevel(str(cwd))
     if git_top and Path(git_top).resolve() != Path(resolved_root).resolve():
         raise RuntimeError(

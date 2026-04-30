@@ -91,3 +91,27 @@ def test_topmost_claude_beats_git_toplevel(tmp_path, monkeypatch):
     # Topmost .claude is at monorepo, but git toplevel from web/ is web/.
     # New priority: .claude ancestor wins over git toplevel.
     assert Path(pr.find_project_root(str(sub))) == repo
+
+
+def test_assert_root_canonical_skips_when_env_set(tmp_path, monkeypatch):
+    repo = tmp_path / "monorepo"
+    repo.mkdir()
+    _init_git_repo(repo)
+    sub = repo / "web"
+    sub.mkdir()
+    _init_git_repo(sub)  # nested git so toplevel from sub = sub, not repo
+    monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(repo))
+    # resolved root = repo (via env), but git toplevel from sub = sub.
+    # Without relaxation this would raise; with relaxation it must pass.
+    pr.assert_root_is_canonical(repo, sub)
+
+
+def test_assert_root_canonical_still_enforced_without_env(tmp_path, monkeypatch):
+    monkeypatch.delenv("CLAUDE_PROJECT_DIR", raising=False)
+    repo = tmp_path / "r"
+    repo.mkdir()
+    _init_git_repo(repo)
+    sub = repo / "pkg"
+    sub.mkdir()
+    with pytest.raises(RuntimeError, match="not git toplevel"):
+        pr.assert_root_is_canonical(sub, sub)
