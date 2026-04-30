@@ -8,6 +8,11 @@ sys.path.insert(0, str(SCRIPTS_DIR))
 import project_root as pr
 
 
+@pytest.fixture(autouse=True)
+def _clean_env(monkeypatch):
+    monkeypatch.delenv("CLAUDE_PROJECT_DIR", raising=False)
+
+
 def _init_git_repo(path: Path):
     subprocess.run(["git", "init"], cwd=path, capture_output=True, check=True)
 
