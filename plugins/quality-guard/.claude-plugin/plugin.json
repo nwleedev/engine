@@ -2,7 +2,7 @@
   "name": "quality-guard",
   "displayName": "Quality Guard",
   "description": "Detects superficial code changes and vague language via hooks and skills",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "author": {
     "name": "nwleedev"
   }
