@@ -35,7 +35,8 @@ PROJECT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 PAYLOAD=$(printf '{"session_id":"%s","transcript_path":"%s","cwd":"%s"}' \
   "$SESSION_ID" "$TRANSCRIPT_PATH" "$PROJECT_ROOT")
 
-echo "$PAYLOAD" | python3 - <<'PY'
+# Pass payload via env var (heredoc would otherwise consume stdin and clash with `|`)
+SESSION_PAYLOAD="$PAYLOAD" python3 - <<'PY'
 import json, os, sys
 project_root = os.environ.get("CLAUDE_PROJECT_DIR") or os.getcwd()
 # Try plugin location
@@ -47,7 +48,7 @@ for candidate in [
         sys.path.insert(0, candidate)
         break
 import narration_pipeline
-payload = json.load(sys.stdin)
+payload = json.loads(os.environ["SESSION_PAYLOAD"])
 narration_pipeline.run("ManualCheckpoint", payload)
 PY
 
