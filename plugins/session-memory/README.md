@@ -67,6 +67,26 @@ The hooks run automatically. There is no trigger keyword.
 
 Injected context goes into Claude's system context — you will not see it printed, but Claude uses it when the conversation references prior work.
 
+## Project Root Resolution
+
+session-memory writes to `<project-root>/.claude/sessions/...`. The root is
+resolved with this priority:
+
+1. `CLAUDE_PROJECT_DIR` env var (set via `.claude/settings.local.json`).
+2. Topmost ancestor of cwd containing a `.claude/` directory, bounded by `$HOME`.
+3. `git rev-parse --show-toplevel`.
+4. cwd itself.
+
+If you launch Claude from a subdirectory of a monorepo (e.g.
+`monorepo/services/api/`), the auto-detection may pick the wrong root. Run
+`/session-memory:bind` to print a JSON snippet for `settings.local.json` that
+pins the canonical root explicitly. Paste it into
+`<root>/.claude/settings.local.json`, then exit Claude and relaunch.
+
+When `CLAUDE_PROJECT_DIR` is not set, a one-time notice is shown per project
+suggesting `/session-memory:bind`. The notice is suppressed after the first
+session via `<root>/.claude/sessions/.cpd-notice-ack`.
+
 ## Diagnostics
 
 Every narration decision (allowed, skipped, why) is appended to `.claude/sessions/<session_id>/log.jsonl`. `/session-memory:status` reads it. If narrations seem too sparse or too frequent, inspect this log to see which gate (delta, hard cap, time gap, or failure-count fallback) is firing.
