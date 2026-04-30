@@ -24,23 +24,27 @@ def find_project_root(cwd: str) -> str:
 
     Priority:
     1. CLAUDE_PROJECT_DIR env var (Claude Code official, stable across cd).
-    2. Topmost ancestor of cwd containing a .claude/ directory.
+    2. Topmost ancestor of cwd containing a .claude/ directory, bounded
+       by $HOME (so the user's global ~/.claude/ is never picked).
     3. git rev-parse --show-toplevel from cwd.
     4. cwd itself.
 
     Why topmost (not nearest) .claude/: in monorepos, users place .claude/
     at the workspace root, so writes from any sub-package must consolidate
-    there. The trade-off: if a developer dogfoods a plugin on a nested
-    project that has its own .claude/, this walk picks the outer root.
-    Set CLAUDE_PROJECT_DIR (tier 1) to override in that case.
+    there. The HOME boundary prevents the walk from leaking into the user's
+    global Claude config directory when no project-level .claude/ exists.
+    Set CLAUDE_PROJECT_DIR (tier 1) to override in any unusual layout.
     """
     env = os.environ.get("CLAUDE_PROJECT_DIR", "").strip()
     if env and Path(env).is_dir():
         return str(Path(env).resolve())
 
     path = Path(cwd).resolve()
+    home = Path.home().resolve()
     topmost = None
     for candidate in [path] + list(path.parents):
+        if candidate == home:
+            break
         if (candidate / ".claude").is_dir():
             topmost = candidate
     if topmost:

@@ -135,3 +135,49 @@ def test_assert_root_canonical_raises_when_env_mismatches_resolved(tmp_path, mon
     monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(other))
     with pytest.raises(RuntimeError, match="not git toplevel"):
         pr.assert_root_is_canonical(sub, sub)
+
+
+def test_walk_stops_at_home_boundary(tmp_path, monkeypatch):
+    """priority 2 must not walk past $HOME (so ~/.claude is never picked)."""
+    fake_home = tmp_path / "fakehome"
+    (fake_home / ".claude").mkdir(parents=True)
+    project = fake_home / "myproj"
+    project.mkdir()
+    sub = project / "pkg"
+    sub.mkdir()
+    monkeypatch.setattr(Path, "home", lambda: fake_home)
+    # No .claude/ inside project; ~/.claude exists. Walk MUST NOT pick fake_home.
+    # No git either, so falls through to cwd.
+    result = Path(pr.find_project_root(str(sub)))
+    assert result != fake_home
+    assert result == sub  # cwd fallback
+
+
+def test_walk_finds_claude_below_home(tmp_path, monkeypatch):
+    """If .claude/ exists below HOME, walk picks it (HOME boundary doesn't
+    block legitimate ancestors that are themselves below HOME)."""
+    fake_home = tmp_path / "fakehome"
+    (fake_home / ".claude").mkdir(parents=True)
+    project = fake_home / "myproj"
+    (project / ".claude").mkdir(parents=True)
+    sub = project / "pkg" / "deep"
+    sub.mkdir(parents=True)
+    monkeypatch.setattr(Path, "home", lambda: fake_home)
+    result = Path(pr.find_project_root(str(sub)))
+    assert result == project
+
+
+def test_walk_falls_through_to_git_when_no_claude_under_home(tmp_path, monkeypatch):
+    """If no .claude/ exists below HOME, walk falls through; git toplevel wins."""
+    fake_home = tmp_path / "fakehome"
+    (fake_home / ".claude").mkdir(parents=True)
+    project = fake_home / "myproj"
+    project.mkdir()
+    _init_git_repo(project)
+    sub = project / "pkg"
+    sub.mkdir()
+    monkeypatch.setattr(Path, "home", lambda: fake_home)
+    # No .claude under project. Walk skips ~/.claude (HOME boundary).
+    # git_toplevel from sub returns project. That should win.
+    result = Path(pr.find_project_root(str(sub)))
+    assert result == project

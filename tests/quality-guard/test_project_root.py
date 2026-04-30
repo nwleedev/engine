@@ -59,3 +59,40 @@ def test_cwd_fallback(tmp_path, monkeypatch):
     p = tmp_path / "loose"
     p.mkdir()
     assert Path(pr.find_project_root(str(p))) == p
+
+
+def test_walk_stops_at_home_boundary(tmp_path, monkeypatch):
+    """priority 2 must not pick ~/.claude/ when walking past HOME."""
+    fake_home = tmp_path / "fakehome"
+    (fake_home / ".claude").mkdir(parents=True)
+    project = fake_home / "myproj"
+    project.mkdir()
+    sub = project / "pkg"
+    sub.mkdir()
+    monkeypatch.setattr(Path, "home", lambda: fake_home)
+    result = Path(pr.find_project_root(str(sub)))
+    assert result != fake_home
+    assert result == sub
+
+
+def test_walk_finds_claude_below_home(tmp_path, monkeypatch):
+    fake_home = tmp_path / "fakehome"
+    (fake_home / ".claude").mkdir(parents=True)
+    project = fake_home / "myproj"
+    (project / ".claude").mkdir(parents=True)
+    sub = project / "pkg" / "deep"
+    sub.mkdir(parents=True)
+    monkeypatch.setattr(Path, "home", lambda: fake_home)
+    assert Path(pr.find_project_root(str(sub))) == project
+
+
+def test_walk_falls_through_to_git_under_home(tmp_path, monkeypatch):
+    fake_home = tmp_path / "fakehome"
+    (fake_home / ".claude").mkdir(parents=True)
+    project = fake_home / "myproj"
+    project.mkdir()
+    _init_git_repo(project)
+    sub = project / "pkg"
+    sub.mkdir()
+    monkeypatch.setattr(Path, "home", lambda: fake_home)
+    assert Path(pr.find_project_root(str(sub))) == project
