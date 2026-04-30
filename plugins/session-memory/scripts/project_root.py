@@ -1,4 +1,5 @@
 """Project root resolution with git-toplevel-first policy and monorepo guard."""
+import os
 import subprocess
 from pathlib import Path
 from typing import List
@@ -18,13 +19,15 @@ def _git_toplevel(cwd: str) -> str:
 def find_project_root(cwd: str) -> str:
     """Resolve project root.
 
-    1. git toplevel (preferred)
-    2. topmost .claude/ ancestor
-    3. cwd fallback
+    Priority:
+    1. CLAUDE_PROJECT_DIR env var (Claude Code official, stable across cd).
+    2. Topmost ancestor of cwd containing a .claude/ directory.
+    3. git rev-parse --show-toplevel from cwd.
+    4. cwd itself.
     """
-    git_top = _git_toplevel(cwd)
-    if git_top:
-        return git_top
+    env = os.environ.get("CLAUDE_PROJECT_DIR", "").strip()
+    if env and Path(env).is_dir():
+        return str(Path(env).resolve())
 
     path = Path(cwd).resolve()
     topmost = None
@@ -33,6 +36,11 @@ def find_project_root(cwd: str) -> str:
             topmost = candidate
     if topmost:
         return str(topmost)
+
+    git_top = _git_toplevel(cwd)
+    if git_top:
+        return git_top
+
     return str(path)
 
 

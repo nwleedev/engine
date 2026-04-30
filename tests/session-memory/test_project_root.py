@@ -59,3 +59,35 @@ def test_detect_subpackage_pollution(tmp_path):
     polluted.mkdir(parents=True)
     found = pr.detect_subpackage_pollution(repo)
     assert any(p.name == ".claude" and p.parent.name == "pkg" for p in found)
+
+
+def test_claude_project_dir_env_takes_priority(tmp_path, monkeypatch):
+    repo = tmp_path / "monorepo"
+    sub = repo / "web"
+    sub.mkdir(parents=True)
+    _init_git_repo(sub)  # nested git inside sub; without env, git toplevel = sub
+    monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(repo))
+    assert Path(pr.find_project_root(str(sub))) == repo
+
+
+def test_claude_project_dir_ignored_when_path_missing(tmp_path, monkeypatch):
+    repo = tmp_path / "monorepo"
+    repo.mkdir()
+    _init_git_repo(repo)
+    sub = repo / "web"
+    sub.mkdir()
+    monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(tmp_path / "does-not-exist"))
+    assert Path(pr.find_project_root(str(sub))) == repo
+
+
+def test_topmost_claude_beats_git_toplevel(tmp_path, monkeypatch):
+    monkeypatch.delenv("CLAUDE_PROJECT_DIR", raising=False)
+    repo = tmp_path / "monorepo"
+    repo.mkdir()
+    (repo / ".claude").mkdir()
+    sub = repo / "web"
+    sub.mkdir()
+    _init_git_repo(sub)  # nested git in web
+    # Topmost .claude is at monorepo, but git toplevel from web/ is web/.
+    # New priority: .claude ancestor wins over git toplevel.
+    assert Path(pr.find_project_root(str(sub))) == repo
