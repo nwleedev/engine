@@ -14,7 +14,9 @@ def main() -> None:
         payload = json.load(sys.stdin)
     except Exception:
         sys.exit(0)
-    cwd = payload.get("cwd", "") or os.getcwd()
+    cwd_raw = payload.get("cwd", "") or os.getcwd()
+    from project_root import find_project_root
+    cwd = find_project_root(cwd_raw)
     from quality_analyzer import run_quality_analysis
     run_quality_analysis(payload, cwd)
 

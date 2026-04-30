@@ -4,6 +4,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(__file__))
 from debiasing import build_core_debiasing, assemble_context
+from project_root import find_project_root
 from ref_index_reader import read_index
 
 _QUALITY_INSTRUCTION_TEMPLATE = """\
@@ -30,7 +31,8 @@ def main_with_payload(payload: object) -> None:
     prompt = payload.get("prompt", "")
     if not prompt:
         return
-    cwd = payload.get("cwd", "") or os.getcwd()
+    cwd_raw = payload.get("cwd", "") or os.getcwd()
+    cwd = find_project_root(cwd_raw)
 
     index_content = read_index(cwd)
     if index_content:

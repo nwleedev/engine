@@ -7,6 +7,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from feedback_io import append_raw_entry, increment_pending_review
+from project_root import find_project_root
 
 _EDIT_PROMPT = """\
 Evaluate this code change for implementation quality.
@@ -119,7 +120,8 @@ def main_with_payload(payload: object, llm_fn: Callable[[str], str] | None = Non
     if llm_fn is None:
         llm_fn = _call_llm
 
-    cwd = payload.get("cwd") or os.getcwd()
+    cwd_raw = payload.get("cwd") or os.getcwd()
+    cwd = find_project_root(cwd_raw)
     tool_name = payload.get("tool_name", "")
     tool_input = payload.get("tool_input")
     if not isinstance(tool_input, dict):
