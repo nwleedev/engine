@@ -1,8 +1,12 @@
-import os
 import subprocess
 from pathlib import Path
 import pytest
 import project_root as pr
+
+
+@pytest.fixture(autouse=True)
+def _clean_env(monkeypatch):
+    monkeypatch.delenv("CLAUDE_PROJECT_DIR", raising=False)
 
 
 def _init_git_repo(path: Path):
@@ -113,5 +117,21 @@ def test_assert_root_canonical_still_enforced_without_env(tmp_path, monkeypatch)
     _init_git_repo(repo)
     sub = repo / "pkg"
     sub.mkdir()
+    with pytest.raises(RuntimeError, match="not git toplevel"):
+        pr.assert_root_is_canonical(sub, sub)
+
+
+def test_assert_root_canonical_raises_when_env_mismatches_resolved(tmp_path, monkeypatch):
+    # env points at one path, but resolved_root is a subdir — should fall
+    # through to git check and raise because subdir != git toplevel.
+    repo = tmp_path / "r"
+    repo.mkdir()
+    _init_git_repo(repo)
+    sub = repo / "pkg"
+    sub.mkdir()
+    other = tmp_path / "other"
+    other.mkdir()
+    # env set to `other`, resolved_root is `sub` — env does NOT match resolved_root
+    monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(other))
     with pytest.raises(RuntimeError, match="not git toplevel"):
         pr.assert_root_is_canonical(sub, sub)
