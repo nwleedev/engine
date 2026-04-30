@@ -6,6 +6,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 
+from project_root import find_project_root
+from quality_analyzer import run_quality_analysis
+
 
 def main() -> None:
     if os.environ.get("CLAUDE_WRITING_CONTEXT"):
@@ -15,9 +18,7 @@ def main() -> None:
     except Exception:
         sys.exit(0)
     cwd_raw = payload.get("cwd", "") or os.getcwd()
-    from project_root import find_project_root
     cwd = find_project_root(cwd_raw)
-    from quality_analyzer import run_quality_analysis
     run_quality_analysis(payload, cwd)
 
 
