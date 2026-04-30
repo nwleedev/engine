@@ -105,6 +105,45 @@ def test_pollution_warning_emitted_in_startup(tmp_path, capsys):
         assert "subpackage" in sm.lower() or "pkg" in sm
 
 
+def test_cpd_notice_emitted_when_env_missing(tmp_path, capsys, monkeypatch):
+    monkeypatch.delenv("CLAUDE_PROJECT_DIR", raising=False)
+    payload = {"session_id": "id1", "cwd": str(tmp_path), "source": "startup"}
+    inj.handle(payload)
+    out = capsys.readouterr().out
+    obj = json.loads(out) if out.strip() else {}
+    sm = obj.get("systemMessage", "")
+    assert "CLAUDE_PROJECT_DIR" in sm
+    assert "/session-memory:bind" in sm
+    # marker file written
+    assert (tmp_path / ".claude" / "sessions" / ".cpd-notice-ack").exists()
+
+
+def test_cpd_notice_suppressed_after_first(tmp_path, capsys, monkeypatch):
+    monkeypatch.delenv("CLAUDE_PROJECT_DIR", raising=False)
+    sessions = tmp_path / ".claude" / "sessions"
+    sessions.mkdir(parents=True)
+    (sessions / ".cpd-notice-ack").write_text("2026-04-30T00:00:00", encoding="utf-8")
+    payload = {"session_id": "id1", "cwd": str(tmp_path), "source": "startup"}
+    inj.handle(payload)
+    out = capsys.readouterr().out
+    if out.strip():
+        obj = json.loads(out)
+        sm = obj.get("systemMessage", "")
+        assert "CLAUDE_PROJECT_DIR" not in sm
+
+
+def test_cpd_notice_skipped_when_env_set(tmp_path, capsys, monkeypatch):
+    monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(tmp_path))
+    payload = {"session_id": "id1", "cwd": str(tmp_path), "source": "startup"}
+    inj.handle(payload)
+    out = capsys.readouterr().out
+    if out.strip():
+        obj = json.loads(out)
+        sm = obj.get("systemMessage", "")
+        assert "CLAUDE_PROJECT_DIR" not in sm
+    assert not (tmp_path / ".claude" / "sessions" / ".cpd-notice-ack").exists()
+
+
 def test_compact_systemMessage_lists_filenames(tmp_path, capsys):
     sd = tmp_path / ".claude" / "sessions" / "id1"
     contexts = sd / "contexts"

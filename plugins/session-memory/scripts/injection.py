@@ -90,7 +90,7 @@ def _load_session_index(session_dir: Path, max_chars: int) -> str:
 
 
 def _emit(content: str, system_message: str = "") -> None:
-    output = {
+    output: dict = {
         "hookSpecificOutput": {
             "hookEventName": "SessionStart",
             "additionalContext": content,
@@ -166,10 +166,41 @@ def _maybe_run_maintenance(cwd: Path) -> dict:
     return result
 
 
+def _detect_cpd_notice(cwd: Path, env_was_set: bool) -> "str | None":
+    """One-time per-project notice when CLAUDE_PROJECT_DIR is unset.
+
+    Auto-resolved root may be wrong if user launched Claude from a subdir.
+    Marker file at <root>/.claude/.cpd-notice-ack suppresses re-emission.
+    """
+    if env_was_set:
+        return None
+    sessions_dir = cwd / ".claude" / "sessions"
+    flag = sessions_dir / ".cpd-notice-ack"
+    if flag.exists():
+        return None
+    try:
+        sessions_dir.mkdir(parents=True, exist_ok=True)
+        flag.write_text(
+            datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            encoding="utf-8",
+        )
+    except Exception:
+        pass
+    return (
+        f"session-memory: CLAUDE_PROJECT_DIR is not set; project root was "
+        f"auto-resolved to `{cwd}`. If this is not the intended root, run "
+        f"`/session-memory:bind` to print a settings.local.json snippet that "
+        f"pins it explicitly. This notice is shown once per project."
+    )
+
+
 def _detect_pollution_warning(cwd: Path) -> "str | None":
     """One-time per-repo warning when subpackage .claude/ directories exist."""
     try:
-        polluted = project_root.detect_subpackage_pollution(cwd)
+        # pyright extraPaths includes both plugin script dirs, so it may
+        # resolve `project_root` to quality-guard's copy which lacks this
+        # function. At runtime, sys.path puts session-memory's copy first.
+        polluted = project_root.detect_subpackage_pollution(cwd)  # pyright: ignore[reportAttributeAccessIssue]
     except Exception:
         return None
     if not polluted:
@@ -211,6 +242,7 @@ def handle(payload: dict) -> None:
                or os.environ.get("PWD", ""))
     if not cwd_raw:
         return
+    env_was_set = bool(os.environ.get("CLAUDE_PROJECT_DIR", "").strip())
     cwd = Path(project_root.find_project_root(cwd_raw))
     session_dir = cwd / ".claude" / "sessions" / session_id
 
@@ -237,6 +269,7 @@ def handle(payload: dict) -> None:
 
     maint = _maybe_run_maintenance(cwd)
     pollution_msg = _detect_pollution_warning(cwd)
+    cpd_notice = _detect_cpd_notice(cwd, env_was_set)
 
     parts = []
     if maint.get("archived_count"):
@@ -246,6 +279,8 @@ def handle(payload: dict) -> None:
     if pollution_msg:
         parts.append(pollution_msg)
     system_message = "session-memory: " + "; ".join(parts) if parts else ""
+    if cpd_notice:
+        system_message = (system_message + "\n\n" if system_message else "") + cpd_notice
 
     body = _load_insight(cwd, INJECTION_BUDGET)
     if body:
