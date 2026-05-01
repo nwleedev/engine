@@ -6,7 +6,10 @@ __pycache__/
 **/.DS_Store
 /.claude/
 CLAUDE.md
+AGENTS.md
 /temps/
 /docs/superpowers/
 /.worktrees/
 /.vscode/
+/.codex/
+.env
