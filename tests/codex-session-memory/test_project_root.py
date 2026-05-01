@@ -65,3 +65,18 @@ def test_assert_canonical_rejects_non_toplevel(tmp_path, monkeypatch):
     sub.mkdir()
     with pytest.raises(RuntimeError, match="not git toplevel"):
         pr.assert_root_is_canonical(str(sub), str(sub))
+
+
+def test_tier3_ignores_agents_md_when_parent_has_directory_named_AGENTS_md(tmp_path, monkeypatch):
+    """A polluted ancestor with a *directory* named AGENTS.md must not capture
+    the resolution. Only AGENTS.md as a regular file marks a project root."""
+    monkeypatch.setattr(Path, "home", lambda: tmp_path.parent)
+    # Polluted ancestor: AGENTS.md as directory
+    (tmp_path / "AGENTS.md").mkdir()
+    # Real project: AGENTS.md as file at a child level
+    project = tmp_path / "real_project"
+    project.mkdir()
+    (project / "AGENTS.md").write_text("real")
+    sub = project / "sub"
+    sub.mkdir()
+    assert pr.find_project_root(str(sub)) == str(project.resolve())

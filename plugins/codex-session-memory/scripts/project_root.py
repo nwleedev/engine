@@ -24,13 +24,18 @@ def _git_toplevel(cwd: str) -> str:
         return ""
 
 
-def _topmost_ancestor_with(path: Path, marker: str, home: Path):
+def _topmost_ancestor_with(path: Path, marker: str, home: Path, must_be_file: bool = False):
     topmost = None
     for candidate in [path] + list(path.parents):
         if candidate == home:
             break
-        if (candidate / marker).exists():
-            topmost = candidate
+        target = candidate / marker
+        if must_be_file:
+            if target.is_file():
+                topmost = candidate
+        else:
+            if target.exists():
+                topmost = candidate
     return topmost
 
 
@@ -42,7 +47,7 @@ def find_project_root(cwd: str) -> str:
     path = Path(cwd).resolve()
     home = Path.home().resolve()
 
-    top = _topmost_ancestor_with(path, "AGENTS.md", home)
+    top = _topmost_ancestor_with(path, "AGENTS.md", home, must_be_file=True)
     if top:
         return str(top)
 
