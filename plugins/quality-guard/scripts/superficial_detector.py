@@ -67,6 +67,7 @@ REASON: [one sentence]
 CONFIDENCE: high | medium | low"""
 
 def _call_llm(prompt: str) -> str:
+    env = {**os.environ, "CLAUDE_WRITING_CONTEXT": "1"}
     try:
         result = subprocess.run(
             [
@@ -78,6 +79,7 @@ def _call_llm(prompt: str) -> str:
             capture_output=True,
             text=True,
             timeout=25,
+            env=env,
         )
     except Exception:
         return ""

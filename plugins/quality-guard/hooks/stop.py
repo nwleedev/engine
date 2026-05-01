@@ -8,11 +8,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 
 from project_root import find_project_root
 from quality_analyzer import run_quality_analysis
+from reentry_guard import exit_if_reentrant
 
 
 def main() -> None:
-    if os.environ.get("CLAUDE_WRITING_CONTEXT"):
-        sys.exit(0)
+    exit_if_reentrant()
     try:
         payload = json.load(sys.stdin)
     except Exception:
