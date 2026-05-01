@@ -8,10 +8,12 @@ User-invoked skills that save Codex CLI session progress as incremental context 
 
 ```
 codex plugin marketplace add /path/to/this/repo
-codex plugin install codex-session-memory
 ```
 
-No `~/.codex/config.toml` modification required.
+Restart Codex, open `/plugins`, choose the `Engine` marketplace, and install
+or enable `codex-session-memory`.
+
+No manual `~/.codex/config.toml` edit is required.
 
 ## Skills
 

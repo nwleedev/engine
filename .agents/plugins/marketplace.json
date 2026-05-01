@@ -1,0 +1,20 @@
+{
+  "name": "engine",
+  "interface": {
+    "displayName": "Engine"
+  },
+  "plugins": [
+    {
+      "name": "codex-session-memory",
+      "source": {
+        "source": "local",
+        "path": "./plugins/codex-session-memory"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}
