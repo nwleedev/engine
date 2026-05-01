@@ -1,5 +1,5 @@
 ---
-name: session-memory-checkpoint
+name: checkpoint
 description: Save the current Codex session as an incremental context summary by forcing a narration checkpoint. Use when the user wants to save, checkpoint, or persist their current work, mark a milestone, or capture progress before risky changes.
 ---
 

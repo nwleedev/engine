@@ -1,5 +1,5 @@
 ---
-name: session-memory-resume
+name: resume
 description: Resume a prior Codex session by loading its INDEX.md context summary into the current session. Use when the user wants to recall, resume, or load context from previous Codex work in this project, or asks to see their saved sessions.
 ---
 
