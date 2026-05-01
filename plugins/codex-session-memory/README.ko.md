@@ -17,11 +17,15 @@ Codex를 재시작한 뒤 `/plugins`를 열고 `Engine` marketplace에서
 
 ## 스킬
 
+Codex는 플러그인에 포함된 스킬을 플러그인 네임스페이스와 함께 표시합니다.
+`/plugins`에는 플러그인 자체(`codex-session-memory`)가 보이며, 채팅에서
+스킬을 호출할 때는 아래 이름을 사용합니다.
+
 | 스킬 | 동작 | LLM 호출 |
 |---|---|---|
-| `$session-memory-checkpoint` | delta 턴을 컨텍스트 요약으로 저장 | 1 (codex-exec, ~15-60초) |
-| `$session-memory-resume [prefix]` | 이전 세션의 INDEX 목록 표시 또는 로드 | 0 |
-| `$session-memory-status` | pending 턴, 컨텍스트 파일 수, 경로 표시 | 0 |
+| `$codex-session-memory:session-memory-checkpoint` | delta 턴을 컨텍스트 요약으로 저장 | 1 (codex-exec, ~15-60초) |
+| `$codex-session-memory:session-memory-resume [prefix]` | 이전 세션의 INDEX 목록 표시 또는 로드 | 0 |
+| `$codex-session-memory:session-memory-status` | pending 턴, 컨텍스트 파일 수, 경로 표시 | 0 |
 
 ## 프로젝트 루트 해석 (모노레포 가드)
 

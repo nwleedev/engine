@@ -17,11 +17,15 @@ No manual `~/.codex/config.toml` edit is required.
 
 ## Skills
 
+Codex shows plugin-bundled skills with the plugin namespace. `/plugins` lists
+the plugin itself (`codex-session-memory`); use the names below when invoking a
+skill from chat.
+
 | Skill | What it does | LLM calls |
 |---|---|---|
-| `$session-memory-checkpoint` | Save delta turns as a context summary | 1 (codex-exec, ~15-60s) |
-| `$session-memory-resume [prefix]` | List or load a prior session's INDEX | 0 |
-| `$session-memory-status` | Show pending turns, context count, paths | 0 |
+| `$codex-session-memory:session-memory-checkpoint` | Save delta turns as a context summary | 1 (codex-exec, ~15-60s) |
+| `$codex-session-memory:session-memory-resume [prefix]` | List or load a prior session's INDEX | 0 |
+| `$codex-session-memory:session-memory-status` | Show pending turns, context count, paths | 0 |
 
 ## Project root resolution (monorepo guard)
 
