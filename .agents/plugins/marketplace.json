@@ -1,7 +1,7 @@
 {
   "name": "engine",
   "interface": {
-    "displayName": "Engine"
+    "displayName": "Utils with session continuity"
   },
   "plugins": [
     {
