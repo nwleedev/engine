@@ -49,7 +49,11 @@ def test_skill_directories_and_frontmatter_use_short_names():
     skill_root = PLUGIN_ROOT / "skills"
     assert skill_root.is_dir(), f"missing skills directory: {skill_root}"
 
-    actual = {p.name for p in skill_root.iterdir() if p.is_dir() and not p.name.startswith("__")}
+    actual = {
+        p.name
+        for p in skill_root.iterdir()
+        if p.is_dir() and (p / "SKILL.md").is_file()
+    }
 
     assert actual == expected
     for name in expected:
