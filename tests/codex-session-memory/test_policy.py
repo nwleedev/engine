@@ -195,3 +195,20 @@ def test_lock_recovers_dead_process_lock(tmp_path):
     with lockfile.acquire_lock(path, timeout_seconds=0.01):
         metadata = json.loads(path.read_text(encoding="utf-8"))
         assert metadata["pid"] == os.getpid()
+
+
+def test_lock_does_not_remove_replaced_active_lock(monkeypatch, tmp_path):
+    lockfile = load_lockfile()
+    path = tmp_path / "session.lock"
+    path.write_text('{"pid": 999999999, "created_at": "2099-01-02T00:00:00+00:00"}\n')
+
+    def replace_lock(lock_path):
+        lock_path.unlink()
+        lock_path.write_text(json.dumps({"pid": os.getpid(), "created_at": "2099-01-02T00:00:01+00:00"}))
+        return True
+
+    monkeypatch.setattr(lockfile, "_lock_process_is_dead", replace_lock)
+
+    with pytest.raises(TimeoutError, match="lock timeout"):
+        with lockfile.acquire_lock(path, timeout_seconds=0.01):
+            pass

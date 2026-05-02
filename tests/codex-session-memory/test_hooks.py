@@ -76,7 +76,7 @@ def test_hooks_json_uses_official_nested_command_shape():
     assert post_tool_use["hooks"][0]["statusMessage"] == "Inspecting Codex session activity"
 
 
-def test_hook_commands_use_plugin_root_substitution_not_session_cwd_or_cache_scan():
+def test_hook_commands_use_plugin_local_relative_paths_not_cache_scan():
     hooks = json.loads((PLUGIN / "hooks" / "hooks.json").read_text())["hooks"]
     commands = [
         handler["command"]
@@ -88,8 +88,8 @@ def test_hook_commands_use_plugin_root_substitution_not_session_cwd_or_cache_sca
     assert commands
     for command in commands:
         assert not command.startswith("python3 hooks/")
-        assert command.startswith('python3 "${PLUGIN_ROOT}/hooks/')
-        assert "${PLUGIN_ROOT}" in command
+        assert command.startswith("python3 ./hooks/")
+        assert "${PLUGIN_ROOT}" not in command
         assert "/hooks/" in command
         assert "find " not in command
         assert "$HOME/.codex/plugins/cache" not in command

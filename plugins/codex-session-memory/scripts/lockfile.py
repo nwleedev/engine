@@ -33,6 +33,30 @@ def _lock_process_is_dead(path: Path) -> bool:
     return not _pid_is_running(pid)
 
 
+def _same_file(left: os.stat_result, right: os.stat_result) -> bool:
+    return left.st_ino == right.st_ino and left.st_dev == right.st_dev
+
+
+def _remove_dead_lock(path: Path) -> bool:
+    try:
+        stale_stat = path.stat()
+    except FileNotFoundError:
+        return False
+    if not _lock_process_is_dead(path):
+        return False
+    try:
+        current_stat = path.stat()
+    except FileNotFoundError:
+        return False
+    if not _same_file(stale_stat, current_stat):
+        return False
+    try:
+        path.unlink()
+        return True
+    except FileNotFoundError:
+        return False
+
+
 @contextmanager
 def acquire_lock(path: Path, timeout_seconds: float = 5.0):
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -42,11 +66,7 @@ def acquire_lock(path: Path, timeout_seconds: float = 5.0):
         try:
             fd = os.open(str(path), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
         except FileExistsError:
-            if _lock_process_is_dead(path):
-                try:
-                    path.unlink()
-                except FileNotFoundError:
-                    pass
+            if _remove_dead_lock(path):
                 continue
             if time.monotonic() >= deadline:
                 raise TimeoutError(f"lock timeout: {path}")
