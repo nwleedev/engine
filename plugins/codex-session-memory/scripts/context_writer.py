@@ -1,16 +1,30 @@
 """Shared context writer used by skills and hooks."""
+import importlib.util
 import sys
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-if str(HERE) not in sys.path:
-    sys.path.insert(0, str(HERE))
 
-import evidence_extractor
-import index_io
-import session_locator
+
+def _load_sibling(script_name: str):
+    module_name = f"_codex_session_memory_{script_name}"
+    existing = sys.modules.get(module_name)
+    if existing is not None:
+        return existing
+
+    spec = importlib.util.spec_from_file_location(module_name, HERE / f"{script_name}.py")
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+evidence_extractor = _load_sibling("evidence_extractor")
+index_io = _load_sibling("index_io")
+session_locator = _load_sibling("session_locator")
 
 
 @dataclass(frozen=True)
@@ -67,6 +81,21 @@ def _render_context(narration: dict, evidence: dict, reason: str) -> str:
     return "\n".join(lines)
 
 
+def _unique_context_path(contexts_dir: Path, base_filename: str) -> Path:
+    candidate = contexts_dir / base_filename
+    if not candidate.exists():
+        return candidate
+
+    stem = candidate.stem
+    suffix = candidate.suffix
+    index = 2
+    while True:
+        candidate = contexts_dir / f"{stem}-{index}{suffix}"
+        if not candidate.exists():
+            return candidate
+        index += 1
+
+
 def write_context(
     *,
     project_root: Path,
@@ -85,7 +114,8 @@ def write_context(
 
     now = datetime.now().strftime("%Y%m%d-%H%M")
     ctx_filename = f"CONTEXT-{now}-{_slug(narration['title'])}.md"
-    ctx_path = contexts_dir / ctx_filename
+    ctx_path = _unique_context_path(contexts_dir, ctx_filename)
+    ctx_filename = ctx_path.name
     evidence = evidence_extractor.extract_evidence(delta)
     ctx_path.write_text(_render_context(narration, evidence, reason))
 
