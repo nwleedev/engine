@@ -4,9 +4,10 @@ import re
 
 FILE_RE = re.compile(r"[\w./-]+\.(?:py|json|md|toml|yaml|yml|ts|tsx|js|jsx)")
 COMMAND_WORDS = r"(?:pytest|git|codex|python|pnpm|npm)"
-INLINE_COMMAND_RE = re.compile(rf"(?<!`)`(?!`)([^`\n]*(?:{COMMAND_WORDS})[^`\n]*)`(?!`)")
+COMMAND_LINE = rf"{COMMAND_WORDS}(?:\s+[^\n`]*)?"
+INLINE_COMMAND_RE = re.compile(rf"(?<!`)`(?!`)\s*({COMMAND_LINE})\s*`(?!`)")
 FENCED_COMMAND_RE = re.compile(r"```(?:bash|shell|sh)?\n(.*?)```", re.DOTALL)
-PLAIN_COMMAND_RE = re.compile(rf"^\s*(?:\$\s*)?({COMMAND_WORDS}\b[^\n`]*)\s*$", re.MULTILINE)
+PLAIN_COMMAND_RE = re.compile(rf"^\s*(?:\$\s*)?({COMMAND_LINE})\s*$", re.MULTILINE)
 URL_RE = re.compile(r"https?://[^\s)]+")
 FAIL_RE = re.compile(r"^(?:FAIL|FAILED|ERROR|Error:|fatal:).*$", re.MULTILINE)
 TRAILING_URL_PUNCTUATION = ".,`\"']}>;:"

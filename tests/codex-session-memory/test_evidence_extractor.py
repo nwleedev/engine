@@ -71,6 +71,19 @@ def test_extracts_fenced_shell_commands_without_language_marker():
     assert "bash" not in evidence["commands"]
 
 
+def test_extracts_fenced_commands_without_language_marker():
+    extractor = load_extractor()
+    delta = [
+        {
+            "role": "assistant",
+            "text": "Run:\n```\nnpm test\npython -m pytest tests/foo.py -q\n```",
+        }
+    ]
+    evidence = extractor.extract_evidence(delta)
+    assert "npm test" in evidence["commands"]
+    assert "python -m pytest tests/foo.py -q" in evidence["commands"]
+
+
 def test_extracts_plain_transcript_command_lines():
     extractor = load_extractor()
     delta = [
@@ -79,6 +92,21 @@ def test_extracts_plain_transcript_command_lines():
     evidence = extractor.extract_evidence(delta)
     assert "python -m pytest tests/foo.py -q" in evidence["commands"]
     assert "git status --short" in evidence["commands"]
+
+
+def test_inline_file_like_values_are_not_commands():
+    extractor = load_extractor()
+    delta = [
+        {
+            "role": "assistant",
+            "text": "Check `.gitignore`, `plugins/digital.py`, `npm-package.json`, then run `npm test`.",
+        }
+    ]
+    evidence = extractor.extract_evidence(delta)
+    assert ".gitignore" not in evidence["commands"]
+    assert "plugins/digital.py" not in evidence["commands"]
+    assert "npm-package.json" not in evidence["commands"]
+    assert "npm test" in evidence["commands"]
 
 
 def test_trims_common_trailing_url_punctuation():
