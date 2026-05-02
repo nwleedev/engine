@@ -152,6 +152,68 @@ def test_stop_internal_narration_timeout_is_shorter_than_hook_timeout():
     assert stop_timeout > 150
 
 
+def test_stop_counts_only_tool_role_text_for_tool_output_threshold():
+    stop = load_hook("stop")
+
+    assert stop._tool_output_chars(
+        [
+            {"role": "assistant", "text": "assistant text that is not tool output"},
+            {"role": "tool", "text": "tool output"},
+            {"role": "tool", "text": "more"},
+        ]
+    ) == len("tool output") + len("more")
+
+
+def test_stop_lock_timeout_fails_open_without_writing(monkeypatch, tmp_path):
+    stop = load_hook("stop")
+    transcript = tmp_path / "rollout.jsonl"
+    transcript.write_text("", encoding="utf-8")
+    session_dir = tmp_path / ".codex" / "sessions" / "abc"
+    session_dir.mkdir(parents=True)
+    (session_dir / ".session-memory.lock").write_text("locked", encoding="utf-8")
+    write_calls = []
+    narration_calls = []
+
+    def fake_load(filename, module_name):
+        if filename == "dotenv_loader.py":
+            return SimpleNamespace(load_project_dotenv=lambda cwd: None)
+        if filename == "project_root.py":
+            return SimpleNamespace(
+                find_project_root=lambda cwd: str(tmp_path),
+                assert_root_is_canonical=lambda root, cwd: None,
+            )
+        if filename == "session_locator.py":
+            return SimpleNamespace(
+                find_jsonl_by_thread=lambda thread_id: transcript,
+                data_session_dir=lambda root, thread_id: session_dir,
+            )
+        if filename == "index_io.py":
+            return SimpleNamespace(read_frontmatter=lambda path: {"last_processed_offset": 0})
+        if filename == "jsonl_parser.py":
+            return SimpleNamespace(extract_delta=lambda path, offset: ([{"role": "user", "text": "x" * 5000}], 10))
+        if filename == "policy.py":
+            return SimpleNamespace(should_save=lambda **kwargs: SimpleNamespace(save=True, reason="test"))
+        if filename == "narrate.py":
+            return SimpleNamespace(
+                build_prompt=lambda delta: "prompt",
+                call_codex_exec=lambda **kwargs: narration_calls.append(kwargs)
+                or {"title": "t", "what_why": "w", "decisions": [], "open": [], "next": "n"},
+                validate=lambda result: None,
+            )
+        if filename == "context_writer.py":
+            return SimpleNamespace(write_context=lambda **kwargs: write_calls.append(kwargs))
+        if filename == "lockfile.py":
+            return load_script("lockfile")
+        raise AssertionError(filename)
+
+    monkeypatch.setattr(stop, "_load_script_module", fake_load)
+
+    stop._save({"cwd": str(tmp_path), "session_id": "abc", "transcript_path": str(transcript)})
+
+    assert narration_calls == []
+    assert write_calls == []
+
+
 def test_stop_refuses_to_write_when_root_is_not_canonical(monkeypatch, tmp_path):
     stop = load_hook("stop")
     write_calls = []
@@ -214,6 +276,8 @@ def test_stop_passes_reentry_env_into_narration(monkeypatch, tmp_path):
             )
         if filename == "context_writer.py":
             return SimpleNamespace(write_context=lambda **kwargs: None)
+        if filename == "lockfile.py":
+            return load_script("lockfile")
         raise AssertionError(filename)
 
     monkeypatch.setattr(stop, "_load_script_module", fake_load)

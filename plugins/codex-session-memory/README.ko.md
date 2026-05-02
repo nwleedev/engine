@@ -28,9 +28,9 @@ codex_hooks = true
 ```
 
 이 플러그인은 `SessionStart`로 압축 컨텍스트를 주입하고, `Stop`으로 정책
-가드를 통과한 자동 체크포인트를 저장합니다. `PostToolUse`는 stop hook이
-체크포인트 필요 여부를 판단할 때 사용할 evidence를 표시합니다. 수동 스킬은
-계속 사용할 수 있습니다:
+가드를 통과한 자동 체크포인트를 저장합니다. `PostToolUse`는 현재 향후
+evidence 처리를 위해 예약된 비차단 placeholder이며, 지금은 evidence를 표시하지
+않습니다. 수동 스킬은 계속 사용할 수 있습니다:
 
 - `$codex-session-memory:checkpoint`
 - `$codex-session-memory:resume`

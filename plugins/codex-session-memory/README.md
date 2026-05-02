@@ -27,9 +27,9 @@ codex_hooks = true
 ```
 
 The plugin uses `SessionStart` for compact context injection and `Stop` for
-policy-gated automatic checkpoints. `PostToolUse` marks evidence that helps
-the stop hook decide whether a checkpoint is useful. Manual skills remain
-available:
+policy-gated automatic checkpoints. `PostToolUse` is currently a non-blocking
+placeholder reserved for future evidence handling; it does not mark evidence
+today. Manual skills remain available:
 
 - `$codex-session-memory:checkpoint`
 - `$codex-session-memory:resume`
