@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 """Best-effort raw evidence checkpoint marker hook."""
-import json
 import sys
 
 
@@ -9,7 +8,6 @@ def main() -> int:
         sys.stdin.read()
     except Exception:
         pass
-    print(json.dumps({"decision": "approve"}))
     return 0
 
 

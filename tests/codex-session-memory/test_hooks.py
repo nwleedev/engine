@@ -42,7 +42,7 @@ def test_hooks_json_uses_official_nested_command_shape():
     stop = hooks["Stop"][0]
     assert "matcher" not in stop
     assert stop["hooks"][0]["type"] == "command"
-    assert stop["hooks"][0]["timeout"] == 180
+    assert stop["hooks"][0]["timeout"] == 210
     assert stop["hooks"][0]["statusMessage"]
 
     post_tool_use = hooks["PostToolUse"][0]
@@ -52,7 +52,7 @@ def test_hooks_json_uses_official_nested_command_shape():
     assert post_tool_use["hooks"][0]["statusMessage"]
 
 
-def test_hook_commands_resolve_from_installed_plugin_cache_not_session_cwd():
+def test_hook_commands_use_plugin_root_substitution_not_session_cwd_or_cache_scan():
     hooks = json.loads((PLUGIN / "hooks" / "hooks.json").read_text())["hooks"]
     commands = [
         handler["command"]
@@ -64,12 +64,13 @@ def test_hook_commands_resolve_from_installed_plugin_cache_not_session_cwd():
     assert commands
     for command in commands:
         assert not command.startswith("python3 hooks/")
-        assert "codex-session-memory" in command
+        assert "${PLUGIN_ROOT}" in command
         assert "/hooks/" in command
-        assert "$HOME/.codex/plugins/cache" in command
+        assert "find " not in command
+        assert "$HOME/.codex/plugins/cache" not in command
 
 
-def test_stop_outputs_approval_when_payload_is_incomplete():
+def test_stop_missing_transcript_outputs_valid_noop_json_without_decision():
     hook = PLUGIN / "hooks" / "stop.py"
     payload = {"hook_event_name": "Stop", "cwd": str(PLUGIN)}
     result = subprocess.run(
@@ -79,10 +80,12 @@ def test_stop_outputs_approval_when_payload_is_incomplete():
         text=True,
         check=True,
     )
-    assert json.loads(result.stdout) == {"decision": "approve"}
+    output = json.loads(result.stdout)
+    assert output == {}
+    assert "decision" not in output
 
 
-def test_post_tool_use_outputs_approval():
+def test_post_tool_use_noop_outputs_nothing():
     hook = PLUGIN / "hooks" / "post_tool_use.py"
     payload = {"hook_event_name": "PostToolUse", "cwd": str(PLUGIN), "tool_name": "Bash"}
     result = subprocess.run(
@@ -92,4 +95,13 @@ def test_post_tool_use_outputs_approval():
         text=True,
         check=True,
     )
-    assert json.loads(result.stdout) == {"decision": "approve"}
+    assert result.stdout == ""
+
+
+def test_stop_internal_narration_timeout_is_shorter_than_hook_timeout():
+    hooks = json.loads((PLUGIN / "hooks" / "hooks.json").read_text())["hooks"]
+    stop_timeout = hooks["Stop"][0]["hooks"][0]["timeout"]
+    stop_source = (PLUGIN / "hooks" / "stop.py").read_text()
+
+    assert "timeout=150" in stop_source
+    assert stop_timeout > 150

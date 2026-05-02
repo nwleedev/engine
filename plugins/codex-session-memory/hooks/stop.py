@@ -13,8 +13,8 @@ SCRIPTS = PLUGIN / "scripts"
 TEMP_SCOPE = Path("temps") / "2026-05-02" / "codex-session-memory-task6"
 
 
-def _approve() -> None:
-    print(json.dumps({"decision": "approve"}))
+def _continue() -> None:
+    print(json.dumps({}))
 
 
 def _load_script_module(filename: str, module_name: str):
@@ -103,6 +103,7 @@ def _save(payload: dict) -> None:
             prompt=prompt,
             schema_path=SCRIPTS / "narration_schema.json",
             out_path=out_path,
+            timeout=150,
         )
         narrate.validate(result)
         context_writer.write_context(
@@ -127,7 +128,7 @@ def main() -> int:
         _save(_read_payload())
     except Exception:
         pass
-    _approve()
+    _continue()
     return 0
 
 
