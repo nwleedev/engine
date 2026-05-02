@@ -1,6 +1,8 @@
 # codex-session-memory
 
-Codex CLI 세션의 진행 상황을 증분 컨텍스트 요약으로 저장하는 사용자 호출 스킬. Claude용 `plugins/session-memory/`와 시맨틱은 닮았지만 코드는 완전 독립 — 훅 없음, 자동 LLM 호출 없음.
+Codex CLI 세션의 진행 상황을 증분 컨텍스트 요약으로 저장하는 세션 메모리
+플러그인입니다. Claude용 `plugins/session-memory/`와 시맨틱은 닮았지만
+코드는 완전히 독립되어 있습니다.
 
 **검증된 Codex 버전:** 0.128.0
 
@@ -13,7 +15,26 @@ codex plugin marketplace add /path/to/this/repo
 Codex를 재시작한 뒤 `/plugins`를 열고 `Engine` marketplace에서
 `codex-session-memory`를 설치하거나 활성화합니다.
 
-`~/.codex/config.toml` 직접 수정은 불필요합니다.
+수동 스킬은 설치 후 바로 사용할 수 있습니다. 자동 모드를 사용하려면 아래
+Codex hooks 기능 플래그가 필요합니다.
+
+## 자동 모드
+
+Codex 설정에서 Codex hooks를 활성화합니다:
+
+```toml
+[features]
+codex_hooks = true
+```
+
+이 플러그인은 `SessionStart`로 압축 컨텍스트를 주입하고, `Stop`으로 정책
+가드를 통과한 자동 체크포인트를 저장합니다. `PostToolUse`는 stop hook이
+체크포인트 필요 여부를 판단할 때 사용할 evidence를 표시합니다. 수동 스킬은
+계속 사용할 수 있습니다:
+
+- `$codex-session-memory:checkpoint`
+- `$codex-session-memory:resume`
+- `$codex-session-memory:status`
 
 ## 스킬
 
@@ -65,5 +86,5 @@ CODEX_PROJECT_DIR=/abs/path/to/monorepo/root
 ## 테스트
 
 ```
-make test-codex-session-memory
+python -m pytest tests/codex-session-memory -q
 ```

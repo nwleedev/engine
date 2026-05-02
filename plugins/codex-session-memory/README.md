@@ -1,6 +1,7 @@
 # codex-session-memory
 
-User-invoked skills that save Codex CLI session progress as incremental context summaries. Companion to `plugins/session-memory/` (Claude Code), but independent — no shared code, no hooks, no automatic LLM calls.
+Codex CLI session memory for incremental context summaries. Companion to
+`plugins/session-memory/` (Claude Code), but independent with no shared code.
 
 **Verified Codex version:** 0.128.0
 
@@ -13,7 +14,26 @@ codex plugin marketplace add /path/to/this/repo
 Restart Codex, open `/plugins`, choose the `Engine` marketplace, and install
 or enable `codex-session-memory`.
 
-No manual `~/.codex/config.toml` edit is required.
+Manual skills work after installation. Automatic mode requires the Codex hooks
+feature flag below.
+
+## Automatic mode
+
+Enable Codex hooks in Codex config:
+
+```toml
+[features]
+codex_hooks = true
+```
+
+The plugin uses `SessionStart` for compact context injection and `Stop` for
+policy-gated automatic checkpoints. `PostToolUse` marks evidence that helps
+the stop hook decide whether a checkpoint is useful. Manual skills remain
+available:
+
+- `$codex-session-memory:checkpoint`
+- `$codex-session-memory:resume`
+- `$codex-session-memory:status`
 
 ## Skills
 
@@ -67,5 +87,5 @@ The same JSONL transcript at `~/.codex/sessions/YYYY/MM/DD/rollout-*-<thread>.js
 ## Tests
 
 ```
-make test-codex-session-memory
+python -m pytest tests/codex-session-memory -q
 ```
