@@ -1,0 +1,26 @@
+"""Locate the current Codex session: thread id, JSONL file, data folder."""
+import os
+from pathlib import Path
+
+
+CODEX_SESSIONS_ROOT = Path.home() / ".codex" / "sessions"
+
+
+def current_thread_id():
+    v = os.environ.get("CODEX_THREAD_ID", "").strip()
+    return v or None
+
+
+def find_jsonl_by_thread(thread_id: str, codex_sessions_root=None):
+    root = Path(codex_sessions_root) if codex_sessions_root else CODEX_SESSIONS_ROOT
+    if not root.is_dir():
+        return None
+    pattern = f"rollout-*-{thread_id}.jsonl"
+    matches = list(root.rglob(pattern))
+    if not matches:
+        return None
+    return matches[0].resolve()
+
+
+def data_session_dir(project_root: str, thread_id: str) -> Path:
+    return (Path(project_root) / ".codex" / "sessions" / thread_id).resolve()
