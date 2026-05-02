@@ -1,17 +1,42 @@
 {
-  "hooks": [
-    {
-      "event": "SessionStart",
-      "command": "python3 hooks/session_start.py"
-    },
-    {
-      "event": "Stop",
-      "command": "python3 hooks/stop.py"
-    },
-    {
-      "event": "PostToolUse",
-      "matcher": "Bash|apply_patch|mcp.*",
-      "command": "python3 hooks/post_tool_use.py"
-    }
-  ]
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh -c 'script=$(find \"$HOME/.codex/plugins/cache\" -path \"*/codex-session-memory/*/hooks/session_start.py\" -type f | sort | tail -n 1); if [ -n \"$script\" ]; then exec python3 \"$script\"; fi'",
+            "timeout": 30,
+            "statusMessage": "Loading Codex session memory"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh -c 'script=$(find \"$HOME/.codex/plugins/cache\" -path \"*/codex-session-memory/*/hooks/stop.py\" -type f | sort | tail -n 1); if [ -n \"$script\" ]; then exec python3 \"$script\"; else printf \"%s\\n\" \"{\\\"decision\\\":\\\"approve\\\"}\"; fi'",
+            "timeout": 180,
+            "statusMessage": "Saving Codex session memory"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash|apply_patch|mcp.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh -c 'script=$(find \"$HOME/.codex/plugins/cache\" -path \"*/codex-session-memory/*/hooks/post_tool_use.py\" -type f | sort | tail -n 1); if [ -n \"$script\" ]; then exec python3 \"$script\"; fi'",
+            "timeout": 30,
+            "statusMessage": "Marking Codex session evidence"
+          }
+        ]
+      }
+    ]
+  }
 }
