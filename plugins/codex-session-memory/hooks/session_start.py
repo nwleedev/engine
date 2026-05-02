@@ -2,6 +2,7 @@
 """Inject saved Codex session memory at session start."""
 import importlib.util
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -10,6 +11,7 @@ HERE = Path(__file__).resolve().parent
 PLUGIN = HERE.parent
 SCRIPTS = PLUGIN / "scripts"
 MAX_INJECT_CHARS = 8000
+INTERNAL_ENV = "CODEX_SESSION_MEMORY_INTERNAL"
 
 
 def _load_script_module(filename: str, module_name: str):
@@ -44,6 +46,9 @@ def _print_context(prompt: str) -> None:
 
 def main() -> int:
     try:
+        if os.environ.get(INTERNAL_ENV):
+            return 0
+
         payload = _read_payload()
         if payload.get("source") == "clear":
             return 0

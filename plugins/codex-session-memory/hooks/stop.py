@@ -2,6 +2,7 @@
 """Best-effort automatic save hook for Codex Stop events."""
 import importlib.util
 import json
+import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -11,6 +12,7 @@ HERE = Path(__file__).resolve().parent
 PLUGIN = HERE.parent
 SCRIPTS = PLUGIN / "scripts"
 TEMP_SCOPE = Path("temps") / "2026-05-02" / "codex-session-memory-task6"
+INTERNAL_ENV = "CODEX_SESSION_MEMORY_INTERNAL"
 
 
 def _continue() -> None:
@@ -58,6 +60,10 @@ def _tool_output_chars(delta: list[dict]) -> int:
     return sum(len(str(item.get("text", ""))) for item in delta if item.get("role") == "assistant")
 
 
+def _narration_env() -> dict[str, str]:
+    return {**os.environ, INTERNAL_ENV: "1"}
+
+
 def _save(payload: dict) -> None:
     cwd = str(payload.get("cwd") or Path.cwd())
     dotenv_loader = _load_script_module("dotenv_loader.py", "codex_session_memory_stop_dotenv_loader")
@@ -75,6 +81,10 @@ def _save(payload: dict) -> None:
 
     dotenv_loader.load_project_dotenv(cwd)
     root = Path(project_root.find_project_root(cwd))
+    try:
+        project_root.assert_root_is_canonical(root, cwd)
+    except Exception:
+        return
     transcript_path = _payload_transcript_path(payload)
     jsonl_path = Path(transcript_path) if transcript_path else session_locator.find_jsonl_by_thread(thread_id)
     if jsonl_path is None or not Path(jsonl_path).is_file():
@@ -104,6 +114,7 @@ def _save(payload: dict) -> None:
             schema_path=SCRIPTS / "narration_schema.json",
             out_path=out_path,
             timeout=150,
+            env=_narration_env(),
         )
         narrate.validate(result)
         context_writer.write_context(
@@ -125,7 +136,8 @@ def _save(payload: dict) -> None:
 
 def main() -> int:
     try:
-        _save(_read_payload())
+        if not os.environ.get(INTERNAL_ENV):
+            _save(_read_payload())
     except Exception:
         pass
     _continue()

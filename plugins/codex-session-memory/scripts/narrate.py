@@ -29,7 +29,13 @@ def build_prompt(delta: list, lang: str = "en") -> str:
     return template.format(delta=delta_text)
 
 
-def call_codex_exec(prompt: str, schema_path: Path, out_path: Path, timeout: int = DEFAULT_TIMEOUT) -> dict:
+def call_codex_exec(
+    prompt: str,
+    schema_path: Path,
+    out_path: Path,
+    timeout: int = DEFAULT_TIMEOUT,
+    env: dict[str, str] | None = None,
+) -> dict:
     cmd = [
         "codex", "exec",
         "--ephemeral",
@@ -40,7 +46,7 @@ def call_codex_exec(prompt: str, schema_path: Path, out_path: Path, timeout: int
         prompt,
     ]
     try:
-        r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, env=env)
     except subprocess.TimeoutExpired as e:
         raise NarrationError(f"codex exec timed out after {timeout}s") from e
     except FileNotFoundError as e:
