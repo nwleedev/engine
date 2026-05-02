@@ -3,39 +3,19 @@
 import os
 import sys
 import tempfile
-from datetime import datetime, timezone
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 SCRIPTS = HERE.parent.parent / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
+import context_writer
 import dotenv_loader
 import project_root as pr
 import session_locator as sl
 import jsonl_parser as jp
 import index_io as io
 import narrate
-
-
-def _now_iso():
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
-
-
-def _slug(title: str) -> str:
-    safe = "".join(c if c.isalnum() or c in "-_" else "-" for c in title.strip())
-    return safe[:60].strip("-") or "checkpoint"
-
-
-def _render_context(r: dict) -> str:
-    lines = [f"# {r['title']}", "", "## 무엇을/왜", r["what_why"], "", "## 결정"]
-    for d in r.get("decisions") or []:
-        lines.append(f"- {d}")
-    lines.extend(["", "## 미완료"])
-    for o in r.get("open") or []:
-        lines.append(f"- {o}")
-    lines.extend(["", "## 다음", r["next"], ""])
-    return "\n".join(lines)
 
 
 def main():
@@ -55,11 +35,7 @@ def main():
         print(f"error: no rollout JSONL found for thread {thread_id[:8]}", file=sys.stderr)
         return 2
 
-    session_dir = sl.data_session_dir(root, thread_id)
-    session_dir.mkdir(parents=True, exist_ok=True)
-    (session_dir / "contexts").mkdir(exist_ok=True)
-    index_path = session_dir / "INDEX.md"
-
+    index_path = sl.data_session_dir(root, thread_id) / "INDEX.md"
     fm = io.read_frontmatter(index_path) or {}
     last_offset = int(fm.get("last_processed_offset", 0))
 
@@ -80,27 +56,21 @@ def main():
         except OSError:
             pass
 
-    title = result["title"]
-    now = datetime.now().strftime("%Y%m%d-%H%M")
-    ctx_filename = f"CONTEXT-{now}-{_slug(title)}.md"
-    ctx_path = session_dir / "contexts" / ctx_filename
-    ctx_path.write_text(_render_context(result))
+    result_path = context_writer.write_context(
+        project_root=Path(root),
+        thread_id=thread_id,
+        cwd=cwd,
+        jsonl_path=str(jsonl),
+        new_offset=new_offset,
+        delta=delta,
+        narration=result,
+        reason="force",
+    )
 
-    if not index_path.exists():
-        io.write_index(index_path, frontmatter={
-            "session_id": thread_id,
-            "cwd": cwd,
-            "started": _now_iso(),
-            "last_updated": _now_iso(),
-            "last_processed_offset": new_offset,
-            "jsonl_path": str(jsonl),
-        }, contexts=[])
-
-    summary = (result["what_why"] or "").splitlines()[0][:120]
-    io.append_context_entry(index_path, filename=ctx_filename, summary=summary)
-    io.update_frontmatter(index_path, last_processed_offset=new_offset, last_updated=_now_iso())
-
-    print(f"Checkpoint saved: {len(delta)} turns -> .codex/sessions/{thread_id[:8]}/contexts/{ctx_filename}")
+    print(
+        "Checkpoint saved: "
+        f"{len(delta)} turns -> {result_path.context_path.relative_to(Path(root))}"
+    )
     return 0
 
 
