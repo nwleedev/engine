@@ -10,5 +10,5 @@ Read-only status report.
 ## Run
 
 ```
-python3 "$(dirname "$0")/status.py"
+python3 /path/to/codex-session-memory/skills/status/status.py
 ```

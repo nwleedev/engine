@@ -9,10 +9,10 @@ Force a narration checkpoint for the current Codex session. Reads transcript del
 
 ## Run
 
-Run the entry script via your shell tool:
+Run the `checkpoint.py` script next to this `SKILL.md` file via your shell tool:
 
 ```
-python3 "$(dirname "$0")/checkpoint.py"
+python3 /path/to/codex-session-memory/skills/checkpoint/checkpoint.py
 ```
 
 Output is a single status line. Full narration goes to file — parent session context unaffected.
@@ -21,4 +21,4 @@ Output is a single status line. Full narration goes to file — parent session c
 
 - Latency ~15-60s (codex-exec baseline overhead).
 - Idempotent: forces a checkpoint marker even if no new turns since last save.
-- Project root resolution honors `CODEX_PROJECT_DIR` env or `.env` declaration; falls back to AGENTS.md / .codex / git toplevel / cwd.
+- Project root resolution honors `CODEX_PROJECT_DIR` env or `.env` declaration; falls back to git toplevel / AGENTS.md / .codex / cwd.

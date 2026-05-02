@@ -53,9 +53,9 @@ Scripts walk up from cwd to find the project root in priority:
 
 1. `CODEX_PROJECT_DIR` env var
 2. `<ancestor>/.env` line `CODEX_PROJECT_DIR=...`
-3. Topmost ancestor containing `AGENTS.md`
-4. Topmost ancestor containing `.codex/`
-5. `git rev-parse --show-toplevel`
+3. `git rev-parse --show-toplevel`
+4. Topmost ancestor containing `AGENTS.md`
+5. Topmost ancestor containing `.codex/`
 6. cwd
 
 If the resolved root differs from `git rev-parse --show-toplevel` and no env override is set, the plugin **refuses to write** (loud failure beats silent data fragmentation).

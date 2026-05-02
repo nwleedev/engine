@@ -54,9 +54,9 @@ Codex는 플러그인에 포함된 스킬을 플러그인 네임스페이스와 
 
 1. `CODEX_PROJECT_DIR` env var
 2. `<ancestor>/.env`의 `CODEX_PROJECT_DIR=...` 선언
-3. `AGENTS.md`를 포함한 topmost 조상
-4. `.codex/`를 포함한 topmost 조상
-5. `git rev-parse --show-toplevel`
+3. `git rev-parse --show-toplevel`
+4. `AGENTS.md`를 포함한 topmost 조상
+5. `.codex/`를 포함한 topmost 조상
 6. cwd
 
 해석된 root가 `git rev-parse --show-toplevel`과 다르고 env 명시 override가 없으면 플러그인은 **쓰기를 거부**합니다 (silent 데이터 분산보다 loud failure 우선).

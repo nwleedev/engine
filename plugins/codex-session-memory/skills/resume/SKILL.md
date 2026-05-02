@@ -12,11 +12,11 @@ List or load saved sessions for the current project.
 No argument — list sessions:
 
 ```
-python3 "$(dirname "$0")/resume.py"
+python3 /path/to/codex-session-memory/skills/resume/resume.py
 ```
 
 With 8-character session id prefix — inject INDEX into current session:
 
 ```
-python3 "$(dirname "$0")/resume.py" <prefix>
+python3 /path/to/codex-session-memory/skills/resume/resume.py <prefix>
 ```

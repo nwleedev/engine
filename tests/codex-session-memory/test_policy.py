@@ -185,3 +185,13 @@ def test_existing_lock_times_out(tmp_path):
     with pytest.raises(TimeoutError, match="lock timeout"):
         with lockfile.acquire_lock(path, timeout_seconds=0.01):
             pass
+
+
+def test_lock_recovers_dead_process_lock(tmp_path):
+    lockfile = load_lockfile()
+    path = tmp_path / "session.lock"
+    path.write_text('{"pid": 999999999, "created_at": "2099-01-02T00:00:00+00:00"}\n')
+
+    with lockfile.acquire_lock(path, timeout_seconds=0.01):
+        metadata = json.loads(path.read_text(encoding="utf-8"))
+        assert metadata["pid"] == os.getpid()

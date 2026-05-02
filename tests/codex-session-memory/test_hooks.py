@@ -73,7 +73,7 @@ def test_hooks_json_uses_official_nested_command_shape():
     assert post_tool_use["matcher"] == "Bash|apply_patch|mcp.*"
     assert post_tool_use["hooks"][0]["type"] == "command"
     assert post_tool_use["hooks"][0]["timeout"] == 30
-    assert post_tool_use["hooks"][0]["statusMessage"]
+    assert post_tool_use["hooks"][0]["statusMessage"] == "Inspecting Codex session activity"
 
 
 def test_hook_commands_use_plugin_root_substitution_not_session_cwd_or_cache_scan():
