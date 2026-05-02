@@ -95,6 +95,34 @@ def test_uses_latest_three_contexts_from_writer_append_order(tmp_path):
     assert "CONTEXT-4 next action" in prompt
 
 
+def test_uses_latest_three_contexts_with_collision_safe_writer_names(tmp_path):
+    session = tmp_path / ".codex" / "sessions" / "abc123"
+    contexts = session / "contexts"
+    contexts.mkdir(parents=True)
+    context_names = [
+        "CONTEXT-20260502-1200-A.md",
+        "CONTEXT-20260502-1200-A-2.md",
+        "CONTEXT-20260502-1201-B.md",
+        "CONTEXT-20260502-1202-C.md",
+    ]
+    (session / "INDEX.md").write_text(
+        "---\nsession_id: abc123\n---\n\n"
+        "# 세션 요약\n\n## 컨텍스트 목록\n\n"
+        + "".join(f"- [{name}] — writer append order\n" for name in context_names)
+    )
+    for name in context_names:
+        (contexts / name).write_text(f"# {name}\n\n## 다음\nnext action for {name}\n")
+
+    prompt = load_resume_prompt().build_resume_prompt(session, budget_chars=2600)
+
+    assert "--- CONTEXT-20260502-1200-A.md ---" not in prompt
+    assert "next action for CONTEXT-20260502-1200-A.md" not in prompt
+    assert "--- CONTEXT-20260502-1200-A-2.md ---" in prompt
+    assert "--- CONTEXT-20260502-1201-B.md ---" in prompt
+    assert "--- CONTEXT-20260502-1202-C.md ---" in prompt
+    assert "next action for CONTEXT-20260502-1202-C.md" in prompt
+
+
 def test_preserves_root_config_and_plugin_file_evidence(tmp_path):
     session = tmp_path / ".codex" / "sessions" / "abc123"
     contexts = session / "contexts"

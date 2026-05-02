@@ -65,10 +65,7 @@ def _context_files(session_dir: Path, index_text: str) -> list[Path]:
 def _recent_context_files(context_files: list[Path], limit: int = 3) -> list[Path]:
     if len(context_files) <= limit:
         return context_files
-    names = [path.name for path in context_files]
-    if names == sorted(names):
-        return context_files[-limit:]
-    return context_files[:limit]
+    return context_files[-limit:]
 
 
 def _clip(text: str, budget_chars: int) -> str:
