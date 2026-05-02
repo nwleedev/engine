@@ -204,6 +204,8 @@ def test_stop_lock_timeout_fails_open_without_writing(monkeypatch, tmp_path):
             return SimpleNamespace(write_context=lambda **kwargs: write_calls.append(kwargs))
         if filename == "lockfile.py":
             return load_script("lockfile")
+        if filename == "temp_paths.py":
+            return SimpleNamespace(project_temp_dir=lambda root, scope: tmp_path / "temps" / "2099-01-02" / scope)
         raise AssertionError(filename)
 
     monkeypatch.setattr(stop, "_load_script_module", fake_load)
@@ -230,6 +232,8 @@ def test_stop_refuses_to_write_when_root_is_not_canonical(monkeypatch, tmp_path)
             return SimpleNamespace(find_jsonl_by_thread=lambda thread_id: (_ for _ in ()).throw(AssertionError("should not find transcript")))
         if filename == "context_writer.py":
             return SimpleNamespace(write_context=lambda **kwargs: write_calls.append(kwargs))
+        if filename == "temp_paths.py":
+            return SimpleNamespace(project_temp_dir=lambda root, scope: tmp_path / "temps" / "2099-01-02" / scope)
         return SimpleNamespace()
 
     monkeypatch.setattr(stop, "_load_script_module", fake_load)
@@ -278,6 +282,8 @@ def test_stop_passes_reentry_env_into_narration(monkeypatch, tmp_path):
             return SimpleNamespace(write_context=lambda **kwargs: None)
         if filename == "lockfile.py":
             return load_script("lockfile")
+        if filename == "temp_paths.py":
+            return SimpleNamespace(project_temp_dir=lambda root, scope: tmp_path / "temps" / "2099-01-02" / scope)
         raise AssertionError(filename)
 
     monkeypatch.setattr(stop, "_load_script_module", fake_load)

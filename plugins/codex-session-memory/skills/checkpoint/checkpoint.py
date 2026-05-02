@@ -16,9 +16,10 @@ import jsonl_parser as jp
 import index_io as io
 import lockfile
 import narrate
+import temp_paths
 
 
-TEMP_SCOPE = Path("temps") / "2026-05-02" / "codex-session-memory-checkpoint"
+TEMP_SCOPE = "codex-session-memory-checkpoint"
 LOCK_NAME = ".session-memory.lock"
 LOCK_TIMEOUT_SECONDS = 5.0
 
@@ -42,7 +43,7 @@ def main():
 
     session_dir = sl.data_session_dir(root, thread_id)
     lock_path = session_dir / LOCK_NAME
-    temp_dir = Path(root) / TEMP_SCOPE
+    temp_dir = temp_paths.project_temp_dir(Path(root), TEMP_SCOPE)
     temp_dir.mkdir(parents=True, exist_ok=True)
     out_path = temp_dir / f"checkpoint-{thread_id[:8]}.json"
     try:

@@ -11,7 +11,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 PLUGIN = HERE.parent
 SCRIPTS = PLUGIN / "scripts"
-TEMP_SCOPE = Path("temps") / "2026-05-02" / "codex-session-memory-final-fixes"
+TEMP_SCOPE = "codex-session-memory-stop"
 INTERNAL_ENV = "CODEX_SESSION_MEMORY_INTERNAL"
 LOCK_NAME = ".session-memory.lock"
 LOCK_TIMEOUT_SECONDS = 0.2
@@ -77,6 +77,7 @@ def _save(payload: dict) -> None:
     narrate = _load_script_module("narrate.py", "codex_session_memory_stop_narrate")
     context_writer = _load_script_module("context_writer.py", "codex_session_memory_stop_context_writer")
     lockfile = _load_script_module("lockfile.py", "codex_session_memory_stop_lockfile")
+    temp_paths = _load_script_module("temp_paths.py", "codex_session_memory_stop_temp_paths")
 
     thread_id = _payload_thread_id(payload)
     if not thread_id:
@@ -111,7 +112,7 @@ def _save(payload: dict) -> None:
             if not decision.save:
                 return
 
-            temp_dir = root / TEMP_SCOPE
+            temp_dir = temp_paths.project_temp_dir(root, TEMP_SCOPE)
             temp_dir.mkdir(parents=True, exist_ok=True)
             out_path = temp_dir / f"narration-{thread_id[:8]}.json"
             try:

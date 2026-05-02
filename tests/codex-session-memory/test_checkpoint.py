@@ -35,6 +35,11 @@ def test_checkpoint_uses_project_local_temp_file(monkeypatch, tmp_path):
     monkeypatch.setattr(checkpoint.io, "read_frontmatter", lambda path: {"last_processed_offset": 0})
     monkeypatch.setattr(checkpoint.jp, "extract_delta", lambda path, offset: ([{"role": "user", "text": "checkpoint"}], 10))
     monkeypatch.setattr(checkpoint.narrate, "build_prompt", lambda delta: "prompt")
+    monkeypatch.setattr(
+        checkpoint.temp_paths,
+        "project_temp_dir",
+        lambda root, scope: tmp_path / "temps" / "2099-01-02" / scope,
+    )
 
     def fake_call_codex_exec(*, prompt, schema_path, out_path, **kwargs):
         captured["out_path"] = Path(out_path)
@@ -51,6 +56,6 @@ def test_checkpoint_uses_project_local_temp_file(monkeypatch, tmp_path):
 
     assert checkpoint.main() == 0
 
-    expected_temp_dir = tmp_path / "temps" / "2026-05-02" / "codex-session-memory-checkpoint"
+    expected_temp_dir = tmp_path / "temps" / "2099-01-02" / "codex-session-memory-checkpoint"
     assert captured["out_path"].parent == expected_temp_dir
     assert not captured["out_path"].exists()
