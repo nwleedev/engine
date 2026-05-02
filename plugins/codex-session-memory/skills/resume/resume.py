@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import importlib.util
 import os
 import sys
 from pathlib import Path
@@ -10,10 +11,19 @@ sys.path.insert(0, str(SCRIPTS))
 import dotenv_loader
 import project_root as pr
 import index_io as io
-import resume_prompt
 
 
 MAX_INJECT_CHARS = 8000
+
+
+def load_resume_prompt_module():
+    module_path = SCRIPTS / "resume_prompt.py"
+    spec = importlib.util.spec_from_file_location("codex_session_memory_resume_prompt", module_path)
+    module = importlib.util.module_from_spec(spec)
+    if spec.loader is None:
+        raise ImportError(f"cannot load resume prompt module from {module_path}")
+    spec.loader.exec_module(module)
+    return module
 
 
 def list_sessions(root: str):
@@ -64,6 +74,7 @@ def main(argv):
         print(f"error: no session matches prefix '{prefix}'", file=sys.stderr)
         return 2
     target_session_dir = matches[0]["path"].parent
+    resume_prompt = load_resume_prompt_module()
     print(resume_prompt.build_resume_prompt(target_session_dir, budget_chars=MAX_INJECT_CHARS))
     print(f"Inspect <root>/.codex/sessions/{matches[0]['session_id']}/contexts/*.md for full details.")
     return 0
