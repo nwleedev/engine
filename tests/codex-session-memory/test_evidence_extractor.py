@@ -57,6 +57,31 @@ def test_caps_files_to_forty_items():
     assert evidence["files"] == [f"file_{index}.py" for index in range(40)]
 
 
+def test_ignores_partial_file_matches_inside_unsupported_extensions():
+    extractor = load_extractor()
+    delta = [
+        {
+            "role": "assistant",
+            "text": "Ignore __pycache__/evidence_extractor.cpython-312.pyc and archive.mdx, edit docs/spec.md.",
+        }
+    ]
+    evidence = extractor.extract_evidence(delta)
+    assert "__pycache__/evidence_extractor.cpython-312.py" not in evidence["files"]
+    assert "archive.md" not in evidence["files"]
+    assert "docs/spec.md" in evidence["files"]
+
+
+def test_caps_commands_sources_and_failures():
+    extractor = load_extractor()
+    commands = "\n".join(f"python script_{index}.py" for index in range(35))
+    sources = " ".join(f"https://example.com/{index}" for index in range(35))
+    failures = "\n".join(f"FAIL tests/test_{index}.py::test_case" for index in range(25))
+    evidence = extractor.extract_evidence([{"role": "assistant", "text": f"{commands}\n{sources}\n{failures}"}])
+    assert evidence["commands"] == [f"python script_{index}.py" for index in range(30)]
+    assert evidence["sources"] == [f"https://example.com/{index}" for index in range(30)]
+    assert evidence["failures"] == [f"FAIL tests/test_{index}.py::test_case" for index in range(20)]
+
+
 def test_extracts_fenced_shell_commands_without_language_marker():
     extractor = load_extractor()
     delta = [
@@ -69,6 +94,27 @@ def test_extracts_fenced_shell_commands_without_language_marker():
     assert "python -m pytest tests/foo.py -q" in evidence["commands"]
     assert "git status --short" in evidence["commands"]
     assert "bash" not in evidence["commands"]
+
+
+def test_extracts_common_codex_transcript_commands_from_fences_and_plain_lines():
+    extractor = load_extractor()
+    delta = [
+        {
+            "role": "assistant",
+            "text": "Run:\n```bash\nrg extract_evidence\nsed -n '1,40p' file.py\ngh pr view 1\n"
+            "node scripts/check.mjs\nuv run ruff check\nruff format .\nmypy package\n```\n$ rg TODO\nsed -n '1,20p' README.md",
+        }
+    ]
+    evidence = extractor.extract_evidence(delta)
+    assert "rg extract_evidence" in evidence["commands"]
+    assert "sed -n '1,40p' file.py" in evidence["commands"]
+    assert "gh pr view 1" in evidence["commands"]
+    assert "node scripts/check.mjs" in evidence["commands"]
+    assert "uv run ruff check" in evidence["commands"]
+    assert "ruff format ." in evidence["commands"]
+    assert "mypy package" in evidence["commands"]
+    assert "rg TODO" in evidence["commands"]
+    assert "sed -n '1,20p' README.md" in evidence["commands"]
 
 
 def test_extracts_fenced_commands_without_language_marker():

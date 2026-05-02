@@ -2,22 +2,24 @@
 import re
 
 
-FILE_RE = re.compile(r"[\w./-]+\.(?:py|json|md|toml|yaml|yml|ts|tsx|js|jsx)")
-COMMAND_WORDS = r"(?:pytest|git|codex|python|pnpm|npm)"
-COMMAND_LINE = rf"{COMMAND_WORDS}(?:\s+[^\n`]*)?"
-INLINE_COMMAND_RE = re.compile(rf"(?<!`)`(?!`)\s*({COMMAND_LINE})\s*`(?!`)")
+FILE_RE = re.compile(r"[\w./-]+\.(?:py|json|md|toml|yaml|yml|ts|tsx|js|jsx)(?![\w-]|\.[A-Za-z0-9])")
+INLINE_COMMAND_WORDS = r"(?:pytest|git|codex|python|pnpm|npm)"
+TRANSCRIPT_COMMAND_WORDS = r"(?:pytest|git|codex|python|pnpm|npm|rg|sed|gh|node|uv|ruff|mypy)"
+INLINE_COMMAND_LINE = rf"{INLINE_COMMAND_WORDS}(?:\s+[^\n`]*)?"
+TRANSCRIPT_COMMAND_LINE = rf"{TRANSCRIPT_COMMAND_WORDS}(?:\s+[^\n`]*)?"
+INLINE_COMMAND_RE = re.compile(rf"(?<!`)`(?!`)\s*({INLINE_COMMAND_LINE})\s*`(?!`)")
 FENCED_COMMAND_RE = re.compile(r"```(?:bash|shell|sh)?\n(.*?)```", re.DOTALL)
-PLAIN_COMMAND_RE = re.compile(rf"^\s*(?:\$\s*)?({COMMAND_LINE})\s*$", re.MULTILINE)
+PLAIN_COMMAND_RE = re.compile(rf"^\s*(?:\$\s*)?({TRANSCRIPT_COMMAND_LINE})\s*$", re.MULTILINE)
 URL_RE = re.compile(r"https?://[^\s)]+")
 FAIL_RE = re.compile(r"^(?:FAIL|FAILED|ERROR|Error:|fatal:).*$", re.MULTILINE)
 TRAILING_URL_PUNCTUATION = ".,`\"']}>;:"
 
 
-def _unique(items):
+def _unique(items, trailing_chars: str = ".,"):
     seen = set()
     out = []
     for item in items:
-        cleaned = item.strip().rstrip(".,")
+        cleaned = item.strip().rstrip(trailing_chars)
         if cleaned and cleaned not in seen:
             seen.add(cleaned)
             out.append(cleaned)
@@ -42,7 +44,7 @@ def _extract_commands(text: str) -> list[str]:
     for match in PLAIN_COMMAND_RE.finditer(text):
         commands.append((match.start(1), match.group(1)))
 
-    return _unique(command for _, command in sorted(commands))
+    return _unique((command for _, command in sorted(commands)), trailing_chars="")
 
 
 def extract_evidence(delta: list[dict]) -> dict:
