@@ -51,6 +51,15 @@ def _context_files(session_dir: Path, index_text: str) -> list[Path]:
     return ordered + remaining
 
 
+def _recent_context_files(context_files: list[Path], limit: int = 3) -> list[Path]:
+    if len(context_files) <= limit:
+        return context_files
+    names = [path.name for path in context_files]
+    if names == sorted(names):
+        return context_files[-limit:]
+    return context_files[:limit]
+
+
 def _clip(text: str, budget_chars: int) -> str:
     if budget_chars <= 0:
         return ""
@@ -120,7 +129,7 @@ def build_resume_prompt(session_dir: Path, budget_chars: int = 8000) -> str:
     index_text = index_path.read_text() if index_path.is_file() else ""
     files = []
     context_chunks = []
-    for path in _context_files(session_dir, index_text)[:3]:
+    for path in _recent_context_files(_context_files(session_dir, index_text)):
         text = path.read_text()
         context_chunks.append(f"--- {path.name} ---\n{_sanitize_context_text(text)}")
         files.extend(_extract_file_evidence(text))

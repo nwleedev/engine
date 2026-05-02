@@ -68,6 +68,33 @@ def test_uses_index_context_order_when_mtime_conflicts(tmp_path):
     assert "INDEX 순서의 최신 작업을 계속한다" in prompt
 
 
+def test_uses_latest_three_contexts_from_writer_append_order(tmp_path):
+    session = tmp_path / ".codex" / "sessions" / "abc123"
+    contexts = session / "contexts"
+    contexts.mkdir(parents=True)
+    (session / "INDEX.md").write_text(
+        "---\nsession_id: abc123\n---\n\n"
+        "# 세션 요약\n\n## 컨텍스트 목록\n\n"
+        "- [CONTEXT-1.md] — first appended\n"
+        "- [CONTEXT-2.md] — second appended\n"
+        "- [CONTEXT-3.md] — third appended\n"
+        "- [CONTEXT-4.md] — fourth appended\n"
+    )
+    for index in range(1, 5):
+        (contexts / f"CONTEXT-{index}.md").write_text(
+            f"# Context {index}\n\n## 다음\nCONTEXT-{index} next action\n"
+        )
+
+    prompt = load_resume_prompt().build_resume_prompt(session, budget_chars=2200)
+
+    assert "--- CONTEXT-1.md ---" not in prompt
+    assert "CONTEXT-1 next action" not in prompt
+    assert "--- CONTEXT-2.md ---" in prompt
+    assert "--- CONTEXT-3.md ---" in prompt
+    assert "--- CONTEXT-4.md ---" in prompt
+    assert "CONTEXT-4 next action" in prompt
+
+
 def test_preserves_root_config_and_plugin_file_evidence(tmp_path):
     session = tmp_path / ".codex" / "sessions" / "abc123"
     contexts = session / "contexts"
