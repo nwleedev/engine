@@ -17,6 +17,17 @@ MIN_STRUCTURED_PROMPT_BUDGET = len(
     ])
 )
 MIN_SMALL_BUDGET_WITH_TAGS = 120
+STRUCTURED_PROMPT_EMPTY = "\n".join([
+    "<codex-session-memory>",
+    "current_goal: 이어진 Codex 작업 맥락을 복원한다.",
+    "last_known_state:",
+    "",
+    "files_and_branches:",
+    "",
+    "next_action:",
+    "",
+    "</codex-session-memory>",
+])
 
 
 def _context_names_from_index(index_text: str) -> list[str]:
@@ -124,6 +135,8 @@ def build_resume_prompt(session_dir: Path, budget_chars: int = 8000) -> str:
         return MINIMAL_PROMPT[:budget_chars]
     if budget_chars <= max(MIN_STRUCTURED_PROMPT_BUDGET, MIN_SMALL_BUDGET_WITH_TAGS):
         return MINIMAL_PROMPT
+    if budget_chars <= len(STRUCTURED_PROMPT_EMPTY):
+        return MINIMAL_PROMPT
 
     index_path = session_dir / "INDEX.md"
     index_text = index_path.read_text() if index_path.is_file() else ""
@@ -134,18 +147,7 @@ def build_resume_prompt(session_dir: Path, budget_chars: int = 8000) -> str:
         context_chunks.append(f"--- {path.name} ---\n{_sanitize_context_text(text)}")
         files.extend(_extract_file_evidence(text))
     files_text = "\n".join(f"- {item}" for item in sorted(set(files))[:20]) or "- no file evidence recorded"
-    fixed_lines = [
-        "<codex-session-memory>",
-        "current_goal: 이어진 Codex 작업 맥락을 복원한다.",
-        "last_known_state:",
-        "",
-        "files_and_branches:",
-        "",
-        "next_action:",
-        "",
-        "</codex-session-memory>",
-    ]
-    fixed_budget = len("\n".join(fixed_lines))
+    fixed_budget = len(STRUCTURED_PROMPT_EMPTY)
     content_budget = max(0, budget_chars - fixed_budget)
     index_budget = _section_budget(content_budget // 4, 1200, 80)
     files_budget = _section_budget(content_budget // 4, 1200, 80)
@@ -175,4 +177,4 @@ def build_resume_prompt(session_dir: Path, budget_chars: int = 8000) -> str:
         prompt = "\n".join(fields)
     if len(prompt) <= budget_chars:
         return prompt
-    return _clip(prompt, budget_chars)
+    return MINIMAL_PROMPT

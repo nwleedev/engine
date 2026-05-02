@@ -155,7 +155,7 @@ def test_preserves_closing_tag_with_very_small_budgets(tmp_path):
         "# Small Budget\n\n## 다음\n작은 예산에서도 태그를 보존한다.\n"
     )
 
-    for budget in (80, 100, 120):
+    for budget in range(80, 201):
         prompt = load_resume_prompt().build_resume_prompt(session, budget_chars=budget)
 
         assert len(prompt) <= budget
