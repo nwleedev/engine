@@ -1,0 +1,17 @@
+{
+  "hooks": [
+    {
+      "event": "SessionStart",
+      "command": "python3 hooks/session_start.py"
+    },
+    {
+      "event": "Stop",
+      "command": "python3 hooks/stop.py"
+    },
+    {
+      "event": "PostToolUse",
+      "matcher": "Bash|apply_patch|mcp.*",
+      "command": "python3 hooks/post_tool_use.py"
+    }
+  ]
+}

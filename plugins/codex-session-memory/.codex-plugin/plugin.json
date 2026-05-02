@@ -1,7 +1,8 @@
 {
   "name": "codex-session-memory",
-  "version": "0.2.0",
-  "description": "Save Codex CLI session progress as incremental context summaries. User-invoked skills only.",
+  "version": "0.3.0",
+  "description": "Save and restore Codex CLI session progress with automatic hooks and manual skills.",
   "license": "MIT",
-  "skills": "./skills/"
+  "skills": "./skills/",
+  "hooks": "./hooks/hooks.json"
 }
