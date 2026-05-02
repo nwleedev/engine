@@ -75,8 +75,7 @@ def main(argv):
         return 2
     target_session_dir = matches[0]["path"].parent
     resume_prompt = load_script_module("resume_prompt.py", "codex_session_memory_resume_prompt")
-    print(resume_prompt.build_resume_prompt(target_session_dir, budget_chars=MAX_INJECT_CHARS))
-    print(f"Inspect <root>/.codex/sessions/{matches[0]['session_id']}/contexts/*.md for full details.")
+    sys.stdout.write(resume_prompt.build_resume_prompt(target_session_dir, budget_chars=MAX_INJECT_CHARS))
     return 0
 
 

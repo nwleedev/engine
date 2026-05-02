@@ -117,6 +117,25 @@ def test_preserves_structure_and_next_action_with_tight_budget(tmp_path):
     assert prompt.endswith("</codex-session-memory>")
 
 
+def test_preserves_closing_tag_with_very_small_budgets(tmp_path):
+    session = tmp_path / ".codex" / "sessions" / "abc123"
+    contexts = session / "contexts"
+    contexts.mkdir(parents=True)
+    (session / "INDEX.md").write_text(
+        "# 세션 요약\n\n## 컨텍스트 목록\n\n- [CONTEXT-1.md] — small budget\n"
+    )
+    (contexts / "CONTEXT-1.md").write_text(
+        "# Small Budget\n\n## 다음\n작은 예산에서도 태그를 보존한다.\n"
+    )
+
+    for budget in (80, 100, 120):
+        prompt = load_resume_prompt().build_resume_prompt(session, budget_chars=budget)
+
+        assert len(prompt) <= budget
+        assert prompt.startswith("<codex-session-memory>")
+        assert prompt.endswith("</codex-session-memory>")
+
+
 def test_resume_skill_ignores_preloaded_sibling_modules(tmp_path, monkeypatch, capsys):
     project = tmp_path / "project"
     session = project / ".codex" / "sessions" / "abc123"
@@ -148,3 +167,26 @@ def test_resume_skill_ignores_preloaded_sibling_modules(tmp_path, monkeypatch, c
     output = capsys.readouterr().out
     assert "파일 경로 로더를 사용한다" in output
     assert "wrong prompt" not in output
+
+
+def test_resume_skill_output_stays_within_prompt_budget(tmp_path, monkeypatch, capsys):
+    project = tmp_path / "project"
+    session = project / ".codex" / "sessions" / "abc123"
+    contexts = session / "contexts"
+    contexts.mkdir(parents=True)
+    (session / "INDEX.md").write_text(
+        "---\nsession_id: abc123\nlast_updated: 2026-05-02T00:00:00Z\n---\n\n"
+        "# 세션 요약\n\n## 컨텍스트 목록\n\n- [CONTEXT-1.md] — budget\n"
+    )
+    (contexts / "CONTEXT-1.md").write_text(
+        "# Budget\n\n## 다음\n출력은 닫는 태그로 끝난다.\n\n" + ("detail\n" * 2000)
+    )
+    monkeypatch.setenv("CODEX_PROJECT_DIR", str(project))
+    monkeypatch.chdir(project)
+
+    resume_skill = load_resume_skill()
+
+    assert resume_skill.main(["resume.py", "abc123"]) == 0
+    output = capsys.readouterr().out
+    assert len(output) <= resume_skill.MAX_INJECT_CHARS
+    assert output.endswith("</codex-session-memory>")

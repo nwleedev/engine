@@ -5,6 +5,18 @@ from pathlib import Path
 
 TRUNCATION_MARKER = "\n...[truncated for Codex context budget]"
 PLACEHOLDER_FILE_VALUES = {"", "없음", "none", "None", "n/a", "N/A", "저장된 파일 근거 없음"}
+MINIMAL_PROMPT = "<codex-session-memory>\n</codex-session-memory>"
+MIN_STRUCTURED_PROMPT_BUDGET = len(
+    "\n".join([
+        "<codex-session-memory>",
+        "current_goal:",
+        "last_known_state:",
+        "files_and_branches:",
+        "next_action:",
+        "</codex-session-memory>",
+    ])
+)
+MIN_SMALL_BUDGET_WITH_TAGS = 120
 
 
 def _context_names_from_index(index_text: str) -> list[str]:
@@ -99,6 +111,11 @@ def _section_budget(total_budget: int, requested: int, floor: int) -> int:
 
 
 def build_resume_prompt(session_dir: Path, budget_chars: int = 8000) -> str:
+    if budget_chars <= len(MINIMAL_PROMPT):
+        return MINIMAL_PROMPT[:budget_chars]
+    if budget_chars <= max(MIN_STRUCTURED_PROMPT_BUDGET, MIN_SMALL_BUDGET_WITH_TAGS):
+        return MINIMAL_PROMPT
+
     index_path = session_dir / "INDEX.md"
     index_text = index_path.read_text() if index_path.is_file() else ""
     files = []
