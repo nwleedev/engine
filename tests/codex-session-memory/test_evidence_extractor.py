@@ -82,7 +82,7 @@ def test_caps_commands_sources_and_failures():
     assert evidence["failures"] == [f"FAIL tests/test_{index}.py::test_case" for index in range(20)]
 
 
-def test_extracts_fenced_shell_commands_without_language_marker():
+def test_extracts_fenced_shell_commands_with_language_marker():
     extractor = load_extractor()
     delta = [
         {
@@ -125,19 +125,35 @@ def test_rejects_plain_prose_while_accepting_command_like_lines():
             "text": "git status showed a clean tree\n"
             "python files are parsed from text\n"
             "npm package metadata changed\n"
+            "git status reported tests/foo.py modified\n"
+            "python script failed in tests/foo.py\n"
+            "npm test failed in package.json validation\n"
             "$ git status --short\n"
             "python -m pytest tests/foo.py -q\n"
             "rg -n pattern path\n"
-            "git status --short",
+            "git status --short\n"
+            "git status\n"
+            "npm test\n"
+            "pnpm test\n"
+            "ruff check\n"
+            "mypy package",
         }
     ]
     evidence = extractor.extract_evidence(delta)
     assert "git status showed a clean tree" not in evidence["commands"]
     assert "python files are parsed from text" not in evidence["commands"]
     assert "npm package metadata changed" not in evidence["commands"]
+    assert "git status reported tests/foo.py modified" not in evidence["commands"]
+    assert "python script failed in tests/foo.py" not in evidence["commands"]
+    assert "npm test failed in package.json validation" not in evidence["commands"]
     assert "git status --short" in evidence["commands"]
     assert "python -m pytest tests/foo.py -q" in evidence["commands"]
     assert "rg -n pattern path" in evidence["commands"]
+    assert "git status" in evidence["commands"]
+    assert "npm test" in evidence["commands"]
+    assert "pnpm test" in evidence["commands"]
+    assert "ruff check" in evidence["commands"]
+    assert "mypy package" in evidence["commands"]
 
 
 def test_extracts_fenced_commands_without_language_marker():

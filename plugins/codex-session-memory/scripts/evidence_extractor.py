@@ -4,17 +4,27 @@ import re
 
 FILE_RE = re.compile(r"[\w./-]+\.(?:py|json|md|toml|yaml|yml|ts|tsx|js|jsx)(?![\w-]|\.[A-Za-z0-9])")
 TRANSCRIPT_COMMAND_WORDS = r"(?:pytest|git|codex|python3?|pnpm|npm|rg|sed|gh|node|uv|ruff|mypy)"
-PROSE_COMMAND_STARTS = {
-    "git status showed",
-    "npm package metadata",
-    "python files are",
-}
-COMMANDLIKE_SIGNAL_RE = re.compile(r"(?:\s-|[/.'\"]|\.py\b|\.mjs\b|\.js\b|\.md\b|\.toml\b|\.yaml\b|\.yml\b|\.json\b)")
 INLINE_COMMAND_LINE = rf"{TRANSCRIPT_COMMAND_WORDS}(?:\s+[^\n`]*)?"
 TRANSCRIPT_COMMAND_LINE = rf"{TRANSCRIPT_COMMAND_WORDS}(?:\s+[^\n`]*)?"
 INLINE_COMMAND_RE = re.compile(rf"(?<!`)`(?!`)\s*({INLINE_COMMAND_LINE})\s*`(?!`)")
 FENCED_COMMAND_RE = re.compile(r"```(?:bash|shell|sh)?\n(.*?)```", re.DOTALL)
 PLAIN_COMMAND_RE = re.compile(rf"^(\s*\$\s*)?({TRANSCRIPT_COMMAND_LINE})\s*$", re.MULTILINE)
+PROMPTLESS_COMMAND_RE = re.compile(
+    r"^(?:"
+    r"git\s+status(?:\s+--[\w-]+)*|"
+    r"(?:npm|pnpm)\s+test(?:\s+--[\w-]+)*|"
+    r"ruff\s+check(?:\s+[-\w./]+)*|"
+    r"mypy\s+[\w./-]+|"
+    r"rg\s+(?:-[\w-]+\s+)+[^\n`]+|"
+    r"sed\s+(?:-[\w-]+\s+)+[^\n`]+|"
+    r"python3?\s+(?:-[\w-]+|[\w./-]+\.py)(?:\s+[^\n`]*)?|"
+    r"pytest(?:\s+[^\n`]*)?|"
+    r"gh\s+[\w-]+(?:\s+[^\n`]*)?|"
+    r"node\s+[\w./-]+\.(?:mjs|js)(?:\s+[^\n`]*)?|"
+    r"uv\s+[\w-]+(?:\s+[^\n`]*)?|"
+    r"codex\s+[\w-]+(?:\s+[^\n`]*)?"
+    r")$"
+)
 URL_RE = re.compile(r"https?://[^\s)]+")
 FAIL_RE = re.compile(r"^(?:FAIL|FAILED|ERROR|Error:|fatal:).*$", re.MULTILINE)
 TRAILING_URL_PUNCTUATION = ".,`\"']}>;:"
@@ -56,10 +66,7 @@ def _extract_commands(text: str) -> list[str]:
 
 
 def _looks_like_plain_command(command: str) -> bool:
-    lowered = command.lower()
-    if any(lowered.startswith(start) for start in PROSE_COMMAND_STARTS):
-        return False
-    return bool(COMMANDLIKE_SIGNAL_RE.search(command))
+    return PROMPTLESS_COMMAND_RE.fullmatch(command) is not None
 
 
 def extract_evidence(delta: list[dict]) -> dict:
