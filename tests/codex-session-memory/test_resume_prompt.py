@@ -117,7 +117,7 @@ def test_preserves_structure_and_next_action_with_tight_budget(tmp_path):
     assert prompt.endswith("</codex-session-memory>")
 
 
-def test_resume_skill_ignores_preloaded_resume_prompt_module(tmp_path, monkeypatch, capsys):
+def test_resume_skill_ignores_preloaded_sibling_modules(tmp_path, monkeypatch, capsys):
     project = tmp_path / "project"
     session = project / ".codex" / "sessions" / "abc123"
     contexts = session / "contexts"
@@ -127,9 +127,18 @@ def test_resume_skill_ignores_preloaded_resume_prompt_module(tmp_path, monkeypat
         "# 세션 요약\n\n## 컨텍스트 목록\n\n- [CONTEXT-1.md] — resume\n"
     )
     (contexts / "CONTEXT-1.md").write_text("# Resume\n\n## 다음\n파일 경로 로더를 사용한다.\n")
-    fake = types.ModuleType("resume_prompt")
-    fake.build_resume_prompt = lambda *_args, **_kwargs: "wrong module"
-    monkeypatch.setitem(sys.modules, "resume_prompt", fake)
+    fake_dotenv = types.ModuleType("dotenv_loader")
+    fake_dotenv.load_project_dotenv = lambda *_args, **_kwargs: (_ for _ in ()).throw(RuntimeError("wrong dotenv"))
+    fake_project_root = types.ModuleType("project_root")
+    fake_project_root.find_project_root = lambda *_args, **_kwargs: (_ for _ in ()).throw(RuntimeError("wrong root"))
+    fake_index_io = types.ModuleType("index_io")
+    fake_index_io.read_frontmatter = lambda *_args, **_kwargs: (_ for _ in ()).throw(RuntimeError("wrong index"))
+    fake_resume_prompt = types.ModuleType("resume_prompt")
+    fake_resume_prompt.build_resume_prompt = lambda *_args, **_kwargs: "wrong prompt"
+    monkeypatch.setitem(sys.modules, "dotenv_loader", fake_dotenv)
+    monkeypatch.setitem(sys.modules, "project_root", fake_project_root)
+    monkeypatch.setitem(sys.modules, "index_io", fake_index_io)
+    monkeypatch.setitem(sys.modules, "resume_prompt", fake_resume_prompt)
     monkeypatch.setenv("CODEX_PROJECT_DIR", str(project))
     monkeypatch.chdir(project)
 
@@ -138,4 +147,4 @@ def test_resume_skill_ignores_preloaded_resume_prompt_module(tmp_path, monkeypat
     assert resume_skill.main(["resume.py", "abc123"]) == 0
     output = capsys.readouterr().out
     assert "파일 경로 로더를 사용한다" in output
-    assert "wrong module" not in output
+    assert "wrong prompt" not in output

@@ -6,24 +6,24 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 SCRIPTS = HERE.parent.parent / "scripts"
-sys.path.insert(0, str(SCRIPTS))
-
-import dotenv_loader
-import project_root as pr
-import index_io as io
 
 
 MAX_INJECT_CHARS = 8000
 
 
-def load_resume_prompt_module():
-    module_path = SCRIPTS / "resume_prompt.py"
-    spec = importlib.util.spec_from_file_location("codex_session_memory_resume_prompt", module_path)
+def load_script_module(filename: str, module_name: str):
+    module_path = SCRIPTS / filename
+    spec = importlib.util.spec_from_file_location(module_name, module_path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"cannot load {module_name} from {module_path}")
     module = importlib.util.module_from_spec(spec)
-    if spec.loader is None:
-        raise ImportError(f"cannot load resume prompt module from {module_path}")
     spec.loader.exec_module(module)
     return module
+
+
+dotenv_loader = load_script_module("dotenv_loader.py", "codex_session_memory_resume_dotenv_loader")
+pr = load_script_module("project_root.py", "codex_session_memory_resume_project_root")
+io = load_script_module("index_io.py", "codex_session_memory_resume_index_io")
 
 
 def list_sessions(root: str):
@@ -74,7 +74,7 @@ def main(argv):
         print(f"error: no session matches prefix '{prefix}'", file=sys.stderr)
         return 2
     target_session_dir = matches[0]["path"].parent
-    resume_prompt = load_resume_prompt_module()
+    resume_prompt = load_script_module("resume_prompt.py", "codex_session_memory_resume_prompt")
     print(resume_prompt.build_resume_prompt(target_session_dir, budget_chars=MAX_INJECT_CHARS))
     print(f"Inspect <root>/.codex/sessions/{matches[0]['session_id']}/contexts/*.md for full details.")
     return 0
