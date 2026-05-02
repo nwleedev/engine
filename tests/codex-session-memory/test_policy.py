@@ -1,6 +1,10 @@
+import json
+import os
 from datetime import datetime, timedelta, timezone
 import importlib.util
 from pathlib import Path
+
+import pytest
 
 
 SCRIPTS = Path(__file__).resolve().parents[2] / "plugins" / "codex-session-memory" / "scripts"
@@ -8,6 +12,14 @@ SCRIPTS = Path(__file__).resolve().parents[2] / "plugins" / "codex-session-memor
 
 def load_policy():
     spec = importlib.util.spec_from_file_location("policy", SCRIPTS / "policy.py")
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+    return module
+
+
+def load_lockfile():
+    spec = importlib.util.spec_from_file_location("lockfile", SCRIPTS / "lockfile.py")
     module = importlib.util.module_from_spec(spec)
     assert spec.loader is not None
     spec.loader.exec_module(module)
@@ -53,3 +65,123 @@ def test_mcp_heavy_delta_saves_before_time_gap():
     )
     assert decision.save is True
     assert decision.reason == "tool-output-threshold"
+
+
+def test_hard_cap_delta_saves():
+    policy = load_policy()
+    now = datetime.now(timezone.utc)
+    decision = policy.should_save(
+        delta_chars=policy.HARD_CAP_DELTA_CHARS,
+        tool_output_chars=0,
+        last_saved_at=now,
+        now=now,
+        force=False,
+    )
+    assert decision.save is True
+    assert decision.reason == "hard-cap"
+
+
+def test_first_save_after_minimum_delta_saves():
+    policy = load_policy()
+    now = datetime.now(timezone.utc)
+    decision = policy.should_save(
+        delta_chars=policy.MIN_DELTA_CHARS,
+        tool_output_chars=0,
+        last_saved_at=None,
+        now=now,
+        force=False,
+    )
+    assert decision.save is True
+    assert decision.reason == "first-save"
+
+
+def test_elapsed_time_gap_saves():
+    policy = load_policy()
+    now = datetime.now(timezone.utc)
+    decision = policy.should_save(
+        delta_chars=policy.MIN_DELTA_CHARS,
+        tool_output_chars=0,
+        last_saved_at=now - timedelta(seconds=policy.MIN_TIME_GAP_SECONDS),
+        now=now,
+        force=False,
+    )
+    assert decision.save is True
+    assert decision.reason == "time-gap"
+
+
+def test_minimum_delta_threshold_equality_within_gap_skips():
+    policy = load_policy()
+    now = datetime.now(timezone.utc)
+    decision = policy.should_save(
+        delta_chars=policy.MIN_DELTA_CHARS,
+        tool_output_chars=0,
+        last_saved_at=now - timedelta(seconds=policy.MIN_TIME_GAP_SECONDS - 1),
+        now=now,
+        force=False,
+    )
+    assert decision.save is False
+    assert decision.reason == "within-time-gap"
+
+
+def test_tool_output_threshold_equality_saves():
+    policy = load_policy()
+    now = datetime.now(timezone.utc)
+    decision = policy.should_save(
+        delta_chars=0,
+        tool_output_chars=policy.TOOL_OUTPUT_CHARS_THRESHOLD,
+        last_saved_at=now,
+        now=now,
+        force=False,
+    )
+    assert decision.save is True
+    assert decision.reason == "tool-output-threshold"
+
+
+def test_naive_last_saved_at_is_normalized_to_utc():
+    policy = load_policy()
+    now = datetime.now(timezone.utc)
+    naive_last_saved_at = (now - timedelta(seconds=policy.MIN_TIME_GAP_SECONDS)).replace(tzinfo=None)
+    decision = policy.should_save(
+        delta_chars=policy.MIN_DELTA_CHARS,
+        tool_output_chars=0,
+        last_saved_at=naive_last_saved_at,
+        now=now,
+        force=False,
+    )
+    assert decision.save is True
+    assert decision.reason == "time-gap"
+
+
+def test_lock_creates_metadata_and_deletes_after_context(tmp_path):
+    lockfile = load_lockfile()
+    path = tmp_path / "session.lock"
+
+    with lockfile.acquire_lock(path):
+        assert path.exists()
+        metadata = json.loads(path.read_text(encoding="utf-8"))
+        assert metadata["pid"] == os.getpid()
+        assert datetime.fromisoformat(metadata["created_at"]).tzinfo is not None
+
+    assert not path.exists()
+
+
+def test_lock_deletes_after_context_exception(tmp_path):
+    lockfile = load_lockfile()
+    path = tmp_path / "session.lock"
+
+    with pytest.raises(RuntimeError, match="body failed"):
+        with lockfile.acquire_lock(path):
+            assert path.exists()
+            raise RuntimeError("body failed")
+
+    assert not path.exists()
+
+
+def test_existing_lock_times_out(tmp_path):
+    lockfile = load_lockfile()
+    path = tmp_path / "session.lock"
+    path.write_text("existing", encoding="utf-8")
+
+    with pytest.raises(TimeoutError, match="lock timeout"):
+        with lockfile.acquire_lock(path, timeout_seconds=0.01):
+            pass

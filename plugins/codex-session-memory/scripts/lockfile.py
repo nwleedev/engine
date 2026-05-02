@@ -1,7 +1,9 @@
 """Small cross-process lock based on atomic file creation."""
+import json
 import os
 import time
 from contextlib import contextmanager
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -18,6 +20,11 @@ def acquire_lock(path: Path, timeout_seconds: float = 5.0):
                 raise TimeoutError(f"lock timeout: {path}")
             time.sleep(0.05)
     try:
+        metadata = {
+            "pid": os.getpid(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        }
+        os.write(fd, f"{json.dumps(metadata, sort_keys=True)}\n".encode("utf-8"))
         yield
     finally:
         os.close(fd)

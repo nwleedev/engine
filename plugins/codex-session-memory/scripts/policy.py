@@ -1,6 +1,6 @@
 """Save policy for codex-session-memory automatic checkpoints."""
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 MIN_DELTA_CHARS = 4000
@@ -13,6 +13,12 @@ HARD_CAP_DELTA_CHARS = 60000
 class SaveDecision:
     save: bool
     reason: str
+
+
+def _as_utc(value: datetime) -> datetime:
+    if value.tzinfo is None or value.utcoffset() is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc)
 
 
 def should_save(
@@ -33,7 +39,7 @@ def should_save(
         return SaveDecision(False, "below-threshold")
     if last_saved_at is None:
         return SaveDecision(True, "first-save")
-    elapsed = (now - last_saved_at).total_seconds()
+    elapsed = (_as_utc(now) - _as_utc(last_saved_at)).total_seconds()
     if elapsed >= MIN_TIME_GAP_SECONDS:
         return SaveDecision(True, "time-gap")
-    return SaveDecision(False, "time-gap")
+    return SaveDecision(False, "within-time-gap")
