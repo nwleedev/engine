@@ -117,6 +117,29 @@ def test_extracts_common_codex_transcript_commands_from_fences_and_plain_lines()
     assert "sed -n '1,20p' README.md" in evidence["commands"]
 
 
+def test_rejects_plain_prose_while_accepting_command_like_lines():
+    extractor = load_extractor()
+    delta = [
+        {
+            "role": "assistant",
+            "text": "git status showed a clean tree\n"
+            "python files are parsed from text\n"
+            "npm package metadata changed\n"
+            "$ git status --short\n"
+            "python -m pytest tests/foo.py -q\n"
+            "rg -n pattern path\n"
+            "git status --short",
+        }
+    ]
+    evidence = extractor.extract_evidence(delta)
+    assert "git status showed a clean tree" not in evidence["commands"]
+    assert "python files are parsed from text" not in evidence["commands"]
+    assert "npm package metadata changed" not in evidence["commands"]
+    assert "git status --short" in evidence["commands"]
+    assert "python -m pytest tests/foo.py -q" in evidence["commands"]
+    assert "rg -n pattern path" in evidence["commands"]
+
+
 def test_extracts_fenced_commands_without_language_marker():
     extractor = load_extractor()
     delta = [
@@ -145,7 +168,8 @@ def test_inline_file_like_values_are_not_commands():
     delta = [
         {
             "role": "assistant",
-            "text": "Check `.gitignore`, `plugins/digital.py`, `npm-package.json`, then run `npm test`.",
+            "text": "Check `.gitignore`, `plugins/digital.py`, `npm-package.json`, then run "
+            "`npm test`, `rg -n foo .`, and `python3 -m pytest tests/foo.py -q`.",
         }
     ]
     evidence = extractor.extract_evidence(delta)
@@ -153,6 +177,8 @@ def test_inline_file_like_values_are_not_commands():
     assert "plugins/digital.py" not in evidence["commands"]
     assert "npm-package.json" not in evidence["commands"]
     assert "npm test" in evidence["commands"]
+    assert "rg -n foo ." in evidence["commands"]
+    assert "python3 -m pytest tests/foo.py -q" in evidence["commands"]
 
 
 def test_trims_common_trailing_url_punctuation():
