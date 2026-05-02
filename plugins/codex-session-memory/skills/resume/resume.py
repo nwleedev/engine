@@ -10,6 +10,7 @@ sys.path.insert(0, str(SCRIPTS))
 import dotenv_loader
 import project_root as pr
 import index_io as io
+import resume_prompt
 
 
 MAX_INJECT_CHARS = 8000
@@ -62,10 +63,8 @@ def main(argv):
     if not matches:
         print(f"error: no session matches prefix '{prefix}'", file=sys.stderr)
         return 2
-    text = matches[0]["path"].read_text()[:MAX_INJECT_CHARS]
-    print("<session-resume>")
-    print(text)
-    print("</session-resume>")
+    target_session_dir = matches[0]["path"].parent
+    print(resume_prompt.build_resume_prompt(target_session_dir, budget_chars=MAX_INJECT_CHARS))
     print(f"Inspect <root>/.codex/sessions/{matches[0]['session_id']}/contexts/*.md for full details.")
     return 0
 
