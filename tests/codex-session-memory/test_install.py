@@ -136,12 +136,16 @@ def load_install_skill():
     return module
 
 
+def configure_install_root(install, monkeypatch, root):
+    monkeypatch.setattr(install.csm_project_root, "find_project_root", lambda cwd: str(root))
+    monkeypatch.setattr(install.os, "getcwd", lambda: str(root))
+
+
 def test_install_skill_prints_patch_without_modifying_agents(tmp_path, monkeypatch, capsys):
     install = load_install_skill()
     agents = tmp_path / "AGENTS.md"
     agents.write_text("# Project Rules\n", encoding="utf-8")
-    monkeypatch.setattr(install.csm_project_root, "find_project_root", lambda cwd: str(tmp_path))
-    monkeypatch.setattr(install.os, "getcwd", lambda: str(tmp_path))
+    configure_install_root(install, monkeypatch, tmp_path)
 
     assert install.main([]) == 1
 
@@ -149,3 +153,57 @@ def test_install_skill_prints_patch_without_modifying_agents(tmp_path, monkeypat
     assert "status: missing" in output or "status: partial" in output
     assert "Add this block:" in output
     assert agents.read_text(encoding="utf-8") == "# Project Rules\n"
+
+
+def test_install_skill_returns_zero_for_installed_rules(tmp_path, monkeypatch, capsys):
+    install = load_install_skill()
+    rules = load_agents_rules()
+    (tmp_path / "AGENTS.md").write_text(rules.REQUIRED_BLOCK, encoding="utf-8")
+    configure_install_root(install, monkeypatch, tmp_path)
+
+    assert install.main([]) == 0
+
+    output = capsys.readouterr().out
+    assert "status: installed" in output
+    assert "missing markers:" not in output
+    assert "Add this block:" not in output
+
+
+def test_install_skill_returns_one_for_not_found_rules(tmp_path, monkeypatch, capsys):
+    install = load_install_skill()
+    configure_install_root(install, monkeypatch, tmp_path)
+
+    assert install.main([]) == 1
+
+    output = capsys.readouterr().out
+    assert "status: not found" in output
+    assert "missing markers:" in output
+    assert "Add this block:" in output
+
+
+def test_install_skill_returns_one_for_partial_rules(tmp_path, monkeypatch, capsys):
+    install = load_install_skill()
+    (tmp_path / "AGENTS.md").write_text(
+        "## Codex Session Memory\n\n"
+        "- `$codex-session-memory:checkpoint`\n",
+        encoding="utf-8",
+    )
+    configure_install_root(install, monkeypatch, tmp_path)
+
+    assert install.main([]) == 1
+
+    output = capsys.readouterr().out
+    assert "status: partial" in output
+    assert "missing markers:" in output
+    assert "- $codex-session-memory:resume" in output
+    assert "Add this block:" in output
+
+
+def test_install_skill_rejects_unexpected_args(capsys):
+    install = load_install_skill()
+
+    assert install.main(["--help"]) == 2
+
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "usage: install.py" in captured.err

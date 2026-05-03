@@ -17,5 +17,5 @@ python3 /path/to/codex-session-memory/skills/install/install.py
 
 - Reads AGENTS.md from the resolved project root.
 - Reports `installed`, `partial`, `missing`, or `not found`.
-- Prints a recommended markdown block when rules are missing.
+- Prints a recommended markdown block for `missing`, `partial`, or `not found` status.
 - Does not modify files.

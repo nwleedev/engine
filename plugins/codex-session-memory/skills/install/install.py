@@ -31,6 +31,10 @@ csm_agents_rules = _load_script_module(
 
 
 def main(argv=None):
+    if argv:
+        print("usage: install.py", file=sys.stderr)
+        return 2
+
     cwd = os.getcwd()
     csm_dotenv_loader.load_project_dotenv(cwd)
     root = csm_project_root.find_project_root(cwd)
