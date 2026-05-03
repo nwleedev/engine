@@ -15,22 +15,10 @@ codex plugin marketplace add /path/to/this/repo
 Codex를 재시작한 뒤 `/plugins`를 열고 `Engine` marketplace에서
 `codex-session-memory`를 설치하거나 활성화합니다.
 
-수동 스킬은 설치 후 바로 사용할 수 있습니다. 자동 모드를 사용하려면 아래
-Codex hooks 기능 플래그가 필요합니다.
+이 플러그인은 skill-first, 사용자 호출 방식으로 동작합니다. Codex lifecycle
+hook을 자동으로 설치하지 않습니다.
 
-## 자동 모드
-
-Codex 설정에서 Codex hooks를 활성화합니다:
-
-```toml
-[features]
-codex_hooks = true
-```
-
-이 플러그인은 `SessionStart`로 압축 컨텍스트를 주입하고, `Stop`으로 정책
-가드를 통과한 자동 체크포인트를 저장합니다. `PostToolUse`는 현재 향후
-evidence 처리를 위해 예약된 비차단 placeholder이며, 지금은 evidence를 표시하지
-않습니다. 수동 스킬은 계속 사용할 수 있습니다:
+사용 가능한 스킬:
 
 - `$codex-session-memory:checkpoint`
 - `$codex-session-memory:resume`
@@ -44,7 +32,7 @@ Codex는 플러그인에 포함된 스킬을 플러그인 네임스페이스와 
 
 | 스킬 | 동작 | LLM 호출 |
 |---|---|---|
-| `$codex-session-memory:checkpoint` | delta 턴을 컨텍스트 요약으로 저장 | 1 (codex-exec, ~15-60초) |
+| `$codex-session-memory:checkpoint` | delta 턴을 컨텍스트 요약으로 저장 | 1 |
 | `$codex-session-memory:resume [prefix]` | 이전 세션의 INDEX 목록 표시 또는 로드 | 0 |
 | `$codex-session-memory:status` | pending 턴, 컨텍스트 파일 수, 경로 표시 | 0 |
 

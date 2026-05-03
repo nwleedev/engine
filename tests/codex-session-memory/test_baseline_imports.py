@@ -15,10 +15,10 @@ def test_plugin_manifest_is_skill_only():
 
 
 def test_plugin_does_not_ship_hooks_directory():
-    hook_sources = sorted(
+    hook_runtime_files = sorted(
         path.relative_to(PLUGIN)
         for path in (PLUGIN / "hooks").rglob("*")
-        if path.suffix in {".json", ".py"}
+        if path.is_file() and path.suffix != ".pyc"
     )
 
-    assert hook_sources == []
+    assert hook_runtime_files == []

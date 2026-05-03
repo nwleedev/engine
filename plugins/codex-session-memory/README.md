@@ -14,22 +14,10 @@ codex plugin marketplace add /path/to/this/repo
 Restart Codex, open `/plugins`, choose the `Engine` marketplace, and install
 or enable `codex-session-memory`.
 
-Manual skills work after installation. Automatic mode requires the Codex hooks
-feature flag below.
+This plugin is skill-first and user-invoked. It does not install automatic
+Codex lifecycle hooks.
 
-## Automatic mode
-
-Enable Codex hooks in Codex config:
-
-```toml
-[features]
-codex_hooks = true
-```
-
-The plugin uses `SessionStart` for compact context injection and `Stop` for
-policy-gated automatic checkpoints. `PostToolUse` is currently a non-blocking
-placeholder reserved for future evidence handling; it does not mark evidence
-today. Manual skills remain available:
+Available skills:
 
 - `$codex-session-memory:checkpoint`
 - `$codex-session-memory:resume`
@@ -43,7 +31,7 @@ skill from chat.
 
 | Skill | What it does | LLM calls |
 |---|---|---|
-| `$codex-session-memory:checkpoint` | Save delta turns as a context summary | 1 (codex-exec, ~15-60s) |
+| `$codex-session-memory:checkpoint` | Save delta turns as a context summary | 1 |
 | `$codex-session-memory:resume [prefix]` | List or load a prior session's INDEX | 0 |
 | `$codex-session-memory:status` | Show pending turns, context count, paths | 0 |
 
