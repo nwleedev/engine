@@ -59,7 +59,6 @@ def main():
         print(f"Context files: {ctx_count}")
         print("Last saved: never")
         print("Pending offset: 0")
-        print("Hooks: SessionStart, Stop, PostToolUse")
         print("status: not yet checkpointed")
         return 0
 
@@ -73,7 +72,6 @@ def main():
     print(f"Context files: {ctx_count}")
     print(f"Last saved: {fm.get('last_updated') or 'never'}")
     print(f"Pending offset: {last_offset}")
-    print("Hooks: SessionStart, Stop, PostToolUse")
     print(f"started: {fm.get('started', '?')}")
     print(f"pending_turns: {pending}")
     return 0

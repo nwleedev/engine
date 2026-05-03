@@ -17,7 +17,7 @@ def load_status():
     return module
 
 
-def test_status_prints_automatic_mode_fields(monkeypatch, tmp_path, capsys):
+def test_status_prints_checkpointed_session_fields(monkeypatch, tmp_path, capsys):
     status = load_status()
     session_dir = tmp_path / ".codex" / "sessions" / "abc123"
     contexts_dir = session_dir / "contexts"
@@ -50,7 +50,7 @@ def test_status_prints_automatic_mode_fields(monkeypatch, tmp_path, capsys):
     assert "Context files: 1" in output
     assert "Last saved: 2026-05-02T00:00:00Z" in output
     assert "Pending offset: 42" in output
-    assert "Hooks: SessionStart, Stop, PostToolUse" in output
+    assert "Hooks:" not in output
     assert "pending_turns: 1" in output
 
 
@@ -72,5 +72,5 @@ def test_status_prints_missing_values_before_checkpoint(monkeypatch, tmp_path, c
     assert "Context files: 0" in output
     assert "Last saved: never" in output
     assert "Pending offset: 0" in output
-    assert "Hooks: SessionStart, Stop, PostToolUse" in output
+    assert "Hooks:" not in output
     assert "status: not yet checkpointed" in output
