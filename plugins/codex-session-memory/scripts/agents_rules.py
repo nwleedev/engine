@@ -106,11 +106,11 @@ def check_agents_rules(project_root: str | Path) -> RuleReport:
             insert_after="",
         )
 
-    missing = _missing_markers(text)
+    full_file_missing = _missing_markers(text)
     return RuleReport(
-        status="partial" if len(missing) < len(REQUIRED_MARKERS) else "missing",
+        status="partial" if len(full_file_missing) < len(REQUIRED_MARKERS) else "missing",
         agents_path=agents_path,
-        missing=missing,
+        missing=REQUIRED_MARKERS,
         patch=_patch_for(agents_path),
         insert_after="after existing context/session-memory rules",
     )
