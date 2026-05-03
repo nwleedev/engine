@@ -171,6 +171,17 @@ def configure_install_root(install, monkeypatch, root):
     monkeypatch.setattr(install.os, "getcwd", lambda: str(root))
 
 
+def test_install_skill_instructions_require_user_visible_stdout_relay():
+    skill_text = (PLUGIN / "skills" / "install" / "SKILL.md").read_text(
+        encoding="utf-8"
+    )
+
+    assert "always relay the script stdout to the user" in skill_text
+    assert "include the full recommended block from stdout" in skill_text
+    assert "exit code 1" in skill_text
+    assert "Do not edit AGENTS.md unless the user explicitly asks" in skill_text
+
+
 def test_install_skill_prints_missing_patch_without_modifying_agents(
     tmp_path, monkeypatch, capsys
 ):
