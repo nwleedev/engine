@@ -20,6 +20,7 @@ hook을 자동으로 설치하지 않습니다.
 
 사용 가능한 스킬:
 
+- `$codex-session-memory:install`
 - `$codex-session-memory:checkpoint`
 - `$codex-session-memory:resume`
 - `$codex-session-memory:status`
@@ -32,9 +33,17 @@ Codex는 플러그인에 포함된 스킬을 플러그인 네임스페이스와 
 
 | 스킬 | 동작 | LLM 호출 |
 |---|---|---|
+| `$codex-session-memory:install` | skill-first 세션 메모리를 위한 AGENTS.md 설정 안내 출력 | 0 |
 | `$codex-session-memory:checkpoint` | 컨텍스트 체크포인트 handoff 준비 및 검증 | 0 |
 | `$codex-session-memory:resume [prefix]` | 이전 세션의 INDEX 목록 표시 또는 로드 | 0 |
 | `$codex-session-memory:status` | pending 턴, 컨텍스트 파일 수, 경로 표시 | 0 |
+
+## 컨텍스트 압축 복구
+
+컨텍스트 압축 복구는 런타임 hook이 아니라 AGENTS.md 지침으로 수행됩니다.
+같은 Codex 세션에서 수동 또는 자동 컨텍스트 압축이 발생한 뒤에는 첫 번째
+작업으로 현재 세션 prefix와 함께 `$codex-session-memory:resume <prefix>`를
+호출해 저장된 handoff를 다시 로드해야 합니다.
 
 ## 프로젝트 루트 해석 (모노레포 가드)
 

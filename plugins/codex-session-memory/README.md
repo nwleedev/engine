@@ -19,6 +19,7 @@ Codex lifecycle hooks.
 
 Available skills:
 
+- `$codex-session-memory:install`
 - `$codex-session-memory:checkpoint`
 - `$codex-session-memory:resume`
 - `$codex-session-memory:status`
@@ -31,9 +32,18 @@ skill from chat.
 
 | Skill | What it does | LLM calls |
 |---|---|---|
+| `$codex-session-memory:install` | Print AGENTS.md setup guidance for skill-first session memory | 0 |
 | `$codex-session-memory:checkpoint` | Prepare and verify context checkpoint handoff | 0 |
 | `$codex-session-memory:resume [prefix]` | List or load a prior session's INDEX | 0 |
 | `$codex-session-memory:status` | Show pending turns, context count, paths | 0 |
+
+## Compaction recovery
+
+Compaction recovery is driven by AGENTS.md instructions, not a runtime hook. After
+manual or automatic context compaction in the same Codex session, the first
+action should be invoking `$codex-session-memory:resume <prefix>` with the
+current session prefix so Codex reloads the saved handoff before doing more
+work.
 
 ## Project root resolution (monorepo guard)
 
