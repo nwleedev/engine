@@ -2,6 +2,7 @@
 """Prepare and verify Codex session memory checkpoint handoffs."""
 from __future__ import annotations
 
+import importlib.util
 import os
 import re
 import sys
@@ -10,14 +11,29 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 SCRIPTS = HERE.parent.parent / "scripts"
-sys.path.insert(0, str(SCRIPTS))
 
-import dotenv_loader
-import evidence_extractor as ee
-import index_io as io
-import jsonl_parser as jp
-import project_root as pr
-import session_locator as sl
+def _load_script_module(filename: str, module_name: str):
+    spec = importlib.util.spec_from_file_location(module_name, SCRIPTS / filename)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"cannot load {filename}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+dotenv_loader = _load_script_module(
+    "dotenv_loader.py", "codex_session_memory_checkpoint_dotenv_loader"
+)
+ee = _load_script_module(
+    "evidence_extractor.py", "codex_session_memory_checkpoint_evidence_extractor"
+)
+io = _load_script_module("index_io.py", "codex_session_memory_checkpoint_index_io")
+jp = _load_script_module("jsonl_parser.py", "codex_session_memory_checkpoint_jsonl_parser")
+pr = _load_script_module("project_root.py", "codex_session_memory_checkpoint_project_root")
+sl = _load_script_module(
+    "session_locator.py", "codex_session_memory_checkpoint_session_locator"
+)
 
 
 REQUIRED_SECTIONS = (

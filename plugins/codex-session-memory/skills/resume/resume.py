@@ -17,6 +17,7 @@ def load_script_module(filename: str, module_name: str):
     if spec is None or spec.loader is None:
         raise ImportError(f"cannot load {module_name} from {module_path}")
     module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
     spec.loader.exec_module(module)
     return module
 

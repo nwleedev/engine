@@ -31,3 +31,14 @@ def test_plugin_does_not_ship_nested_narration_artifacts():
 
 def test_plugin_does_not_ship_legacy_context_writer():
     assert not (PLUGIN / "scripts" / "context_writer.py").exists()
+
+
+def test_skill_entrypoints_use_explicit_importlib_loader_pattern():
+    skill_scripts = sorted((PLUGIN / "skills").glob("*/*.py"))
+
+    assert skill_scripts
+    for script in skill_scripts:
+        source = script.read_text()
+        assert "importlib.util.spec_from_file_location" in source
+        assert "sys.path.insert" not in source
+        assert "sys.modules[module_name] = module" in source
