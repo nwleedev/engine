@@ -12,3 +12,7 @@ def test_plugin_manifest_is_skill_only():
     assert manifest["skills"] == "./skills/"
     assert "hooks" not in manifest
     assert "automatic hooks" not in manifest["description"].lower()
+
+
+def test_plugin_does_not_ship_hooks_directory():
+    assert not (PLUGIN / "hooks").exists()
