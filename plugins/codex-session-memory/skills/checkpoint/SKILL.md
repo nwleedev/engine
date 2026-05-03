@@ -18,8 +18,8 @@ python3 /path/to/codex-session-memory/skills/checkpoint/checkpoint.py prepare
 Use the printed `context_path`, `index_path`, offsets, evidence, and required section template. The active Codex must then:
 
 - write the context body to `context_path` using the prepare template and project AGENTS.md rules;
-- update `INDEX.md` so it references the new context filename;
-- record offset metadata such as `last_processed_offset` according to the session-memory rules;
+- update `INDEX.md` with the printed `index_entry` list item shape;
+- record the printed frontmatter/update keys, including `last_processed_offset` set to the new offset;
 - avoid writing secrets, `.env` contents, API keys, tokens, or personal identifiers.
 
 After writing the files, verify the result:
@@ -28,10 +28,11 @@ After writing the files, verify the result:
 python3 /path/to/codex-session-memory/skills/checkpoint/checkpoint.py verify /path/to/context.md
 ```
 
-`verify` succeeds only when the context file exists, all required headings are present, and `INDEX.md` references the context filename.
+`verify` succeeds only when the context file is under `<root>/.codex/sessions/*/contexts/`, all required headings are present as exact Markdown heading lines, and `INDEX.md` contains a context list entry like `- [CONTEXT-...md]`.
 
 ## Notes
 
 - The helper does not spawn another Codex process.
 - The helper does not write the context body or update `INDEX.md`.
+- Suggested context paths include seconds and are best-effort only; the active Codex must still handle collisions before writing.
 - Project root resolution honors `CODEX_PROJECT_DIR` env or `.env` declaration, then falls back to git toplevel / AGENTS.md / `.codex` / cwd.

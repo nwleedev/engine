@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import re
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -37,6 +38,16 @@ def _print_usage() -> None:
     print(_usage(), file=sys.stderr)
 
 
+def _resolve_project_root(cwd: str) -> str | None:
+    try:
+        root = pr.find_project_root(cwd)
+        pr.assert_root_is_canonical(root, cwd)
+    except Exception as exc:
+        print(f"error: project root validation failed: {exc}", file=sys.stderr)
+        return None
+    return root
+
+
 def _coerce_offset(value) -> int:
     try:
         return int(value)
@@ -45,7 +56,7 @@ def _coerce_offset(value) -> int:
 
 
 def _suggest_context_path(contexts_dir: Path) -> Path:
-    stamp = datetime.now().strftime("%Y%m%d-%H00")
+    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     base = contexts_dir / f"CONTEXT-{stamp}-checkpoint.md"
     if not base.exists():
         return base
@@ -82,6 +93,28 @@ def _render_evidence(evidence: dict) -> str:
     )
 
 
+def _is_context_path_in_session_tree(context_path: Path, root: str) -> bool:
+    sessions_root = (Path(root) / ".codex" / "sessions").resolve()
+    try:
+        relative = context_path.relative_to(sessions_root)
+    except ValueError:
+        return False
+    return len(relative.parts) == 3 and relative.parts[1] == "contexts"
+
+
+def _contains_required_heading_lines(context_text: str) -> str | None:
+    lines = set(context_text.splitlines())
+    for section in REQUIRED_SECTIONS:
+        if section not in lines:
+            return section
+    return None
+
+
+def _index_has_context_entry(index_text: str, filename: str) -> bool:
+    entry_re = re.compile(rf"^\s*-\s+\[{re.escape(filename)}\](?:\s|$)")
+    return any(entry_re.match(line) for line in index_text.splitlines())
+
+
 def _prepare() -> int:
     cwd = os.getcwd()
     dotenv_loader.load_project_dotenv(cwd)
@@ -91,8 +124,9 @@ def _prepare() -> int:
         print("error: CODEX_THREAD_ID is required for checkpoint prepare", file=sys.stderr)
         return 2
 
-    root = pr.find_project_root(cwd)
-    pr.assert_root_is_canonical(root, cwd)
+    root = _resolve_project_root(cwd)
+    if root is None:
+        return 2
 
     jsonl_path = sl.find_jsonl_by_thread(thread_id)
     if not jsonl_path:
@@ -123,8 +157,15 @@ def _prepare() -> int:
                 f"jsonl_path: {jsonl_path}",
                 f"index_path: {index_path}",
                 f"context_path: {context_path}",
-                f"last_processed_offset: {last_processed_offset}",
+                f"previous_processed_offset: {last_processed_offset}",
                 f"new_offset: {new_offset}",
+                "",
+                "## index update",
+                f"index_entry: - [{context_path.name}] — <summary>",
+                "frontmatter_update:",
+                f"  last_processed_offset: {new_offset}",
+                "  last_updated: <ISO-8601 timestamp>",
+                "  session_id: <thread_id>",
                 "",
                 "## evidence",
                 _render_evidence(evidence),
@@ -135,7 +176,7 @@ def _prepare() -> int:
                 *REQUIRED_SECTIONS,
                 "",
                 "After writing the context, update INDEX.md to reference the context filename.",
-                "Record offset metadata according to the project session-memory rules.",
+                "Set INDEX.md frontmatter last_processed_offset to the printed new offset.",
             ]
         )
     )
@@ -145,23 +186,31 @@ def _prepare() -> int:
 def _verify(context_arg: str) -> int:
     cwd = os.getcwd()
     dotenv_loader.load_project_dotenv(cwd)
-    root = pr.find_project_root(cwd)
-    pr.assert_root_is_canonical(root, cwd)
+    root = _resolve_project_root(cwd)
+    if root is None:
+        return 2
 
     context_path = Path(context_arg)
     if not context_path.is_absolute():
         context_path = Path(root) / context_path
     context_path = context_path.resolve()
 
+    if not _is_context_path_in_session_tree(context_path, root):
+        print(
+            f"error: context path is outside project session contexts: {context_path}",
+            file=sys.stderr,
+        )
+        return 1
+
     if not context_path.is_file():
         print(f"error: context file does not exist: {context_path}", file=sys.stderr)
         return 1
 
     context_text = context_path.read_text(encoding="utf-8")
-    for section in REQUIRED_SECTIONS:
-        if section not in context_text:
-            print(f"error: missing section: {section}", file=sys.stderr)
-            return 1
+    missing_section = _contains_required_heading_lines(context_text)
+    if missing_section:
+        print(f"error: missing section: {missing_section}", file=sys.stderr)
+        return 1
 
     index_path = context_path.parent.parent / "INDEX.md"
     if not index_path.is_file():
@@ -169,8 +218,11 @@ def _verify(context_arg: str) -> int:
         return 1
 
     index_text = index_path.read_text(encoding="utf-8")
-    if context_path.name not in index_text:
-        print(f"error: INDEX.md does not reference {context_path.name}", file=sys.stderr)
+    if not _index_has_context_entry(index_text, context_path.name):
+        print(
+            f"error: INDEX.md does not include context entry for {context_path.name}",
+            file=sys.stderr,
+        )
         return 1
 
     print("verify: ok")
