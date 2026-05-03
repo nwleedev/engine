@@ -9,6 +9,7 @@ def test_plugin_manifest_is_skill_only():
     manifest = json.loads((PLUGIN / ".codex-plugin" / "plugin.json").read_text())
 
     assert manifest["name"] == "codex-session-memory"
+    assert manifest["version"] == "0.4.0"
     assert manifest["skills"] == "./skills/"
     assert "hooks" not in manifest
     assert "automatic hooks" not in manifest["description"].lower()
@@ -31,6 +32,17 @@ def test_plugin_does_not_ship_nested_narration_artifacts():
 
 def test_plugin_does_not_ship_legacy_context_writer():
     assert not (PLUGIN / "scripts" / "context_writer.py").exists()
+
+
+def test_plugin_does_not_ship_legacy_automatic_checkpoint_helpers():
+    legacy_helpers = {
+        "lockfile.py",
+        "policy.py",
+        "temp_paths.py",
+    }
+
+    for filename in legacy_helpers:
+        assert not (PLUGIN / "scripts" / filename).exists()
 
 
 def test_skill_entrypoints_use_explicit_importlib_loader_pattern():
