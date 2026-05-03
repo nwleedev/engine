@@ -22,3 +22,8 @@ def test_plugin_does_not_ship_hooks_directory():
     )
 
     assert hook_runtime_files == []
+
+
+def test_plugin_does_not_ship_nested_narration_artifacts():
+    assert not (PLUGIN / "scripts" / ("nar" + "rate.py")).exists()
+    assert not (PLUGIN / "scripts" / ("narration" + "_schema.json")).exists()

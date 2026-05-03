@@ -1,4 +1,4 @@
-"""Shared context writer used by skills and hooks."""
+"""Shared INDEX/context rendering helpers for codex-session-memory skills."""
 import importlib.util
 import sys
 from dataclasses import dataclass
