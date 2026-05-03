@@ -141,7 +141,9 @@ def configure_install_root(install, monkeypatch, root):
     monkeypatch.setattr(install.os, "getcwd", lambda: str(root))
 
 
-def test_install_skill_prints_patch_without_modifying_agents(tmp_path, monkeypatch, capsys):
+def test_install_skill_prints_missing_patch_without_modifying_agents(
+    tmp_path, monkeypatch, capsys
+):
     install = load_install_skill()
     agents = tmp_path / "AGENTS.md"
     agents.write_text("# Project Rules\n", encoding="utf-8")
@@ -150,7 +152,7 @@ def test_install_skill_prints_patch_without_modifying_agents(tmp_path, monkeypat
     assert install.main([]) == 1
 
     output = capsys.readouterr().out
-    assert "status: missing" in output or "status: partial" in output
+    assert "status: missing" in output
     assert "Add this block:" in output
     assert agents.read_text(encoding="utf-8") == "# Project Rules\n"
 
