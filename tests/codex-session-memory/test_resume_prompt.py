@@ -193,11 +193,11 @@ def test_preserves_closing_tag_with_very_small_budgets(tmp_path):
 
 def test_resume_skill_ignores_preloaded_sibling_modules(tmp_path, monkeypatch, capsys):
     project = tmp_path / "project"
-    session = project / ".codex" / "sessions" / "abc123"
+    session = project / ".codex" / "sessions" / "abc12345"
     contexts = session / "contexts"
     contexts.mkdir(parents=True)
     (session / "INDEX.md").write_text(
-        "---\nsession_id: abc123\nlast_updated: 2026-05-02T00:00:00Z\n---\n\n"
+        "---\nsession_id: abc12345\nlast_updated: 2026-05-02T00:00:00Z\n---\n\n"
         "# 세션 요약\n\n## 컨텍스트 목록\n\n- [CONTEXT-1.md] — resume\n"
     )
     (contexts / "CONTEXT-1.md").write_text("# Resume\n\n## 다음\n파일 경로 로더를 사용한다.\n")
@@ -218,7 +218,7 @@ def test_resume_skill_ignores_preloaded_sibling_modules(tmp_path, monkeypatch, c
 
     resume_skill = load_resume_skill()
 
-    assert resume_skill.main(["resume.py", "abc123"]) == 0
+    assert resume_skill.main(["resume.py", "abc12345"]) == 0
     output = capsys.readouterr().out
     assert "파일 경로 로더를 사용한다" in output
     assert "wrong prompt" not in output
@@ -226,11 +226,11 @@ def test_resume_skill_ignores_preloaded_sibling_modules(tmp_path, monkeypatch, c
 
 def test_resume_skill_output_stays_within_prompt_budget(tmp_path, monkeypatch, capsys):
     project = tmp_path / "project"
-    session = project / ".codex" / "sessions" / "abc123"
+    session = project / ".codex" / "sessions" / "abc12345"
     contexts = session / "contexts"
     contexts.mkdir(parents=True)
     (session / "INDEX.md").write_text(
-        "---\nsession_id: abc123\nlast_updated: 2026-05-02T00:00:00Z\n---\n\n"
+        "---\nsession_id: abc12345\nlast_updated: 2026-05-02T00:00:00Z\n---\n\n"
         "# 세션 요약\n\n## 컨텍스트 목록\n\n- [CONTEXT-1.md] — budget\n"
     )
     (contexts / "CONTEXT-1.md").write_text(
@@ -241,7 +241,71 @@ def test_resume_skill_output_stays_within_prompt_budget(tmp_path, monkeypatch, c
 
     resume_skill = load_resume_skill()
 
-    assert resume_skill.main(["resume.py", "abc123"]) == 0
+    assert resume_skill.main(["resume.py", "abc12345"]) == 0
     output = capsys.readouterr().out
     assert len(output) <= resume_skill.MAX_INJECT_CHARS
     assert output.endswith("</codex-session-memory>")
+
+
+def test_resume_skill_rejects_non_8_character_prefix(tmp_path, monkeypatch, capsys):
+    project = tmp_path / "project"
+    (project / ".codex" / "sessions").mkdir(parents=True)
+    monkeypatch.setenv("CODEX_PROJECT_DIR", str(project))
+    monkeypatch.chdir(project)
+
+    resume_skill = load_resume_skill()
+
+    assert resume_skill.main(["resume.py", "abc123"]) == 2
+    assert "exactly 8 characters" in capsys.readouterr().err
+
+
+def test_resume_skill_rejects_ambiguous_prefix(tmp_path, monkeypatch, capsys):
+    project = tmp_path / "project"
+    for session_id, updated in [
+        ("abc12345-one", "2026-05-02T00:00:00Z"),
+        ("abc12345-two", "2026-05-03T00:00:00Z"),
+    ]:
+        session = project / ".codex" / "sessions" / session_id
+        session.mkdir(parents=True)
+        (session / "INDEX.md").write_text(
+            f"---\nsession_id: {session_id}\nlast_updated: {updated}\n---\n\n"
+            "# 세션 요약\n\n## 컨텍스트 목록\n\n",
+            encoding="utf-8",
+        )
+    monkeypatch.setenv("CODEX_PROJECT_DIR", str(project))
+    monkeypatch.chdir(project)
+
+    resume_skill = load_resume_skill()
+
+    assert resume_skill.main(["resume.py", "abc12345"]) == 2
+    assert "multiple sessions match" in capsys.readouterr().err
+
+
+def test_resume_skill_matches_sessions_beyond_display_limit(tmp_path, monkeypatch, capsys):
+    project = tmp_path / "project"
+    sessions_root = project / ".codex" / "sessions"
+    for index in range(12):
+        session_id = f"recent{index:02d}-session"
+        session = sessions_root / session_id
+        session.mkdir(parents=True)
+        (session / "INDEX.md").write_text(
+            f"---\nsession_id: {session_id}\nlast_updated: 2026-05-03T00:{index:02d}:00Z\n---\n\n"
+            "# 세션 요약\n\n## 컨텍스트 목록\n\n",
+            encoding="utf-8",
+        )
+    target = sessions_root / "target99-session"
+    contexts = target / "contexts"
+    contexts.mkdir(parents=True)
+    (target / "INDEX.md").write_text(
+        "---\nsession_id: target99-session\nlast_updated: 2026-05-02T00:00:00Z\n---\n\n"
+        "# 세션 요약\n\n## 컨텍스트 목록\n\n- [CONTEXT-1.md] — older target\n",
+        encoding="utf-8",
+    )
+    (contexts / "CONTEXT-1.md").write_text("# Target\n\n## 다음\n오래된 세션도 prefix로 찾는다.\n", encoding="utf-8")
+    monkeypatch.setenv("CODEX_PROJECT_DIR", str(project))
+    monkeypatch.chdir(project)
+
+    resume_skill = load_resume_skill()
+
+    assert resume_skill.main(["resume.py", "target99"]) == 0
+    assert "오래된 세션도 prefix로 찾는다" in capsys.readouterr().out

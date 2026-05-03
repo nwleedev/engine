@@ -16,7 +16,11 @@ def find_jsonl_by_thread(thread_id: str, codex_sessions_root=None):
     if not root.is_dir():
         return None
     pattern = f"rollout-*-{thread_id}.jsonl"
-    matches = list(root.rglob(pattern))
+    matches = sorted(
+        root.rglob(pattern),
+        key=lambda path: (path.stat().st_mtime_ns, str(path)),
+        reverse=True,
+    )
     if not matches:
         return None
     return matches[0].resolve()

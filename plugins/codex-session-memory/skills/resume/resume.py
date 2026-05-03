@@ -26,7 +26,7 @@ pr = load_script_module("project_root.py", "codex_session_memory_resume_project_
 io = load_script_module("index_io.py", "codex_session_memory_resume_index_io")
 
 
-def list_sessions(root: str):
+def list_sessions(root: str, limit: int | None = 10):
     sessions_dir = Path(root) / ".codex" / "sessions"
     if not sessions_dir.is_dir():
         return []
@@ -44,7 +44,7 @@ def list_sessions(root: str):
             "path": idx,
         })
     rows.sort(key=lambda r: str(r["last_updated"]), reverse=True)
-    return rows[:10]
+    return rows[:limit] if limit is not None else rows
 
 
 def render_table(rows):
@@ -69,9 +69,16 @@ def main(argv):
         return 0
 
     prefix = argv[1]
-    matches = [r for r in list_sessions(root) if str(r["session_id"]).startswith(prefix)]
+    if len(prefix) != 8:
+        print("error: session prefix must be exactly 8 characters", file=sys.stderr)
+        return 2
+
+    matches = [r for r in list_sessions(root, limit=None) if str(r["session_id"]).startswith(prefix)]
     if not matches:
         print(f"error: no session matches prefix '{prefix}'", file=sys.stderr)
+        return 2
+    if len(matches) > 1:
+        print(f"error: multiple sessions match prefix '{prefix}'", file=sys.stderr)
         return 2
     target_session_dir = matches[0]["path"].parent
     resume_prompt = load_script_module("resume_prompt.py", "codex_session_memory_resume_prompt")

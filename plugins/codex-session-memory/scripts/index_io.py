@@ -9,7 +9,7 @@ from typing import Any
 
 _FENCE = "---"
 _CONTEXT_HEADING = "## 컨텍스트 목록"
-_RESUME_HINT = "이 세션 재개: `codex exec resume {session_id}`"
+_RESUME_HINT = "이 세션 재개: `$codex-session-memory:resume {session_prefix}`"
 
 
 def _coerce(v: str):
@@ -74,7 +74,8 @@ def write_index(path: Path, frontmatter: dict, contexts: list) -> None:
         body_lines.append(f"- [{c['filename']}] — {c['summary']}")
     body_lines.append("")
     body_lines.append("---")
-    body_lines.append(_RESUME_HINT.format(session_id=frontmatter.get("session_id", "")))
+    session_prefix = str(frontmatter.get("session_id", ""))[:8]
+    body_lines.append(_RESUME_HINT.format(session_prefix=session_prefix))
     body_lines.append("")
     p.write_text(_render(frontmatter, "\n".join(body_lines)))
 

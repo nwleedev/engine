@@ -80,7 +80,7 @@ The same JSONL transcript at `~/.codex/sessions/YYYY/MM/DD/rollout-*-<thread>.js
 
 ## How session continuity works
 
-`CODEX_THREAD_ID` stays stable across `codex exec resume <id>` — verified empirically. Multi-day work on the same Codex session accumulates into the same `<root>/.codex/sessions/<id>/INDEX.md`.
+`CODEX_THREAD_ID` stays stable across resumed Codex CLI sessions — verified empirically. Multi-day work on the same Codex session accumulates into the same `<root>/.codex/sessions/<id>/INDEX.md`.
 
 ## Tests
 

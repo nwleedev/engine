@@ -78,7 +78,7 @@ CODEX_PROJECT_DIR=/abs/path/to/monorepo/root
 
 ## 세션 연속성
 
-`CODEX_THREAD_ID`는 `codex exec resume <id>` 사이에서도 동일 유지 — 실측 확인됨. 같은 Codex 세션의 며칠 작업이 동일한 `<root>/.codex/sessions/<id>/INDEX.md`에 누적됩니다.
+`CODEX_THREAD_ID`는 재개된 Codex CLI 세션 사이에서도 동일 유지 — 실측 확인됨. 같은 Codex 세션의 며칠 작업이 동일한 `<root>/.codex/sessions/<id>/INDEX.md`에 누적됩니다.
 
 ## 테스트
 
