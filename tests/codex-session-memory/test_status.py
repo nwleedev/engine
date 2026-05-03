@@ -3,6 +3,8 @@ import sys
 from pathlib import Path
 from types import SimpleNamespace
 
+import pytest
+
 
 PLUGIN = Path(__file__).resolve().parents[2] / "plugins" / "codex-session-memory"
 STATUS = PLUGIN / "skills" / "status" / "status.py"
@@ -61,7 +63,16 @@ def test_status_prints_checkpointed_session_fields(monkeypatch, tmp_path, capsys
     assert "pending_turns: 1" in output
 
 
-def test_status_prints_missing_values_before_checkpoint(monkeypatch, tmp_path, capsys):
+@pytest.mark.parametrize(
+    ("rules_status", "missing_markers"),
+    (
+        ("partial", ("CODEX_THREAD_ID", ".codex/")),
+        ("missing", ("$codex-session-memory:checkpoint", "CODEX_THREAD_ID", ".codex/")),
+    ),
+)
+def test_status_prints_missing_values_before_checkpoint(
+    monkeypatch, tmp_path, capsys, rules_status, missing_markers
+):
     status = load_status()
     session_dir = tmp_path / ".codex" / "sessions" / "abc123"
 
@@ -74,7 +85,7 @@ def test_status_prints_missing_values_before_checkpoint(monkeypatch, tmp_path, c
     monkeypatch.setattr(
         status.csm_agents_rules,
         "check_agents_rules",
-        lambda root: SimpleNamespace(status="partial", missing=("CODEX_THREAD_ID", ".codex/")),
+        lambda root: SimpleNamespace(status=rules_status, missing=missing_markers),
     )
 
     assert status.main() == 0
@@ -84,8 +95,8 @@ def test_status_prints_missing_values_before_checkpoint(monkeypatch, tmp_path, c
     assert "Context files: 0" in output
     assert "Last saved: never" in output
     assert "Pending offset: 0" in output
-    assert "AGENTS.md rules: partial" in output
-    assert "AGENTS.md missing markers: CODEX_THREAD_ID, .codex/" in output
+    assert f"AGENTS.md rules: {rules_status}" in output
+    assert f"AGENTS.md missing markers: {', '.join(missing_markers)}" in output
     assert "Hooks:" not in output
     assert "status: not yet checkpointed" in output
 
