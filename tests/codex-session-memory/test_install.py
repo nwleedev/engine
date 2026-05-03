@@ -125,3 +125,27 @@ def test_missing_markers_are_immutable(tmp_path):
 
     with pytest.raises(AttributeError):
         report.missing.append("another-marker")
+
+
+def load_install_skill():
+    skill = PLUGIN / "skills" / "install" / "install.py"
+    spec = importlib.util.spec_from_file_location("install_skill", skill)
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_install_skill_prints_patch_without_modifying_agents(tmp_path, monkeypatch, capsys):
+    install = load_install_skill()
+    agents = tmp_path / "AGENTS.md"
+    agents.write_text("# Project Rules\n", encoding="utf-8")
+    monkeypatch.setattr(install.csm_project_root, "find_project_root", lambda cwd: str(tmp_path))
+    monkeypatch.setattr(install.os, "getcwd", lambda: str(tmp_path))
+
+    assert install.main([]) == 1
+
+    output = capsys.readouterr().out
+    assert "status: missing" in output or "status: partial" in output
+    assert "Add this block:" in output
+    assert agents.read_text(encoding="utf-8") == "# Project Rules\n"
