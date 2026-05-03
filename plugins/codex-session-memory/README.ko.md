@@ -32,7 +32,7 @@ Codex는 플러그인에 포함된 스킬을 플러그인 네임스페이스와 
 
 | 스킬 | 동작 | LLM 호출 |
 |---|---|---|
-| `$codex-session-memory:checkpoint` | delta 턴을 컨텍스트 요약으로 저장 | 1 |
+| `$codex-session-memory:checkpoint` | 컨텍스트 체크포인트 handoff 준비 및 검증 | 0 |
 | `$codex-session-memory:resume [prefix]` | 이전 세션의 INDEX 목록 표시 또는 로드 | 0 |
 | `$codex-session-memory:status` | pending 턴, 컨텍스트 파일 수, 경로 표시 | 0 |
 

@@ -31,7 +31,7 @@ skill from chat.
 
 | Skill | What it does | LLM calls |
 |---|---|---|
-| `$codex-session-memory:checkpoint` | Save delta turns as a context summary | 1 |
+| `$codex-session-memory:checkpoint` | Prepare and verify context checkpoint handoff | 0 |
 | `$codex-session-memory:resume [prefix]` | List or load a prior session's INDEX | 0 |
 | `$codex-session-memory:status` | Show pending turns, context count, paths | 0 |
 
