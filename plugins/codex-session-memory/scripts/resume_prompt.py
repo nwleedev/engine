@@ -1,4 +1,4 @@
-"""Build compact SessionStart context from saved session memory."""
+"""Build compact resume handoff context from saved session memory."""
 import re
 from pathlib import Path
 

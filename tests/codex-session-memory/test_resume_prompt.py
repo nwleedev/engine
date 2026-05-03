@@ -35,13 +35,13 @@ def test_builds_short_actionable_prompt(tmp_path):
         "- [CONTEXT-1.md] — 자동 저장 정책을 분리했다.\n"
     )
     (contexts / "CONTEXT-1.md").write_text(
-        "# Policy Update\n\n## 다음\nSessionStart 주입을 구현한다.\n\n"
+        "# Policy Update\n\n## 다음\nresume handoff를 구현한다.\n\n"
         "## Evidence\n\n### Files\n- plugins/codex-session-memory/scripts/policy.py\n"
     )
     prompt = load_resume_prompt().build_resume_prompt(session, budget_chars=1200)
     assert "current_goal" in prompt
     assert "next_action" in prompt
-    assert "SessionStart 주입을 구현한다" in prompt
+    assert "resume handoff를 구현한다" in prompt
     assert "plugins/codex-session-memory/scripts/policy.py" in prompt
 
 

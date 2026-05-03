@@ -24,7 +24,7 @@ def narration(title="Policy Update"):
         "what_why": "자동 저장 정책을 분리했다.",
         "decisions": ["저장량과 주입량을 분리한다."],
         "open": ["hook fixture 검증이 남았다."],
-        "next": "SessionStart 주입을 구현한다.",
+        "next": "resume handoff를 구현한다.",
     }
 
 
