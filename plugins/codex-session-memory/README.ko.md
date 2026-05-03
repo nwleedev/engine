@@ -1,6 +1,8 @@
 # codex-session-memory
 
-Codex CLI 세션의 진행 상황을 증분 컨텍스트 요약으로 저장하는 사용자 호출 스킬. Claude용 `plugins/session-memory/`와 시맨틱은 닮았지만 코드는 완전 독립 — 훅 없음, 자동 LLM 호출 없음.
+Codex CLI 세션의 진행 상황을 증분 컨텍스트 요약으로 저장하는 세션 메모리
+플러그인입니다. Claude용 `plugins/session-memory/`와 시맨틱은 닮았지만
+코드는 완전히 독립되어 있습니다.
 
 **검증된 Codex 버전:** 0.128.0
 
@@ -13,7 +15,15 @@ codex plugin marketplace add /path/to/this/repo
 Codex를 재시작한 뒤 `/plugins`를 열고 `Engine` marketplace에서
 `codex-session-memory`를 설치하거나 활성화합니다.
 
-`~/.codex/config.toml` 직접 수정은 불필요합니다.
+이 플러그인은 skill-first, 사용자 호출 방식으로 동작합니다. Codex lifecycle
+hook을 자동으로 설치하지 않습니다.
+
+사용 가능한 스킬:
+
+- `$codex-session-memory:install`
+- `$codex-session-memory:checkpoint`
+- `$codex-session-memory:resume`
+- `$codex-session-memory:status`
 
 ## 스킬
 
@@ -23,9 +33,17 @@ Codex는 플러그인에 포함된 스킬을 플러그인 네임스페이스와 
 
 | 스킬 | 동작 | LLM 호출 |
 |---|---|---|
-| `$codex-session-memory:checkpoint` | delta 턴을 컨텍스트 요약으로 저장 | 1 (codex-exec, ~15-60초) |
+| `$codex-session-memory:install` | skill-first 세션 메모리를 위한 AGENTS.md 설정 안내 출력 | 0 |
+| `$codex-session-memory:checkpoint` | 컨텍스트 체크포인트 handoff 준비 및 검증 | 0 |
 | `$codex-session-memory:resume [prefix]` | 이전 세션의 INDEX 목록 표시 또는 로드 | 0 |
 | `$codex-session-memory:status` | pending 턴, 컨텍스트 파일 수, 경로 표시 | 0 |
+
+## 컨텍스트 압축 복구
+
+컨텍스트 압축 복구는 런타임 hook이 아니라 AGENTS.md 지침으로 수행됩니다.
+같은 Codex 세션에서 수동 또는 자동 컨텍스트 압축이 발생한 뒤에는 첫 번째
+작업으로 현재 세션 prefix와 함께 `$codex-session-memory:resume <prefix>`를
+호출해 저장된 handoff를 다시 로드해야 합니다.
 
 ## 프로젝트 루트 해석 (모노레포 가드)
 
@@ -33,9 +51,9 @@ Codex는 플러그인에 포함된 스킬을 플러그인 네임스페이스와 
 
 1. `CODEX_PROJECT_DIR` env var
 2. `<ancestor>/.env`의 `CODEX_PROJECT_DIR=...` 선언
-3. `AGENTS.md`를 포함한 topmost 조상
-4. `.codex/`를 포함한 topmost 조상
-5. `git rev-parse --show-toplevel`
+3. `git rev-parse --show-toplevel`
+4. `AGENTS.md`를 포함한 topmost 조상
+5. `.codex/`를 포함한 topmost 조상
 6. cwd
 
 해석된 root가 `git rev-parse --show-toplevel`과 다르고 env 명시 override가 없으면 플러그인은 **쓰기를 거부**합니다 (silent 데이터 분산보다 loud failure 우선).
@@ -55,15 +73,35 @@ CODEX_PROJECT_DIR=/abs/path/to/monorepo/root
 ```
 <root>/.codex/sessions/<CODEX_THREAD_ID>/
 ├── INDEX.md
-└── contexts/CONTEXT-YYYYMMDD-HHMM-<title>.md
+└── contexts/CONTEXT-YYYYMMDD-HH00-checkpoint.md
+
+<root>/.codex/sessions/_children/<CHILD_CODEX_THREAD_ID>/
+├── INDEX.md
+└── contexts/CONTEXT-YYYYMMDD-HH00-checkpoint.md
 ```
+
+subagent/review 세션은 아래처럼 parent session id를 명시해 checkpoint하면
+`_children` 아래 저장합니다.
+
+```
+python3 /path/to/codex-session-memory/skills/checkpoint/checkpoint.py prepare --role child --parent <parent-session-id>
+```
+
+child `INDEX.md`에는 `role: child`와 `parent_session_id`를 기록하고, parent
+`INDEX.md`에는 `Child Sessions` 항목으로 child session 링크를 append합니다.
+기본 세션 목록은 `_children`을 숨겨 main session 중심으로 표시합니다.
+
+`INDEX.md`는 append-only event log로 취급합니다. 같은 HH00 context 파일을 여러
+번 갱신하더라도 기존 INDEX 라인을 교체하지 말고 새 라인을 append합니다. resume은
+INDEX 이벤트 순서를 보존하되 실제 context 파일 주입은 filename 기준으로 dedupe해
+같은 파일을 여러 번 읽지 않습니다.
 
 ## 세션 연속성
 
-`CODEX_THREAD_ID`는 `codex exec resume <id>` 사이에서도 동일 유지 — 실측 확인됨. 같은 Codex 세션의 며칠 작업이 동일한 `<root>/.codex/sessions/<id>/INDEX.md`에 누적됩니다.
+`CODEX_THREAD_ID`는 재개된 Codex CLI 세션 사이에서도 동일 유지 — 실측 확인됨. 같은 Codex 세션의 며칠 작업이 동일한 `<root>/.codex/sessions/<id>/INDEX.md`에 누적됩니다.
 
 ## 테스트
 
 ```
-make test-codex-session-memory
+python -m pytest tests/codex-session-memory -q
 ```

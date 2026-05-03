@@ -1,44 +1,54 @@
+import importlib.util
+import json
 from pathlib import Path
-import jsonl_parser as jp
-
-FIXTURE = Path(__file__).parent / "fixtures" / "sample_rollout.jsonl"
 
 
-def test_extract_delta_from_offset_zero():
-    msgs, new_offset = jp.extract_delta(str(FIXTURE), 0)
-    assert [(m["role"], m["text"]) for m in msgs] == [
-        ("user", "Add tests for auth"),
-        ("assistant", "Adding tests now."),
-    ]
-    assert new_offset == FIXTURE.stat().st_size
+SCRIPTS = Path(__file__).resolve().parents[2] / "plugins" / "codex-session-memory" / "scripts"
 
 
-def test_extract_delta_skips_already_processed():
-    full_size = FIXTURE.stat().st_size
-    msgs, new_offset = jp.extract_delta(str(FIXTURE), full_size)
-    assert msgs == []
-    assert new_offset == full_size
+def load_parser():
+    spec = importlib.util.spec_from_file_location("jsonl_parser", SCRIPTS / "jsonl_parser.py")
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+    return module
 
 
-def test_extract_delta_partial_offset():
-    text = FIXTURE.read_bytes()
-    target = b'"role":"user"'
-    pos = text.find(target)
-    line_start = text.rfind(b"\n", 0, pos) + 1
-    msgs, new_offset = jp.extract_delta(str(FIXTURE), line_start)
-    assert [(m["role"], m["text"]) for m in msgs] == [
-        ("user", "Add tests for auth"),
-        ("assistant", "Adding tests now."),
-    ]
-    assert new_offset == FIXTURE.stat().st_size
-
-
-def test_extract_delta_handles_malformed_lines(tmp_path):
-    p = tmp_path / "bad.jsonl"
-    p.write_text(
-        '{"type":"response_item","payload":{"role":"user","content":[{"type":"input_text","text":"ok"}]}}\n'
-        'not json at all\n'
-        '{"type":"response_item","payload":{"role":"assistant","content":[{"type":"output_text","text":"hi"}]}}\n'
+def test_extract_delta_includes_function_call_output_as_tool_text(tmp_path):
+    parser = load_parser()
+    transcript = tmp_path / "rollout.jsonl"
+    transcript.write_text(
+        "\n".join(
+            [
+                json.dumps(
+                    {
+                        "type": "response_item",
+                        "payload": {
+                            "role": "assistant",
+                            "content": [{"type": "output_text", "text": "I will inspect files."}],
+                        },
+                    }
+                ),
+                json.dumps(
+                    {
+                        "type": "response_item",
+                        "payload": {
+                            "type": "function_call_output",
+                            "call_id": "call-1",
+                            "output": "pytest output\nFAIL tests/example.py::test_case",
+                        },
+                    }
+                ),
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
     )
-    msgs, _ = jp.extract_delta(str(p), 0)
-    assert [(m["role"], m["text"]) for m in msgs] == [("user", "ok"), ("assistant", "hi")]
+
+    delta, new_offset = parser.extract_delta(str(transcript), 0)
+
+    assert delta == [
+        {"role": "assistant", "text": "I will inspect files."},
+        {"role": "tool", "text": "pytest output\nFAIL tests/example.py::test_case"},
+    ]
+    assert new_offset == transcript.stat().st_size

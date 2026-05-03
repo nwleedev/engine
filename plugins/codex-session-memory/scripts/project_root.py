@@ -1,12 +1,11 @@
 """Project root resolution for codex-session-memory.
 
-6-tier resolution priority:
+5-tier resolution priority:
 1. CODEX_PROJECT_DIR env var (must be existing directory).
 2. Same env var, populated earlier by dotenv_loader.
-3. Topmost ancestor with AGENTS.md (HOME boundary).
-4. Topmost ancestor with .codex/ (HOME boundary).
-5. git rev-parse --show-toplevel.
-6. cwd.
+3. git rev-parse --show-toplevel.
+4. Topmost ancestor with AGENTS.md or .codex/ (HOME boundary).
+5. cwd.
 """
 import os
 import subprocess
@@ -47,6 +46,10 @@ def find_project_root(cwd: str) -> str:
     path = Path(cwd).resolve()
     home = Path.home().resolve()
 
+    git_top = _git_toplevel(cwd)
+    if git_top:
+        return git_top
+
     top = _topmost_ancestor_with(path, "AGENTS.md", home, must_be_file=True)
     if top:
         return str(top)
@@ -54,10 +57,6 @@ def find_project_root(cwd: str) -> str:
     top = _topmost_ancestor_with(path, ".codex", home)
     if top and (top / ".codex").is_dir():
         return str(top)
-
-    git_top = _git_toplevel(cwd)
-    if git_top:
-        return git_top
 
     return str(path)
 

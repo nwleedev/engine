@@ -1,6 +1,7 @@
 # codex-session-memory
 
-User-invoked skills that save Codex CLI session progress as incremental context summaries. Companion to `plugins/session-memory/` (Claude Code), but independent — no shared code, no hooks, no automatic LLM calls.
+Codex CLI session memory for incremental context summaries. Companion to
+`plugins/session-memory/` (Claude Code), but independent with no shared code.
 
 **Verified Codex version:** 0.128.0
 
@@ -13,7 +14,15 @@ codex plugin marketplace add /path/to/this/repo
 Restart Codex, open `/plugins`, choose the `Engine` marketplace, and install
 or enable `codex-session-memory`.
 
-No manual `~/.codex/config.toml` edit is required.
+This plugin is skill-first and user-invoked. It does not install automatic
+Codex lifecycle hooks.
+
+Available skills:
+
+- `$codex-session-memory:install`
+- `$codex-session-memory:checkpoint`
+- `$codex-session-memory:resume`
+- `$codex-session-memory:status`
 
 ## Skills
 
@@ -23,9 +32,18 @@ skill from chat.
 
 | Skill | What it does | LLM calls |
 |---|---|---|
-| `$codex-session-memory:checkpoint` | Save delta turns as a context summary | 1 (codex-exec, ~15-60s) |
+| `$codex-session-memory:install` | Print AGENTS.md setup guidance for skill-first session memory | 0 |
+| `$codex-session-memory:checkpoint` | Prepare and verify context checkpoint handoff | 0 |
 | `$codex-session-memory:resume [prefix]` | List or load a prior session's INDEX | 0 |
 | `$codex-session-memory:status` | Show pending turns, context count, paths | 0 |
+
+## Compaction recovery
+
+Compaction recovery is driven by AGENTS.md instructions, not a runtime hook. After
+manual or automatic context compaction in the same Codex session, the first
+action should be invoking `$codex-session-memory:resume <prefix>` with the
+current session prefix so Codex reloads the saved handoff before doing more
+work.
 
 ## Project root resolution (monorepo guard)
 
@@ -33,9 +51,9 @@ Scripts walk up from cwd to find the project root in priority:
 
 1. `CODEX_PROJECT_DIR` env var
 2. `<ancestor>/.env` line `CODEX_PROJECT_DIR=...`
-3. Topmost ancestor containing `AGENTS.md`
-4. Topmost ancestor containing `.codex/`
-5. `git rev-parse --show-toplevel`
+3. `git rev-parse --show-toplevel`
+4. Topmost ancestor containing `AGENTS.md`
+5. Topmost ancestor containing `.codex/`
 6. cwd
 
 If the resolved root differs from `git rev-parse --show-toplevel` and no env override is set, the plugin **refuses to write** (loud failure beats silent data fragmentation).
@@ -55,17 +73,37 @@ Confirm `.env` is in `.gitignore` before committing other changes.
 ```
 <root>/.codex/sessions/<CODEX_THREAD_ID>/
 ├── INDEX.md
-└── contexts/CONTEXT-YYYYMMDD-HHMM-<title>.md
+└── contexts/CONTEXT-YYYYMMDD-HH00-checkpoint.md
+
+<root>/.codex/sessions/_children/<CHILD_CODEX_THREAD_ID>/
+├── INDEX.md
+└── contexts/CONTEXT-YYYYMMDD-HH00-checkpoint.md
 ```
 
 The same JSONL transcript at `~/.codex/sessions/YYYY/MM/DD/rollout-*-<thread>.jsonl` is read incrementally on each checkpoint.
 
+Subagent and review sessions are stored under `_children` when checkpointed with:
+
+```
+python3 /path/to/codex-session-memory/skills/checkpoint/checkpoint.py prepare --role child --parent <parent-session-id>
+```
+
+The child `INDEX.md` records `role: child` and `parent_session_id`. The parent
+`INDEX.md` should append a `Child Sessions` entry linking to the child session.
+Default session listing skips `_children` to keep resume/status output focused
+on main sessions.
+
+`INDEX.md` is append-only. If multiple checkpoints update the same HH00 context
+file, append a new INDEX entry instead of replacing the previous line. Resume
+keeps INDEX event order but deduplicates context file injection by filename to
+avoid spending context budget on the same file more than once.
+
 ## How session continuity works
 
-`CODEX_THREAD_ID` stays stable across `codex exec resume <id>` — verified empirically. Multi-day work on the same Codex session accumulates into the same `<root>/.codex/sessions/<id>/INDEX.md`.
+`CODEX_THREAD_ID` stays stable across resumed Codex CLI sessions — verified empirically. Multi-day work on the same Codex session accumulates into the same `<root>/.codex/sessions/<id>/INDEX.md`.
 
 ## Tests
 
 ```
-make test-codex-session-memory
+python -m pytest tests/codex-session-memory -q
 ```

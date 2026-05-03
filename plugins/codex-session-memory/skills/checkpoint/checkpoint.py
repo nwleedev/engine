@@ -1,107 +1,320 @@
 #!/usr/bin/env python3
-"""Checkpoint skill entry."""
+"""Prepare and verify Codex session memory checkpoint handoffs."""
+from __future__ import annotations
+
+import importlib.util
 import os
+import re
 import sys
-import tempfile
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 SCRIPTS = HERE.parent.parent / "scripts"
-sys.path.insert(0, str(SCRIPTS))
-
-import dotenv_loader
-import project_root as pr
-import session_locator as sl
-import jsonl_parser as jp
-import index_io as io
-import narrate
 
 
-def _now_iso():
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+def _load_script_module(filename: str, module_name: str):
+    spec = importlib.util.spec_from_file_location(module_name, SCRIPTS / filename)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"cannot load {filename}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module
 
 
-def _slug(title: str) -> str:
-    safe = "".join(c if c.isalnum() or c in "-_" else "-" for c in title.strip())
-    return safe[:60].strip("-") or "checkpoint"
+dotenv_loader = _load_script_module(
+    "dotenv_loader.py", "codex_session_memory_checkpoint_dotenv_loader"
+)
+ee = _load_script_module(
+    "evidence_extractor.py", "codex_session_memory_checkpoint_evidence_extractor"
+)
+io = _load_script_module("index_io.py", "codex_session_memory_checkpoint_index_io")
+jp = _load_script_module("jsonl_parser.py", "codex_session_memory_checkpoint_jsonl_parser")
+pr = _load_script_module("project_root.py", "codex_session_memory_checkpoint_project_root")
+sl = _load_script_module(
+    "session_locator.py", "codex_session_memory_checkpoint_session_locator"
+)
 
 
-def _render_context(r: dict) -> str:
-    lines = [f"# {r['title']}", "", "## 무엇을/왜", r["what_why"], "", "## 결정"]
-    for d in r.get("decisions") or []:
-        lines.append(f"- {d}")
-    lines.extend(["", "## 미완료"])
-    for o in r.get("open") or []:
-        lines.append(f"- {o}")
-    lines.extend(["", "## 다음", r["next"], ""])
-    return "\n".join(lines)
+REQUIRED_SECTIONS = (
+    "## [현재 상태 (Phase)]",
+    "## [문제 및 아키텍처 결정 (ADR)]",
+    "## [도구 및 파일 변경 내역]",
+    "## [검증 결과]",
+    "## [남은 위험 및 미해결 사항]",
+    "## [다음 단계 (Next Steps)]",
+)
 
 
-def main():
+def _usage() -> str:
+    return (
+        "usage: checkpoint.py prepare [--role main|child] [--parent <session-id>] | "
+        "checkpoint.py verify <context-path>"
+    )
+
+
+def _print_usage() -> None:
+    print(_usage(), file=sys.stderr)
+
+
+def _resolve_project_root(cwd: str) -> str | None:
+    try:
+        root = pr.find_project_root(cwd)
+        pr.assert_root_is_canonical(root, cwd)
+    except Exception as exc:
+        print(f"error: project root validation failed: {exc}", file=sys.stderr)
+        return None
+    return root
+
+
+def _data_session_dir(root: str, thread_id: str, role: str) -> Path:
+    try:
+        return sl.data_session_dir(root, thread_id, role=role)
+    except TypeError:
+        if role == "main":
+            return sl.data_session_dir(root, thread_id)
+        raise
+
+
+def _coerce_offset(value) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return 0
+
+
+def _suggest_context_path(contexts_dir: Path) -> Path:
+    stamp = datetime.now().strftime("%Y%m%d-%H00")
+    return contexts_dir / f"CONTEXT-{stamp}-checkpoint.md"
+
+
+def _render_list(items: list[str]) -> str:
+    if not items:
+        return "- (none)"
+    return "\n".join(f"- {item}" for item in items)
+
+
+def _render_evidence(evidence: dict) -> str:
+    return "\n".join(
+        [
+            "### files",
+            _render_list(evidence.get("files", [])),
+            "",
+            "### commands",
+            _render_list(evidence.get("commands", [])),
+            "",
+            "### failures",
+            _render_list(evidence.get("failures", [])),
+            "",
+            "### sources",
+            _render_list(evidence.get("sources", [])),
+        ]
+    )
+
+
+def _is_context_path_in_session_tree(context_path: Path, root: str) -> bool:
+    sessions_root = (Path(root) / ".codex" / "sessions").resolve()
+    try:
+        relative = context_path.relative_to(sessions_root)
+    except ValueError:
+        return False
+    if len(relative.parts) == 3 and relative.parts[1] == "contexts":
+        return not relative.parts[0].startswith(("_", "."))
+    return (
+        len(relative.parts) == 4
+        and relative.parts[0] == "_children"
+        and relative.parts[2] == "contexts"
+    )
+
+
+def _contains_required_heading_lines(context_text: str) -> str | None:
+    lines = set(context_text.splitlines())
+    for section in REQUIRED_SECTIONS:
+        if section not in lines:
+            return section
+    return None
+
+
+def _index_has_context_entry(index_text: str, filename: str) -> bool:
+    entry_re = re.compile(rf"^\s*-\s+\[{re.escape(filename)}\](?:\s|$)")
+    return any(entry_re.match(line) for line in index_text.splitlines())
+
+
+def _parse_prepare_args(args: list[str]) -> tuple[str, str | None] | None:
+    role = "main"
+    parent = None
+    i = 1
+    while i < len(args):
+        arg = args[i]
+        if arg == "--role" and i + 1 < len(args):
+            role = args[i + 1]
+            i += 2
+            continue
+        if arg == "--parent" and i + 1 < len(args):
+            parent = args[i + 1]
+            i += 2
+            continue
+        return None
+    if role not in {"main", "child"}:
+        return None
+    if role == "child" and not parent:
+        print("error: --parent <session-id> is required for child checkpoints", file=sys.stderr)
+        return None
+    if role == "main" and parent:
+        print("error: --parent is only valid with --role child", file=sys.stderr)
+        return None
+    return role, parent
+
+
+def _prepare(role: str = "main", parent_session_id: str | None = None) -> int:
     cwd = os.getcwd()
     dotenv_loader.load_project_dotenv(cwd)
 
     thread_id = sl.current_thread_id()
     if not thread_id:
-        print("error: CODEX_THREAD_ID not set. Run inside a Codex session.", file=sys.stderr)
+        print("error: CODEX_THREAD_ID is required for checkpoint prepare", file=sys.stderr)
         return 2
 
-    root = pr.find_project_root(cwd)
-    pr.assert_root_is_canonical(root, cwd)
-
-    jsonl = sl.find_jsonl_by_thread(thread_id)
-    if not jsonl:
-        print(f"error: no rollout JSONL found for thread {thread_id[:8]}", file=sys.stderr)
+    root = _resolve_project_root(cwd)
+    if root is None:
         return 2
 
-    session_dir = sl.data_session_dir(root, thread_id)
-    session_dir.mkdir(parents=True, exist_ok=True)
-    (session_dir / "contexts").mkdir(exist_ok=True)
+    jsonl_path = sl.find_jsonl_by_thread(thread_id)
+    if not jsonl_path:
+        print(f"error: no rollout JSONL found for thread {thread_id}", file=sys.stderr)
+        return 2
+
+    session_dir = _data_session_dir(root, thread_id, role)
     index_path = session_dir / "INDEX.md"
+    contexts_dir = session_dir / "contexts"
+    contexts_dir.mkdir(parents=True, exist_ok=True)
+    parent_index_path = None
+    if role == "child" and parent_session_id:
+        parent_index_path = sl.parent_session_dir(root, parent_session_id) / "INDEX.md"
 
-    fm = io.read_frontmatter(index_path) or {}
-    last_offset = int(fm.get("last_processed_offset", 0))
+    frontmatter = io.read_frontmatter(index_path) or {}
+    last_processed_offset = _coerce_offset(frontmatter.get("last_processed_offset", 0))
+    delta, new_offset = jp.extract_delta(str(jsonl_path), last_processed_offset)
+    context_path = _suggest_context_path(contexts_dir)
+    evidence = ee.extract_evidence(delta)
 
-    delta, new_offset = jp.extract_delta(str(jsonl), last_offset)
-
-    schema_path = SCRIPTS / "narration_schema.json"
-    with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as t:
-        out_path = Path(t.name)
-    try:
-        prompt = narrate.build_prompt(
-            delta=delta or [{"role": "user", "text": "(no new turns; checkpoint marker only)"}]
+    print(
+        "\n".join(
+            [
+                "# checkpoint prepare",
+                "",
+                "The active Codex must write the context file and update INDEX.md.",
+                "",
+                "## target",
+                f"thread_id: {thread_id}",
+                f"role: {role}",
+                f"parent_session_id: {parent_session_id or ''}",
+                f"project_root: {root}",
+                f"jsonl_path: {jsonl_path}",
+                f"index_path: {index_path}",
+                f"context_path: {context_path}",
+                f"parent_index_path: {parent_index_path or ''}",
+                f"previous_processed_offset: {last_processed_offset}",
+                f"new_offset: {new_offset}",
+                "",
+                "## index update",
+                f"index_entry: - [{context_path.name}] — <summary>",
+                (
+                    f"parent_child_entry: - [{thread_id[:8]}]"
+                    f"(../_children/{thread_id}/INDEX.md) — <role/summary>"
+                    if role == "child"
+                    else "parent_child_entry:"
+                ),
+                "frontmatter_update:",
+                f"  last_processed_offset: {new_offset}",
+                "  last_updated: <ISO-8601 timestamp>",
+                "  session_id: <thread_id>",
+                f"  role: {role}",
+                f"  parent_session_id: {parent_session_id or ''}",
+                "",
+                "## evidence",
+                _render_evidence(evidence),
+                "",
+                "## required context template",
+                "# <title>",
+                "",
+                *REQUIRED_SECTIONS,
+                "",
+                "After writing the context, update INDEX.md to reference the context filename.",
+                "Set INDEX.md frontmatter last_processed_offset to the printed new offset.",
+            ]
         )
-        result = narrate.call_codex_exec(prompt=prompt, schema_path=schema_path, out_path=out_path)
-        narrate.validate(result)
-    finally:
-        try:
-            out_path.unlink()
-        except OSError:
-            pass
-
-    title = result["title"]
-    now = datetime.now().strftime("%Y%m%d-%H%M")
-    ctx_filename = f"CONTEXT-{now}-{_slug(title)}.md"
-    ctx_path = session_dir / "contexts" / ctx_filename
-    ctx_path.write_text(_render_context(result))
-
-    if not index_path.exists():
-        io.write_index(index_path, frontmatter={
-            "session_id": thread_id,
-            "cwd": cwd,
-            "started": _now_iso(),
-            "last_updated": _now_iso(),
-            "last_processed_offset": new_offset,
-            "jsonl_path": str(jsonl),
-        }, contexts=[])
-
-    summary = (result["what_why"] or "").splitlines()[0][:120]
-    io.append_context_entry(index_path, filename=ctx_filename, summary=summary)
-    io.update_frontmatter(index_path, last_processed_offset=new_offset, last_updated=_now_iso())
-
-    print(f"Checkpoint saved: {len(delta)} turns -> .codex/sessions/{thread_id[:8]}/contexts/{ctx_filename}")
+    )
     return 0
+
+
+def _verify(context_arg: str) -> int:
+    cwd = os.getcwd()
+    dotenv_loader.load_project_dotenv(cwd)
+    root = _resolve_project_root(cwd)
+    if root is None:
+        return 2
+
+    context_path = Path(context_arg)
+    if not context_path.is_absolute():
+        context_path = Path(root) / context_path
+    context_path = context_path.resolve()
+
+    if not _is_context_path_in_session_tree(context_path, root):
+        print(
+            f"error: context path is outside project session contexts: {context_path}",
+            file=sys.stderr,
+        )
+        return 1
+
+    if not context_path.is_file():
+        print(f"error: context file does not exist: {context_path}", file=sys.stderr)
+        return 1
+
+    context_text = context_path.read_text(encoding="utf-8")
+    missing_section = _contains_required_heading_lines(context_text)
+    if missing_section:
+        print(f"error: missing section: {missing_section}", file=sys.stderr)
+        return 1
+
+    index_path = context_path.parent.parent / "INDEX.md"
+    if not index_path.is_file():
+        print(f"error: INDEX.md does not exist: {index_path}", file=sys.stderr)
+        return 1
+
+    index_text = index_path.read_text(encoding="utf-8")
+    if not _index_has_context_entry(index_text, context_path.name):
+        print(
+            f"error: INDEX.md does not include context entry for {context_path.name}",
+            file=sys.stderr,
+        )
+        return 1
+
+    print("verify: ok")
+    return 0
+
+
+def main(argv=None) -> int:
+    args = sys.argv[1:] if argv is None else list(argv)
+    if not args:
+        _print_usage()
+        return 2
+
+    command = args[0]
+    if command == "prepare":
+        parsed = _parse_prepare_args(args)
+        if parsed is None:
+            if not any(arg == "--parent" for arg in args):
+                _print_usage()
+            return 2
+        role, parent_session_id = parsed
+        return _prepare(role=role, parent_session_id=parent_session_id)
+    if command == "verify" and len(args) == 2:
+        return _verify(args[1])
+
+    _print_usage()
+    return 2
 
 
 if __name__ == "__main__":

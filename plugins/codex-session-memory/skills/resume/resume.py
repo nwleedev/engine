@@ -1,21 +1,33 @@
 #!/usr/bin/env python3
+import importlib.util
 import os
 import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 SCRIPTS = HERE.parent.parent / "scripts"
-sys.path.insert(0, str(SCRIPTS))
-
-import dotenv_loader
-import project_root as pr
-import index_io as io
 
 
 MAX_INJECT_CHARS = 8000
 
 
-def list_sessions(root: str):
+def load_script_module(filename: str, module_name: str):
+    module_path = SCRIPTS / filename
+    spec = importlib.util.spec_from_file_location(module_name, module_path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"cannot load {module_name} from {module_path}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+dotenv_loader = load_script_module("dotenv_loader.py", "codex_session_memory_resume_dotenv_loader")
+pr = load_script_module("project_root.py", "codex_session_memory_resume_project_root")
+io = load_script_module("index_io.py", "codex_session_memory_resume_index_io")
+
+
+def list_sessions(root: str, limit: int | None = 10):
     sessions_dir = Path(root) / ".codex" / "sessions"
     if not sessions_dir.is_dir():
         return []
@@ -33,7 +45,7 @@ def list_sessions(root: str):
             "path": idx,
         })
     rows.sort(key=lambda r: str(r["last_updated"]), reverse=True)
-    return rows[:10]
+    return rows[:limit] if limit is not None else rows
 
 
 def render_table(rows):
@@ -58,15 +70,20 @@ def main(argv):
         return 0
 
     prefix = argv[1]
-    matches = [r for r in list_sessions(root) if str(r["session_id"]).startswith(prefix)]
+    if len(prefix) != 8:
+        print("error: session prefix must be exactly 8 characters", file=sys.stderr)
+        return 2
+
+    matches = [r for r in list_sessions(root, limit=None) if str(r["session_id"]).startswith(prefix)]
     if not matches:
         print(f"error: no session matches prefix '{prefix}'", file=sys.stderr)
         return 2
-    text = matches[0]["path"].read_text()[:MAX_INJECT_CHARS]
-    print("<session-resume>")
-    print(text)
-    print("</session-resume>")
-    print(f"Inspect <root>/.codex/sessions/{matches[0]['session_id']}/contexts/*.md for full details.")
+    if len(matches) > 1:
+        print(f"error: multiple sessions match prefix '{prefix}'", file=sys.stderr)
+        return 2
+    target_session_dir = matches[0]["path"].parent
+    resume_prompt = load_script_module("resume_prompt.py", "codex_session_memory_resume_prompt")
+    sys.stdout.write(resume_prompt.build_resume_prompt(target_session_dir, budget_chars=MAX_INJECT_CHARS))
     return 0
 
 

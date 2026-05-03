@@ -1,24 +1,45 @@
 ---
 name: checkpoint
-description: Save the current Codex session as an incremental context summary by forcing a narration checkpoint. Use when the user wants to save, checkpoint, or persist their current work, mark a milestone, or capture progress before risky changes.
+description: Prepare and verify a Codex session-memory checkpoint. Use when the user wants to save, checkpoint, persist current work, mark a milestone, or capture progress before risky changes.
 ---
 
 # Session Memory Checkpoint
 
-Force a narration checkpoint for the current Codex session. Reads transcript delta since last save, generates structured summary via codex-exec, writes to `<root>/.codex/sessions/<thread_id>/INDEX.md` and `contexts/CONTEXT-*.md`.
+Create a checkpoint through an active-Codex handoff. The helper script gathers deterministic state and evidence; the current Codex writes the context file and updates the session index.
 
-## Run
+## Workflow
 
-Run the entry script via your shell tool:
+Run the `checkpoint.py` script next to this `SKILL.md` file.
 
+```bash
+python3 /path/to/codex-session-memory/skills/checkpoint/checkpoint.py prepare
 ```
-python3 "$(dirname "$0")/checkpoint.py"
+
+For subagent/review child sessions, pass the parent session id explicitly:
+
+```bash
+python3 /path/to/codex-session-memory/skills/checkpoint/checkpoint.py prepare --role child --parent <parent-session-id>
 ```
 
-Output is a single status line. Full narration goes to file — parent session context unaffected.
+Use the printed `context_path`, `index_path`, offsets, evidence, and required section template. The active Codex must then:
+
+- write the context body to `context_path` using the prepare template and project AGENTS.md rules;
+- append the printed `index_entry` list item to `INDEX.md`; do not rewrite or delete prior context entries, even when appending to the same HH00 context file;
+- record the printed frontmatter/update keys, including `last_processed_offset` set to the new offset;
+- for child sessions, write the child frontmatter `role: child` and `parent_session_id`, and append the printed `parent_child_entry` to the parent `INDEX.md`;
+- avoid writing secrets, `.env` contents, API keys, tokens, or personal identifiers.
+
+After writing the files, verify the result:
+
+```bash
+python3 /path/to/codex-session-memory/skills/checkpoint/checkpoint.py verify /path/to/context.md
+```
+
+`verify` succeeds only when the context file is under `<root>/.codex/sessions/*/contexts/` or `<root>/.codex/sessions/_children/*/contexts/`, all required headings are present as exact Markdown heading lines, and `INDEX.md` contains a context list entry like `- [CONTEXT-...md]`.
 
 ## Notes
 
-- Latency ~15-60s (codex-exec baseline overhead).
-- Idempotent: forces a checkpoint marker even if no new turns since last save.
-- Project root resolution honors `CODEX_PROJECT_DIR` env or `.env` declaration; falls back to AGENTS.md / .codex / git toplevel / cwd.
+- The helper does not spawn another Codex process.
+- The helper does not write the context body or update `INDEX.md`.
+- Suggested context paths use `CONTEXT-YYYYMMDD-HH00-checkpoint.md`; if that file already exists, append a new section to it and append a new `INDEX.md` entry.
+- Project root resolution honors `CODEX_PROJECT_DIR` env or `.env` declaration, then falls back to git toplevel / AGENTS.md / `.codex` / cwd.

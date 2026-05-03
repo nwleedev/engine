@@ -1,9 +1,15 @@
-"""Parse Codex rollout JSONL. Extract user/assistant turn delta from byte offset.
+"""Parse Codex rollout JSONL. Extract turn and tool delta from byte offset.
 Resilient to malformed lines (skip silently)."""
 import json
 
 
 _KEEP_ROLES = {"user", "assistant"}
+
+
+def _text_from_output(output) -> str:
+    if isinstance(output, str):
+        return output
+    return json.dumps(output, ensure_ascii=False, sort_keys=True)
 
 
 def extract_delta(jsonl_path: str, start_offset: int):
@@ -23,6 +29,11 @@ def extract_delta(jsonl_path: str, start_offset: int):
         if obj.get("type") != "response_item":
             continue
         payload = obj.get("payload") or {}
+        if payload.get("type") == "function_call_output":
+            output = payload.get("output")
+            if output is not None:
+                messages.append({"role": "tool", "text": _text_from_output(output)})
+            continue
         role = payload.get("role")
         if role not in _KEEP_ROLES:
             continue
