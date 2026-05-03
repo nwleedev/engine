@@ -7,26 +7,34 @@ SECTION_HEADING = "## Codex Quality Guard"
 
 RECOMMENDED_BLOCK = """## Codex Quality Guard
 
-- Before finalizing a work turn, run `git status --short` and inspect the relevant diff so completion claims match the current worktree.
-- Run `$codex-quality-guard:retrospect` before the final response when the turn included code changes, file edits, verification results, or implementation decisions.
-- Use session memory or an equivalent context record when decisions, verification results, or remaining tasks need to survive context compaction.
-- Treat missing verification, skipped tests without a concrete reason, or unsupported done claims as issues to resolve before reporting completion.
+- Before ending each work turn, check for superficial work using `codex-quality-guard:retrospect`.
+- On turns with code or file changes, include changed files, verification run, and skipped checks as evidence.
+- If `Superficial risk` is `medium`, `high`, or `unknown`, do not report completion; provide one concrete next action.
+- If context was compacted or evidence is incomplete, inspect the visible request, AGENTS.md, changed files, project artifacts, and git status/diff before running `retrospect`.
+- Session memory or separate notes may be used only as supporting evidence. Do not skip the check when they are unavailable.
+- This process does not replace Codex `/review`. `/review` reviews diffs; `retrospect` reviews the current turn's working pattern.
 """
 
 RECOMMENDED_BLOCK_KO = """## Codex Quality Guard
 
-- 작업 턴을 끝내기 전에 `git status --short`를 실행하고 관련 diff를 확인해 완료 보고가 현재 작업트리와 일치하는지 검증한다.
-- 코드 변경, 파일 수정, 검증 결과, 구현 결정이 있었던 턴에서는 최종 답변 전에 `$codex-quality-guard:retrospect`를 실행한다.
-- 결정 사항, 검증 결과, 남은 작업이 컨텍스트 압축 이후에도 유지되어야 하면 세션 메모리 또는 동등한 컨텍스트 기록을 사용한다.
-- 검증 누락, 구체적 이유 없는 테스트 생략, 근거 없는 완료 주장은 완료 보고 전에 해결해야 할 문제로 취급한다.
+- 각 작업 턴을 마치기 전에 `codex-quality-guard:retrospect` 기준으로 superficial 작업 여부를 점검한다.
+- 코드 변경이 있는 턴에서는 변경 파일, 실행한 검증, 생략된 확인을 근거로 남긴다.
+- `Superficial risk`가 `medium`, `high`, `unknown`이면 완료로 보고하지 말고 한 가지 다음 조치를 제시한다.
+- 컨텍스트 압축이 발생했거나 근거가 부족하면 현재 대화에서 보이는 요청, AGENTS.md, 변경 파일, 작업 산출물, git 상태와 diff를 먼저 확인한 뒤 `retrospect`를 수행한다.
+- 세션 메모리나 별도 기록 파일이 있는 경우에는 보조 근거로만 참고하며, 없다는 이유로 점검을 생략하지 않는다.
+- 이 절차는 Codex `/review`를 대체하지 않는다. `/review`는 diff 리뷰이고, `retrospect`는 현재 턴의 작업 방식 회고다.
 """
 
 REQUIRED_MARKER_GROUPS = (
-    ("section heading", (SECTION_HEADING,)),
-    ("git status", ("git status --short", "git status")),
-    ("retrospect skill", ("$codex-quality-guard:retrospect",)),
-    ("session memory", ("session memory", "세션 메모리", "context record", "컨텍스트 기록")),
-    ("verification", ("verification", "검증")),
+    ("codex-quality-guard:retrospect", ("codex-quality-guard:retrospect",)),
+    ("Superficial risk", ("Superficial risk",)),
+    ("medium", ("medium",)),
+    ("high", ("high",)),
+    ("unknown", ("unknown",)),
+    ("AGENTS.md", ("AGENTS.md",)),
+    ("git status", ("git status", "git 상태")),
+    ("session memory", ("session memory", "Session memory", "세션 메모리")),
+    ("/review", ("/review",)),
 )
 
 
@@ -68,13 +76,19 @@ def _marker_label(group: tuple[str, tuple[str, ...]]) -> str:
     return group[0]
 
 
-def _missing_markers(text: str) -> tuple[str, ...]:
+def _missing_markers_for_groups(
+    text: str, groups: tuple[tuple[str, tuple[str, ...]], ...]
+) -> tuple[str, ...]:
     missing = []
-    for group in REQUIRED_MARKER_GROUPS:
+    for group in groups:
         label, alternatives = group
         if not any(marker in text for marker in alternatives):
             missing.append(label)
     return tuple(missing)
+
+
+def _missing_markers(text: str) -> tuple[str, ...]:
+    return _missing_markers_for_groups(text, REQUIRED_MARKER_GROUPS)
 
 
 def _guidance_for(path: Path, locale: str | None = None) -> str:
@@ -119,7 +133,11 @@ def check_agents_rules(project_root: str | Path, locale: str | None = None) -> R
         )
 
     full_file_missing = _missing_markers(text)
-    if len(full_file_missing) < len(REQUIRED_MARKER_GROUPS):
+    non_path_markers = tuple(
+        group for group in REQUIRED_MARKER_GROUPS if _marker_label(group) != "AGENTS.md"
+    )
+    non_path_missing = _missing_markers_for_groups(text, non_path_markers)
+    if len(non_path_missing) < len(non_path_markers):
         return RuleReport(
             status="partial",
             agents_path=agents_path,

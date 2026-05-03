@@ -19,7 +19,7 @@ def test_not_found_reports_recommended_block(tmp_path):
     report = rules.check_agents_rules(tmp_path)
     assert report.status == "not found"
     assert "codex-quality-guard:retrospect" in report.guidance
-    assert "verification" in report.missing
+    assert "Superficial risk" in report.missing
 
 
 def test_missing_when_agents_exists_without_quality_guard(tmp_path):
@@ -27,7 +27,7 @@ def test_missing_when_agents_exists_without_quality_guard(tmp_path):
     (tmp_path / "AGENTS.md").write_text("# AGENTS.md\n\nGeneral rules.\n", encoding="utf-8")
     report = rules.check_agents_rules(tmp_path)
     assert report.status == "missing"
-    assert "retrospect skill" in report.missing
+    assert "codex-quality-guard:retrospect" in report.missing
     assert "Add this block:" in report.guidance
 
 
@@ -49,14 +49,14 @@ def test_partial_when_section_is_incomplete(tmp_path):
     )
     report = rules.check_agents_rules(tmp_path)
     assert report.status == "partial"
-    assert "git status" in report.missing
-    assert "session memory" in report.missing
+    assert "unknown" in report.missing
+    assert "/review" in report.missing
 
 
 def test_korean_guidance_contains_korean_block(tmp_path):
     rules = load_agents_rules()
     report = rules.check_agents_rules(tmp_path, locale="ko")
-    assert "작업 턴을 끝내기 전에" in report.guidance
+    assert "각 작업 턴을 마치기 전에" in report.guidance
     assert "codex-quality-guard:retrospect" in report.guidance
 
 
