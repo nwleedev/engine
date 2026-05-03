@@ -1,6 +1,7 @@
 import importlib.util
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 
 PLUGIN = Path(__file__).resolve().parents[2] / "plugins" / "codex-session-memory"
@@ -40,6 +41,11 @@ def test_status_prints_checkpointed_session_fields(monkeypatch, tmp_path, capsys
         lambda path: {"last_updated": "2026-05-02T00:00:00Z", "last_processed_offset": 42},
     )
     monkeypatch.setattr(status.csm_jsonl_parser, "extract_delta", lambda path, offset: ([{"role": "user"}], 84))
+    monkeypatch.setattr(
+        status.csm_agents_rules,
+        "check_agents_rules",
+        lambda root: SimpleNamespace(status="installed", missing=()),
+    )
 
     assert status.main() == 0
 
@@ -50,6 +56,7 @@ def test_status_prints_checkpointed_session_fields(monkeypatch, tmp_path, capsys
     assert "Context files: 1" in output
     assert "Last saved: 2026-05-02T00:00:00Z" in output
     assert "Pending offset: 42" in output
+    assert "AGENTS.md rules: installed" in output
     assert "Hooks:" not in output
     assert "pending_turns: 1" in output
 
@@ -64,6 +71,11 @@ def test_status_prints_missing_values_before_checkpoint(monkeypatch, tmp_path, c
     monkeypatch.setattr(status.csm_project_root, "find_project_root", lambda cwd: str(tmp_path))
     monkeypatch.setattr(status.csm_session_locator, "data_session_dir", lambda root, thread_id: session_dir)
     monkeypatch.setattr(status.csm_session_locator, "find_jsonl_by_thread", lambda thread_id: None)
+    monkeypatch.setattr(
+        status.csm_agents_rules,
+        "check_agents_rules",
+        lambda root: SimpleNamespace(status="partial", missing=("CODEX_THREAD_ID", ".codex/")),
+    )
 
     assert status.main() == 0
 
@@ -72,5 +84,21 @@ def test_status_prints_missing_values_before_checkpoint(monkeypatch, tmp_path, c
     assert "Context files: 0" in output
     assert "Last saved: never" in output
     assert "Pending offset: 0" in output
+    assert "AGENTS.md rules: partial" in output
+    assert "AGENTS.md missing markers: CODEX_THREAD_ID, .codex/" in output
     assert "Hooks:" not in output
     assert "status: not yet checkpointed" in output
+
+
+def test_status_without_thread_id_returns_zero(monkeypatch, tmp_path, capsys):
+    status = load_status()
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(status.csm_dotenv_loader, "load_project_dotenv", lambda cwd: None)
+    monkeypatch.setattr(status.csm_session_locator, "current_thread_id", lambda: None)
+
+    assert status.main() == 0
+
+    output = capsys.readouterr().out
+    assert "CODEX_THREAD_ID: not set" in output
+    assert "Hooks:" not in output

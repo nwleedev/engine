@@ -33,6 +33,16 @@ csm_jsonl_parser = _load_script_module(
 csm_index_io = _load_script_module(
     "index_io.py", "codex_session_memory_status_index_io"
 )
+csm_agents_rules = _load_script_module(
+    "agents_rules.py", "codex_session_memory_status_agents_rules"
+)
+
+
+def _print_agents_rules_status(root):
+    report = csm_agents_rules.check_agents_rules(root)
+    print(f"AGENTS.md rules: {report.status}")
+    if report.missing:
+        print(f"AGENTS.md missing markers: {', '.join(report.missing)}")
 
 
 def main():
@@ -54,6 +64,7 @@ def main():
     print(f"Project root: {root}")
     print(f"Thread id: {thread_id}")
     print(f"JSONL path: {jsonl or 'missing'}")
+    _print_agents_rules_status(root)
 
     if not index_path.exists():
         print(f"Context files: {ctx_count}")
