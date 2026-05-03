@@ -1,8 +1,7 @@
 {
   "name": "codex-session-memory",
   "version": "0.3.0",
-  "description": "Save and restore Codex CLI session progress with automatic hooks and manual skills.",
+  "description": "Save and restore Codex CLI session progress with skill-first checkpoint, resume, status, and install workflows.",
   "license": "MIT",
-  "skills": "./skills/",
-  "hooks": "./hooks/hooks.json"
+  "skills": "./skills/"
 }
