@@ -43,6 +43,7 @@ def test_default_required_block_is_english_and_ko_block_is_opt_in():
     assert "context compaction" in rules.REQUIRED_BLOCK_EN
     assert "컨텍스트 압축" not in rules.REQUIRED_BLOCK_EN
     assert "컨텍스트 압축" in rules.REQUIRED_BLOCK_KO
+    assert rules.required_block("en") == rules.REQUIRED_BLOCK_EN
     assert rules.required_block("ko") == rules.REQUIRED_BLOCK_KO
     assert rules.required_block(None) == rules.REQUIRED_BLOCK_EN
 
@@ -204,6 +205,23 @@ def test_install_skill_prints_korean_patch_when_ko_arg_is_passed(
     assert "컨텍스트 압축" in output
 
 
+def test_install_skill_prints_english_patch_when_en_arg_is_passed(
+    tmp_path, monkeypatch, capsys
+):
+    install = load_install_skill()
+    agents = tmp_path / "AGENTS.md"
+    agents.write_text("# Project Rules\n", encoding="utf-8")
+    configure_install_root(install, monkeypatch, tmp_path)
+
+    assert install.main(["en"]) == 1
+
+    output = capsys.readouterr().out
+    assert "status: missing" in output
+    assert "Add this block:" in output
+    assert "context compaction" in output
+    assert "컨텍스트 압축" not in output
+
+
 def test_install_skill_returns_zero_for_installed_rules(tmp_path, monkeypatch, capsys):
     install = load_install_skill()
     rules = load_agents_rules()
@@ -255,4 +273,4 @@ def test_install_skill_rejects_unexpected_args(capsys):
 
     captured = capsys.readouterr()
     assert captured.out == ""
-    assert "usage: install.py [ko]" in captured.err
+    assert "usage: install.py [en|ko]" in captured.err

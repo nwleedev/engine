@@ -32,8 +32,8 @@ csm_agents_rules = _load_script_module(
 
 def main(argv=None):
     args = [] if argv is None else list(argv)
-    if len(args) > 1 or (args and args[0] != "ko"):
-        print("usage: install.py [ko]", file=sys.stderr)
+    if len(args) > 1 or (args and args[0] not in {"en", "ko"}):
+        print("usage: install.py [en|ko]", file=sys.stderr)
         return 2
     locale = args[0] if args else None
 
