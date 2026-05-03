@@ -6,7 +6,18 @@ from pathlib import Path
 SECTION_HEADING = "## Codex Session Memory"
 REQUIRED_SECTION_MARKER = SECTION_HEADING
 
-REQUIRED_BLOCK = """## Codex Session Memory
+REQUIRED_BLOCK_EN = """## Codex Session Memory
+
+- Before ending a work turn, run `$codex-session-memory:checkpoint` when there are changes, decisions, verification results, or remaining tasks to preserve.
+- During long work or when MCP/tool usage consumes substantial context, run an intermediate `$codex-session-memory:checkpoint`.
+- Immediately after manual or automatic context compaction in the same Codex session, run `$codex-session-memory:resume <current-session-prefix>` as the first action in the next turn.
+- Do not auto-resume old sessions when starting a new session. Only resume when the user explicitly calls `$codex-session-memory:resume <prefix>`.
+- If the session state is unclear, run `$codex-session-memory:status`.
+- If `CODEX_THREAD_ID` is not available, do not checkpoint; report the missing session id to the user.
+- Do not commit `.codex/` session data.
+"""
+
+REQUIRED_BLOCK_KO = """## Codex Session Memory
 
 - 작업 턴을 끝내기 전에 변경 사항, 결정 사항, 검증 결과, 남은 작업이 있으면 `$codex-session-memory:checkpoint`를 실행한다.
 - 작업이 길어지거나 MCP/tool 사용으로 컨텍스트 소모가 커지면 중간 `$codex-session-memory:checkpoint`를 실행한다.
@@ -17,6 +28,8 @@ REQUIRED_BLOCK = """## Codex Session Memory
 - `.codex/` 세션 데이터는 커밋하지 않는다.
 """
 
+REQUIRED_BLOCK = REQUIRED_BLOCK_EN
+
 
 REQUIRED_MARKERS = (
     "$codex-session-memory:checkpoint",
@@ -24,8 +37,6 @@ REQUIRED_MARKERS = (
     "$codex-session-memory:status",
     "CODEX_THREAD_ID",
     ".codex/",
-    "컨텍스트 압축",
-    "첫 행동",
 )
 
 
@@ -64,17 +75,21 @@ def _codex_session_memory_section(text: str) -> str | None:
     return "\n".join(section_lines)
 
 
-def _patch_for(path: Path) -> str:
+def required_block(locale: str | None = None) -> str:
+    return REQUIRED_BLOCK_KO if locale == "ko" else REQUIRED_BLOCK_EN
+
+
+def _patch_for(path: Path, locale: str | None = None) -> str:
     return (
         f"AGENTS.md path: {path}\n\n"
         "Recommended insertion point: after the existing context/session-memory section, "
         "or near other workflow rules.\n\n"
         "Add this block:\n\n"
-        f"{REQUIRED_BLOCK}"
+        f"{required_block(locale)}"
     )
 
 
-def check_agents_rules(project_root: str | Path) -> RuleReport:
+def check_agents_rules(project_root: str | Path, locale: str | None = None) -> RuleReport:
     root = Path(project_root)
     agents_path = root / "AGENTS.md"
     if not agents_path.is_file():
@@ -82,7 +97,7 @@ def check_agents_rules(project_root: str | Path) -> RuleReport:
             status="not found",
             agents_path=agents_path,
             missing=REQUIRED_MARKERS,
-            patch=_patch_for(agents_path),
+            patch=_patch_for(agents_path, locale),
             insert_after="create AGENTS.md at project root",
         )
 
@@ -95,7 +110,7 @@ def check_agents_rules(project_root: str | Path) -> RuleReport:
                 status="partial",
                 agents_path=agents_path,
                 missing=missing,
-                patch=_patch_for(agents_path),
+                patch=_patch_for(agents_path, locale),
                 insert_after="after existing context/session-memory rules",
             )
 
@@ -114,7 +129,7 @@ def check_agents_rules(project_root: str | Path) -> RuleReport:
             status="partial",
             agents_path=agents_path,
             missing=missing,
-            patch=_patch_for(agents_path),
+            patch=_patch_for(agents_path, locale),
             insert_after="after existing context/session-memory rules",
         )
 
@@ -122,6 +137,6 @@ def check_agents_rules(project_root: str | Path) -> RuleReport:
         status="missing",
         agents_path=agents_path,
         missing=full_file_missing,
-        patch=_patch_for(agents_path),
+        patch=_patch_for(agents_path, locale),
         insert_after="after existing context/session-memory rules",
     )
