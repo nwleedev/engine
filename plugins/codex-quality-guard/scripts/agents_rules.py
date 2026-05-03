@@ -36,7 +36,6 @@ class RuleReport:
     agents_path: Path
     missing: tuple[str, ...]
     guidance: str
-    insert_after: str
 
 
 def recommended_block(locale: str | None = None) -> str:
@@ -98,7 +97,6 @@ def check_agents_rules(project_root: str | Path, locale: str | None = None) -> R
             agents_path=agents_path,
             missing=tuple(_marker_label(group) for group in REQUIRED_MARKER_GROUPS),
             guidance=guidance,
-            insert_after="create AGENTS.md at project root",
         )
 
     text = agents_path.read_text(encoding="utf-8")
@@ -111,7 +109,6 @@ def check_agents_rules(project_root: str | Path, locale: str | None = None) -> R
                 agents_path=agents_path,
                 missing=missing,
                 guidance=guidance,
-                insert_after="after existing Codex Quality Guard rules",
             )
 
         return RuleReport(
@@ -119,7 +116,6 @@ def check_agents_rules(project_root: str | Path, locale: str | None = None) -> R
             agents_path=agents_path,
             missing=(),
             guidance="",
-            insert_after="",
         )
 
     full_file_missing = _missing_markers(text)
@@ -129,7 +125,6 @@ def check_agents_rules(project_root: str | Path, locale: str | None = None) -> R
             agents_path=agents_path,
             missing=full_file_missing,
             guidance=guidance,
-            insert_after="near other workflow or final-response rules",
         )
 
     return RuleReport(
@@ -137,5 +132,4 @@ def check_agents_rules(project_root: str | Path, locale: str | None = None) -> R
         agents_path=agents_path,
         missing=full_file_missing,
         guidance=guidance,
-        insert_after="near other workflow or final-response rules",
     )

@@ -23,4 +23,6 @@ python3 plugins/codex-quality-guard/skills/install/install.py ko
 
 ## Diagnostic Only
 
-This installer is diagnostic-only. It prints status, missing markers, and guidance, but it does not edit AGENTS.md.
+This installer is diagnostic-only. It prints status, missing markers, guidance, and a recommended block, but it does not edit AGENTS.md.
+
+Do not edit AGENTS.md unless the user explicitly asks to apply the recommended block.
