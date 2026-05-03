@@ -30,6 +30,7 @@ def test_agents_md_ancestor_used_without_git(tmp_path, monkeypatch):
     child.mkdir(parents=True)
     (root / "AGENTS.md").write_text("# AGENTS.md\n", encoding="utf-8")
     monkeypatch.delenv("CODEX_PROJECT_DIR", raising=False)
+    monkeypatch.setattr(project_root, "_git_toplevel", lambda cwd: "")
     assert project_root.find_project_root(str(child)) == str(root.resolve())
 
 
@@ -38,4 +39,5 @@ def test_cwd_used_when_no_marker(tmp_path, monkeypatch):
     cwd = tmp_path / "plain"
     cwd.mkdir()
     monkeypatch.delenv("CODEX_PROJECT_DIR", raising=False)
+    monkeypatch.setattr(project_root, "_git_toplevel", lambda cwd: "")
     assert project_root.find_project_root(str(cwd)) == str(cwd.resolve())
