@@ -3,6 +3,8 @@ from dataclasses import dataclass
 from pathlib import Path
 
 
+SECTION_HEADING = "## Codex Session Memory"
+
 REQUIRED_BLOCK = """## Codex Session Memory
 
 - 작업 턴을 끝내기 전에 변경 사항, 결정 사항, 검증 결과, 남은 작업이 있으면 `$codex-session-memory:checkpoint`를 실행한다.
@@ -15,7 +17,7 @@ REQUIRED_BLOCK = """## Codex Session Memory
 """
 
 
-REQUIRED_MARKERS = [
+REQUIRED_MARKERS = (
     "$codex-session-memory:checkpoint",
     "$codex-session-memory:resume",
     "$codex-session-memory:status",
@@ -23,20 +25,42 @@ REQUIRED_MARKERS = [
     ".codex/",
     "컨텍스트 압축",
     "첫 행동",
-]
+)
 
 
 @dataclass(frozen=True)
 class RuleReport:
     status: str
     agents_path: Path
-    missing: list[str]
+    missing: tuple[str, ...]
     patch: str
     insert_after: str
 
 
-def _missing_markers(text: str) -> list[str]:
-    return [marker for marker in REQUIRED_MARKERS if marker not in text]
+def _missing_markers(text: str) -> tuple[str, ...]:
+    return tuple(marker for marker in REQUIRED_MARKERS if marker not in text)
+
+
+def _codex_session_memory_section(text: str) -> str | None:
+    lines = text.splitlines()
+    section_lines: list[str] = []
+    in_section = False
+
+    for line in lines:
+        stripped = line.strip()
+        if stripped == SECTION_HEADING:
+            in_section = True
+            section_lines = [line]
+            continue
+        if in_section and stripped.startswith("#") and not stripped.startswith("###"):
+            break
+        if in_section:
+            section_lines.append(line)
+
+    if not in_section:
+        return None
+
+    return "\n".join(section_lines)
 
 
 def _patch_for(path: Path) -> str:
@@ -56,22 +80,33 @@ def check_agents_rules(project_root: str | Path) -> RuleReport:
         return RuleReport(
             status="not found",
             agents_path=agents_path,
-            missing=REQUIRED_MARKERS[:],
+            missing=REQUIRED_MARKERS,
             patch=_patch_for(agents_path),
             insert_after="create AGENTS.md at project root",
         )
 
     text = agents_path.read_text(encoding="utf-8")
-    missing = _missing_markers(text)
-    if not missing:
+    section = _codex_session_memory_section(text)
+    if section is not None:
+        missing = _missing_markers(section)
+        if missing:
+            return RuleReport(
+                status="partial",
+                agents_path=agents_path,
+                missing=missing,
+                patch=_patch_for(agents_path),
+                insert_after="after existing context/session-memory rules",
+            )
+
         return RuleReport(
             status="installed",
             agents_path=agents_path,
-            missing=[],
+            missing=(),
             patch="",
             insert_after="",
         )
 
+    missing = _missing_markers(text)
     return RuleReport(
         status="partial" if len(missing) < len(REQUIRED_MARKERS) else "missing",
         agents_path=agents_path,

@@ -1,6 +1,8 @@
 import importlib.util
 from pathlib import Path
 
+import pytest
+
 
 PLUGIN = Path(__file__).resolve().parents[2] / "plugins" / "codex-session-memory"
 SCRIPTS = PLUGIN / "scripts"
@@ -30,7 +32,7 @@ def test_detects_installed_rules(tmp_path):
     report = rules.check_agents_rules(tmp_path)
 
     assert report.status == "installed"
-    assert report.missing == []
+    assert report.missing == ()
     assert report.patch == ""
 
 
@@ -47,3 +49,53 @@ def test_detects_partial_rules(tmp_path):
     assert report.status == "partial"
     assert "$codex-session-memory:resume" in "\n".join(report.missing)
     assert "## Codex Session Memory" in report.patch
+
+
+def test_detects_missing_markers_from_incomplete_section(tmp_path):
+    rules = load_agents_rules()
+    (tmp_path / "AGENTS.md").write_text(
+        "## Codex Session Memory\n\n"
+        "- `$codex-session-memory:checkpoint`\n"
+        "- `$codex-session-memory:status`\n\n"
+        "## Other Rules\n\n"
+        "$codex-session-memory:resume\n"
+        "CODEX_THREAD_ID\n"
+        ".codex/\n"
+        "컨텍스트 압축\n"
+        "첫 행동\n",
+        encoding="utf-8",
+    )
+
+    report = rules.check_agents_rules(tmp_path)
+
+    assert report.status == "partial"
+    assert "$codex-session-memory:resume" in report.missing
+    assert "CODEX_THREAD_ID" in report.missing
+
+
+def test_does_not_install_when_markers_are_scattered_outside_section(tmp_path):
+    rules = load_agents_rules()
+    (tmp_path / "AGENTS.md").write_text(
+        "# Project Rules\n\n"
+        "$codex-session-memory:checkpoint\n"
+        "$codex-session-memory:resume\n"
+        "$codex-session-memory:status\n"
+        "CODEX_THREAD_ID\n"
+        ".codex/\n"
+        "컨텍스트 압축\n"
+        "첫 행동\n",
+        encoding="utf-8",
+    )
+
+    report = rules.check_agents_rules(tmp_path)
+
+    assert report.status == "partial"
+    assert report.patch
+
+
+def test_missing_markers_are_immutable(tmp_path):
+    rules = load_agents_rules()
+    report = rules.check_agents_rules(tmp_path)
+
+    with pytest.raises(AttributeError):
+        report.missing.append("another-marker")
