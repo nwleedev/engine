@@ -90,8 +90,26 @@ def test_does_not_install_when_markers_are_scattered_outside_section(tmp_path):
     report = rules.check_agents_rules(tmp_path)
 
     assert report.status == "partial"
-    assert report.missing == rules.REQUIRED_MARKERS
+    assert report.missing == (rules.SECTION_HEADING,)
     assert report.patch
+
+
+def test_no_section_partial_reports_only_actual_missing_markers(tmp_path):
+    rules = load_agents_rules()
+    (tmp_path / "AGENTS.md").write_text(
+        "# Project Rules\n\n"
+        "$codex-session-memory:checkpoint\n"
+        "$codex-session-memory:status\n",
+        encoding="utf-8",
+    )
+
+    report = rules.check_agents_rules(tmp_path)
+
+    assert report.status == "partial"
+    assert "$codex-session-memory:checkpoint" not in report.missing
+    assert "$codex-session-memory:status" not in report.missing
+    assert "$codex-session-memory:resume" in report.missing
+    assert "CODEX_THREAD_ID" in report.missing
 
 
 def test_non_installed_reports_have_missing_markers(tmp_path):

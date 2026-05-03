@@ -4,6 +4,7 @@ from pathlib import Path
 
 
 SECTION_HEADING = "## Codex Session Memory"
+REQUIRED_SECTION_MARKER = SECTION_HEADING
 
 REQUIRED_BLOCK = """## Codex Session Memory
 
@@ -107,10 +108,20 @@ def check_agents_rules(project_root: str | Path) -> RuleReport:
         )
 
     full_file_missing = _missing_markers(text)
+    if len(full_file_missing) < len(REQUIRED_MARKERS):
+        missing = full_file_missing or (REQUIRED_SECTION_MARKER,)
+        return RuleReport(
+            status="partial",
+            agents_path=agents_path,
+            missing=missing,
+            patch=_patch_for(agents_path),
+            insert_after="after existing context/session-memory rules",
+        )
+
     return RuleReport(
-        status="partial" if len(full_file_missing) < len(REQUIRED_MARKERS) else "missing",
+        status="missing",
         agents_path=agents_path,
-        missing=REQUIRED_MARKERS,
+        missing=full_file_missing,
         patch=_patch_for(agents_path),
         insert_after="after existing context/session-memory rules",
     )
