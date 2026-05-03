@@ -28,3 +28,14 @@ def test_find_jsonl_by_thread_returns_newest_match(tmp_path):
     os.utime(new_file, (200, 200))
 
     assert locator.find_jsonl_by_thread("thread-123", codex_sessions_root=tmp_path) == new_file.resolve()
+
+
+def test_data_session_dir_supports_hidden_child_sessions(tmp_path):
+    locator = load_session_locator()
+
+    assert locator.data_session_dir(str(tmp_path), "main-thread") == (
+        tmp_path / ".codex" / "sessions" / "main-thread"
+    ).resolve()
+    assert locator.data_session_dir(str(tmp_path), "child-thread", role="child") == (
+        tmp_path / ".codex" / "sessions" / "_children" / "child-thread"
+    ).resolve()

@@ -73,8 +73,28 @@ CODEX_PROJECT_DIR=/abs/path/to/monorepo/root
 ```
 <root>/.codex/sessions/<CODEX_THREAD_ID>/
 ├── INDEX.md
-└── contexts/CONTEXT-YYYYMMDD-HHMM-<title>.md
+└── contexts/CONTEXT-YYYYMMDD-HH00-checkpoint.md
+
+<root>/.codex/sessions/_children/<CHILD_CODEX_THREAD_ID>/
+├── INDEX.md
+└── contexts/CONTEXT-YYYYMMDD-HH00-checkpoint.md
 ```
+
+subagent/review 세션은 아래처럼 parent session id를 명시해 checkpoint하면
+`_children` 아래 저장합니다.
+
+```
+python3 /path/to/codex-session-memory/skills/checkpoint/checkpoint.py prepare --role child --parent <parent-session-id>
+```
+
+child `INDEX.md`에는 `role: child`와 `parent_session_id`를 기록하고, parent
+`INDEX.md`에는 `Child Sessions` 항목으로 child session 링크를 append합니다.
+기본 세션 목록은 `_children`을 숨겨 main session 중심으로 표시합니다.
+
+`INDEX.md`는 append-only event log로 취급합니다. 같은 HH00 context 파일을 여러
+번 갱신하더라도 기존 INDEX 라인을 교체하지 말고 새 라인을 append합니다. resume은
+INDEX 이벤트 순서를 보존하되 실제 context 파일 주입은 filename 기준으로 dedupe해
+같은 파일을 여러 번 읽지 않습니다.
 
 ## 세션 연속성
 

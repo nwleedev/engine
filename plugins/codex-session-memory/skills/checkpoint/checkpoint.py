@@ -12,6 +12,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 SCRIPTS = HERE.parent.parent / "scripts"
 
+
 def _load_script_module(filename: str, module_name: str):
     spec = importlib.util.spec_from_file_location(module_name, SCRIPTS / filename)
     if spec is None or spec.loader is None:
@@ -47,7 +48,10 @@ REQUIRED_SECTIONS = (
 
 
 def _usage() -> str:
-    return "usage: checkpoint.py prepare | checkpoint.py verify <context-path>"
+    return (
+        "usage: checkpoint.py prepare [--role main|child] [--parent <session-id>] | "
+        "checkpoint.py verify <context-path>"
+    )
 
 
 def _print_usage() -> None:
@@ -64,6 +68,15 @@ def _resolve_project_root(cwd: str) -> str | None:
     return root
 
 
+def _data_session_dir(root: str, thread_id: str, role: str) -> Path:
+    try:
+        return sl.data_session_dir(root, thread_id, role=role)
+    except TypeError:
+        if role == "main":
+            return sl.data_session_dir(root, thread_id)
+        raise
+
+
 def _coerce_offset(value) -> int:
     try:
         return int(value)
@@ -72,17 +85,8 @@ def _coerce_offset(value) -> int:
 
 
 def _suggest_context_path(contexts_dir: Path) -> Path:
-    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    base = contexts_dir / f"CONTEXT-{stamp}-checkpoint.md"
-    if not base.exists():
-        return base
-
-    suffix = 2
-    while True:
-        candidate = contexts_dir / f"CONTEXT-{stamp}-checkpoint-{suffix}.md"
-        if not candidate.exists():
-            return candidate
-        suffix += 1
+    stamp = datetime.now().strftime("%Y%m%d-%H00")
+    return contexts_dir / f"CONTEXT-{stamp}-checkpoint.md"
 
 
 def _render_list(items: list[str]) -> str:
@@ -115,7 +119,13 @@ def _is_context_path_in_session_tree(context_path: Path, root: str) -> bool:
         relative = context_path.relative_to(sessions_root)
     except ValueError:
         return False
-    return len(relative.parts) == 3 and relative.parts[1] == "contexts"
+    if len(relative.parts) == 3 and relative.parts[1] == "contexts":
+        return not relative.parts[0].startswith(("_", "."))
+    return (
+        len(relative.parts) == 4
+        and relative.parts[0] == "_children"
+        and relative.parts[2] == "contexts"
+    )
 
 
 def _contains_required_heading_lines(context_text: str) -> str | None:
@@ -131,7 +141,33 @@ def _index_has_context_entry(index_text: str, filename: str) -> bool:
     return any(entry_re.match(line) for line in index_text.splitlines())
 
 
-def _prepare() -> int:
+def _parse_prepare_args(args: list[str]) -> tuple[str, str | None] | None:
+    role = "main"
+    parent = None
+    i = 1
+    while i < len(args):
+        arg = args[i]
+        if arg == "--role" and i + 1 < len(args):
+            role = args[i + 1]
+            i += 2
+            continue
+        if arg == "--parent" and i + 1 < len(args):
+            parent = args[i + 1]
+            i += 2
+            continue
+        return None
+    if role not in {"main", "child"}:
+        return None
+    if role == "child" and not parent:
+        print("error: --parent <session-id> is required for child checkpoints", file=sys.stderr)
+        return None
+    if role == "main" and parent:
+        print("error: --parent is only valid with --role child", file=sys.stderr)
+        return None
+    return role, parent
+
+
+def _prepare(role: str = "main", parent_session_id: str | None = None) -> int:
     cwd = os.getcwd()
     dotenv_loader.load_project_dotenv(cwd)
 
@@ -149,10 +185,13 @@ def _prepare() -> int:
         print(f"error: no rollout JSONL found for thread {thread_id}", file=sys.stderr)
         return 2
 
-    session_dir = sl.data_session_dir(root, thread_id)
+    session_dir = _data_session_dir(root, thread_id, role)
     index_path = session_dir / "INDEX.md"
     contexts_dir = session_dir / "contexts"
     contexts_dir.mkdir(parents=True, exist_ok=True)
+    parent_index_path = None
+    if role == "child" and parent_session_id:
+        parent_index_path = sl.parent_session_dir(root, parent_session_id) / "INDEX.md"
 
     frontmatter = io.read_frontmatter(index_path) or {}
     last_processed_offset = _coerce_offset(frontmatter.get("last_processed_offset", 0))
@@ -169,19 +208,30 @@ def _prepare() -> int:
                 "",
                 "## target",
                 f"thread_id: {thread_id}",
+                f"role: {role}",
+                f"parent_session_id: {parent_session_id or ''}",
                 f"project_root: {root}",
                 f"jsonl_path: {jsonl_path}",
                 f"index_path: {index_path}",
                 f"context_path: {context_path}",
+                f"parent_index_path: {parent_index_path or ''}",
                 f"previous_processed_offset: {last_processed_offset}",
                 f"new_offset: {new_offset}",
                 "",
                 "## index update",
                 f"index_entry: - [{context_path.name}] — <summary>",
+                (
+                    f"parent_child_entry: - [{thread_id[:8]}]"
+                    f"(../_children/{thread_id}/INDEX.md) — <role/summary>"
+                    if role == "child"
+                    else "parent_child_entry:"
+                ),
                 "frontmatter_update:",
                 f"  last_processed_offset: {new_offset}",
                 "  last_updated: <ISO-8601 timestamp>",
                 "  session_id: <thread_id>",
+                f"  role: {role}",
+                f"  parent_session_id: {parent_session_id or ''}",
                 "",
                 "## evidence",
                 _render_evidence(evidence),
@@ -252,8 +302,14 @@ def main(argv=None) -> int:
         return 2
 
     command = args[0]
-    if command == "prepare" and len(args) == 1:
-        return _prepare()
+    if command == "prepare":
+        parsed = _parse_prepare_args(args)
+        if parsed is None:
+            if not any(arg == "--parent" for arg in args):
+                _print_usage()
+            return 2
+        role, parent_session_id = parsed
+        return _prepare(role=role, parent_session_id=parent_session_id)
     if command == "verify" and len(args) == 2:
         return _verify(args[1])
 

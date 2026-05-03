@@ -45,6 +45,20 @@ def _print_agents_rules_status(root):
         print(f"AGENTS.md missing markers: {', '.join(report.missing)}")
 
 
+def _count_child_sessions(root, thread_id):
+    children_dir = csm_session_locator.child_sessions_dir(root)
+    if not children_dir.is_dir():
+        return 0
+    count = 0
+    for child in children_dir.iterdir():
+        if not child.is_dir() or child.name.startswith((".", "_")):
+            continue
+        fm = csm_index_io.read_frontmatter(child / "INDEX.md") or {}
+        if fm.get("parent_session_id") == thread_id:
+            count += 1
+    return count
+
+
 def main():
     cwd = os.getcwd()
     csm_dotenv_loader.load_project_dotenv(cwd)
@@ -60,6 +74,7 @@ def main():
     jsonl = csm_session_locator.find_jsonl_by_thread(thread_id)
     contexts_dir = session_dir / "contexts"
     ctx_count = len(list(contexts_dir.glob("CONTEXT-*.md"))) if contexts_dir.is_dir() else 0
+    child_count = _count_child_sessions(root, thread_id)
 
     print(f"Project root: {root}")
     print(f"Thread id: {thread_id}")
@@ -81,6 +96,7 @@ def main():
         pending = len(delta)
 
     print(f"Context files: {ctx_count}")
+    print(f"Child sessions: {child_count}")
     print(f"Last saved: {fm.get('last_updated') or 'never'}")
     print(f"Pending offset: {last_offset}")
     print(f"started: {fm.get('started', '?')}")

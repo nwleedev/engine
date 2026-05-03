@@ -95,6 +95,30 @@ def test_uses_latest_three_contexts_from_writer_append_order(tmp_path):
     assert "CONTEXT-4 next action" in prompt
 
 
+def test_dedupes_duplicate_index_filenames_using_latest_append_event(tmp_path):
+    session = tmp_path / ".codex" / "sessions" / "abc123"
+    contexts = session / "contexts"
+    contexts.mkdir(parents=True)
+    (session / "INDEX.md").write_text(
+        "---\nsession_id: abc123\n---\n\n"
+        "# 세션 요약\n\n## 컨텍스트 목록\n\n"
+        "- [CONTEXT-1.md] — first event\n"
+        "- [CONTEXT-2.md] — second event\n"
+        "- [CONTEXT-1.md] — latest event for same HH00 file\n"
+        "- [CONTEXT-3.md] — third file\n"
+    )
+    for index in range(1, 4):
+        (contexts / f"CONTEXT-{index}.md").write_text(
+            f"# Context {index}\n\n## 다음\nCONTEXT-{index} next action\n"
+        )
+
+    prompt = load_resume_prompt().build_resume_prompt(session, budget_chars=2600)
+
+    assert prompt.count("--- CONTEXT-1.md ---") == 1
+    assert prompt.index("--- CONTEXT-2.md ---") < prompt.index("--- CONTEXT-1.md ---")
+    assert prompt.index("--- CONTEXT-1.md ---") < prompt.index("--- CONTEXT-3.md ---")
+
+
 def test_uses_latest_three_contexts_with_collision_safe_writer_names(tmp_path):
     session = tmp_path / ".codex" / "sessions" / "abc123"
     contexts = session / "contexts"

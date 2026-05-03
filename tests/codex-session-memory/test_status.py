@@ -28,6 +28,12 @@ def test_status_prints_checkpointed_session_fields(monkeypatch, tmp_path, capsys
     (contexts_dir / "CONTEXT-20260502-1200-test.md").write_text("# test\n")
     index_path = session_dir / "INDEX.md"
     index_path.write_text("---\nlast_updated: 2026-05-02T00:00:00Z\nlast_processed_offset: 42\n---\n")
+    child = tmp_path / ".codex" / "sessions" / "_children" / "child123"
+    child.mkdir(parents=True)
+    (child / "INDEX.md").write_text(
+        "---\nrole: child\nparent_session_id: abc123\n---\n\n# Child\n",
+        encoding="utf-8",
+    )
     jsonl_path = tmp_path / "rollout-test-abc123.jsonl"
     jsonl_path.write_text("")
 
@@ -37,11 +43,12 @@ def test_status_prints_checkpointed_session_fields(monkeypatch, tmp_path, capsys
     monkeypatch.setattr(status.csm_project_root, "find_project_root", lambda cwd: str(tmp_path))
     monkeypatch.setattr(status.csm_session_locator, "data_session_dir", lambda root, thread_id: session_dir)
     monkeypatch.setattr(status.csm_session_locator, "find_jsonl_by_thread", lambda thread_id: jsonl_path)
-    monkeypatch.setattr(
-        status.csm_index_io,
-        "read_frontmatter",
-        lambda path: {"last_updated": "2026-05-02T00:00:00Z", "last_processed_offset": 42},
-    )
+    def fake_read_frontmatter(path):
+        if "child123" in str(path):
+            return {"role": "child", "parent_session_id": "abc123"}
+        return {"last_updated": "2026-05-02T00:00:00Z", "last_processed_offset": 42}
+
+    monkeypatch.setattr(status.csm_index_io, "read_frontmatter", fake_read_frontmatter)
     monkeypatch.setattr(status.csm_jsonl_parser, "extract_delta", lambda path, offset: ([{"role": "user"}], 84))
     monkeypatch.setattr(
         status.csm_agents_rules,
@@ -60,6 +67,7 @@ def test_status_prints_checkpointed_session_fields(monkeypatch, tmp_path, capsys
     assert "Pending offset: 42" in output
     assert "AGENTS.md rules: installed" in output
     assert "Hooks:" not in output
+    assert "Child sessions: 1" in output
     assert "pending_turns: 1" in output
 
 

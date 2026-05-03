@@ -73,10 +73,30 @@ Confirm `.env` is in `.gitignore` before committing other changes.
 ```
 <root>/.codex/sessions/<CODEX_THREAD_ID>/
 ├── INDEX.md
-└── contexts/CONTEXT-YYYYMMDD-HHMM-<title>.md
+└── contexts/CONTEXT-YYYYMMDD-HH00-checkpoint.md
+
+<root>/.codex/sessions/_children/<CHILD_CODEX_THREAD_ID>/
+├── INDEX.md
+└── contexts/CONTEXT-YYYYMMDD-HH00-checkpoint.md
 ```
 
 The same JSONL transcript at `~/.codex/sessions/YYYY/MM/DD/rollout-*-<thread>.jsonl` is read incrementally on each checkpoint.
+
+Subagent and review sessions are stored under `_children` when checkpointed with:
+
+```
+python3 /path/to/codex-session-memory/skills/checkpoint/checkpoint.py prepare --role child --parent <parent-session-id>
+```
+
+The child `INDEX.md` records `role: child` and `parent_session_id`. The parent
+`INDEX.md` should append a `Child Sessions` entry linking to the child session.
+Default session listing skips `_children` to keep resume/status output focused
+on main sessions.
+
+`INDEX.md` is append-only. If multiple checkpoints update the same HH00 context
+file, append a new INDEX entry instead of replacing the previous line. Resume
+keeps INDEX event order but deduplicates context file injection by filename to
+avoid spending context budget on the same file more than once.
 
 ## How session continuity works
 

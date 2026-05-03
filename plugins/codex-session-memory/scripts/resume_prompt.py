@@ -59,7 +59,18 @@ def _context_files(session_dir: Path, index_text: str) -> list[Path]:
         key=lambda path: path.name,
         reverse=True,
     )
-    return ordered + remaining
+    return _dedupe_keep_latest_order(ordered + remaining)
+
+
+def _dedupe_keep_latest_order(paths: list[Path]) -> list[Path]:
+    seen = set()
+    deduped = []
+    for path in reversed(paths):
+        if path.name in seen:
+            continue
+        seen.add(path.name)
+        deduped.append(path)
+    return list(reversed(deduped))
 
 
 def _recent_context_files(context_files: list[Path], limit: int = 3) -> list[Path]:

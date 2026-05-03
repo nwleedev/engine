@@ -59,12 +59,103 @@ def test_prepare_outputs_context_target_and_evidence(monkeypatch, tmp_path, caps
     assert "last_processed_offset: 10" in output
 
 
+def test_prepare_uses_hh00_context_path_and_reuses_existing_file(monkeypatch, tmp_path, capsys):
+    checkpoint = load_checkpoint()
+    jsonl = tmp_path / "rollout-test-thread.jsonl"
+    jsonl.write_text('{"type":"turn","payload":"ok"}\n', encoding="utf-8")
+    session_dir = tmp_path / ".codex" / "sessions" / "test-thread"
+    contexts_dir = session_dir / "contexts"
+    contexts_dir.mkdir(parents=True)
+    existing = contexts_dir / "CONTEXT-20260503-1500-checkpoint.md"
+    existing.write_text("# Existing\n", encoding="utf-8")
+
+    class FakeDatetime:
+        @classmethod
+        def now(cls):
+            return cls()
+
+        def strftime(self, fmt):
+            assert fmt == "%Y%m%d-%H00"
+            return "20260503-1500"
+
+    patch_project(monkeypatch, checkpoint, tmp_path)
+    monkeypatch.setattr(checkpoint, "datetime", FakeDatetime)
+    monkeypatch.setattr(checkpoint.sl, "current_thread_id", lambda: "test-thread")
+    monkeypatch.setattr(checkpoint.sl, "find_jsonl_by_thread", lambda thread_id: jsonl)
+    monkeypatch.setattr(checkpoint.sl, "data_session_dir", lambda root, thread_id, role="main": session_dir)
+    monkeypatch.setattr(checkpoint.io, "read_frontmatter", lambda path: {"last_processed_offset": 0})
+    monkeypatch.setattr(checkpoint.jp, "extract_delta", lambda path, offset: ([], 10))
+
+    assert checkpoint.main(["prepare"]) == 0
+
+    output = capsys.readouterr().out
+    assert f"context_path: {existing}" in output
+    assert existing.read_text(encoding="utf-8") == "# Existing\n"
+
+
+def test_prepare_child_requires_parent_session_id(monkeypatch, tmp_path, capsys):
+    checkpoint = load_checkpoint()
+    patch_project(monkeypatch, checkpoint, tmp_path)
+    monkeypatch.setattr(checkpoint.sl, "current_thread_id", lambda: "child-thread")
+
+    assert checkpoint.main(["prepare", "--role", "child"]) == 2
+    assert "--parent" in capsys.readouterr().err
+
+
+def test_prepare_child_outputs_hidden_child_target_and_parent_link(monkeypatch, tmp_path, capsys):
+    checkpoint = load_checkpoint()
+    jsonl = tmp_path / "rollout-child-thread.jsonl"
+    jsonl.write_text('{"type":"turn","payload":"ok"}\n', encoding="utf-8")
+    child_dir = tmp_path / ".codex" / "sessions" / "_children" / "child-thread"
+
+    patch_project(monkeypatch, checkpoint, tmp_path)
+    monkeypatch.setattr(checkpoint.sl, "current_thread_id", lambda: "child-thread")
+    monkeypatch.setattr(checkpoint.sl, "find_jsonl_by_thread", lambda thread_id: jsonl)
+    monkeypatch.setattr(checkpoint.sl, "data_session_dir", lambda root, thread_id, role="main": child_dir)
+    monkeypatch.setattr(checkpoint.io, "read_frontmatter", lambda path: {"last_processed_offset": 0})
+    monkeypatch.setattr(checkpoint.jp, "extract_delta", lambda path, offset: ([], 10))
+
+    assert checkpoint.main(["prepare", "--role", "child", "--parent", "parent-thread"]) == 0
+
+    output = capsys.readouterr().out
+    assert "role: child" in output
+    assert "parent_session_id: parent-thread" in output
+    assert f"index_path: {child_dir / 'INDEX.md'}" in output
+    assert f"parent_index_path: {tmp_path / '.codex' / 'sessions' / 'parent-thread' / 'INDEX.md'}" in output
+    assert "parent_child_entry:" in output
+
+
 def test_verify_requires_sections_and_index_entry(tmp_path, monkeypatch, capsys):
     checkpoint = load_checkpoint()
     context = tmp_path / ".codex" / "sessions" / "test-thread" / "contexts" / "CONTEXT-20260503-1200-test.md"
     write_valid_context(context)
     index = context.parent.parent / "INDEX.md"
     index.write_text(f"## 컨텍스트 목록\n\n- [{context.name}] - test\n", encoding="utf-8")
+
+    patch_project(monkeypatch, checkpoint, tmp_path)
+
+    assert checkpoint.main(["verify", str(context)]) == 0
+    assert "verify: ok" in capsys.readouterr().out
+
+
+def test_verify_accepts_hidden_child_session_context(tmp_path, monkeypatch, capsys):
+    checkpoint = load_checkpoint()
+    context = (
+        tmp_path
+        / ".codex"
+        / "sessions"
+        / "_children"
+        / "child-thread"
+        / "contexts"
+        / "CONTEXT-20260503-1500-checkpoint.md"
+    )
+    write_valid_context(context)
+    index = context.parent.parent / "INDEX.md"
+    index.write_text(
+        "---\nrole: child\nparent_session_id: parent-thread\n---\n\n"
+        f"## 컨텍스트 목록\n\n- [{context.name}] - child checkpoint\n",
+        encoding="utf-8",
+    )
 
     patch_project(monkeypatch, checkpoint, tmp_path)
 
