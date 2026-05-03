@@ -15,4 +15,10 @@ def test_plugin_manifest_is_skill_only():
 
 
 def test_plugin_does_not_ship_hooks_directory():
-    assert not (PLUGIN / "hooks").exists()
+    hook_sources = sorted(
+        path.relative_to(PLUGIN)
+        for path in (PLUGIN / "hooks").rglob("*")
+        if path.suffix in {".json", ".py"}
+    )
+
+    assert hook_sources == []
