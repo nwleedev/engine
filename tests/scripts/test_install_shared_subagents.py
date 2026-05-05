@@ -147,3 +147,15 @@ def test_agents_md_block_warns_about_global_mcp_startup_cost() -> None:
     assert "Global MCP servers may be inherited by spawned subagents" in block
     assert "project-local `.codex/agents`" in block
     assert "project `.codex/config.toml`" in block
+
+
+def test_agents_md_block_defines_subagent_use_boundaries() -> None:
+    block = (PLUGIN_ROOT / "references" / "agents-md-block.md").read_text(
+        encoding="utf-8"
+    )
+
+    assert "Spawn subagents only when the user explicitly asks" in block
+    assert "Use subagents for broad, parallelizable work" in block
+    assert "Keep simple or single-file work in the main session" in block
+    assert "Do not delegate urgent blocking work" in block
+    assert "Do not ask `reviewer` and `code-reviewer` the same question" in block
