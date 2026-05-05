@@ -110,3 +110,33 @@ def test_readme_uses_skill_relative_scaffold_command() -> None:
 
     assert "python3 /path/to/shared-subagents/skills/scaffold/scaffold.py" in readme
     assert "plugins/shared-subagents/scripts/install_shared_subagents.py" not in readme
+
+
+def test_spec_reviewer_is_bounded_for_small_reviews() -> None:
+    text = (PLUGIN_ROOT / "agents" / "spec-reviewer.toml").read_text(
+        encoding="utf-8"
+    )
+
+    assert 'model_reasoning_effort = "medium"' in text
+    assert "For small scoped reviews:" in text
+    assert "Return at most 5 findings." in text
+    assert "Do not inspect unrelated repository files." in text
+
+
+def test_readme_documents_mcp_inheritance_without_owning_mcp_config() -> None:
+    readme = (PLUGIN_ROOT / "README.md").read_text(encoding="utf-8")
+
+    assert "MCP inheritance" in readme
+    assert "~/.codex/config.toml" in readme
+    assert "shared-subagents does not install or modify MCP servers" in readme
+    assert "startup_timeout_sec" in readme
+    assert "required = false" in readme
+
+
+def test_agents_md_block_warns_about_global_mcp_startup_cost() -> None:
+    block = (PLUGIN_ROOT / "references" / "agents-md-block.md").read_text(
+        encoding="utf-8"
+    )
+
+    assert "Global MCP servers may be inherited by spawned subagents" in block
+    assert "Keep MCP server configuration in `~/.codex/config.toml`" in block

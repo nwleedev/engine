@@ -24,6 +24,15 @@ rtk python3 /path/to/shared-subagents/skills/scaffold/scaffold.py --install --ba
 - Keep stack-specific agents in each project's `.codex/agents/` directory.
 - Do not modify the Superpowers plugin cache during installation.
 - Print AGENTS.md guidance for copy-paste instead of editing repository files.
+- Keep MCP server configuration outside this plugin.
+
+## MCP inheritance
+
+Codex custom agents inherit parent session settings when agent TOML files omit those keys. In practice, global MCP servers configured in `~/.codex/config.toml` may be started for spawned subagents, which can add startup latency or expose failures from unrelated MCP servers.
+
+shared-subagents does not install or modify MCP servers. Keep MCP server configuration in `~/.codex/config.toml` or project `.codex/config.toml`, and tune slow or optional servers there with settings such as `startup_timeout_sec`, `tool_timeout_sec`, `required = false`, or `enabled = false`.
+
+Do not add one-off MCP server blocks to these shared agent templates unless the agent truly owns that tool surface. Prefer user or project Codex config for machine-specific MCP choices.
 
 ## Superpowers Integration
 
