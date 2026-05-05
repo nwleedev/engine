@@ -1,6 +1,6 @@
 # Shared Subagents
 
-Shared Codex subagent templates for reusable Superpowers workflows across multiple machines and projects.
+Shared Codex subagent templates for reusable Superpowers workflows across projects.
 
 ## Cross-Check Summary
 
@@ -15,12 +15,12 @@ Shared Codex subagent templates for reusable Superpowers workflows across multip
 
 ```bash
 rtk python3 /path/to/shared-subagents/skills/scaffold/scaffold.py --dry-run
-rtk python3 /path/to/shared-subagents/skills/scaffold/scaffold.py --install --backup
+rtk python3 /path/to/shared-subagents/skills/scaffold/scaffold.py --install --backup --project-root .
 ```
 
 ## Principles
 
-- Install only project-agnostic agents globally.
+- Install shared agents into each project's `.codex/agents/` directory.
 - Keep stack-specific agents in each project's `.codex/agents/` directory.
 - Do not modify the Superpowers plugin cache during installation.
 - Print AGENTS.md guidance for copy-paste instead of editing repository files.
@@ -28,7 +28,7 @@ rtk python3 /path/to/shared-subagents/skills/scaffold/scaffold.py --install --ba
 
 ## MCP inheritance
 
-Codex custom agents inherit parent session settings when agent TOML files omit those keys. In practice, global MCP servers configured in `~/.codex/config.toml` may be started for spawned subagents, which can add startup latency or expose failures from unrelated MCP servers.
+Codex custom agents inherit parent session settings when agent TOML files omit those keys. In practice, MCP servers configured in user or project Codex config may be started for spawned subagents, which can add startup latency or expose failures from unrelated MCP servers.
 
 shared-subagents does not install or modify MCP servers. Keep MCP server configuration in `~/.codex/config.toml` or project `.codex/config.toml`, and tune slow or optional servers there with settings such as `startup_timeout_sec`, `tool_timeout_sec`, `required = false`, or `enabled = false`.
 
@@ -47,16 +47,16 @@ Use `$shared-subagents:scaffold` to ask Codex to run the install, AGENTS.md bloc
 ```bash
 rtk python3 /path/to/shared-subagents/skills/scaffold/scaffold.py --dry-run
 rtk python3 /path/to/shared-subagents/skills/scaffold/scaffold.py --print-agents-md-block
-rtk python3 /path/to/shared-subagents/skills/scaffold/scaffold.py --install --codex-home temps/2026-05-05/shared-subagents/codex-home
-rtk find temps/2026-05-05/shared-subagents/codex-home/agents -maxdepth 1 -type f
+rtk python3 /path/to/shared-subagents/skills/scaffold/scaffold.py --install --project-root temps/2026-05-05/shared-subagents/project-root
+rtk find temps/2026-05-05/shared-subagents/project-root/.codex/agents -maxdepth 1 -type f
 ```
 
 Expected results:
 
 - Dry run prints eight target installation paths.
 - The AGENTS.md block command prints copy-paste Markdown and does not edit files.
-- The temporary Codex home contains eight TOML files.
+- The temporary project `.codex/agents` directory contains eight TOML files.
 - Each TOML file contains `developer_instructions`.
-- Real Codex home installation should use `--backup` unless the operator intentionally chooses `--force`.
+- Each TOML file contains `# shared-subagents:provided-agent` so project-local copies can be identified as plugin-provided templates.
 
-After installing into the real `~/.codex/agents/` directory, restart Codex and manually verify whether custom agent names can be invoked.
+After installing into a project `.codex/agents/` directory, restart Codex in that project and manually verify whether custom agent names can be invoked.

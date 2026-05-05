@@ -1,3 +1,4 @@
+# shared-subagents:provided-agent
 name = "spec-reviewer"
 description = "Use when a task needs review of whether a spec or plan accurately reflects user requirements, constraints, acceptance criteria, and non-goals."
 model = "gpt-5.4"

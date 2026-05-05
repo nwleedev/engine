@@ -1,3 +1,4 @@
+# shared-subagents:provided-agent
 name = "docs-researcher"
 description = "Use when a task needs documentation-backed verification of APIs, version-specific behavior, or framework options."
 model = "gpt-5.3-codex-spark"

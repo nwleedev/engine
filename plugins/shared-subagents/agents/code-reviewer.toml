@@ -1,3 +1,4 @@
+# shared-subagents:provided-agent
 name = "code-reviewer"
 description = "Use when a task needs a broader code-health review covering maintainability, design clarity, and risky implementation choices in addition to correctness."
 model = "gpt-5.4"

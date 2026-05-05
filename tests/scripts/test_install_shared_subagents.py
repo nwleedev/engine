@@ -32,8 +32,8 @@ def test_dry_run_returns_expected_targets(tmp_path: Path) -> None:
     targets = module.install_agents(tmp_path, dry_run=True)
 
     assert len(targets) == 8
-    assert targets[0] == tmp_path / "agents" / "context-manager.toml"
-    assert not (tmp_path / "agents").exists()
+    assert targets[0] == tmp_path / ".codex" / "agents" / "context-manager.toml"
+    assert not (tmp_path / ".codex" / "agents").exists()
 
 
 def test_install_copies_all_agents(tmp_path: Path) -> None:
@@ -45,12 +45,13 @@ def test_install_copies_all_agents(tmp_path: Path) -> None:
     for target in targets:
         assert target.exists()
         text = target.read_text(encoding="utf-8")
+        assert "# shared-subagents:provided-agent" in text
         assert "developer_instructions" in text
 
 
 def test_install_refuses_to_overwrite_existing_agent(tmp_path: Path) -> None:
     module = load_module()
-    existing = tmp_path / "agents" / "context-manager.toml"
+    existing = tmp_path / ".codex" / "agents" / "context-manager.toml"
     existing.parent.mkdir(parents=True)
     existing.write_text("custom local agent\n", encoding="utf-8")
 
@@ -66,13 +67,13 @@ def test_install_refuses_to_overwrite_existing_agent(tmp_path: Path) -> None:
 
 def test_backup_preserves_existing_agent_before_install(tmp_path: Path) -> None:
     module = load_module()
-    existing = tmp_path / "agents" / "context-manager.toml"
+    existing = tmp_path / ".codex" / "agents" / "context-manager.toml"
     existing.parent.mkdir(parents=True)
     existing.write_text("custom local agent\n", encoding="utf-8")
 
     targets = module.install_agents(tmp_path, dry_run=False, backup=True)
 
-    backup = tmp_path / "agents" / "context-manager.toml.bak"
+    backup = tmp_path / ".codex" / "agents" / "context-manager.toml.bak"
     assert backup.exists()
     assert backup.read_text(encoding="utf-8") == "custom local agent\n"
     assert existing.read_text(encoding="utf-8") != "custom local agent\n"
@@ -98,7 +99,10 @@ def test_scaffold_skill_references_shared_scripts() -> None:
 
     assert "skills/scaffold/scaffold.py --dry-run" in text
     assert "skills/scaffold/scaffold.py --print-agents-md-block" in text
+    assert "--project-root" in text
+    assert ".codex/agents" in text
     assert "Does not modify AGENTS.md automatically." in text
+    assert "real Codex home" not in text
 
 
 def test_scaffold_wrapper_exists() -> None:
@@ -110,6 +114,8 @@ def test_readme_uses_skill_relative_scaffold_command() -> None:
 
     assert "python3 /path/to/shared-subagents/skills/scaffold/scaffold.py" in readme
     assert "plugins/shared-subagents/scripts/install_shared_subagents.py" not in readme
+    assert ".codex/agents" in readme
+    assert "~/.codex/agents" not in readme
 
 
 def test_spec_reviewer_is_bounded_for_small_reviews() -> None:
@@ -139,4 +145,5 @@ def test_agents_md_block_warns_about_global_mcp_startup_cost() -> None:
     )
 
     assert "Global MCP servers may be inherited by spawned subagents" in block
-    assert "Keep MCP server configuration in `~/.codex/config.toml`" in block
+    assert "project-local `.codex/agents`" in block
+    assert "project `.codex/config.toml`" in block

@@ -1,3 +1,4 @@
+# shared-subagents:provided-agent
 name = "reviewer"
 description = "Use when a task needs PR-style review focused on correctness, security, behavior regressions, and missing tests."
 model = "gpt-5.4"

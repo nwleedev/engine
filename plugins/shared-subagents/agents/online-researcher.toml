@@ -1,3 +1,4 @@
+# shared-subagents:provided-agent
 name = "online-researcher"
 description = "Use when a non-development task needs current source-backed research for market analysis, planning, ideation, positioning, strategy, or business decision support."
 model = "gpt-5.4"

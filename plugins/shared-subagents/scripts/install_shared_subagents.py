@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Install shared Codex subagent TOML files into a Codex home directory."""
+"""Install shared Codex subagent TOML files into a project .codex directory."""
 
 from __future__ import annotations
 
@@ -26,10 +26,10 @@ def plugin_root() -> Path:
     return Path(__file__).resolve().parents[1]
 
 
-def default_codex_home() -> Path:
-    """Return the default Codex home directory."""
+def default_project_root() -> Path:
+    """Return the default project root directory."""
 
-    return Path.home() / ".codex"
+    return Path.cwd()
 
 
 def backup_path_for(target: Path) -> Path:
@@ -48,16 +48,16 @@ def backup_path_for(target: Path) -> Path:
 
 
 def install_agents(
-    codex_home: Path,
+    project_root: Path,
     dry_run: bool,
     *,
     force: bool = False,
     backup: bool = False,
 ) -> list[Path]:
-    """Copy bundled agent TOML files into the Codex agents directory."""
+    """Copy bundled agent TOML files into the project-local Codex agents directory."""
 
     source_dir = plugin_root() / "agents"
-    target_dir = codex_home / "agents"
+    target_dir = project_root / ".codex" / "agents"
     installed: list[Path] = []
 
     for name in AGENT_NAMES:
@@ -84,7 +84,7 @@ def parse_args() -> argparse.Namespace:
     """Parse command line arguments."""
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--codex-home", type=Path, default=default_codex_home())
+    parser.add_argument("--project-root", type=Path, default=default_project_root())
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--force", action="store_true")
     parser.add_argument("--backup", action="store_true")
@@ -92,11 +92,11 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> int:
-    """Install common subagents and print installed target paths."""
+    """Install shared subagents into the project-local .codex directory."""
 
     args = parse_args()
     targets = install_agents(
-        args.codex_home.expanduser(),
+        args.project_root.expanduser(),
         args.dry_run,
         force=args.force,
         backup=args.backup,

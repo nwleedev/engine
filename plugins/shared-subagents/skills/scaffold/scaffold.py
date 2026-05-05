@@ -36,7 +36,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     """Parse scaffold command arguments."""
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--codex-home", type=Path, default=installer.default_codex_home())
+    parser.add_argument("--project-root", type=Path, default=installer.default_project_root())
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--install", action="store_true")
     parser.add_argument("--backup", action="store_true")
@@ -62,7 +62,7 @@ def main(argv: list[str] | None = None) -> int:
 
     dry_run = args.dry_run or not args.install
     targets = installer.install_agents(
-        args.codex_home.expanduser(),
+        args.project_root.expanduser(),
         dry_run,
         force=args.force,
         backup=args.backup,
