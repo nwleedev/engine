@@ -28,7 +28,7 @@ def test_manifest_exposes_shared_skills_plugin() -> None:
     manifest = json.loads(read(manifest_path))
 
     assert manifest["name"] == "shared-skills"
-    assert manifest["version"] == "0.1.0"
+    assert manifest["version"] == "0.2.0"
     assert manifest["license"] == "MIT"
     assert manifest["skills"] == "./skills/"
     assert "main-session quality gates" in manifest["description"]

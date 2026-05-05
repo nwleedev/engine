@@ -1,6 +1,6 @@
 {
   "name": "shared-subagents",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Shared Codex subagent templates and installation guidance for Superpowers workflows.",
   "license": "MIT",
   "skills": "./skills/"

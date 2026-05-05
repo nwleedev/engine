@@ -87,6 +87,7 @@ def test_plugin_manifest_exposes_scaffold_skill() -> None:
     skill = PLUGIN_ROOT / "skills" / "scaffold" / "SKILL.md"
 
     assert '"name": "shared-subagents"' in manifest
+    assert '"version": "0.2.0"' in manifest
     assert '"skills": "./skills/"' in manifest
     assert skill.exists()
     assert "name: scaffold" in skill.read_text(encoding="utf-8")
