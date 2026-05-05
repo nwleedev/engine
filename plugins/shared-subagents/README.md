@@ -14,8 +14,8 @@ Shared Codex subagent templates for reusable Superpowers workflows across multip
 ## Installation
 
 ```bash
-rtk python3 plugins/shared-subagents/scripts/install_shared_subagents.py --dry-run
-rtk python3 plugins/shared-subagents/scripts/install_shared_subagents.py
+rtk python3 /path/to/shared-subagents/skills/scaffold/scaffold.py --dry-run
+rtk python3 /path/to/shared-subagents/skills/scaffold/scaffold.py --install --backup
 ```
 
 ## Principles
@@ -36,9 +36,9 @@ Use `$shared-subagents:scaffold` to ask Codex to run the install, AGENTS.md bloc
 ## Verification
 
 ```bash
-rtk python3 plugins/shared-subagents/scripts/install_shared_subagents.py --dry-run
-rtk python3 plugins/shared-subagents/scripts/print_agents_md_block.py
-rtk python3 plugins/shared-subagents/scripts/install_shared_subagents.py --codex-home temps/2026-05-05/shared-subagents/codex-home
+rtk python3 /path/to/shared-subagents/skills/scaffold/scaffold.py --dry-run
+rtk python3 /path/to/shared-subagents/skills/scaffold/scaffold.py --print-agents-md-block
+rtk python3 /path/to/shared-subagents/skills/scaffold/scaffold.py --install --codex-home temps/2026-05-05/shared-subagents/codex-home
 rtk find temps/2026-05-05/shared-subagents/codex-home/agents -maxdepth 1 -type f
 ```
 
@@ -48,5 +48,6 @@ Expected results:
 - The AGENTS.md block command prints copy-paste Markdown and does not edit files.
 - The temporary Codex home contains eight TOML files.
 - Each TOML file contains `developer_instructions`.
+- Real Codex home installation should use `--backup` unless the operator intentionally chooses `--force`.
 
 After installing into the real `~/.codex/agents/` directory, restart Codex and manually verify whether custom agent names can be invoked.

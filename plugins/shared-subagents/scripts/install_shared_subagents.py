@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Install common Codex subagent TOML files into a Codex home directory."""
+"""Install shared Codex subagent TOML files into a Codex home directory."""
 
 from __future__ import annotations
 
@@ -32,7 +32,28 @@ def default_codex_home() -> Path:
     return Path.home() / ".codex"
 
 
-def install_agents(codex_home: Path, dry_run: bool) -> list[Path]:
+def backup_path_for(target: Path) -> Path:
+    """Return the first available backup path for an existing target."""
+
+    candidate = target.with_name(f"{target.name}.bak")
+    if not candidate.exists():
+        return candidate
+
+    index = 1
+    while True:
+        candidate = target.with_name(f"{target.name}.bak{index}")
+        if not candidate.exists():
+            return candidate
+        index += 1
+
+
+def install_agents(
+    codex_home: Path,
+    dry_run: bool,
+    *,
+    force: bool = False,
+    backup: bool = False,
+) -> list[Path]:
     """Copy bundled agent TOML files into the Codex agents directory."""
 
     source_dir = plugin_root() / "agents"
@@ -47,7 +68,13 @@ def install_agents(codex_home: Path, dry_run: bool) -> list[Path]:
         installed.append(target)
         if dry_run:
             continue
+        if target.exists() and not force and not backup:
+            raise FileExistsError(
+                f"target already exists: {target}; use --backup or --force"
+            )
         target_dir.mkdir(parents=True, exist_ok=True)
+        if target.exists() and backup:
+            shutil.copy2(target, backup_path_for(target))
         shutil.copy2(source, target)
 
     return installed
@@ -59,6 +86,8 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--codex-home", type=Path, default=default_codex_home())
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--force", action="store_true")
+    parser.add_argument("--backup", action="store_true")
     return parser.parse_args()
 
 
@@ -66,7 +95,12 @@ def main() -> int:
     """Install common subagents and print installed target paths."""
 
     args = parse_args()
-    targets = install_agents(args.codex_home.expanduser(), args.dry_run)
+    targets = install_agents(
+        args.codex_home.expanduser(),
+        args.dry_run,
+        force=args.force,
+        backup=args.backup,
+    )
     mode = "would install" if args.dry_run else "installed"
     for target in targets:
         print(f"{mode}: {target}")

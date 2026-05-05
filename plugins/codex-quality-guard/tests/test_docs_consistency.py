@@ -14,10 +14,19 @@ def test_readmes_share_skill_names_and_command():
     for token in (
         "codex-quality-guard:retrospect",
         "codex-quality-guard:install",
-        "python3 plugins/codex-quality-guard/skills/install/install.py",
+        "python3 /path/to/codex-quality-guard/skills/install/install.py",
     ):
         assert token in english
         assert token in korean
+
+
+def test_install_skill_uses_skill_relative_command():
+    skill = Path("plugins/codex-quality-guard/skills/install/SKILL.md").read_text(
+        encoding="utf-8"
+    )
+
+    assert "python3 /path/to/codex-quality-guard/skills/install/install.py" in skill
+    assert "python3 plugins/codex-quality-guard/skills/install/install.py" not in skill
 
 
 def test_readmes_share_output_schema():

@@ -48,6 +48,37 @@ def test_install_copies_all_agents(tmp_path: Path) -> None:
         assert "developer_instructions" in text
 
 
+def test_install_refuses_to_overwrite_existing_agent(tmp_path: Path) -> None:
+    module = load_module()
+    existing = tmp_path / "agents" / "context-manager.toml"
+    existing.parent.mkdir(parents=True)
+    existing.write_text("custom local agent\n", encoding="utf-8")
+
+    try:
+        module.install_agents(tmp_path, dry_run=False)
+    except FileExistsError as error:
+        assert "context-manager.toml" in str(error)
+    else:
+        raise AssertionError("install_agents should reject existing files by default")
+
+    assert existing.read_text(encoding="utf-8") == "custom local agent\n"
+
+
+def test_backup_preserves_existing_agent_before_install(tmp_path: Path) -> None:
+    module = load_module()
+    existing = tmp_path / "agents" / "context-manager.toml"
+    existing.parent.mkdir(parents=True)
+    existing.write_text("custom local agent\n", encoding="utf-8")
+
+    targets = module.install_agents(tmp_path, dry_run=False, backup=True)
+
+    backup = tmp_path / "agents" / "context-manager.toml.bak"
+    assert backup.exists()
+    assert backup.read_text(encoding="utf-8") == "custom local agent\n"
+    assert existing.read_text(encoding="utf-8") != "custom local agent\n"
+    assert targets[0] == existing
+
+
 def test_plugin_manifest_exposes_scaffold_skill() -> None:
     manifest = (PLUGIN_ROOT / ".codex-plugin" / "plugin.json").read_text(
         encoding="utf-8"
@@ -65,6 +96,17 @@ def test_scaffold_skill_references_shared_scripts() -> None:
         PLUGIN_ROOT / "skills" / "scaffold" / "SKILL.md"
     ).read_text(encoding="utf-8")
 
-    assert "scripts/install_shared_subagents.py --dry-run" in text
-    assert "scripts/print_agents_md_block.py" in text
+    assert "skills/scaffold/scaffold.py --dry-run" in text
+    assert "skills/scaffold/scaffold.py --print-agents-md-block" in text
     assert "Does not modify AGENTS.md automatically." in text
+
+
+def test_scaffold_wrapper_exists() -> None:
+    assert (PLUGIN_ROOT / "skills" / "scaffold" / "scaffold.py").exists()
+
+
+def test_readme_uses_skill_relative_scaffold_command() -> None:
+    readme = (PLUGIN_ROOT / "README.md").read_text(encoding="utf-8")
+
+    assert "python3 /path/to/shared-subagents/skills/scaffold/scaffold.py" in readme
+    assert "plugins/shared-subagents/scripts/install_shared_subagents.py" not in readme

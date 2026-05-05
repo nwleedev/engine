@@ -40,7 +40,7 @@ Next action:
 Use this to inspect AGENTS.md:
 
 ```bash
-python3 plugins/codex-quality-guard/skills/install/install.py
+python3 /path/to/codex-quality-guard/skills/install/install.py
 ```
 
 The command prints one of these statuses:

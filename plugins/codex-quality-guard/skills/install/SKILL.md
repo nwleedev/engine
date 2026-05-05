@@ -10,8 +10,8 @@ Inspect the current project's AGENTS.md for codex-quality-guard rules.
 ## Run
 
 ```bash
-python3 plugins/codex-quality-guard/skills/install/install.py
-python3 plugins/codex-quality-guard/skills/install/install.py ko
+python3 /path/to/codex-quality-guard/skills/install/install.py
+python3 /path/to/codex-quality-guard/skills/install/install.py ko
 ```
 
 ## Status Meanings
