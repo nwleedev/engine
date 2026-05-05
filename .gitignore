@@ -13,3 +13,4 @@ AGENTS.md
 /.vscode/
 /.codex/
 .env
+packages/searxng/
