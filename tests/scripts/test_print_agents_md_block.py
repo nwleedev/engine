@@ -7,7 +7,7 @@ from pathlib import Path
 SCRIPT_PATH = (
     Path(__file__).resolve().parents[2]
     / "plugins"
-    / "common-subagents"
+    / "shared-subagents"
     / "scripts"
     / "print_agents_md_block.py"
 )
@@ -29,8 +29,8 @@ def test_read_block_contains_markers() -> None:
 
     block = module.read_block()
 
-    assert "<!-- COMMON-SUBAGENTS-START -->" in block
-    assert "<!-- COMMON-SUBAGENTS-END -->" in block
+    assert "<!-- SHARED-SUBAGENTS-START -->" in block
+    assert "<!-- SHARED-SUBAGENTS-END -->" in block
     assert "context-manager" in block
     assert "online-researcher" in block
     assert "spec-reviewer" in block

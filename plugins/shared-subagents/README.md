@@ -1,4 +1,4 @@
-# Common Subagents
+# Shared Subagents
 
 Shared Codex subagent templates for reusable Superpowers workflows across multiple machines and projects.
 
@@ -14,8 +14,8 @@ Shared Codex subagent templates for reusable Superpowers workflows across multip
 ## Installation
 
 ```bash
-rtk python3 plugins/common-subagents/scripts/install_common_subagents.py --dry-run
-rtk python3 plugins/common-subagents/scripts/install_common_subagents.py
+rtk python3 plugins/shared-subagents/scripts/install_shared_subagents.py --dry-run
+rtk python3 plugins/shared-subagents/scripts/install_shared_subagents.py
 ```
 
 ## Principles
@@ -29,13 +29,17 @@ rtk python3 plugins/common-subagents/scripts/install_common_subagents.py
 
 Use `references/superpowers-routing.md` for Superpowers stage routing and custom-agent fallback rules.
 
+## Skill Integration
+
+Use `$shared-subagents:scaffold` to ask Codex to run the install, AGENTS.md block, and verification workflow.
+
 ## Verification
 
 ```bash
-rtk python3 plugins/common-subagents/scripts/install_common_subagents.py --dry-run
-rtk python3 plugins/common-subagents/scripts/print_agents_md_block.py
-rtk python3 plugins/common-subagents/scripts/install_common_subagents.py --codex-home temps/2026-05-05/common-subagents/codex-home
-rtk find temps/2026-05-05/common-subagents/codex-home/agents -maxdepth 1 -type f
+rtk python3 plugins/shared-subagents/scripts/install_shared_subagents.py --dry-run
+rtk python3 plugins/shared-subagents/scripts/print_agents_md_block.py
+rtk python3 plugins/shared-subagents/scripts/install_shared_subagents.py --codex-home temps/2026-05-05/shared-subagents/codex-home
+rtk find temps/2026-05-05/shared-subagents/codex-home/agents -maxdepth 1 -type f
 ```
 
 Expected results:

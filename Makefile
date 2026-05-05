@@ -1,6 +1,6 @@
 PYTEST = pytest -q
 
-.PHONY: test test-session-memory test-scripts test-quality-guard test-codex-quality-guard test-codex-session-memory test-common-subagents
+.PHONY: test test-session-memory test-scripts test-quality-guard test-codex-quality-guard test-codex-session-memory test-shared-subagents
 
 # Run each plugin test suite in its own process to prevent sys.modules collision
 # between plugins that share script filenames.
@@ -21,5 +21,5 @@ test-codex-quality-guard:
 test-codex-session-memory:
 	$(PYTEST) tests/codex-session-memory/
 
-test-common-subagents:
-	$(PYTEST) tests/scripts/test_install_common_subagents.py tests/scripts/test_print_agents_md_block.py
+test-shared-subagents:
+	$(PYTEST) tests/scripts/test_install_shared_subagents.py tests/scripts/test_print_agents_md_block.py tests/scripts/test_shared_subagents_marketplace.py
