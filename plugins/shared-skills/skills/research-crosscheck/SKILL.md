@@ -13,8 +13,8 @@ Ground decisions in verifiable sources and make uncertainty visible.
 
 1. Define the research question and the decision it supports.
 2. Prefer official or primary sources.
-3. For development work, prioritize official docs, release notes, standards, source repositories, and Context7 when available.
-4. For non-development work, prioritize SearXNG, primary sources, credible reports, direct company pages, filings, standards, or source documents.
+3. For development work, prioritize official docs, release notes, standards, source repositories, and an MCP server specialized for up-to-date library and framework documentation when available.
+4. For non-development work, prioritize an MCP server specialized for external source discovery, primary sources, credible reports, direct company pages, filings, standards, or source documents.
 5. Compare at least two relevant sources when the decision affects architecture, cost, strategy, safety, legality, or significant time investment.
 6. Record Counterevidence and source conflicts before recommending a direction.
 

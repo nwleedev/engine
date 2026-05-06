@@ -69,8 +69,8 @@ def test_research_crosscheck_requires_counterevidence() -> None:
     text = read(PLUGIN_ROOT / "skills" / "research-crosscheck" / "SKILL.md")
 
     assert "Prefer official or primary sources." in text
-    assert "Context7" in text
-    assert "SearXNG" in text
+    assert "MCP server specialized for up-to-date library and framework documentation" in text
+    assert "MCP server specialized for external source discovery" in text
     assert "Counterevidence" in text
 
 
