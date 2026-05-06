@@ -13,7 +13,8 @@ metadata:
 2. Identify the files that may be created for specs, evals, scaffold plans, project-local skills, subagents, rules, hooks, and MCP guidance.
 3. Split changes into safe phases with separate approval points for configuration that changes runtime behavior.
 4. Produce a scaffold plan before writing or activating anything.
-5. Include verification commands and rollback notes for each phase.
+5. Treat GitHub issue and PR templates as passive assets unless the user explicitly approves copying them into the target project.
+6. Include verification commands and rollback notes for each phase.
 
 ## Output
 
@@ -27,8 +28,11 @@ metadata:
 
 AGENTS.md, MCP configuration, hooks, and subagents require separate explicit approval before modification or activation.
 
+GitHub issue and PR templates require separate explicit approval before copying them into a downstream project `.github/**` location.
+
 ## Do not
 
 - Do not automatically modify AGENTS.md.
 - Do not automatically install MCP servers.
 - Do not activate hooks or subagents without explicit approval.
+- Do not install GitHub issue or PR templates without explicit approval.

@@ -1,0 +1,55 @@
+name: Harness quality issue
+description: Report a project-local domain harness quality problem.
+title: "[harness-quality] "
+labels:
+  - harness-quality
+body:
+  - type: input
+    id: affected_domain
+    attributes:
+      label: Affected domain
+      description: Name the domain harness from docs/domain-harness/index.md.
+      placeholder: example-domain
+    validations:
+      required: true
+  - type: dropdown
+    id: work_type
+    attributes:
+      label: Work type
+      options:
+        - development
+        - non-development
+        - mixed
+    validations:
+      required: true
+  - type: textarea
+    id: observed_problem
+    attributes:
+      label: Observed problem
+      description: Describe the behavior, gap, or conflict without including sensitive details.
+    validations:
+      required: true
+  - type: textarea
+    id: validator_output
+    attributes:
+      label: Validator output
+      description: Paste sanitized validator excerpts or link to a project-local report.
+    validations:
+      required: false
+  - type: dropdown
+    id: local_or_upstream
+    attributes:
+      label: Expected handling
+      options:
+        - local project fix
+        - upstream harness-foundry candidate
+        - unknown
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacy_sanitization_check
+    attributes:
+      label: Privacy and sanitization check
+      options:
+        - label: This issue does not include secrets, credentials, customer data, private source code, or internal documents.
+          required: true

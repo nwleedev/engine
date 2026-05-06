@@ -1,0 +1,7 @@
+{
+  "name": "invalid-index-json-source",
+  "expected_result": "fail",
+  "expected_rule_ids": ["index-json-source-of-truth"],
+  "work_type": "development",
+  "purpose": "Project maintains index.json as a source of truth."
+}

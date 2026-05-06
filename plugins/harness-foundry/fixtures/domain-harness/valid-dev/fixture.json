@@ -1,0 +1,7 @@
+{
+  "name": "valid-dev",
+  "expected_result": "pass",
+  "expected_rule_ids": [],
+  "work_type": "development",
+  "purpose": "Development harness with complete files and guardrails."
+}

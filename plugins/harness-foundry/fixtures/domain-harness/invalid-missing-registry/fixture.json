@@ -1,0 +1,7 @@
+{
+  "name": "invalid-missing-registry",
+  "expected_result": "fail",
+  "expected_rule_ids": ["missing-registry"],
+  "work_type": "development",
+  "purpose": "Project has no docs/domain-harness/index.md file."
+}

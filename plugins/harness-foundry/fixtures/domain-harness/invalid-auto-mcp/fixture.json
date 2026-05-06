@@ -1,0 +1,7 @@
+{
+  "name": "invalid-auto-mcp",
+  "expected_result": "fail",
+  "expected_rule_ids": ["unapproved-auto-mcp"],
+  "work_type": "development",
+  "purpose": "Scaffold tries to install MCP automatically."
+}

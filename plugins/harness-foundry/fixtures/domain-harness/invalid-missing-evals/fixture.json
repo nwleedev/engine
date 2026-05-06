@@ -1,0 +1,7 @@
+{
+  "name": "invalid-missing-evals",
+  "expected_result": "fail",
+  "expected_rule_ids": ["missing-evals-file"],
+  "work_type": "development",
+  "purpose": "Active registry row points to a missing evals.md file."
+}

@@ -1,0 +1,7 @@
+{
+  "name": "invalid-mixed-no-split-guardrails",
+  "expected_result": "fail",
+  "expected_rule_ids": ["missing-mixed-split-guardrails"],
+  "work_type": "mixed",
+  "purpose": "Mixed harness omits explicit split between development and non-development guardrails."
+}

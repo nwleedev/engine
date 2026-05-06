@@ -1,0 +1,7 @@
+{
+  "name": "invalid-nondev-no-source-policy",
+  "expected_result": "fail",
+  "expected_rule_ids": ["missing-non-development-source-policy"],
+  "work_type": "non-development",
+  "purpose": "Non-development harness omits source quality policy."
+}

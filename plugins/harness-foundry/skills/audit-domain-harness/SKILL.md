@@ -13,7 +13,8 @@ metadata:
 2. Compare registry status with actual files and activation state.
 3. Check whether development, non-development, and mixed guardrails are complete for the declared `work_type`.
 4. Identify conflicts between skills, subagents, rules, hooks, MCP guidance, and project instructions.
-5. Report findings before summaries.
+5. Review downstream issue/report artifacts and sanitized regression cases for `privacy_sanitization_check`.
+6. Report findings before summaries.
 
 ## Output
 
@@ -23,9 +24,12 @@ metadata:
 - Recommended action
 - Open questions
 - Residual risk
+- Downstream report or issue follow-up
+- Sanitized upstream regression candidate status
 
 ## Do not
 
 - Do not modify files during an audit.
 - Do not treat missing evidence as proof that a harness is safe.
 - Do not ignore non-development risks such as source quality, privacy, brand, tone, or approval flow.
+- Do not recommend upstream sharing unless the case is synthetic and public-safe.

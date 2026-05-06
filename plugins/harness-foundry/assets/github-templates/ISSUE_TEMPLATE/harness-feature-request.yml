@@ -1,0 +1,50 @@
+name: Harness feature request
+description: Request a harness-foundry validator, template, report, or domain pattern improvement.
+title: "[harness-feature] "
+labels:
+  - harness-feature
+body:
+  - type: dropdown
+    id: requested_area
+    attributes:
+      label: Requested area
+      options:
+        - validator rule
+        - report format
+        - issue template
+        - skill guidance
+        - fixture coverage
+        - domain pattern
+    validations:
+      required: true
+  - type: textarea
+    id: use_case
+    attributes:
+      label: Use case
+      description: Describe the public-safe scenario this request should support.
+    validations:
+      required: true
+  - type: dropdown
+    id: work_type
+    attributes:
+      label: Work type
+      options:
+        - development
+        - non-development
+        - mixed
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance criteria
+      description: Explain how the improvement should be verified.
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacy_sanitization_check
+    attributes:
+      label: Privacy and sanitization check
+      options:
+        - label: This request uses public-safe or synthetic details only.
+          required: true

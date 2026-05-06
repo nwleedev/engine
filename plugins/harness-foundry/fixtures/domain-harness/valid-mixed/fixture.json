@@ -1,0 +1,7 @@
+{
+  "name": "valid-mixed",
+  "expected_result": "pass",
+  "expected_rule_ids": [],
+  "work_type": "mixed",
+  "purpose": "Mixed harness with explicit development and non-development guardrail split."
+}

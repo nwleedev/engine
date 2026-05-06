@@ -1,0 +1,7 @@
+{
+  "name": "invalid-missing-spec",
+  "expected_result": "fail",
+  "expected_rule_ids": ["missing-spec-file"],
+  "work_type": "development",
+  "purpose": "Active registry row points to a missing spec.md file."
+}
