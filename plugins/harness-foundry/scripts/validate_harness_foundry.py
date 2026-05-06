@@ -173,6 +173,9 @@ def validate_boundary_patterns() -> None:
             "It supports development, non-development, and mixed work.",
             "Downstream reports are project-local artifacts.",
             "Operator-run",
+            "Report drafts are not auto-saved",
+            "privacy_sanitization_check",
+            "explicit approval",
         ),
         "README.ko.md": (
             "영어 README와 `SKILL.md`가 canonical 문서",

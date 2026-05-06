@@ -112,6 +112,9 @@ def test_readmes_explain_downstream_adoption_models():
         assert phrase in english
     assert "Operator-run" in korean
     assert "현업 프로젝트의 report는 자동 저장하지 않습니다" in korean
+    assert "Report drafts are not auto-saved" in english
+    assert "privacy_sanitization_check" in english
+    assert "explicit approval" in english
 
 
 def test_scaffold_skill_requires_downstream_approval_gates():

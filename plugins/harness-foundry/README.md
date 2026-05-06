@@ -53,6 +53,8 @@ The report draft is reviewed before writing it to the target project. If saved, 
 docs/domain-harness/reports/<date>-improvement-report.md
 ```
 
+Report drafts are not auto-saved. Complete `privacy_sanitization_check` and get explicit approval before saving or sharing downstream reports.
+
 Only sanitized, public-safe cases should become upstream `harness-foundry` fixture candidates.
 
 ## Downstream Adoption Models

@@ -126,3 +126,38 @@ def test_report_without_privacy_sanitization_check_returns_warning(tmp_path):
     assert payload["ok"] is True
     actual_rule_ids = {finding["rule_id"] for finding in payload["findings"]}
     assert "missing-privacy-sanitization-check" in actual_rule_ids
+
+
+def test_warning_only_human_output_passes_with_warnings(tmp_path):
+    project_root = copy_fixture(tmp_path, "valid-dev")
+    report_dir = project_root / "docs" / "domain-harness" / "reports"
+    report_dir.mkdir()
+    report_path = report_dir / "2026-05-07-improvement-report.md"
+    report_path.write_text("# Report\n\nNo privacy review yet.\n", encoding="utf-8")
+
+    result = run_validator(project_root)
+
+    assert result.returncode == 0
+    assert "domain harness validation passed with warnings" in result.stdout
+    assert "domain harness validation failed" not in result.stdout
+    assert "missing-privacy-sanitization-check" in result.stdout
+
+
+def test_regression_case_without_privacy_sanitization_check_returns_warning(tmp_path):
+    project_root = copy_fixture(tmp_path, "valid-dev")
+    regression_dir = project_root / "docs" / "domain-harness" / "regression-cases"
+    regression_dir.mkdir()
+    regression_path = regression_dir / "checkout-api-case.md"
+    regression_path.write_text("# Regression case\n\nNo privacy review yet.\n", encoding="utf-8")
+
+    result = run_validator(project_root, "--json")
+
+    assert result.returncode == 0
+    payload = json.loads(result.stdout)
+    assert payload["ok"] is True
+    findings = payload["findings"]
+    assert any(
+        finding["rule_id"] == "missing-privacy-sanitization-check"
+        and finding["path"] == "docs/domain-harness/regression-cases/checkout-api-case.md"
+        for finding in findings
+    )

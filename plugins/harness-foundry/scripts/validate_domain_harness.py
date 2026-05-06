@@ -275,7 +275,12 @@ def validate_project(root: Path) -> list[Finding]:
 def render_human(root: Path, findings: list[Finding]) -> str:
     if not findings:
         return "domain harness validation passed\n"
-    lines = ["domain harness validation failed"]
+    has_errors = any(finding.severity == "error" for finding in findings)
+    lines = [
+        "domain harness validation failed"
+        if has_errors
+        else "domain harness validation passed with warnings"
+    ]
     for finding in findings:
         lines.append(
             f"- [{finding.severity}] {finding.rule_id} {finding.path}: {finding.message}"
