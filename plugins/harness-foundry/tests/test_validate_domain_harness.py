@@ -108,4 +108,21 @@ def test_reporter_groups_validator_findings(tmp_path):
     assert "## Local fix candidates" in result.stdout
     assert "## Upstream regression candidates" in result.stdout
     assert "## Privacy and sanitization review" in result.stdout
+    assert "privacy_sanitization_check" in result.stdout
     assert "missing-evals-file" in result.stdout
+
+
+def test_report_without_privacy_sanitization_check_returns_warning(tmp_path):
+    project_root = copy_fixture(tmp_path, "valid-dev")
+    report_dir = project_root / "docs" / "domain-harness" / "reports"
+    report_dir.mkdir()
+    report_path = report_dir / "2026-05-07-improvement-report.md"
+    report_path.write_text("# Report\n\nNo privacy review yet.\n", encoding="utf-8")
+
+    result = run_validator(project_root, "--json")
+
+    assert result.returncode == 0
+    payload = json.loads(result.stdout)
+    assert payload["ok"] is True
+    actual_rule_ids = {finding["rule_id"] for finding in payload["findings"]}
+    assert "missing-privacy-sanitization-check" in actual_rule_ids

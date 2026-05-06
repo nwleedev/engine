@@ -54,3 +54,17 @@ docs/domain-harness/reports/<date>-improvement-report.md
 ```
 
 Only sanitized, public-safe cases should become upstream `harness-foundry` fixture candidates.
+
+## Downstream Adoption Models
+
+| model | default | notes |
+|---|---|---|
+| Operator-run | yes | Run `harness-foundry` scripts from engine or a plugin cache against a target project root. |
+| Project-local tooling | no | Copy tooling into a target project only after explicit approval. |
+| Plugin-mediated workflow | no | Use installed Codex skills when the team already works through Codex. |
+
+Operator-run is the recommended v1 starting point because it avoids copying tooling into the target project before the team approves project-local files.
+
+GitHub issue and PR templates, AGENTS.md changes, MCP configuration, hooks, and subagents require separate explicit approval before installation, modification, or activation.
+
+See `references/downstream-adoption-guide.md` for the full downstream adoption process.

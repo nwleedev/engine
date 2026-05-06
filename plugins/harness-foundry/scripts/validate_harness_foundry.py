@@ -32,6 +32,7 @@ REFERENCE_FILES = {
     "improvement-report-template.md",
     "sanitized-regression-case-template.md",
     "downstream-issue-template.md",
+    "downstream-adoption-guide.md",
 }
 SCRIPT_FILES = {
     "validate_harness_foundry.py",
@@ -171,11 +172,13 @@ def validate_boundary_patterns() -> None:
             "It does not bulk-install public awesome repositories.",
             "It supports development, non-development, and mixed work.",
             "Downstream reports are project-local artifacts.",
+            "Operator-run",
         ),
         "README.ko.md": (
             "영어 README와 `SKILL.md`가 canonical 문서",
             "공개 skills/subagents를 대량 설치하는 도구가 아니라",
             "현업 프로젝트의 report는 project-local 산출물",
+            "현업 프로젝트의 report는 자동 저장하지 않습니다",
         ),
         "skills/diagnose-project/SKILL.md": (
             "Do not recommend bulk-installing public awesome repositories.",
@@ -183,9 +186,17 @@ def validate_boundary_patterns() -> None:
         "skills/scaffold-domain-harness/SKILL.md": (
             "AGENTS.md, MCP configuration, hooks, and subagents require separate explicit approval",
             "GitHub issue and PR templates require separate explicit approval",
+            "docs/domain-harness/** files require explicit approval",
         ),
         "skills/audit-domain-harness/SKILL.md": (
             "privacy_sanitization_check",
+            "validate_domain_harness.py",
+            "local harness issue",
+        ),
+        "references/downstream-adoption-guide.md": (
+            "Operator-run is the default v1 adoption model.",
+            "GitHub issue and PR templates remain passive assets until explicit approval.",
+            "Separate local fixes from upstream regression candidates.",
         ),
         "skills/update-registry/SKILL.md": (
             "Do not create or maintain `index.json` as a source of truth in v1.",

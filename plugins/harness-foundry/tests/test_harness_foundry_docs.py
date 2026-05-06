@@ -18,6 +18,7 @@ REFERENCE_FILES = (
     "improvement-report-template.md",
     "sanitized-regression-case-template.md",
     "downstream-issue-template.md",
+    "downstream-adoption-guide.md",
 )
 ISSUE_TEMPLATE_FILES = (
     "harness-quality-issue.yml",
@@ -86,3 +87,52 @@ def test_improvement_report_template_has_required_sections():
         "## Open questions",
     ):
         assert heading in text
+
+
+def test_downstream_adoption_guide_defines_operator_run_boundary():
+    text = read("references/downstream-adoption-guide.md")
+    for phrase in (
+        "Operator-run is the default v1 adoption model.",
+        "docs/domain-harness/reports/<date>-improvement-report.md",
+        "GitHub issue and PR templates remain passive assets until explicit approval.",
+        "Do not copy downstream project source, customer data, internal documents, or credentials into upstream fixtures.",
+        "Separate local fixes from upstream regression candidates.",
+    ):
+        assert phrase in text
+
+
+def test_readmes_explain_downstream_adoption_models():
+    english = read("README.md")
+    korean = read("README.ko.md")
+    for phrase in (
+        "Operator-run",
+        "Project-local tooling",
+        "Plugin-mediated workflow",
+    ):
+        assert phrase in english
+    assert "Operator-run" in korean
+    assert "현업 프로젝트의 report는 자동 저장하지 않습니다" in korean
+
+
+def test_scaffold_skill_requires_downstream_approval_gates():
+    text = read("skills/scaffold-domain-harness/SKILL.md")
+    for phrase in (
+        "Phase 0",
+        "docs/domain-harness/** files require explicit approval",
+        "diff preview",
+        "rollback note",
+        "Phase 7",
+    ):
+        assert phrase in text
+
+
+def test_audit_skill_classifies_downstream_findings():
+    text = read("skills/audit-domain-harness/SKILL.md")
+    for phrase in (
+        "validate_domain_harness.py",
+        "local harness issue",
+        "upstream plugin issue",
+        "runtime activation issue",
+        "privacy_sanitization_check",
+    ):
+        assert phrase in text

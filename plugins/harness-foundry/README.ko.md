@@ -58,3 +58,19 @@ docs/domain-harness/reports/<date>-improvement-report.md
 ```
 
 upstream fixture 후보는 synthetic, public-safe case로 축소된 경우에만 `engine`에 반영합니다.
+
+## 현업 프로젝트 적용 모델
+
+| 모델 | 기본값 | 설명 |
+|---|---|---|
+| Operator-run | 예 | `engine` 또는 plugin cache의 script를 대상 프로젝트 루트에 대해 실행합니다. |
+| Project-local tooling | 아니오 | 명시 승인 후에만 대상 프로젝트에 tooling을 복사합니다. |
+| Plugin-mediated workflow | 아니오 | Codex plugin/skill 환경에서 진단, scaffold, audit을 진행합니다. |
+
+v1 권장값은 Operator-run입니다. 대상 프로젝트에 tooling을 복사하기 전에 진단과 report 초안을 만들 수 있기 때문입니다.
+
+현업 프로젝트의 report는 자동 저장하지 않습니다. 초안을 검토하고 민감정보 제거와 사용자 승인을 거친 뒤에만 `docs/domain-harness/reports/<date>-improvement-report.md`에 저장합니다.
+
+GitHub issue/PR template, AGENTS.md, MCP 설정, hooks, subagents는 별도 승인 전에는 설치하거나 활성화하지 않습니다.
+
+상세 절차는 영어 canonical 문서인 `references/downstream-adoption-guide.md`를 기준으로 합니다.
