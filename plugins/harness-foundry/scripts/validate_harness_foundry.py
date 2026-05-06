@@ -60,6 +60,9 @@ def parse_frontmatter(text: str) -> dict[str, str | dict[str, str]]:
 def validate_manifest() -> None:
     path = ROOT / ".codex-plugin" / "plugin.json"
     data = json.loads(path.read_text(encoding="utf-8"))
+    missing_keys = MANIFEST_KEYS - set(data)
+    if missing_keys:
+        fail(f"plugin manifest missing required keys: {sorted(missing_keys)}")
     extra_keys = set(data) - MANIFEST_KEYS
     if extra_keys:
         fail(f"plugin manifest has non-v1 keys: {sorted(extra_keys)}")
@@ -130,7 +133,10 @@ def validate_boundary_patterns() -> None:
         ),
     }
     for relative_path, patterns in required_by_file.items():
-        text = (ROOT / relative_path).read_text(encoding="utf-8")
+        path = ROOT / relative_path
+        if not path.exists():
+            fail(f"missing required file: {relative_path}")
+        text = path.read_text(encoding="utf-8")
         for pattern in patterns:
             if pattern not in text:
                 fail(f"{relative_path} missing boundary pattern: {pattern}")

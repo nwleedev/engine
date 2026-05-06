@@ -42,6 +42,19 @@ def test_validator_rejects_manifest_components_outside_v1(tmp_path):
     assert "non-v1 keys" in result.stdout
 
 
+def test_validator_rejects_missing_manifest_required_key(tmp_path):
+    plugin = copy_plugin(tmp_path)
+    manifest_path = plugin / ".codex-plugin" / "plugin.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    del manifest["license"]
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    result = run_validator(plugin)
+
+    assert result.returncode == 1
+    assert "missing required keys" in result.stdout
+
+
 def test_validator_rejects_missing_short_description(tmp_path):
     plugin = copy_plugin(tmp_path)
     skill_path = plugin / "skills" / "diagnose-project" / "SKILL.md"
@@ -70,3 +83,13 @@ def test_validator_rejects_missing_readme_boundary(tmp_path):
 
     assert result.returncode == 1
     assert "README.md missing boundary pattern" in result.stdout
+
+
+def test_validator_rejects_missing_boundary_file(tmp_path):
+    plugin = copy_plugin(tmp_path)
+    (plugin / "README.ko.md").unlink()
+
+    result = run_validator(plugin)
+
+    assert result.returncode == 1
+    assert "missing required file: README.ko.md" in result.stdout
