@@ -7,7 +7,9 @@ import sys
 from pathlib import Path
 
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(
+    sys.argv[1] if len(sys.argv) > 1 else Path(__file__).resolve().parents[1]
+).resolve()
 SKILL_NAMES = {
     "diagnose-project",
     "design-domain-harness",
@@ -15,10 +17,11 @@ SKILL_NAMES = {
     "scaffold-domain-harness",
     "audit-domain-harness",
 }
-REQUIRED_BOUNDARY_PATTERNS = (
-    "It does not bulk-install public awesome repositories.",
-    "AGENTS.md, MCP configuration, hooks, and subagents require separate explicit approval",
-    "Do not create or maintain `index.json` as a source of truth in v1.",
+MANIFEST_KEYS = {"name", "version", "description", "license", "skills"}
+FORBIDDEN_PLUGIN_FILES = (
+    ".app.json",
+    ".mcp.json",
+    "hooks/hooks.json",
 )
 
 
@@ -27,25 +30,46 @@ def fail(message: str) -> None:
     sys.exit(1)
 
 
-def parse_frontmatter(text: str) -> dict[str, str]:
+def parse_frontmatter(text: str) -> dict[str, str | dict[str, str]]:
     match = re.match(r"^---\n(.*?)\n---", text, re.DOTALL)
     if not match:
         fail("missing frontmatter")
-    result: dict[str, str] = {}
+    result: dict[str, str | dict[str, str]] = {}
+    current_parent: str | None = None
     for line in match.group(1).splitlines():
+        if not line.strip():
+            continue
         if ":" in line and not line.startswith(" "):
             key, value = line.split(":", 1)
-            result[key.strip()] = value.strip().strip('"')
+            key = key.strip()
+            value = value.strip().strip('"')
+            if value:
+                result[key] = value
+                current_parent = None
+            else:
+                result[key] = {}
+                current_parent = key
+        elif current_parent and ":" in line and line.startswith(" "):
+            key, value = line.split(":", 1)
+            parent = result[current_parent]
+            if isinstance(parent, dict):
+                parent[key.strip()] = value.strip().strip('"')
     return result
 
 
 def validate_manifest() -> None:
     path = ROOT / ".codex-plugin" / "plugin.json"
     data = json.loads(path.read_text(encoding="utf-8"))
+    extra_keys = set(data) - MANIFEST_KEYS
+    if extra_keys:
+        fail(f"plugin manifest has non-v1 keys: {sorted(extra_keys)}")
     if data.get("name") != "harness-foundry":
         fail("plugin name must be harness-foundry")
     if data.get("skills") != "./skills/":
         fail("plugin skills path must be ./skills/")
+    for relative_path in FORBIDDEN_PLUGIN_FILES:
+        if (ROOT / relative_path).exists():
+            fail(f"v1 skill-only plugin must not include {relative_path}")
 
 
 def validate_skills() -> None:
@@ -61,8 +85,11 @@ def validate_skills() -> None:
         if frontmatter.get("name") != skill_name:
             fail(f"{skill_name} frontmatter name mismatch")
         description = frontmatter.get("description", "")
-        if not description.startswith("Use when "):
+        if not isinstance(description, str) or not description.startswith("Use when "):
             fail(f"{skill_name} description must start with 'Use when '")
+        metadata = frontmatter.get("metadata")
+        if not isinstance(metadata, dict) or not metadata.get("short-description"):
+            fail(f"{skill_name} missing metadata.short-description")
         for heading in ("## Workflow", "## Output"):
             if heading not in text:
                 fail(f"{skill_name} missing {heading}")
@@ -83,14 +110,30 @@ def validate_references() -> None:
 
 
 def validate_boundary_patterns() -> None:
-    combined = "\n".join(
-        path.read_text(encoding="utf-8")
-        for path in ROOT.rglob("*")
-        if path.is_file() and path.suffix in {".md", ".json", ".py"}
-    )
-    for pattern in REQUIRED_BOUNDARY_PATTERNS:
-        if pattern not in combined:
-            fail(f"missing boundary pattern: {pattern}")
+    required_by_file = {
+        "README.md": (
+            "It does not bulk-install public awesome repositories.",
+            "It supports development, non-development, and mixed work.",
+        ),
+        "README.ko.md": (
+            "영어 README와 `SKILL.md`가 canonical 문서",
+            "공개 skills/subagents를 대량 설치하는 도구가 아니라",
+        ),
+        "skills/diagnose-project/SKILL.md": (
+            "Do not recommend bulk-installing public awesome repositories.",
+        ),
+        "skills/scaffold-domain-harness/SKILL.md": (
+            "AGENTS.md, MCP configuration, hooks, and subagents require separate explicit approval",
+        ),
+        "skills/update-registry/SKILL.md": (
+            "Do not create or maintain `index.json` as a source of truth in v1.",
+        ),
+    }
+    for relative_path, patterns in required_by_file.items():
+        text = (ROOT / relative_path).read_text(encoding="utf-8")
+        for pattern in patterns:
+            if pattern not in text:
+                fail(f"{relative_path} missing boundary pattern: {pattern}")
 
 
 def main() -> None:

@@ -27,4 +27,4 @@ metadata:
 
 - Do not create files.
 - Do not install skills, subagents, MCP servers, or hooks.
-- Do not recommend mass-installing public awesome repositories.
+- Do not recommend bulk-installing public awesome repositories.
