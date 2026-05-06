@@ -59,6 +59,8 @@ def parse_frontmatter(text: str) -> dict[str, str | dict[str, str]]:
 
 def validate_manifest() -> None:
     path = ROOT / ".codex-plugin" / "plugin.json"
+    if not path.exists():
+        fail("missing required file: .codex-plugin/plugin.json")
     data = json.loads(path.read_text(encoding="utf-8"))
     missing_keys = MANIFEST_KEYS - set(data)
     if missing_keys:
@@ -77,6 +79,8 @@ def validate_manifest() -> None:
 
 def validate_skills() -> None:
     skills_dir = ROOT / "skills"
+    if not skills_dir.is_dir():
+        fail("missing required directory: skills")
     actual = {path.name for path in skills_dir.iterdir() if path.is_dir()}
     if actual != SKILL_NAMES:
         fail(f"skill directories mismatch: {sorted(actual)}")

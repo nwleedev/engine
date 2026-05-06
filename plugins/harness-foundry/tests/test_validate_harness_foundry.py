@@ -42,6 +42,16 @@ def test_validator_rejects_manifest_components_outside_v1(tmp_path):
     assert "non-v1 keys" in result.stdout
 
 
+def test_validator_rejects_missing_manifest_file(tmp_path):
+    plugin = copy_plugin(tmp_path)
+    (plugin / ".codex-plugin" / "plugin.json").unlink()
+
+    result = run_validator(plugin)
+
+    assert result.returncode == 1
+    assert "missing required file: .codex-plugin/plugin.json" in result.stdout
+
+
 def test_validator_rejects_missing_manifest_required_key(tmp_path):
     plugin = copy_plugin(tmp_path)
     manifest_path = plugin / ".codex-plugin" / "plugin.json"
@@ -53,6 +63,16 @@ def test_validator_rejects_missing_manifest_required_key(tmp_path):
 
     assert result.returncode == 1
     assert "missing required keys" in result.stdout
+
+
+def test_validator_rejects_missing_skills_directory(tmp_path):
+    plugin = copy_plugin(tmp_path)
+    shutil.rmtree(plugin / "skills")
+
+    result = run_validator(plugin)
+
+    assert result.returncode == 1
+    assert "missing required directory: skills" in result.stdout
 
 
 def test_validator_rejects_missing_short_description(tmp_path):
