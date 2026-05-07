@@ -53,8 +53,26 @@ def relative_path(path: Path, root: Path) -> str:
         return str(path)
 
 
+def read_text_or_finding(
+    path: Path, root: Path, rule_id: str, message: str, domain: str = ""
+) -> tuple[str | None, Finding | None]:
+    try:
+        return path.read_text(encoding="utf-8"), None
+    except (OSError, UnicodeDecodeError):
+        return None, Finding(rule_id, "error", relative_path(path, root), message, domain)
+
+
 def parse_registry(index_path: Path, root: Path) -> tuple[list[dict[str, str]], list[Finding]]:
-    lines = index_path.read_text(encoding="utf-8").splitlines()
+    text, finding = read_text_or_finding(
+        index_path,
+        root,
+        "unreadable-registry",
+        "Registry file must be a readable UTF-8 Markdown file.",
+    )
+    if finding is not None:
+        return [], [finding]
+    assert text is not None
+    lines = text.splitlines()
     tables: list[list[str]] = []
     current_table: list[str] = []
     for line in lines:
@@ -117,7 +135,16 @@ def validate_work_type_guardrails(
 ) -> list[Finding]:
     if not spec_path.is_file():
         return []
-    text = spec_path.read_text(encoding="utf-8")
+    text, finding = read_text_or_finding(
+        spec_path,
+        root,
+        "unreadable-harness-artifact",
+        "Harness artifact must be a readable UTF-8 Markdown file.",
+        domain,
+    )
+    if finding is not None:
+        return [finding]
+    assert text is not None
     rel = relative_path(spec_path, root)
     findings: list[Finding] = []
     if work_type == "development" and not contains_all(
@@ -172,7 +199,17 @@ def validate_work_type_guardrails(
 def detect_unapproved_activation(path: Path, root: Path, domain: str) -> list[Finding]:
     if not path.is_file():
         return []
-    text = path.read_text(encoding="utf-8").lower()
+    text, finding = read_text_or_finding(
+        path,
+        root,
+        "unreadable-harness-artifact",
+        "Harness artifact must be a readable UTF-8 Markdown file.",
+        domain,
+    )
+    if finding is not None:
+        return [finding]
+    assert text is not None
+    text = text.lower()
     rel = relative_path(path, root)
     findings: list[Finding] = []
     if re.search(r"automatically\s+(activate|enable|install).{0,40}hooks?", text):
@@ -285,9 +322,15 @@ def validate_project(root: Path) -> list[Finding]:
                 )
 
         spec_path = paths.get("missing-spec-file")
+        unreadable_paths: set[Path] = set()
         if spec_path is not None:
-            findings.extend(validate_work_type_guardrails(work_type, spec_path, root, domain))
+            spec_findings = validate_work_type_guardrails(work_type, spec_path, root, domain)
+            findings.extend(spec_findings)
+            if any(finding.rule_id == "unreadable-harness-artifact" for finding in spec_findings):
+                unreadable_paths.add(spec_path)
         for artifact_path in paths.values():
+            if artifact_path in unreadable_paths:
+                continue
             findings.extend(detect_unapproved_activation(artifact_path, root, domain))
 
     return findings

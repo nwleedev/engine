@@ -312,3 +312,58 @@ def test_registry_path_directory_returns_structured_missing_registry_finding(tmp
         "message": "Missing docs/domain-harness/index.md registry.",
         "domain": "",
     } in payload["findings"]
+
+
+def test_unreadable_registry_returns_structured_finding(tmp_path):
+    project_root = tmp_path / "unreadable-registry"
+    harness_root = project_root / "docs" / "domain-harness"
+    harness_root.mkdir(parents=True)
+    (harness_root / "index.md").write_bytes(b"\xff\xfe\x00")
+
+    result = run_validator(project_root, "--json")
+
+    assert result.returncode == 1
+    payload = json.loads(result.stdout)
+    assert {
+        "rule_id": "unreadable-registry",
+        "severity": "error",
+        "path": "docs/domain-harness/index.md",
+        "message": "Registry file must be a readable UTF-8 Markdown file.",
+        "domain": "",
+    } in payload["findings"]
+
+
+@pytest.mark.parametrize(
+    ("artifact_path", "expected_path"),
+    [
+        ("checkout-api/spec.md", "docs/domain-harness/checkout-api/spec.md"),
+        ("checkout-api/evals.md", "docs/domain-harness/checkout-api/evals.md"),
+        ("checkout-api/scaffold.md", "docs/domain-harness/checkout-api/scaffold.md"),
+    ],
+)
+def test_unreadable_harness_artifact_returns_structured_finding(
+    tmp_path, artifact_path, expected_path
+):
+    project_root = tmp_path / "unreadable-artifact"
+    write_minimal_domain_harness(project_root)
+    (project_root / "docs" / "domain-harness" / artifact_path).write_bytes(b"\xff\xfe\x00")
+
+    result = run_validator(project_root, "--json")
+
+    assert result.returncode == 1
+    payload = json.loads(result.stdout)
+    matching_findings = [
+        finding
+        for finding in payload["findings"]
+        if finding["rule_id"] == "unreadable-harness-artifact"
+        and finding["path"] == expected_path
+    ]
+    assert matching_findings == [
+        {
+            "rule_id": "unreadable-harness-artifact",
+            "severity": "error",
+            "path": expected_path,
+            "message": "Harness artifact must be a readable UTF-8 Markdown file.",
+            "domain": "checkout-api",
+        }
+    ]
