@@ -137,9 +137,8 @@ def validate_references(root: Path) -> None:
 
 
 def validate_scripts(root: Path) -> None:
-    plugin_root_scripts = sorted(path.name for path in (root / "scripts").glob("*.py"))
-    if plugin_root_scripts:
-        fail(f"plugin root must not include scripts/*.py: {plugin_root_scripts}")
+    if (root / "scripts").exists():
+        fail("plugin root must not include scripts directory")
 
     missing_skill_scripts = [
         relative_path

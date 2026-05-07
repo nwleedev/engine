@@ -187,7 +187,35 @@ def test_validator_rejects_plugin_root_scripts_directory(tmp_path):
     result = run_validator(plugin)
 
     assert result.returncode == 1
-    assert "plugin root must not include scripts/*.py" in result.stdout
+    assert "plugin root must not include scripts directory" in result.stdout
+
+
+def test_validator_rejects_plugin_root_scripts_directory_with_nested_non_py_file(tmp_path):
+    plugin = copy_plugin(tmp_path)
+    nested_dir = plugin / "scripts" / "nested"
+    nested_dir.mkdir(parents=True)
+    (nested_dir / "notes.txt").write_text("lab-only script notes\n", encoding="utf-8")
+
+    result = run_validator(plugin)
+
+    assert result.returncode == 1
+    assert "plugin root must not include scripts directory" in result.stdout
+
+
+def test_validator_rejects_missing_required_skill_local_script(tmp_path):
+    plugin = copy_plugin(tmp_path)
+    (
+        plugin
+        / "skills"
+        / "audit-domain-harness"
+        / "scripts"
+        / "validate_domain_harness.py"
+    ).unlink()
+
+    result = run_validator(plugin)
+
+    assert result.returncode == 1
+    assert "missing required skill-local script files" in result.stdout
 
 
 def test_readmes_list_all_skills():
