@@ -59,7 +59,7 @@ def validate_public_safety_reviews(harness_root: Path, root: Path) -> list[Findi
             continue
         try:
             text = path.read_text(encoding="utf-8").lower()
-        except UnicodeDecodeError:
+        except (UnicodeDecodeError, OSError):
             findings.append(unreadable_public_safety_finding(path, root))
             continue
         if "public_safety_check" not in text and "public-safety review" not in text:

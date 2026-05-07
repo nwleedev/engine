@@ -1,3 +1,4 @@
+import importlib.util
 import json
 import shutil
 import subprocess
@@ -18,6 +19,17 @@ BASE_VALIDATOR = (
     / "validate_domain_harness.py"
 )
 REPORTER = ROOT / "scripts" / "render_evaluation_report.py"
+
+
+def load_validator_module():
+    spec = importlib.util.spec_from_file_location(
+        "_test_validate_domain_harness_corpus", VALIDATOR
+    )
+    assert spec is not None
+    assert spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 def copy_fixture(tmp_path: Path, fixture_name: str) -> Path:
@@ -219,4 +231,35 @@ def test_unreadable_public_safety_candidates_return_warning_findings(tmp_path):
             "message": "Public-safety artifact candidate is not a readable UTF-8 file.",
             "domain": "",
         },
+    ]
+
+
+def test_public_safety_candidate_read_os_error_returns_warning(tmp_path, monkeypatch):
+    project_root = copy_fixture(tmp_path, "valid-dev")
+    report_dir = project_root / "docs" / "domain-harness" / "evaluation-reports"
+    report_dir.mkdir()
+    report_path = report_dir / "restricted.md"
+    report_path.write_text("# Report\n\npublic_safety_check: pass\n", encoding="utf-8")
+    validator = load_validator_module()
+    original_read_text = Path.read_text
+
+    def read_text_with_permission_error(path, *args, **kwargs):
+        if path == report_path:
+            raise PermissionError("permission denied")
+        return original_read_text(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "read_text", read_text_with_permission_error)
+
+    findings = validator.validate_public_safety_reviews(
+        project_root / "docs" / "domain-harness", project_root
+    )
+
+    assert [finding.to_dict() for finding in findings] == [
+        {
+            "rule_id": "unreadable-public-safety-artifact",
+            "severity": "warning",
+            "path": "docs/domain-harness/evaluation-reports/restricted.md",
+            "message": "Public-safety artifact candidate is not a readable UTF-8 file.",
+            "domain": "",
+        }
     ]
