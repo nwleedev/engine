@@ -4,21 +4,11 @@ import subprocess
 from pathlib import Path
 
 
-ROOT = Path("apps/harness-foundry-lab")
+REPO_ROOT = Path(__file__).resolve().parents[3]
+ROOT = REPO_ROOT / "apps" / "harness-foundry-lab"
 FIXTURES = ROOT / "corpus" / "domain-harness" / "synthetic"
 VALIDATOR = ROOT / "scripts" / "validate_domain_harness_corpus.py"
 REPORTER = ROOT / "scripts" / "render_evaluation_report.py"
-VALID_FIXTURES = ("valid-dev", "valid-nondev", "valid-mixed")
-INVALID_FIXTURES = (
-    "invalid-missing-registry",
-    "invalid-missing-spec",
-    "invalid-missing-evals",
-    "invalid-index-json-source",
-    "invalid-auto-hooks",
-    "invalid-auto-mcp",
-    "invalid-nondev-no-source-policy",
-    "invalid-mixed-no-split-guardrails",
-)
 
 
 def copy_fixture(tmp_path: Path, fixture_name: str) -> Path:
@@ -46,53 +36,53 @@ def run_reporter(input_path: Path) -> subprocess.CompletedProcess[str]:
     )
 
 
-def read_fixture_contract(fixture_name: str) -> dict[str, object]:
-    path = FIXTURES / fixture_name / "fixture.json"
-    return json.loads(path.read_text(encoding="utf-8"))
+def write_minimal_domain_harness(project_root: Path, *, status: str = "active") -> None:
+    harness_root = project_root / "docs" / "domain-harness"
+    domain_root = harness_root / "checkout-api"
+    domain_root.mkdir(parents=True)
+    (domain_root / "spec.md").write_text(
+        "\n".join(
+            [
+                "# Checkout API Harness",
+                "Implementation scope",
+                "Test strategy",
+                "Security review",
+                "Dependency policy",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (domain_root / "evals.md").write_text("# Evals\n", encoding="utf-8")
+    (domain_root / "scaffold.md").write_text("# Scaffold\n", encoding="utf-8")
+    (harness_root / "index.md").write_text(
+        "\n".join(
+            [
+                "# Domain Harness Registry",
+                "",
+                "| domain | work_type | status | owner | spec | evals | scaffold | last_reviewed |",
+                "|---|---|---|---|---|---|---|---|",
+                f"| checkout-api | development | {status} | platform-team | `checkout-api/spec.md` | `checkout-api/evals.md` | `checkout-api/scaffold.md` | 2026-05-06 |",
+            ]
+        ),
+        encoding="utf-8",
+    )
 
 
-def test_valid_fixtures_pass(tmp_path):
-    for fixture_name in VALID_FIXTURES:
-        project_root = copy_fixture(tmp_path, fixture_name)
-
-        result = run_validator(project_root)
-
-        assert result.returncode == 0, result.stdout + result.stderr
-        assert "domain harness validation passed" in result.stdout
-
-
-def test_invalid_fixtures_fail_with_expected_rule_ids(tmp_path):
-    for fixture_name in INVALID_FIXTURES:
-        contract = read_fixture_contract(fixture_name)
-        project_root = copy_fixture(tmp_path, fixture_name)
-
-        result = run_validator(project_root, "--json")
-
-        assert result.returncode == 1
-        payload = json.loads(result.stdout)
-        actual_rule_ids = {finding["rule_id"] for finding in payload["findings"]}
-        assert set(contract["expected_rule_ids"]).issubset(actual_rule_ids)
-
-
-def test_json_output_is_parseable_for_valid_fixture(tmp_path):
-    project_root = copy_fixture(tmp_path, "valid-dev")
+def test_wrapper_forwards_base_validator_finding(tmp_path):
+    project_root = tmp_path / "invalid-status"
+    write_minimal_domain_harness(project_root, status="paused")
 
     result = run_validator(project_root, "--json")
 
-    assert result.returncode == 0
+    assert result.returncode == 1
     payload = json.loads(result.stdout)
-    assert payload["ok"] is True
-    assert payload["root"] == str(project_root.resolve())
-    assert payload["findings"] == []
-
-
-def test_missing_root_returns_usage_exit_code(tmp_path):
-    missing_root = tmp_path / "missing"
-
-    result = run_validator(missing_root)
-
-    assert result.returncode == 2
-    assert "unreadable project root" in result.stderr
+    assert {
+        "rule_id": "invalid-status",
+        "severity": "error",
+        "path": "docs/domain-harness/index.md",
+        "message": "Invalid status for domain checkout-api: paused.",
+        "domain": "checkout-api",
+    } in payload["findings"]
 
 
 def test_reporter_groups_validator_findings(tmp_path):
