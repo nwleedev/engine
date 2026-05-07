@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "synthetic": {
+    "root": "synthetic",
+    "description": "Public-safe synthetic domain-harness evaluation corpus."
+  },
+  "repos": []
+}

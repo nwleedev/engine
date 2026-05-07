@@ -1,10 +1,10 @@
-# Improvement Report Template
+# Evaluation Report Template
 
-Use this template inside a downstream project when a domain harness quality issue needs a local record.
+Use this template inside `harness-foundry-lab` when evaluation corpus validation needs a maintainer record.
 
 ## Summary
 
-- Project:
+- Corpus:
 - Report date:
 - Trigger:
 - Validator command:
@@ -24,17 +24,17 @@ Use this template inside a downstream project when a domain harness quality issu
 
 ## Local fix candidates
 
-- Record fixes that should stay inside the downstream project.
+- Record fixes that should stay inside the evaluated project or corpus sample.
 - Include owner, expected file changes, and verification commands.
 
-## Upstream regression candidates
+## Sanitized evaluation case candidates
 
-- Record sanitized cases that may improve `harness-foundry` fixtures, validator rules, templates, or documentation.
+- Record public-safe cases that may improve `harness-foundry` fixtures, validator rules, templates, or documentation.
 - Do not include proprietary code, customer details, internal documents, credentials, or unreleased strategy.
 
-## Privacy and sanitization review
+## Public-safety review
 
-- `privacy_sanitization_check`: not yet reviewed
+- `public_safety_check`: not yet reviewed
 - Removed sensitive details:
 - Synthetic replacements used:
 - Reviewer:
@@ -43,7 +43,7 @@ Use this template inside a downstream project when a domain harness quality issu
 
 - [ ] Validator was run after local edits.
 - [ ] Report contains no secrets, credentials, customer data, private source code, or internal documents.
-- [ ] Upstream candidates were sanitized before sharing outside the project.
+- [ ] Evaluation case candidates were sanitized before sharing outside the project.
 - [ ] Open questions have an owner.
 
 ## Open questions

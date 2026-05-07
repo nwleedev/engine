@@ -18,7 +18,7 @@ This document defines deterministic v1 validation rules for project-local `docs/
 | `missing-development-guardrails` | error | `spec.md` | Development harnesses include implementation, testing, security, and dependency guardrails. |
 | `missing-non-development-source-policy` | error | `spec.md` | Non-development harnesses include source quality, privacy, tone, and approval guardrails. |
 | `missing-mixed-split-guardrails` | error | `spec.md` | Mixed harnesses split development and non-development guardrails. |
-| `missing-privacy-sanitization-check` | warning | reports and regression cases | Reports or regression cases include `privacy_sanitization_check` or equivalent text. |
+| `missing-public-safety-check` | warning | evaluation reports and sanitized evaluation cases | Evaluation reports or sanitized evaluation cases include `public_safety_check` or equivalent text. |
 
 ## Registry Contract
 
@@ -43,6 +43,6 @@ Non-development harnesses must define source quality, privacy, brand or tone, an
 
 Mixed harnesses must explicitly separate development and non-development guardrails so implementation rules do not silently govern research, planning, communication, or strategy work.
 
-## Privacy Metric
+## Public-Safety Metric
 
-`privacy_sanitization_check` means the author confirmed that secrets, credentials, customer data, private source code, and internal documents were removed or replaced with neutral synthetic details before a report or regression case is shared.
+`public_safety_check` means the author confirmed that secrets, credentials, customer data, private source code, and internal documents were removed or replaced with neutral synthetic details before an evaluation report or sanitized evaluation case is shared.

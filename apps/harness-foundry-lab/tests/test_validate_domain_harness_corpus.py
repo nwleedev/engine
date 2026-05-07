@@ -4,10 +4,10 @@ import subprocess
 from pathlib import Path
 
 
-ROOT = Path("plugins/harness-foundry")
-FIXTURES = ROOT / "fixtures" / "domain-harness"
-VALIDATOR = ROOT / "scripts" / "validate_domain_harness.py"
-REPORTER = ROOT / "scripts" / "summarize_domain_harness_failures.py"
+ROOT = Path("apps/harness-foundry-lab")
+FIXTURES = ROOT / "corpus" / "domain-harness" / "synthetic"
+VALIDATOR = ROOT / "scripts" / "validate_domain_harness_corpus.py"
+REPORTER = ROOT / "scripts" / "render_evaluation_report.py"
 VALID_FIXTURES = ("valid-dev", "valid-nondev", "valid-mixed")
 INVALID_FIXTURES = (
     "invalid-missing-registry",
@@ -106,18 +106,18 @@ def test_reporter_groups_validator_findings(tmp_path):
     assert result.returncode == 0
     assert "## Summary" in result.stdout
     assert "## Local fix candidates" in result.stdout
-    assert "## Upstream regression candidates" in result.stdout
-    assert "## Privacy and sanitization review" in result.stdout
-    assert "privacy_sanitization_check" in result.stdout
+    assert "## Sanitized evaluation case candidates" in result.stdout
+    assert "## Public-safety review" in result.stdout
+    assert "public_safety_check" in result.stdout
     assert "missing-evals-file" in result.stdout
 
 
-def test_report_without_privacy_sanitization_check_returns_warning(tmp_path):
+def test_report_without_public_safety_check_returns_warning(tmp_path):
     project_root = copy_fixture(tmp_path, "valid-dev")
-    report_dir = project_root / "docs" / "domain-harness" / "reports"
+    report_dir = project_root / "docs" / "domain-harness" / "evaluation-reports"
     report_dir.mkdir()
-    report_path = report_dir / "2026-05-07-improvement-report.md"
-    report_path.write_text("# Report\n\nNo privacy review yet.\n", encoding="utf-8")
+    report_path = report_dir / "2026-05-07-evaluation-report.md"
+    report_path.write_text("# Report\n\nNo release review yet.\n", encoding="utf-8")
 
     result = run_validator(project_root, "--json")
 
@@ -125,30 +125,30 @@ def test_report_without_privacy_sanitization_check_returns_warning(tmp_path):
     payload = json.loads(result.stdout)
     assert payload["ok"] is True
     actual_rule_ids = {finding["rule_id"] for finding in payload["findings"]}
-    assert "missing-privacy-sanitization-check" in actual_rule_ids
+    assert "missing-public-safety-check" in actual_rule_ids
 
 
 def test_warning_only_human_output_passes_with_warnings(tmp_path):
     project_root = copy_fixture(tmp_path, "valid-dev")
-    report_dir = project_root / "docs" / "domain-harness" / "reports"
+    report_dir = project_root / "docs" / "domain-harness" / "evaluation-reports"
     report_dir.mkdir()
-    report_path = report_dir / "2026-05-07-improvement-report.md"
-    report_path.write_text("# Report\n\nNo privacy review yet.\n", encoding="utf-8")
+    report_path = report_dir / "2026-05-07-evaluation-report.md"
+    report_path.write_text("# Report\n\nNo release review yet.\n", encoding="utf-8")
 
     result = run_validator(project_root)
 
     assert result.returncode == 0
     assert "domain harness validation passed with warnings" in result.stdout
     assert "domain harness validation failed" not in result.stdout
-    assert "missing-privacy-sanitization-check" in result.stdout
+    assert "missing-public-safety-check" in result.stdout
 
 
-def test_regression_case_without_privacy_sanitization_check_returns_warning(tmp_path):
+def test_sanitized_evaluation_case_without_public_safety_check_returns_warning(tmp_path):
     project_root = copy_fixture(tmp_path, "valid-dev")
-    regression_dir = project_root / "docs" / "domain-harness" / "regression-cases"
-    regression_dir.mkdir()
-    regression_path = regression_dir / "checkout-api-case.md"
-    regression_path.write_text("# Regression case\n\nNo privacy review yet.\n", encoding="utf-8")
+    case_dir = project_root / "docs" / "domain-harness" / "sanitized-evaluation-cases"
+    case_dir.mkdir()
+    case_path = case_dir / "checkout-api-case.md"
+    case_path.write_text("# Sanitized evaluation case\n\nNo release review yet.\n", encoding="utf-8")
 
     result = run_validator(project_root, "--json")
 
@@ -157,7 +157,7 @@ def test_regression_case_without_privacy_sanitization_check_returns_warning(tmp_
     assert payload["ok"] is True
     findings = payload["findings"]
     assert any(
-        finding["rule_id"] == "missing-privacy-sanitization-check"
-        and finding["path"] == "docs/domain-harness/regression-cases/checkout-api-case.md"
+        finding["rule_id"] == "missing-public-safety-check"
+        and finding["path"] == "docs/domain-harness/sanitized-evaluation-cases/checkout-api-case.md"
         for finding in findings
     )

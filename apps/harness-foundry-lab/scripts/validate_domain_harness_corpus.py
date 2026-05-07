@@ -184,19 +184,19 @@ def detect_unapproved_activation(path: Path, root: Path, domain: str) -> list[Fi
     return findings
 
 
-def validate_privacy_reports(harness_root: Path, root: Path) -> list[Finding]:
+def validate_public_safety_reviews(harness_root: Path, root: Path) -> list[Finding]:
     findings: list[Finding] = []
-    candidates = list((harness_root / "reports").glob("*.md"))
-    candidates.extend((harness_root / "regression-cases").glob("*.md"))
+    candidates = list((harness_root / "evaluation-reports").glob("*.md"))
+    candidates.extend((harness_root / "sanitized-evaluation-cases").glob("*.md"))
     for path in candidates:
         text = path.read_text(encoding="utf-8").lower()
-        if "privacy_sanitization_check" not in text and "privacy and sanitization" not in text:
+        if "public_safety_check" not in text and "public-safety review" not in text:
             findings.append(
                 Finding(
-                    "missing-privacy-sanitization-check",
+                    "missing-public-safety-check",
                     "warning",
                     relative_path(path, root),
-                    "Report or regression case must include privacy_sanitization_check or equivalent privacy review.",
+                    "Evaluation report or sanitized evaluation case must include public_safety_check or equivalent public-safety review.",
                 )
             )
     return findings
@@ -268,7 +268,7 @@ def validate_project(root: Path) -> list[Finding]:
         for artifact_path in paths.values():
             findings.extend(detect_unapproved_activation(artifact_path, root, domain))
 
-    findings.extend(validate_privacy_reports(harness_root, root))
+    findings.extend(validate_public_safety_reviews(harness_root, root))
     return findings
 
 
@@ -289,8 +289,8 @@ def render_human(root: Path, findings: list[Finding]) -> str:
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Validate project-local domain harness artifacts.")
-    parser.add_argument("project_root", help="Project root containing docs/domain-harness/index.md")
+    parser = argparse.ArgumentParser(description="Validate domain-harness evaluation corpus artifacts.")
+    parser.add_argument("project_root", help="Root containing docs/domain-harness/index.md")
     parser.add_argument("--json", action="store_true", help="Print machine-readable JSON output")
     return parser.parse_args(argv)
 

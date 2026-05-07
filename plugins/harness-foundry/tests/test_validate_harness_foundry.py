@@ -113,3 +113,25 @@ def test_validator_rejects_missing_boundary_file(tmp_path):
 
     assert result.returncode == 1
     assert "missing required file: README.ko.md" in result.stdout
+
+
+def test_validator_rejects_extra_reference_file(tmp_path):
+    plugin = copy_plugin(tmp_path)
+    extra_reference = plugin / "references" / ("improvement-" + "report-template.md")
+    extra_reference.write_text("# Lab-only template\n", encoding="utf-8")
+
+    result = run_validator(plugin)
+
+    assert result.returncode == 1
+    assert "reference files mismatch" in result.stdout
+
+
+def test_validator_rejects_extra_script_file(tmp_path):
+    plugin = copy_plugin(tmp_path)
+    extra_script = plugin / "scripts" / ("validate_" + "domain_harness.py")
+    extra_script.write_text("#!/usr/bin/env python3\n", encoding="utf-8")
+
+    result = run_validator(plugin)
+
+    assert result.returncode == 1
+    assert "script files mismatch" in result.stdout

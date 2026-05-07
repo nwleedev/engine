@@ -14,7 +14,7 @@ metadata:
 3. Identify the files that may be created for specs, evals, scaffold plans, project-local skills, subagents, rules, hooks, and MCP guidance.
 4. Split documentation scaffold from runtime behavior changes.
 5. Produce a scaffold plan before writing or activating anything, including file list, diff preview, rollback note, and approval gates.
-6. Treat GitHub issue and PR templates as passive assets unless the user explicitly approves copying them into the target project in Phase 7.
+6. Keep GitHub issue and PR templates outside the v1 public plugin scaffold flow.
 7. Include verification commands and rollback notes for each phase.
 
 ## Output
@@ -31,14 +31,12 @@ AGENTS.md, MCP configuration, hooks, and subagents require separate explicit app
 
 docs/domain-harness/** files require explicit approval before creation or modification.
 
-GitHub issue and PR templates require separate explicit approval before copying them into a downstream project `.github/**` location.
-
-Use `references/downstream-adoption-guide.md` as the canonical downstream adoption phase reference.
+GitHub issue and PR templates are outside the v1 public plugin scaffold flow.
 
 ## Do not
 
 - Do not automatically modify AGENTS.md.
 - Do not automatically install MCP servers.
 - Do not activate hooks or subagents without explicit approval.
-- Do not install GitHub issue or PR templates without explicit approval.
+- Do not install GitHub issue or PR templates from this plugin flow.
 - Do not write project-local domain harness files without explicit approval.

@@ -11,7 +11,7 @@ from typing import Any
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Convert validate_domain_harness JSON into an improvement report draft."
+        description="Convert domain harness corpus validation JSON into an evaluation report draft."
     )
     parser.add_argument("validation_json", help="Path to validator JSON output")
     return parser.parse_args(argv)
@@ -33,7 +33,7 @@ def render_report(payload: dict[str, Any]) -> str:
     findings = payload.get("findings", [])
     grouped = group_findings(findings)
     lines = [
-        "# Domain Harness Improvement Report",
+        "# Domain Harness Evaluation Report",
         "",
         "## Summary",
         "",
@@ -76,20 +76,20 @@ def render_report(payload: dict[str, Any]) -> str:
             "- Review each finding inside the downstream project before editing files.",
             "- Treat missing files, registry errors, and guardrail gaps as local fixes first.",
             "",
-            "## Upstream regression candidates",
+            "## Sanitized evaluation case candidates",
             "",
             "- Consider upstream contribution only after the case is reduced to public-safe synthetic content.",
             "- Candidate rule ids: "
             + (", ".join(sorted({finding.get("rule_id", "") for finding in findings})) or "none"),
             "",
-            "## Privacy and sanitization review",
+            "## Public-safety review",
             "",
-            "- `privacy_sanitization_check`: not yet reviewed",
+            "- `public_safety_check`: not yet reviewed",
             "- Confirm that secrets, credentials, customer data, private source code, and internal documents are absent before sharing.",
             "",
             "## Verification checklist",
             "",
-            "- [ ] Re-run `validate_domain_harness.py` after local fixes.",
+            "- [ ] Re-run `validate_domain_harness_corpus.py` after local fixes.",
             "- [ ] Confirm report contents are public-safe before upstream sharing.",
             "- [ ] Assign owners for unresolved findings.",
             "",

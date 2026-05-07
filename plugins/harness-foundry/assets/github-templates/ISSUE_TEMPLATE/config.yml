@@ -1,5 +1,0 @@
-blank_issues_enabled: false
-contact_links:
-  - name: harness-foundry documentation
-    url: https://developers.openai.com/codex/plugins
-    about: Review Codex plugin documentation before installing templates into a project.

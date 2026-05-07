@@ -14,17 +14,6 @@ REFERENCE_FILES = (
     "registry-template.md",
     "evaluation-template.md",
     "risk-checklist.md",
-    "domain-harness-eval-metrics.md",
-    "improvement-report-template.md",
-    "sanitized-regression-case-template.md",
-    "downstream-issue-template.md",
-    "downstream-adoption-guide.md",
-)
-ISSUE_TEMPLATE_FILES = (
-    "harness-quality-issue.yml",
-    "upstream-regression-case.yml",
-    "harness-feature-request.yml",
-    "config.yml",
 )
 
 
@@ -61,60 +50,17 @@ def test_required_references_exist():
         assert (ROOT / "references" / reference_file).is_file()
 
 
-def test_issue_template_assets_are_complete():
-    template_dir = ROOT / "assets" / "github-templates" / "ISSUE_TEMPLATE"
-    for template_file in ISSUE_TEMPLATE_FILES:
-        assert (template_dir / template_file).is_file()
-    assert (ROOT / "assets" / "github-templates" / "pull_request_template.md").is_file()
-
-
-def test_issue_templates_include_privacy_sanitization_check():
-    for template_file in ISSUE_TEMPLATE_FILES[:3]:
-        text = read(f"assets/github-templates/ISSUE_TEMPLATE/{template_file}")
-        assert "privacy_sanitization_check" in text
-
-
-def test_improvement_report_template_has_required_sections():
-    text = read("references/improvement-report-template.md")
-    for heading in (
-        "## Summary",
-        "## Affected harnesses",
-        "## Findings",
-        "## Local fix candidates",
-        "## Upstream regression candidates",
-        "## Privacy and sanitization review",
-        "## Verification checklist",
-        "## Open questions",
-    ):
-        assert heading in text
-
-
-def test_downstream_adoption_guide_defines_operator_run_boundary():
-    text = read("references/downstream-adoption-guide.md")
+def test_readmes_do_not_expose_downstream_loop():
+    combined = read("README.md") + "\n" + read("README.ko.md")
     for phrase in (
-        "Operator-run is the default v1 adoption model.",
-        "docs/domain-harness/reports/<date>-improvement-report.md",
-        "GitHub issue and PR templates remain passive assets until explicit approval.",
-        "Do not copy downstream project source, customer data, internal documents, or credentials into upstream fixtures.",
-        "Separate local fixes from upstream regression candidates.",
+        "Downstream " + "Quality Loop",
+        "Downstream " + "Adoption Models",
+        "Operator-" + "run",
+        "Project-local " + "tooling",
+        "Plugin-mediated " + "workflow",
+        "privacy_" + "sanitization_check",
     ):
-        assert phrase in text
-
-
-def test_readmes_explain_downstream_adoption_models():
-    english = read("README.md")
-    korean = read("README.ko.md")
-    for phrase in (
-        "Operator-run",
-        "Project-local tooling",
-        "Plugin-mediated workflow",
-    ):
-        assert phrase in english
-    assert "Operator-run" in korean
-    assert "현업 프로젝트의 report는 자동 저장하지 않습니다" in korean
-    assert "Report drafts are not auto-saved" in english
-    assert "privacy_sanitization_check" in english
-    assert "explicit approval" in english
+        assert phrase not in combined
 
 
 def test_scaffold_skill_requires_downstream_approval_gates():
@@ -124,18 +70,19 @@ def test_scaffold_skill_requires_downstream_approval_gates():
         "docs/domain-harness/** files require explicit approval",
         "diff preview",
         "rollback note",
-        "Phase 7",
+        "GitHub issue and PR templates are outside the v1 public plugin scaffold flow.",
     ):
         assert phrase in text
 
 
-def test_audit_skill_classifies_downstream_findings():
+def test_audit_skill_stays_in_public_plugin_scope():
     text = read("skills/audit-domain-harness/SKILL.md")
+    assert "Perform a read-only audit" in text
+    assert "Findings ordered by severity" in text
     for phrase in (
-        "validate_domain_harness.py",
-        "local harness issue",
-        "upstream plugin issue",
-        "runtime activation issue",
-        "privacy_sanitization_check",
+        "downstream",
+        "upstream " + "plugin issue",
+        "privacy_" + "sanitization_check",
+        "validate_" + "domain_harness.py",
     ):
-        assert phrase in text
+        assert phrase not in text

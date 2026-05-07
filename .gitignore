@@ -14,3 +14,5 @@ AGENTS.md
 /.codex/
 .env
 packages/searxng/
+/apps/harness-foundry-lab/corpus/domain-harness/repos/*
+!/apps/harness-foundry-lab/corpus/domain-harness/repos/.gitkeep

@@ -1,6 +1,6 @@
-# Sanitized Regression Case Template
+# Sanitized Evaluation Case Template
 
-Use this template when a downstream project issue may become an upstream `harness-foundry` fixture or validator rule.
+Use this template when an evaluation finding may become a `harness-foundry` synthetic corpus sample or validator rule.
 
 ## Summary
 
@@ -8,7 +8,7 @@ Use this template when a downstream project issue may become an upstream `harnes
 - Harness domain:
 - Work type:
 - Failure mode:
-- Proposed upstream rule or fixture:
+- Proposed rule or corpus sample:
 
 ## Sanitized reproduction
 
@@ -24,16 +24,16 @@ Provide the smallest synthetic `docs/domain-harness/**` tree that reproduces the
 | internal documents | yes/no | public-safe summary |
 | strategy or roadmap | yes/no | generic scenario |
 
-## Privacy and sanitization review
+## Public-safety review
 
-- `privacy_sanitization_check`: not yet reviewed
+- `public_safety_check`: not yet reviewed
 - Reviewer:
 - Review date:
 
-## Fixture acceptance criteria
+## Corpus acceptance criteria
 
 - The case is public-safe synthetic content.
-- The fixture has one primary expected failure.
+- The sample has one primary expected failure.
 - The expected `rule_id` is deterministic.
 - The case improves a validator, template, report, or skill boundary.
-- The case does not require access to the original downstream project.
+- The case does not require access to the original project.
