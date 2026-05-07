@@ -9,7 +9,7 @@ Repo-local maintainer app for evaluating `harness-foundry`.
 ## Boundaries
 
 - Do not place plugin runtime skills here.
-- Do not copy private downstream project code, customer data, credentials, or internal documents into the corpus.
+- Do not copy private source project code, customer data, credentials, or internal documents into the corpus.
 - Synthetic corpus must be public-safe.
 - Cloned repositories under `corpus/domain-harness/repos/` are local evaluation inputs and must not be committed.
 
