@@ -20,6 +20,7 @@ REQUIRED_COLUMNS = (
     "last_reviewed",
 )
 VALID_WORK_TYPES = {"development", "non-development", "mixed"}
+VALID_STATUSES = {"draft", "active", "deprecated"}
 ACTIVE_STATUSES = {"active"}
 
 
@@ -54,7 +55,31 @@ def relative_path(path: Path, root: Path) -> str:
 
 def parse_registry(index_path: Path, root: Path) -> tuple[list[dict[str, str]], list[Finding]]:
     lines = index_path.read_text(encoding="utf-8").splitlines()
-    table_lines = [line for line in lines if line.strip().startswith("|") and line.strip().endswith("|")]
+    tables: list[list[str]] = []
+    current_table: list[str] = []
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith("|") and stripped.endswith("|"):
+            current_table.append(line)
+            continue
+        if current_table:
+            tables.append(current_table)
+            current_table = []
+    if current_table:
+        tables.append(current_table)
+
+    table_lines = next(
+        (
+            table
+            for table in tables
+            if len(table) >= 2
+            and all(
+                column in [clean_cell(cell) for cell in table[0].strip().strip("|").split("|")]
+                for column in REQUIRED_COLUMNS
+            )
+        ),
+        tables[0] if tables else [],
+    )
     if len(table_lines) < 2:
         return [], [
             Finding(
@@ -212,9 +237,20 @@ def validate_project(root: Path) -> list[Finding]:
 
     for row in rows:
         status = row.get("status", "")
+        domain = row.get("domain", "")
+        if status not in VALID_STATUSES:
+            findings.append(
+                Finding(
+                    "invalid-status",
+                    "error",
+                    relative_path(index_path, root),
+                    f"Invalid status for domain {domain}: {status}.",
+                    domain,
+                )
+            )
+            continue
         if status not in ACTIVE_STATUSES:
             continue
-        domain = row.get("domain", "")
         work_type = row.get("work_type", "")
         if work_type not in VALID_WORK_TYPES:
             findings.append(

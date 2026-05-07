@@ -55,6 +55,47 @@ def read_fixture_contract(fixture_name: str) -> dict[str, object]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def write_minimal_domain_harness(
+    project_root: Path,
+    *,
+    work_type: str = "development",
+    status: str = "active",
+    scaffold_path: str = "checkout-api/scaffold.md",
+    extra_index_content: str = "",
+) -> None:
+    harness_root = project_root / "docs" / "domain-harness"
+    domain_root = harness_root / "checkout-api"
+    domain_root.mkdir(parents=True)
+    (domain_root / "spec.md").write_text(
+        "\n".join(
+            [
+                "# Checkout API Harness",
+                "Implementation scope",
+                "Test strategy",
+                "Security review",
+                "Dependency policy",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (domain_root / "evals.md").write_text("# Evals\n", encoding="utf-8")
+    if scaffold_path == "checkout-api/scaffold.md":
+        (domain_root / "scaffold.md").write_text("# Scaffold\n", encoding="utf-8")
+    (harness_root / "index.md").write_text(
+        "\n".join(
+            [
+                "# Domain Harness Registry",
+                "",
+                "| domain | work_type | status | owner | spec | evals | scaffold | last_reviewed |",
+                "|---|---|---|---|---|---|---|---|",
+                f"| checkout-api | {work_type} | {status} | platform-team | `checkout-api/spec.md` | `checkout-api/evals.md` | `{scaffold_path}` | 2026-05-06 |",
+                extra_index_content,
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+
 def test_valid_domain_harness_fixtures_pass(tmp_path):
     for fixture_name in VALID_FIXTURES:
         project_root = copy_fixture(tmp_path, fixture_name)
@@ -97,3 +138,77 @@ def test_domain_harness_missing_root_returns_usage_exit_code(tmp_path):
 
     assert result.returncode == 2
     assert "unreadable project root" in result.stderr
+
+
+def test_invalid_work_type_returns_domain_finding(tmp_path):
+    project_root = tmp_path / "invalid-work-type"
+    write_minimal_domain_harness(project_root, work_type="operations")
+
+    result = run_validator(project_root, "--json")
+
+    assert result.returncode == 1
+    payload = json.loads(result.stdout)
+    assert {
+        "rule_id": "invalid-work-type",
+        "severity": "error",
+        "path": "docs/domain-harness/index.md",
+        "message": "Invalid work_type for domain checkout-api: operations.",
+        "domain": "checkout-api",
+    } in payload["findings"]
+
+
+def test_missing_scaffold_file_returns_domain_finding(tmp_path):
+    project_root = tmp_path / "missing-scaffold"
+    write_minimal_domain_harness(project_root, scaffold_path="checkout-api/missing-scaffold.md")
+
+    result = run_validator(project_root, "--json")
+
+    assert result.returncode == 1
+    payload = json.loads(result.stdout)
+    assert {
+        "rule_id": "missing-scaffold-file",
+        "severity": "error",
+        "path": "docs/domain-harness/checkout-api/missing-scaffold.md",
+        "message": "Active registry row for checkout-api points to a missing file.",
+        "domain": "checkout-api",
+    } in payload["findings"]
+
+
+def test_invalid_status_returns_domain_finding_at_registry_path(tmp_path):
+    project_root = tmp_path / "invalid-status"
+    write_minimal_domain_harness(project_root, status="paused")
+
+    result = run_validator(project_root, "--json")
+
+    assert result.returncode == 1
+    payload = json.loads(result.stdout)
+    assert {
+        "rule_id": "invalid-status",
+        "severity": "error",
+        "path": "docs/domain-harness/index.md",
+        "message": "Invalid status for domain checkout-api: paused.",
+        "domain": "checkout-api",
+    } in payload["findings"]
+
+
+def test_registry_parser_ignores_unrelated_later_pipe_table(tmp_path):
+    project_root = tmp_path / "later-table"
+    write_minimal_domain_harness(
+        project_root,
+        extra_index_content="\n".join(
+            [
+                "",
+                "## Notes",
+                "",
+                "| item | value |",
+                "|---|---|",
+                "| unrelated | ignored |",
+            ]
+        ),
+    )
+
+    result = run_validator(project_root, "--json")
+
+    assert result.returncode == 0
+    payload = json.loads(result.stdout)
+    assert payload["findings"] == []
