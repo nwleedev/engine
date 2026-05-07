@@ -126,7 +126,7 @@ def contains_all(text: str, required_patterns: tuple[str, ...]) -> bool:
 def validate_work_type_guardrails(
     work_type: str, spec_path: Path, root: Path, domain: str
 ) -> list[Finding]:
-    if not spec_path.exists():
+    if not spec_path.is_file():
         return []
     text = spec_path.read_text(encoding="utf-8")
     rel = relative_path(spec_path, root)
@@ -181,7 +181,7 @@ def validate_work_type_guardrails(
 
 
 def detect_unapproved_activation(path: Path, root: Path, domain: str) -> list[Finding]:
-    if not path.exists():
+    if not path.is_file():
         return []
     text = path.read_text(encoding="utf-8").lower()
     rel = relative_path(path, root)
@@ -270,7 +270,7 @@ def validate_project(root: Path) -> list[Finding]:
             "missing-scaffold-file": harness_root / row.get("scaffold", ""),
         }
         for rule_id, path in paths.items():
-            if not path.exists():
+            if not path.is_file():
                 findings.append(
                     Finding(
                         rule_id,

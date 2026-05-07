@@ -60,6 +60,8 @@ def write_minimal_domain_harness(
     *,
     work_type: str = "development",
     status: str = "active",
+    spec_path: str = "checkout-api/spec.md",
+    evals_path: str = "checkout-api/evals.md",
     scaffold_path: str = "checkout-api/scaffold.md",
     extra_index_content: str = "",
 ) -> None:
@@ -88,7 +90,7 @@ def write_minimal_domain_harness(
                 "",
                 "| domain | work_type | status | owner | spec | evals | scaffold | last_reviewed |",
                 "|---|---|---|---|---|---|---|---|",
-                f"| checkout-api | {work_type} | {status} | platform-team | `checkout-api/spec.md` | `checkout-api/evals.md` | `{scaffold_path}` | 2026-05-06 |",
+                f"| checkout-api | {work_type} | {status} | platform-team | `{spec_path}` | `{evals_path}` | `{scaffold_path}` | 2026-05-06 |",
                 extra_index_content,
             ]
         ),
@@ -172,6 +174,28 @@ def test_missing_scaffold_file_returns_domain_finding(tmp_path):
         "message": "Active registry row for checkout-api points to a missing file.",
         "domain": "checkout-api",
     } in payload["findings"]
+
+
+@pytest.mark.parametrize(
+    ("path_overrides", "expected_rule_id"),
+    [
+        ({"spec_path": ""}, "missing-spec-file"),
+        ({"evals_path": ""}, "missing-evals-file"),
+        ({"scaffold_path": ""}, "missing-scaffold-file"),
+    ],
+)
+def test_empty_registry_artifact_reference_returns_domain_finding(
+    tmp_path, path_overrides, expected_rule_id
+):
+    project_root = tmp_path / f"empty-{expected_rule_id}"
+    write_minimal_domain_harness(project_root, **path_overrides)
+
+    result = run_validator(project_root, "--json")
+
+    assert result.returncode == 1
+    payload = json.loads(result.stdout)
+    actual_rule_ids = {finding["rule_id"] for finding in payload["findings"]}
+    assert expected_rule_id in actual_rule_ids
 
 
 def test_invalid_status_returns_domain_finding_at_registry_path(tmp_path):
