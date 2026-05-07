@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import argparse
 import json
 import re
 import sys
 from pathlib import Path
+from typing import Sequence
 
 
-ROOT = Path(
-    sys.argv[1] if len(sys.argv) > 1 else Path(__file__).resolve().parents[1]
-).resolve()
+REPO_ROOT = Path(__file__).resolve().parents[3]
+DEFAULT_PLUGIN_ROOT = REPO_ROOT / "plugins" / "harness-foundry"
 SKILL_NAMES = {
     "diagnose-project",
     "design-domain-harness",
@@ -29,14 +30,30 @@ REFERENCE_FILES = {
     "evaluation-template.md",
     "risk-checklist.md",
 }
-SCRIPT_FILES = {
-    "validate_harness_foundry.py",
+SKILL_LOCAL_SCRIPT_FILES = {
+    "skills/audit-domain-harness/scripts/validate_domain_harness.py",
 }
 
 
 def fail(message: str) -> None:
-    print(f"harness-foundry validation failed: {message}")
+    print(f"harness-foundry plugin package validation failed: {message}")
     sys.exit(1)
+
+
+def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Validate the harness-foundry public plugin package boundary."
+    )
+    parser.add_argument(
+        "plugin_root",
+        nargs="?",
+        default=DEFAULT_PLUGIN_ROOT,
+        type=lambda value: Path(value).resolve(),
+        help="Path to the plugin root. Defaults to plugins/harness-foundry.",
+    )
+    args = parser.parse_args(argv)
+    args.plugin_root = Path(args.plugin_root).resolve()
+    return args
 
 
 def parse_frontmatter(text: str) -> dict[str, str | dict[str, str]]:
@@ -66,8 +83,8 @@ def parse_frontmatter(text: str) -> dict[str, str | dict[str, str]]:
     return result
 
 
-def validate_manifest() -> None:
-    path = ROOT / ".codex-plugin" / "plugin.json"
+def validate_manifest(root: Path) -> None:
+    path = root / ".codex-plugin" / "plugin.json"
     if not path.exists():
         fail("missing required file: .codex-plugin/plugin.json")
     data = json.loads(path.read_text(encoding="utf-8"))
@@ -82,12 +99,12 @@ def validate_manifest() -> None:
     if data.get("skills") != "./skills/":
         fail("plugin skills path must be ./skills/")
     for relative_path in FORBIDDEN_PLUGIN_FILES:
-        if (ROOT / relative_path).exists():
+        if (root / relative_path).exists():
             fail(f"v1 skill-only plugin must not include {relative_path}")
 
 
-def validate_skills() -> None:
-    skills_dir = ROOT / "skills"
+def validate_skills(root: Path) -> None:
+    skills_dir = root / "skills"
     if not skills_dir.is_dir():
         fail("missing required directory: skills")
     actual = {path.name for path in skills_dir.iterdir() if path.is_dir()}
@@ -113,19 +130,27 @@ def validate_skills() -> None:
             fail(f"{skill_name} missing Do not or Boundaries section")
 
 
-def validate_references() -> None:
-    actual = {path.name for path in (ROOT / "references").glob("*.md")}
+def validate_references(root: Path) -> None:
+    actual = {path.name for path in (root / "references").glob("*.md")}
     if actual != REFERENCE_FILES:
         fail(f"reference files mismatch: {sorted(actual)}")
 
 
-def validate_scripts() -> None:
-    actual_scripts = {path.name for path in (ROOT / "scripts").glob("*.py")}
-    if actual_scripts != SCRIPT_FILES:
-        fail(f"script files mismatch: {sorted(actual_scripts)}")
+def validate_scripts(root: Path) -> None:
+    plugin_root_scripts = sorted(path.name for path in (root / "scripts").glob("*.py"))
+    if plugin_root_scripts:
+        fail(f"plugin root must not include scripts/*.py: {plugin_root_scripts}")
+
+    missing_skill_scripts = [
+        relative_path
+        for relative_path in sorted(SKILL_LOCAL_SCRIPT_FILES)
+        if not (root / relative_path).is_file()
+    ]
+    if missing_skill_scripts:
+        fail(f"missing required skill-local script files: {missing_skill_scripts}")
 
 
-def validate_boundary_patterns() -> None:
+def validate_boundary_patterns(root: Path) -> None:
     required_by_file = {
         "README.md": (
             "It does not bulk-install public awesome repositories.",
@@ -153,7 +178,7 @@ def validate_boundary_patterns() -> None:
         ),
     }
     for relative_path, patterns in required_by_file.items():
-        path = ROOT / relative_path
+        path = root / relative_path
         if not path.exists():
             fail(f"missing required file: {relative_path}")
         text = path.read_text(encoding="utf-8")
@@ -162,13 +187,18 @@ def validate_boundary_patterns() -> None:
                 fail(f"{relative_path} missing boundary pattern: {pattern}")
 
 
-def main() -> None:
-    validate_manifest()
-    validate_skills()
-    validate_references()
-    validate_scripts()
-    validate_boundary_patterns()
-    print("harness-foundry validation passed")
+def validate_plugin_package(root: Path) -> None:
+    validate_manifest(root)
+    validate_skills(root)
+    validate_references(root)
+    validate_scripts(root)
+    validate_boundary_patterns(root)
+
+
+def main(argv: Sequence[str] | None = None) -> None:
+    args = parse_args(argv)
+    validate_plugin_package(args.plugin_root)
+    print("harness-foundry plugin package validation passed")
 
 
 if __name__ == "__main__":
