@@ -15,7 +15,20 @@ Repo-local maintainer app for evaluating `harness-foundry`.
 
 ## Verification
 
+Maintainer package boundary validation:
+
+```bash
+rtk python3 apps/harness-foundry-lab/scripts/validate_plugin_package.py
+```
+
+Maintainer corpus wrapper validation:
+
 ```bash
 rtk python3 apps/harness-foundry-lab/scripts/validate_domain_harness_corpus.py apps/harness-foundry-lab/corpus/domain-harness/synthetic/valid-dev
+```
+
+Lab tests:
+
+```bash
 rtk pytest apps/harness-foundry-lab/tests
 ```

@@ -15,6 +15,10 @@ metadata:
 4. Identify conflicts between skills, subagents, rules, hooks, MCP guidance, and project instructions.
 5. Report findings before summaries.
 
+Use `scripts/validate_domain_harness.py <project-root>` only as a read-only
+audit aid for `docs/domain-harness/**`; it does not replace evidence-based
+findings or user-approved remediation.
+
 ## Output
 
 - Findings ordered by severity

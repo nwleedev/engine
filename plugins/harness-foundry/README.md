@@ -24,9 +24,13 @@ Codex-first skills for designing project-specific domain harnesses.
 
 ## Verification
 
-Run:
+Installed plugin users interact with the public skill surface and project-local
+domain harness artifacts. To validate a user project's `docs/domain-harness/**`
+files, run the skill-local read-only validator from this repository:
 
 ```bash
-rtk python3 plugins/harness-foundry/scripts/validate_harness_foundry.py
-rtk pytest plugins/harness-foundry/tests
+rtk python3 plugins/harness-foundry/skills/audit-domain-harness/scripts/validate_domain_harness.py <project-root>
 ```
+
+Maintainer-only plugin package and corpus validation lives in
+`apps/harness-foundry-lab`; see that app's README for lab commands.

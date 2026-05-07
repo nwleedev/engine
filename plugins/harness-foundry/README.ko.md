@@ -28,9 +28,14 @@
 
 ## 검증
 
-실행:
+설치된 plugin 사용자는 공개 skill surface와 프로젝트 로컬
+`docs/domain-harness/**` 산출물을 다룹니다. 사용자 프로젝트의
+`docs/domain-harness/**` 파일을 검증하려면 이 저장소의 skill-local
+read-only validator를 실행합니다.
 
 ```bash
-rtk python3 plugins/harness-foundry/scripts/validate_harness_foundry.py
-rtk pytest plugins/harness-foundry/tests
+rtk python3 plugins/harness-foundry/skills/audit-domain-harness/scripts/validate_domain_harness.py <project-root>
 ```
+
+Maintainer 전용 plugin package 검증과 corpus 검증은
+`apps/harness-foundry-lab`에 있으며, lab 명령은 해당 app README를 참고합니다.

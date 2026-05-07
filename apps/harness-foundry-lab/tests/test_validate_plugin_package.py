@@ -226,6 +226,21 @@ def test_readmes_list_all_skills():
         assert skill in korean
 
 
+def test_readmes_separate_public_validator_from_lab_validation():
+    english = read_plugin_file("README.md")
+    korean = read_plugin_file("README.ko.md")
+    combined = english + "\n" + korean
+
+    assert (
+        "plugins/harness-foundry/skills/audit-domain-harness/scripts/validate_domain_harness.py <project-root>"
+        in combined
+    )
+    assert "`docs/domain-harness/**`" in english
+    assert "`docs/domain-harness/**`" in korean
+    assert "Maintainer-only plugin package and corpus validation lives in" in english
+    assert "Maintainer 전용 plugin package 검증과 corpus 검증" in korean
+
+
 def test_skills_keep_v1_boundaries():
     combined = "\n".join(read_plugin_file(f"skills/{skill}/SKILL.md") for skill in SKILLS)
     assert "Do not recommend bulk-installing public awesome repositories." in combined
@@ -276,10 +291,11 @@ def test_audit_skill_stays_in_public_plugin_scope():
     text = read_plugin_file("skills/audit-domain-harness/SKILL.md")
     assert "Perform a read-only audit" in text
     assert "Findings ordered by severity" in text
+    assert "scripts/validate_domain_harness.py <project-root>" in text
+    assert "read-only" in text
     for phrase in (
         "downstream",
         "upstream " + "plugin issue",
         "privacy_" + "sanitization_check",
-        "validate_" + "domain_harness.py",
     ):
         assert phrase not in text
