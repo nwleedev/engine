@@ -139,6 +139,8 @@ def validate_references(root: Path) -> None:
 def validate_scripts(root: Path) -> None:
     if (root / "scripts").exists():
         fail("plugin root must not include scripts directory")
+    if (root / "tests").exists():
+        fail("plugin root must not include tests directory")
 
     missing_skill_scripts = [
         relative_path

@@ -51,7 +51,7 @@ def copy_plugin(tmp_path: Path) -> Path:
     shutil.copytree(
         PLUGIN_ROOT,
         target,
-        ignore=shutil.ignore_patterns("__pycache__", "tests"),
+        ignore=shutil.ignore_patterns("__pycache__"),
     )
     return target
 
@@ -200,6 +200,18 @@ def test_validator_rejects_plugin_root_scripts_directory_with_nested_non_py_file
 
     assert result.returncode == 1
     assert "plugin root must not include scripts directory" in result.stdout
+
+
+def test_validator_rejects_plugin_root_tests_directory(tmp_path):
+    plugin = copy_plugin(tmp_path)
+    tests_dir = plugin / "tests"
+    tests_dir.mkdir(exist_ok=True)
+    (tests_dir / "test_plugin_surface.py").write_text("# lab-only test\n", encoding="utf-8")
+
+    result = run_validator(plugin)
+
+    assert result.returncode == 1
+    assert "plugin root must not include tests directory" in result.stdout
 
 
 def test_validator_rejects_missing_required_skill_local_script(tmp_path):

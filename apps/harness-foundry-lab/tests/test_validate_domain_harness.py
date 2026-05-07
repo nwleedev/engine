@@ -102,10 +102,12 @@ def test_valid_domain_harness_fixtures_pass(tmp_path):
     for fixture_name in VALID_FIXTURES:
         project_root = copy_fixture(tmp_path, fixture_name)
 
-        result = run_validator(project_root)
+        result = run_validator(project_root, "--json")
 
         assert result.returncode == 0, result.stdout + result.stderr
-        assert "domain harness validation passed" in result.stdout
+        payload = json.loads(result.stdout)
+        assert payload["ok"] is True
+        assert payload["findings"] == []
 
 
 def test_invalid_domain_harness_fixtures_fail_with_expected_rule_ids(tmp_path):
