@@ -8,6 +8,15 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 ROOT = REPO_ROOT / "apps" / "harness-foundry-lab"
 FIXTURES = ROOT / "corpus" / "domain-harness" / "synthetic"
 VALIDATOR = ROOT / "scripts" / "validate_domain_harness_corpus.py"
+BASE_VALIDATOR = (
+    REPO_ROOT
+    / "plugins"
+    / "harness-foundry"
+    / "skills"
+    / "audit-domain-harness"
+    / "scripts"
+    / "validate_domain_harness.py"
+)
 REPORTER = ROOT / "scripts" / "render_evaluation_report.py"
 
 
@@ -21,6 +30,15 @@ def copy_fixture(tmp_path: Path, fixture_name: str) -> Path:
 def run_validator(project_root: Path, *extra_args: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         ["python3", str(VALIDATOR), str(project_root), *extra_args],
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+
+
+def run_base_validator(project_root: Path, *extra_args: str) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        ["python3", str(BASE_VALIDATOR), str(project_root), *extra_args],
         check=False,
         text=True,
         capture_output=True,
@@ -83,6 +101,16 @@ def test_wrapper_forwards_base_validator_finding(tmp_path):
         "message": "Invalid status for domain checkout-api: paused.",
         "domain": "checkout-api",
     } in payload["findings"]
+
+
+def test_wrapper_json_matches_base_validator_without_lab_specific_artifacts(tmp_path):
+    project_root = copy_fixture(tmp_path, "valid-dev")
+
+    wrapper_result = run_validator(project_root, "--json")
+    base_result = run_base_validator(project_root, "--json")
+
+    assert wrapper_result.returncode == base_result.returncode
+    assert json.loads(wrapper_result.stdout) == json.loads(base_result.stdout)
 
 
 def test_reporter_groups_validator_findings(tmp_path):
@@ -151,3 +179,44 @@ def test_sanitized_evaluation_case_without_public_safety_check_returns_warning(t
         and finding["path"] == "docs/domain-harness/sanitized-evaluation-cases/checkout-api-case.md"
         for finding in findings
     )
+
+
+def test_unreadable_public_safety_candidates_return_warning_findings(tmp_path):
+    project_root = copy_fixture(tmp_path, "valid-dev")
+    report_dir = project_root / "docs" / "domain-harness" / "evaluation-reports"
+    report_dir.mkdir()
+    directory_candidate = report_dir / "nested.md"
+    directory_candidate.mkdir()
+    binary_candidate = report_dir / "legacy.md"
+    binary_candidate.write_bytes(b"\xff\xfe\x00")
+
+    result = run_validator(project_root, "--json")
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert result.stderr == ""
+    payload = json.loads(result.stdout)
+    assert payload["ok"] is True
+    unreadable_findings = sorted(
+        [
+            finding
+            for finding in payload["findings"]
+            if finding["rule_id"] == "unreadable-public-safety-artifact"
+        ],
+        key=lambda finding: finding["path"],
+    )
+    assert unreadable_findings == [
+        {
+            "rule_id": "unreadable-public-safety-artifact",
+            "severity": "warning",
+            "path": "docs/domain-harness/evaluation-reports/legacy.md",
+            "message": "Public-safety artifact candidate is not a readable UTF-8 file.",
+            "domain": "",
+        },
+        {
+            "rule_id": "unreadable-public-safety-artifact",
+            "severity": "warning",
+            "path": "docs/domain-harness/evaluation-reports/nested.md",
+            "message": "Public-safety artifact candidate is not a readable UTF-8 file.",
+            "domain": "",
+        },
+    ]

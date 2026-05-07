@@ -40,12 +40,28 @@ render_human = BASE_VALIDATOR.render_human
 validate_base_project = BASE_VALIDATOR.validate_project
 
 
+def unreadable_public_safety_finding(path: Path, root: Path) -> Finding:
+    return Finding(
+        "unreadable-public-safety-artifact",
+        "warning",
+        relative_path(path, root),
+        "Public-safety artifact candidate is not a readable UTF-8 file.",
+    )
+
+
 def validate_public_safety_reviews(harness_root: Path, root: Path) -> list[Finding]:
     findings: list[Finding] = []
-    candidates = list((harness_root / "evaluation-reports").glob("*.md"))
-    candidates.extend((harness_root / "sanitized-evaluation-cases").glob("*.md"))
+    candidates = sorted((harness_root / "evaluation-reports").glob("*.md"))
+    candidates.extend(sorted((harness_root / "sanitized-evaluation-cases").glob("*.md")))
     for path in candidates:
-        text = path.read_text(encoding="utf-8").lower()
+        if not path.is_file():
+            findings.append(unreadable_public_safety_finding(path, root))
+            continue
+        try:
+            text = path.read_text(encoding="utf-8").lower()
+        except UnicodeDecodeError:
+            findings.append(unreadable_public_safety_finding(path, root))
+            continue
         if "public_safety_check" not in text and "public-safety review" not in text:
             findings.append(
                 Finding(
