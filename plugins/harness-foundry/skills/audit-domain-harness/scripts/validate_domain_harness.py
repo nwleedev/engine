@@ -68,18 +68,7 @@ def parse_registry(index_path: Path, root: Path) -> tuple[list[dict[str, str]], 
     if current_table:
         tables.append(current_table)
 
-    table_lines = next(
-        (
-            table
-            for table in tables
-            if len(table) >= 2
-            and all(
-                column in [clean_cell(cell) for cell in table[0].strip().strip("|").split("|")]
-                for column in REQUIRED_COLUMNS
-            )
-        ),
-        tables[0] if tables else [],
-    )
+    table_lines = tables[0] if tables else []
     if len(table_lines) < 2:
         return [], [
             Finding(
@@ -212,7 +201,7 @@ def detect_unapproved_activation(path: Path, root: Path, domain: str) -> list[Fi
 def validate_project(root: Path) -> list[Finding]:
     harness_root = root / "docs" / "domain-harness"
     index_path = harness_root / "index.md"
-    if not index_path.exists():
+    if not index_path.is_file():
         return [
             Finding(
                 "missing-registry",
@@ -264,11 +253,25 @@ def validate_project(root: Path) -> list[Finding]:
             )
             continue
 
-        paths = {
-            "missing-spec-file": harness_root / row.get("spec", ""),
-            "missing-evals-file": harness_root / row.get("evals", ""),
-            "missing-scaffold-file": harness_root / row.get("scaffold", ""),
+        artifact_refs = {
+            "missing-spec-file": row.get("spec", ""),
+            "missing-evals-file": row.get("evals", ""),
+            "missing-scaffold-file": row.get("scaffold", ""),
         }
+        paths: dict[str, Path] = {}
+        for rule_id, artifact_ref in artifact_refs.items():
+            if not artifact_ref:
+                findings.append(
+                    Finding(
+                        rule_id,
+                        "error",
+                        relative_path(index_path, root),
+                        f"Active registry row for {domain} has an empty registry value.",
+                        domain,
+                    )
+                )
+                continue
+            paths[rule_id] = harness_root / artifact_ref
         for rule_id, path in paths.items():
             if not path.is_file():
                 findings.append(
@@ -281,8 +284,9 @@ def validate_project(root: Path) -> list[Finding]:
                     )
                 )
 
-        spec_path = paths["missing-spec-file"]
-        findings.extend(validate_work_type_guardrails(work_type, spec_path, root, domain))
+        spec_path = paths.get("missing-spec-file")
+        if spec_path is not None:
+            findings.extend(validate_work_type_guardrails(work_type, spec_path, root, domain))
         for artifact_path in paths.values():
             findings.extend(detect_unapproved_activation(artifact_path, root, domain))
 

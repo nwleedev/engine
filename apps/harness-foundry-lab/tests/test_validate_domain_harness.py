@@ -194,8 +194,13 @@ def test_empty_registry_artifact_reference_returns_domain_finding(
 
     assert result.returncode == 1
     payload = json.loads(result.stdout)
-    actual_rule_ids = {finding["rule_id"] for finding in payload["findings"]}
-    assert expected_rule_id in actual_rule_ids
+    assert {
+        "rule_id": expected_rule_id,
+        "severity": "error",
+        "path": "docs/domain-harness/index.md",
+        "message": "Active registry row for checkout-api has an empty registry value.",
+        "domain": "checkout-api",
+    } in payload["findings"]
 
 
 def test_invalid_status_returns_domain_finding_at_registry_path(tmp_path):
@@ -236,3 +241,72 @@ def test_registry_parser_ignores_unrelated_later_pipe_table(tmp_path):
     assert result.returncode == 0
     payload = json.loads(result.stdout)
     assert payload["findings"] == []
+
+
+def test_registry_parser_does_not_fallback_to_later_registry_shaped_table(tmp_path):
+    project_root = tmp_path / "malformed-first-table"
+    harness_root = project_root / "docs" / "domain-harness"
+    domain_root = harness_root / "checkout-api"
+    domain_root.mkdir(parents=True)
+    (domain_root / "spec.md").write_text(
+        "\n".join(
+            [
+                "# Checkout API Harness",
+                "Implementation scope",
+                "Test strategy",
+                "Security review",
+                "Dependency policy",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (domain_root / "evals.md").write_text("# Evals\n", encoding="utf-8")
+    (domain_root / "scaffold.md").write_text("# Scaffold\n", encoding="utf-8")
+    (harness_root / "index.md").write_text(
+        "\n".join(
+            [
+                "# Domain Harness Registry",
+                "",
+                "| domain | work_type | status |",
+                "|---|---|---|",
+                "| checkout-api | development | active |",
+                "",
+                "## Example",
+                "",
+                "| domain | work_type | status | owner | spec | evals | scaffold | last_reviewed |",
+                "|---|---|---|---|---|---|---|---|",
+                "| checkout-api | development | active | platform-team | `checkout-api/spec.md` | `checkout-api/evals.md` | `checkout-api/scaffold.md` | 2026-05-06 |",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    result = run_validator(project_root, "--json")
+
+    assert result.returncode == 1
+    payload = json.loads(result.stdout)
+    assert {
+        "rule_id": "registry-parse-error",
+        "severity": "error",
+        "path": "docs/domain-harness/index.md",
+        "message": "Registry table missing columns: owner, spec, evals, scaffold, last_reviewed.",
+        "domain": "",
+    } in payload["findings"]
+
+
+def test_registry_path_directory_returns_structured_missing_registry_finding(tmp_path):
+    project_root = tmp_path / "directory-registry"
+    index_path = project_root / "docs" / "domain-harness" / "index.md"
+    index_path.mkdir(parents=True)
+
+    result = run_validator(project_root, "--json")
+
+    assert result.returncode == 1
+    payload = json.loads(result.stdout)
+    assert {
+        "rule_id": "missing-registry",
+        "severity": "error",
+        "path": "docs/domain-harness/index.md",
+        "message": "Missing docs/domain-harness/index.md registry.",
+        "domain": "",
+    } in payload["findings"]
