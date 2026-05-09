@@ -10,6 +10,7 @@ def load_project_root():
     module_name = "test_codex_session_memory_project_root"
     sys.modules.pop(module_name, None)
     spec = importlib.util.spec_from_file_location(module_name, SCRIPTS / "project_root.py")
+    assert spec is not None
     module = importlib.util.module_from_spec(spec)
     assert spec.loader is not None
     sys.modules[module_name] = module

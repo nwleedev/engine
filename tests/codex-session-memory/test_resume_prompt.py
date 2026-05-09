@@ -11,6 +11,7 @@ RESUME = Path(__file__).resolve().parents[2] / "plugins" / "codex-session-memory
 
 def load_resume_prompt():
     spec = importlib.util.spec_from_file_location("resume_prompt", SCRIPTS / "resume_prompt.py")
+    assert spec is not None
     module = importlib.util.module_from_spec(spec)
     assert spec.loader is not None
     spec.loader.exec_module(module)
@@ -19,6 +20,7 @@ def load_resume_prompt():
 
 def load_resume_skill():
     spec = importlib.util.spec_from_file_location("codex_session_memory_resume_skill_test", RESUME)
+    assert spec is not None
     module = importlib.util.module_from_spec(spec)
     assert spec.loader is not None
     spec.loader.exec_module(module)

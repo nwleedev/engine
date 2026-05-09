@@ -11,6 +11,7 @@ PARENT_LOCATOR = SCRIPTS / "parent_locator.py"
 
 def load_parent_locator():
     spec = importlib.util.spec_from_file_location("parent_locator", PARENT_LOCATOR)
+    assert spec is not None
     module = importlib.util.module_from_spec(spec)
     assert spec.loader is not None
     sys.modules[spec.name] = module
@@ -35,6 +36,16 @@ def make_state_db(path: Path, *, edges: bool = True, threads: bool = True):
             "rollout_path TEXT NOT NULL, "
             "source TEXT NOT NULL)"
         )
+    conn.commit()
+    conn.close()
+
+
+def insert_edge(db: Path, parent_thread_id: str, child_thread_id: str) -> None:
+    conn = sqlite3.connect(db)
+    conn.execute(
+        "INSERT INTO thread_spawn_edges VALUES (?, ?, ?)",
+        (parent_thread_id, child_thread_id, "open"),
+    )
     conn.commit()
     conn.close()
 
@@ -75,7 +86,7 @@ def test_reads_parent_from_session_meta_after_noise_event(tmp_path):
     assert result.warnings == ()
 
 
-def test_rollout_child_evidence_without_parent_stops_before_state_db(tmp_path):
+def test_rollout_child_evidence_without_parent_falls_back_to_state_db(tmp_path):
     locator = load_parent_locator()
     jsonl = tmp_path / "rollout-child.jsonl"
     jsonl.write_text(
@@ -106,6 +117,38 @@ def test_rollout_child_evidence_without_parent_stops_before_state_db(tmp_path):
 
     result = locator.resolve_parent_thread_id(
         "child-no-rollout-parent",
+        rollout_path=jsonl,
+        codex_home=tmp_path / ".codex",
+    )
+
+    assert result.role == "child"
+    assert result.parent_thread_id == "parent-from-db"
+    assert result.source == "state_db_thread_spawn_edges"
+    assert result.confidence == "high"
+
+
+def test_rollout_child_evidence_without_parent_fails_closed_after_state_db_miss(tmp_path):
+    locator = load_parent_locator()
+    jsonl = tmp_path / "rollout-child.jsonl"
+    jsonl.write_text(
+        json.dumps(
+            {
+                "type": "session_meta",
+                "payload": {
+                    "source": {
+                        "subagent": {
+                            "thread_spawn": {},
+                        },
+                    },
+                },
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    result = locator.resolve_parent_thread_id(
+        "child-no-parent-anywhere",
         rollout_path=jsonl,
         codex_home=tmp_path / ".codex",
     )
@@ -170,6 +213,195 @@ def test_reads_parent_from_thread_spawn_edges(tmp_path):
     assert result.parent_thread_id == "parent-456"
     assert result.source == "state_db_thread_spawn_edges"
     assert result.confidence == "high"
+
+
+def test_reads_state_db_from_codex_sqlite_home_env(monkeypatch, tmp_path):
+    locator = load_parent_locator()
+    sqlite_home = tmp_path / "custom-sqlite"
+    db = sqlite_home / "state_5.sqlite"
+    make_state_db(db)
+    conn = sqlite3.connect(db)
+    conn.execute(
+        "INSERT INTO thread_spawn_edges VALUES (?, ?, ?)",
+        ("parent-env-sqlite", "child-env-sqlite", "open"),
+    )
+    conn.commit()
+    conn.close()
+    monkeypatch.setenv("CODEX_SQLITE_HOME", str(sqlite_home))
+
+    result = locator.resolve_parent_thread_id(
+        "child-env-sqlite",
+        codex_home=tmp_path / ".codex",
+    )
+
+    assert result.role == "child"
+    assert result.parent_thread_id == "parent-env-sqlite"
+    assert result.source == "state_db_thread_spawn_edges"
+
+
+def test_expands_explicit_sqlite_home(monkeypatch, tmp_path):
+    locator = load_parent_locator()
+    user_home = tmp_path / "user-home"
+    sqlite_home = user_home / "explicit-sqlite"
+    db = sqlite_home / "state_5.sqlite"
+    make_state_db(db)
+    insert_edge(db, "parent-explicit-tilde", "child-explicit-tilde")
+    monkeypatch.setenv("HOME", str(user_home))
+
+    result = locator.resolve_parent_thread_id(
+        "child-explicit-tilde",
+        sqlite_home="~/explicit-sqlite",
+    )
+
+    assert result.role == "child"
+    assert result.parent_thread_id == "parent-explicit-tilde"
+    assert result.source == "state_db_thread_spawn_edges"
+
+
+def test_reads_state_db_from_codex_config_sqlite_home(tmp_path):
+    locator = load_parent_locator()
+    codex_home = tmp_path / ".codex"
+    sqlite_home = tmp_path / "configured-sqlite"
+    db = sqlite_home / "state_5.sqlite"
+    make_state_db(db)
+    conn = sqlite3.connect(db)
+    conn.execute(
+        "INSERT INTO thread_spawn_edges VALUES (?, ?, ?)",
+        ("parent-config-sqlite", "child-config-sqlite", "open"),
+    )
+    conn.commit()
+    conn.close()
+    codex_home.mkdir()
+    (codex_home / "config.toml").write_text(
+        f'sqlite_home = "{sqlite_home}"\n',
+        encoding="utf-8",
+    )
+
+    result = locator.resolve_parent_thread_id(
+        "child-config-sqlite",
+        codex_home=codex_home,
+    )
+
+    assert result.role == "child"
+    assert result.parent_thread_id == "parent-config-sqlite"
+    assert result.source == "state_db_thread_spawn_edges"
+
+
+def test_state_db_candidate_home_precedence(monkeypatch, tmp_path):
+    locator = load_parent_locator()
+    child_id = "child-precedence"
+    explicit_home = tmp_path / "explicit-sqlite"
+    env_home = tmp_path / "env-sqlite"
+    config_home = tmp_path / "config-sqlite"
+    project_home = tmp_path / ".codex"
+    user_home = tmp_path / "user-home"
+    user_codex_home = user_home / ".codex"
+
+    candidates = [
+        (explicit_home, "parent-explicit"),
+        (env_home, "parent-env"),
+        (config_home, "parent-config"),
+        (project_home, "parent-project"),
+        (user_codex_home, "parent-user"),
+    ]
+    for home, parent_id in candidates:
+        db = home / "state_5.sqlite"
+        make_state_db(db)
+        insert_edge(db, parent_id, child_id)
+
+    project_home.mkdir(exist_ok=True)
+    (project_home / "config.toml").write_text(
+        f'sqlite_home = "{config_home}"\n',
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("CODEX_SQLITE_HOME", str(env_home))
+    monkeypatch.setenv("HOME", str(user_home))
+
+    explicit_result = locator.resolve_parent_thread_id(
+        child_id,
+        codex_home=project_home,
+        sqlite_home=explicit_home,
+    )
+    env_result = locator.resolve_parent_thread_id(
+        child_id,
+        codex_home=project_home,
+    )
+    monkeypatch.delenv("CODEX_SQLITE_HOME")
+    config_result = locator.resolve_parent_thread_id(
+        child_id,
+        codex_home=project_home,
+    )
+    (project_home / "config.toml").unlink()
+    project_result = locator.resolve_parent_thread_id(
+        child_id,
+        codex_home=project_home,
+    )
+    project_state = project_home / "state_5.sqlite"
+    project_state.unlink()
+    user_result = locator.resolve_parent_thread_id(
+        child_id,
+        codex_home=project_home,
+    )
+
+    assert explicit_result.parent_thread_id == "parent-explicit"
+    assert env_result.parent_thread_id == "parent-env"
+    assert config_result.parent_thread_id == "parent-config"
+    assert project_result.parent_thread_id == "parent-project"
+    assert user_result.parent_thread_id == "parent-user"
+
+
+def test_state_db_candidate_home_fallback_after_miss(monkeypatch, tmp_path):
+    locator = load_parent_locator()
+    explicit_home = tmp_path / "explicit-sqlite"
+    env_home = tmp_path / "env-sqlite"
+    config_home = tmp_path / "config-sqlite"
+    project_home = tmp_path / ".codex"
+    user_home = tmp_path / "user-home"
+    user_codex_home = user_home / ".codex"
+
+    homes = [explicit_home, env_home, config_home, project_home, user_codex_home]
+    for index, home in enumerate(homes):
+        db = home / "state_5.sqlite"
+        make_state_db(db)
+        insert_edge(db, f"parent-noise-{index}", f"child-noise-{index}")
+
+    insert_edge(env_home / "state_5.sqlite", "parent-env-hit", "child-env-hit")
+    insert_edge(config_home / "state_5.sqlite", "parent-config-hit", "child-config-hit")
+    insert_edge(project_home / "state_5.sqlite", "parent-project-hit", "child-project-hit")
+    insert_edge(user_codex_home / "state_5.sqlite", "parent-user-hit", "child-user-hit")
+
+    (project_home / "config.toml").write_text(
+        f'sqlite_home = "{config_home}"\n',
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("CODEX_SQLITE_HOME", str(env_home))
+    monkeypatch.setenv("HOME", str(user_home))
+
+    env_result = locator.resolve_parent_thread_id(
+        "child-env-hit",
+        codex_home=project_home,
+        sqlite_home=explicit_home,
+    )
+    config_result = locator.resolve_parent_thread_id(
+        "child-config-hit",
+        codex_home=project_home,
+        sqlite_home=explicit_home,
+    )
+    project_result = locator.resolve_parent_thread_id(
+        "child-project-hit",
+        codex_home=project_home,
+        sqlite_home=explicit_home,
+    )
+    user_result = locator.resolve_parent_thread_id(
+        "child-user-hit",
+        codex_home=project_home,
+        sqlite_home=explicit_home,
+    )
+
+    assert env_result.parent_thread_id == "parent-env-hit"
+    assert config_result.parent_thread_id == "parent-config-hit"
+    assert project_result.parent_thread_id == "parent-project-hit"
+    assert user_result.parent_thread_id == "parent-user-hit"
 
 
 def test_reads_parent_from_threads_source(tmp_path):

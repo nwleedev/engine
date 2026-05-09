@@ -3,8 +3,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 import json
+import os
 from pathlib import Path
 import sqlite3
+import tomllib
 from urllib.parse import quote
 
 
@@ -29,13 +31,15 @@ def resolve_parent_thread_id(
 ) -> ParentResolution:
     """Return parent resolution evidence for the current Codex thread."""
     rollout_result = _from_rollout_session_meta(rollout_path)
-    if rollout_result.role == "child":
+    if rollout_result.parent_thread_id:
         return rollout_result
 
     db_result = _from_state_db(thread_id, codex_home=codex_home, sqlite_home=sqlite_home)
     warnings = rollout_result.warnings + db_result.warnings
     if db_result.parent_thread_id or db_result.role == "child":
         return _with_warnings(db_result, warnings)
+    if rollout_result.role == "child":
+        return _with_warnings(rollout_result, warnings)
 
     return ParentResolution(
         role="main",
@@ -127,10 +131,10 @@ def _state_db_candidates(
     sqlite_home: str | Path | None,
 ) -> list[Path]:
     homes: list[Path] = []
-    for home in (sqlite_home, codex_home, Path.home() / ".codex"):
+    for home in _sqlite_home_candidates(codex_home=codex_home, sqlite_home=sqlite_home):
         if home is None:
             continue
-        path = Path(home)
+        path = Path(home).expanduser()
         if path not in homes:
             homes.append(path)
 
@@ -147,6 +151,53 @@ def _state_db_candidates(
             dbs = [path for path in dbs if path != preferred]
         candidates.extend(sorted(dbs, key=_state_db_sort_key, reverse=True))
     return candidates
+
+
+def _sqlite_home_candidates(
+    codex_home: str | Path | None,
+    sqlite_home: str | Path | None,
+) -> list[Path | str]:
+    homes: list[Path | str] = []
+    if sqlite_home is not None:
+        homes.append(sqlite_home)
+
+    env_home = os.environ.get("CODEX_SQLITE_HOME", "").strip()
+    if env_home:
+        homes.append(Path(env_home).expanduser())
+
+    configured = _configured_sqlite_home(codex_home)
+    if configured is not None:
+        homes.append(configured)
+
+    if codex_home is not None:
+        homes.append(codex_home)
+    homes.append(Path.home() / ".codex")
+    return homes
+
+
+def _configured_sqlite_home(codex_home: str | Path | None) -> Path | None:
+    config_homes: list[Path] = []
+    if codex_home is not None:
+        config_homes.append(Path(codex_home))
+    default_home = Path.home() / ".codex"
+    if default_home not in config_homes:
+        config_homes.append(default_home)
+
+    for home in config_homes:
+        config_path = home / "config.toml"
+        if not config_path.is_file():
+            continue
+        try:
+            data = tomllib.loads(config_path.read_text(encoding="utf-8"))
+        except (OSError, tomllib.TOMLDecodeError):
+            continue
+        value = data.get("sqlite_home")
+        if isinstance(value, str) and value.strip():
+            path = Path(value).expanduser()
+            if not path.is_absolute():
+                path = config_path.parent / path
+            return path
+    return None
 
 
 def _state_db_sort_key(path: Path) -> tuple[int, str]:

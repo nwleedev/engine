@@ -111,9 +111,12 @@ python3 /path/to/codex-session-memory/skills/checkpoint/checkpoint.py prepare --
 
 자동 감지 안에서는 도우미가 상태 DB보다 rollout `session_meta`를 먼저 읽습니다.
 rollout 메타데이터가 자식 세션을 식별하지만 부모 id를 포함하지 않으면, 도우미는
-상태 DB가 추측하도록 넘기지 않고 실패로 중단합니다. 상태 DB 대체 조회는 rollout
-메타데이터가 없거나 자식 세션으로 식별하지 않는 경우에만 사용합니다. 상태 DB 대체
+실패로 중단하기 전에 상태 DB에서 일치하는 부모 edge를 확인합니다. 상태 DB 대체
 조회는 `thread_spawn_edges`를 먼저 확인한 뒤 `threads.source`를 확인합니다.
+
+상태 DB 대체 조회는 읽기 전용 내부 fallback입니다. 후보 홈은 명시적
+`sqlite_home` 인자, `CODEX_SQLITE_HOME`, Codex `config.toml`의 `sqlite_home`,
+프로젝트 `.codex`, 사용자 `~/.codex` 순서로 확인합니다.
 
 자식 증거가 감지되었지만 부모 id를 확인할 수 없으면, 도우미는 최상위 기본 세션
 대상을 출력하지 않고 종료 코드 2로 종료합니다.
@@ -126,6 +129,28 @@ INDEX 이벤트 순서를 보존하되 실제 context 파일 주입은 filename 
 ## 세션 연속성
 
 `CODEX_THREAD_ID`는 재개된 Codex CLI 세션 사이에서도 동일 유지 — 실측 확인됨. 같은 Codex 세션의 며칠 작업이 동일한 `<root>/.codex/sessions/<id>/INDEX.md`에 누적됩니다.
+
+## 기존 자식 세션 마이그레이션
+
+마이그레이션 도우미는 자식 세션이 `_children` 아래 저장되기 전에 생성된 기존
+최상위 자식 세션 폴더에만 사용합니다.
+
+먼저 dry-run으로 이동 계획을 확인합니다.
+
+```bash
+python3 plugins/codex-session-memory/scripts/migrate_child_sessions.py --root /path/to/project
+```
+
+계획을 검토한 뒤 실제 적용합니다.
+
+```bash
+python3 plugins/codex-session-memory/scripts/migrate_child_sessions.py --root /path/to/project --apply
+```
+
+도우미는 부모를 확인할 수 있는 자식 폴더를 `.codex/sessions/_children/`로
+이동하고, 자식 `INDEX.md` frontmatter를 정규화하며, 부모 `INDEX.md`에
+`Child Sessions` 링크를 추가합니다. 대상 충돌은 사전 검사하고 적용 중 실패하면
+가능한 범위에서 롤백합니다. 파일 복구까지 실패하면 수동 정리 진단을 출력합니다.
 
 ## 테스트
 

@@ -8,6 +8,7 @@ SCRIPTS = Path(__file__).resolve().parents[2] / "plugins" / "codex-session-memor
 
 def load_parser():
     spec = importlib.util.spec_from_file_location("jsonl_parser", SCRIPTS / "jsonl_parser.py")
+    assert spec is not None
     module = importlib.util.module_from_spec(spec)
     assert spec.loader is not None
     spec.loader.exec_module(module)

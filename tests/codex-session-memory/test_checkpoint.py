@@ -1,5 +1,6 @@
 import importlib.util
 import json
+import sqlite3
 from pathlib import Path
 
 
@@ -9,6 +10,7 @@ CHECKPOINT = PLUGIN / "skills" / "checkpoint" / "checkpoint.py"
 
 def load_checkpoint():
     spec = importlib.util.spec_from_file_location("checkpoint_skill", CHECKPOINT)
+    assert spec is not None
     module = importlib.util.module_from_spec(spec)
     assert spec.loader is not None
     spec.loader.exec_module(module)
@@ -231,14 +233,79 @@ def test_prepare_fails_when_child_detected_without_parent(monkeypatch, tmp_path,
     assert "role: main" not in captured.out
 
 
+def test_prepare_uses_state_db_when_rollout_child_parent_missing(
+    monkeypatch,
+    tmp_path,
+    capsys,
+):
+    checkpoint = load_checkpoint()
+    jsonl = tmp_path / "rollout-child-thread.jsonl"
+    write_child_session_meta(jsonl, parent_thread_id=None)
+    sqlite_home = tmp_path / "sqlite-home"
+    db = sqlite_home / "state_5.sqlite"
+    db.parent.mkdir(parents=True)
+    conn = sqlite3.connect(db)
+    conn.execute(
+        "CREATE TABLE thread_spawn_edges ("
+        "parent_thread_id TEXT NOT NULL, "
+        "child_thread_id TEXT NOT NULL PRIMARY KEY, "
+        "status TEXT NOT NULL)"
+    )
+    conn.execute(
+        "INSERT INTO thread_spawn_edges VALUES (?, ?, ?)",
+        ("parent-from-db", "child-thread", "open"),
+    )
+    conn.commit()
+    conn.close()
+    child_dir = tmp_path / ".codex" / "sessions" / "_children" / "child-thread"
+
+    patch_project(monkeypatch, checkpoint, tmp_path)
+    monkeypatch.setenv("CODEX_SQLITE_HOME", str(sqlite_home))
+    monkeypatch.setattr(checkpoint.sl, "current_thread_id", lambda: "child-thread")
+    monkeypatch.setattr(checkpoint.sl, "find_jsonl_by_thread", lambda thread_id: jsonl)
+    monkeypatch.setattr(checkpoint.sl, "data_session_dir", lambda root, thread_id, role="main": child_dir)
+    monkeypatch.setattr(checkpoint.io, "read_frontmatter", lambda path: {"last_processed_offset": 0})
+    monkeypatch.setattr(checkpoint.jp, "extract_delta", lambda path, offset: ([], 10))
+
+    assert checkpoint.main(["prepare", "--role", "child"]) == 0
+
+    output = capsys.readouterr().out
+    assert "role: child" in output
+    assert "parent_session_id: parent-from-db" in output
+    assert f"index_path: {child_dir / 'INDEX.md'}" in output
+
+
+def test_prepare_passes_project_codex_home_to_parent_locator(
+    monkeypatch,
+    tmp_path,
+):
+    checkpoint = load_checkpoint()
+    jsonl = tmp_path / "rollout-child-thread.jsonl"
+    jsonl.write_text('{"type":"turn","payload":"ok"}\n', encoding="utf-8")
+    calls = []
+
+    def resolve_parent_thread_id(*, thread_id, rollout_path, codex_home=None):
+        calls.append((thread_id, rollout_path, codex_home))
+        return checkpoint.pl.ParentResolution(role="main")
+
+    patch_project(monkeypatch, checkpoint, tmp_path)
+    monkeypatch.setattr(checkpoint.sl, "current_thread_id", lambda: "child-thread")
+    monkeypatch.setattr(checkpoint.sl, "find_jsonl_by_thread", lambda thread_id: jsonl)
+    monkeypatch.setattr(checkpoint.pl, "resolve_parent_thread_id", resolve_parent_thread_id)
+
+    assert checkpoint.main(["prepare", "--role", "child"]) == 2
+
+    assert calls == [("child-thread", jsonl, tmp_path / ".codex")]
+
+
 def test_prepare_checks_parent_resolution_before_jsonl_missing_failure(
     monkeypatch, tmp_path, capsys
 ):
     checkpoint = load_checkpoint()
     calls = []
 
-    def resolve_parent_thread_id(*, thread_id, rollout_path):
-        calls.append((thread_id, rollout_path))
+    def resolve_parent_thread_id(*, thread_id, rollout_path, codex_home=None):
+        calls.append((thread_id, rollout_path, codex_home))
         return checkpoint.pl.ParentResolution(
             role="child",
             parent_thread_id="parent-thread",
@@ -254,7 +321,7 @@ def test_prepare_checks_parent_resolution_before_jsonl_missing_failure(
     assert checkpoint.main(["prepare"]) == 2
 
     captured = capsys.readouterr()
-    assert calls == [("child-thread", None)]
+    assert calls == [("child-thread", None, tmp_path / ".codex")]
     assert "no rollout JSONL" in captured.err
     assert "role: main" not in captured.out
 

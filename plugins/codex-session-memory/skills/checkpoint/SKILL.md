@@ -25,9 +25,12 @@ python3 /path/to/codex-session-memory/skills/checkpoint/checkpoint.py prepare --
 ```
 
 Within automatic detection, the helper reads rollout `session_meta` before state
-DB. If rollout metadata identifies a child but lacks parent id, it fails closed
-and does not ask state DB to guess. State DB fallback is used only when rollout
-metadata is absent or does not identify a child.
+DB. If rollout metadata identifies a child but lacks parent id, the helper still
+checks state DB for a matching parent edge before failing closed. State DB
+fallback checks `thread_spawn_edges` first, then `threads.source`.
+State DB fallback is read-only and checks candidate homes in this order:
+explicit `sqlite_home`, `CODEX_SQLITE_HOME`, Codex `config.toml` `sqlite_home`,
+project `.codex`, then user `~/.codex`.
 
 If automatic detection fails, retry with the parent session id explicitly:
 

@@ -110,10 +110,13 @@ Overall parent decision order is:
 3. automatic detector
 
 Within automatic detection, the helper reads rollout `session_meta` before state
-DB. If rollout metadata identifies a child but lacks parent id, it fails closed
-and does not ask state DB to guess. State DB fallback is used only when rollout
-metadata is absent or does not identify a child. State DB fallback checks
-`thread_spawn_edges` first, then `threads.source`.
+DB. If rollout metadata identifies a child but lacks parent id, the helper still
+checks state DB for a matching parent edge before failing closed. State DB
+fallback checks `thread_spawn_edges` first, then `threads.source`.
+
+State DB fallback is a read-only internal fallback. Candidate homes are checked
+in this order: explicit `sqlite_home` argument, `CODEX_SQLITE_HOME`, Codex
+`config.toml` `sqlite_home`, project `.codex`, then user `~/.codex`.
 
 If child evidence is detected but no parent id can be resolved, the helper exits
 with code 2 instead of emitting a top-level main session target.
@@ -126,6 +129,29 @@ avoid spending context budget on the same file more than once.
 ## How session continuity works
 
 `CODEX_THREAD_ID` stays stable across resumed Codex CLI sessions — verified empirically. Multi-day work on the same Codex session accumulates into the same `<root>/.codex/sessions/<id>/INDEX.md`.
+
+## Legacy child session migration
+
+Use the migration helper only for existing top-level child session folders that
+were created before child sessions were stored under `_children`.
+
+Dry-run first:
+
+```bash
+python3 plugins/codex-session-memory/scripts/migrate_child_sessions.py --root /path/to/project
+```
+
+Apply after reviewing the planned moves:
+
+```bash
+python3 plugins/codex-session-memory/scripts/migrate_child_sessions.py --root /path/to/project --apply
+```
+
+The helper moves resolvable child folders to `.codex/sessions/_children/`,
+normalizes child `INDEX.md` frontmatter, and appends parent `Child Sessions`
+links. It preflights destination conflicts and rolls back failed apply runs on a
+best-effort basis; if rollback cannot restore a file, it prints a manual cleanup
+diagnostic.
 
 ## Tests
 

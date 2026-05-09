@@ -180,6 +180,7 @@ def _resolve_prepare_target(
     requested_parent: str | None,
     thread_id: str,
     jsonl_path: Path | None,
+    project_root: str | Path,
 ) -> tuple[str, str | None] | None:
     if requested_parent:
         if requested_role == "main":
@@ -194,7 +195,11 @@ def _resolve_prepare_target(
             return None
         return "child", env_parent
 
-    resolution = pl.resolve_parent_thread_id(thread_id=thread_id, rollout_path=jsonl_path)
+    resolution = pl.resolve_parent_thread_id(
+        thread_id=thread_id,
+        rollout_path=jsonl_path,
+        codex_home=Path(project_root) / ".codex",
+    )
     if resolution.role == "child":
         if requested_role == "main":
             print(
@@ -240,6 +245,7 @@ def _prepare(requested_role: str | None = None, requested_parent: str | None = N
         requested_parent=requested_parent,
         thread_id=thread_id,
         jsonl_path=jsonl_path,
+        project_root=root,
     )
     if resolved is None:
         return 2

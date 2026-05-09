@@ -10,6 +10,7 @@ SCRIPTS = PLUGIN / "scripts"
 
 def load_agents_rules():
     spec = importlib.util.spec_from_file_location("agents_rules", SCRIPTS / "agents_rules.py")
+    assert spec is not None
     module = importlib.util.module_from_spec(spec)
     assert spec.loader is not None
     spec.loader.exec_module(module)
@@ -160,6 +161,7 @@ def test_missing_markers_are_immutable(tmp_path):
 def load_install_skill():
     skill = PLUGIN / "skills" / "install" / "install.py"
     spec = importlib.util.spec_from_file_location("install_skill", skill)
+    assert spec is not None
     module = importlib.util.module_from_spec(spec)
     assert spec.loader is not None
     spec.loader.exec_module(module)

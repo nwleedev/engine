@@ -13,6 +13,7 @@ STATUS = PLUGIN / "skills" / "status" / "status.py"
 def load_status():
     module_name = "test_codex_session_memory_status"
     spec = importlib.util.spec_from_file_location(module_name, STATUS)
+    assert spec is not None
     module = importlib.util.module_from_spec(spec)
     assert spec.loader is not None
     sys.modules[module_name] = module
@@ -227,7 +228,7 @@ def test_status_reports_uncheckpointed_child_from_parent_evidence_before_stale_m
         status,
         "csm_parent_locator",
         SimpleNamespace(
-            resolve_parent_thread_id=lambda thread_id, rollout_path=None: SimpleNamespace(
+            resolve_parent_thread_id=lambda thread_id, rollout_path=None, **kwargs: SimpleNamespace(
                 role="child",
                 parent_thread_id="parent123",
             )
@@ -278,7 +279,7 @@ def test_status_reports_uncheckpointed_child_with_unknown_parent_before_stale_ma
         status,
         "csm_parent_locator",
         SimpleNamespace(
-            resolve_parent_thread_id=lambda thread_id, rollout_path=None: SimpleNamespace(
+            resolve_parent_thread_id=lambda thread_id, rollout_path=None, **kwargs: SimpleNamespace(
                 role="child",
                 parent_thread_id=None,
             )
@@ -300,6 +301,39 @@ def test_status_reports_uncheckpointed_child_with_unknown_parent_before_stale_ma
     assert "Last saved: main-stale" not in output
     assert "Child sessions:" not in output
     assert "status: not yet checkpointed" in output
+
+
+def test_status_passes_project_codex_home_to_parent_locator(monkeypatch, tmp_path):
+    status = load_status()
+    jsonl_path = tmp_path / "rollout-child123.jsonl"
+    jsonl_path.write_text("", encoding="utf-8")
+    calls = []
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(status.csm_dotenv_loader, "load_project_dotenv", lambda cwd: None)
+    monkeypatch.setattr(status.csm_session_locator, "current_thread_id", lambda: "child123")
+    monkeypatch.setattr(status.csm_project_root, "find_project_root", lambda cwd: str(tmp_path))
+    monkeypatch.setattr(status.csm_session_locator, "find_jsonl_by_thread", lambda thread_id: jsonl_path)
+    monkeypatch.setattr(
+        status.csm_agents_rules,
+        "check_agents_rules",
+        lambda root: SimpleNamespace(status="installed", missing=()),
+    )
+
+    def resolve_parent_thread_id(thread_id, rollout_path=None, codex_home=None):
+        calls.append((thread_id, rollout_path, codex_home))
+        return SimpleNamespace(role="main", parent_thread_id=None)
+
+    monkeypatch.setattr(
+        status,
+        "csm_parent_locator",
+        SimpleNamespace(resolve_parent_thread_id=resolve_parent_thread_id),
+        raising=False,
+    )
+
+    assert status.main() == 0
+
+    assert calls == [("child123", jsonl_path, tmp_path / ".codex")]
 
 
 def test_status_old_data_session_dir_signature_still_finds_child_session(

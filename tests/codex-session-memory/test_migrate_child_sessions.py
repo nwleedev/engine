@@ -1,4 +1,5 @@
 import importlib.util
+import sqlite3
 from pathlib import Path
 from types import SimpleNamespace
 import sys
@@ -10,6 +11,7 @@ MIGRATE = SCRIPTS / "migrate_child_sessions.py"
 
 def load_migrate_child_sessions():
     spec = importlib.util.spec_from_file_location("migrate_child_sessions", MIGRATE)
+    assert spec is not None
     module = importlib.util.module_from_spec(spec)
     assert spec.loader is not None
     sys.modules[spec.name] = module
@@ -22,6 +24,10 @@ def write_session(root: Path, session_id: str, index_text: str = "# Session\n") 
     session_dir.mkdir(parents=True, exist_ok=True)
     (session_dir / "INDEX.md").write_text(index_text, encoding="utf-8")
     return session_dir
+
+
+def atomic_temp_for(path: Path) -> Path:
+    return path.with_name(f".{path.name}.tmp")
 
 
 def child_resolution(parent_thread_id: str | None = "parent-thread"):
@@ -56,7 +62,7 @@ def test_dry_run_prints_candidate_and_does_not_move(monkeypatch, tmp_path, capsy
 
     monkeypatch.setattr(migrate.sl, "find_jsonl_by_thread", lambda thread_id: rollout)
 
-    def resolve_parent_thread_id(thread_id, rollout_path=None):
+    def resolve_parent_thread_id(thread_id, rollout_path=None, **kwargs):
         calls.append((thread_id, rollout_path))
         return child_resolution("parent-thread")
 
@@ -78,7 +84,7 @@ def test_apply_moves_candidate_and_appends_parent_link(monkeypatch, tmp_path):
 
     monkeypatch.setattr(migrate.sl, "find_jsonl_by_thread", lambda thread_id: None)
 
-    def resolve_parent_thread_id(thread_id, rollout_path=None):
+    def resolve_parent_thread_id(thread_id, rollout_path=None, **kwargs):
         if thread_id == "child-thread":
             return child_resolution("parent-thread")
         return main_resolution()
@@ -113,7 +119,7 @@ def test_apply_uses_child_frontmatter_parent_when_parent_locator_misses(monkeypa
     monkeypatch.setattr(
         migrate.pl,
         "resolve_parent_thread_id",
-        lambda thread_id, rollout_path=None: main_resolution(),
+        lambda thread_id, rollout_path=None, **kwargs: main_resolution(),
     )
 
     assert migrate.main(["--root", str(tmp_path), "--apply"]) == 0
@@ -125,6 +131,96 @@ def test_apply_uses_child_frontmatter_parent_when_parent_locator_misses(monkeypa
     parent_index = (parent_dir / "INDEX.md").read_text(encoding="utf-8")
     assert "## Child Sessions" in parent_index
     assert "- [child-th](../_children/child-thread/INDEX.md) - migrated child session" in parent_index
+
+
+def test_migration_passes_project_codex_home_to_parent_locator(
+    monkeypatch,
+    tmp_path,
+):
+    migrate = load_migrate_child_sessions()
+    write_session(tmp_path, "child-thread", "# Child\n")
+    calls = []
+
+    monkeypatch.setattr(migrate.sl, "find_jsonl_by_thread", lambda thread_id: None)
+
+    def resolve_parent_thread_id(thread_id, rollout_path=None, codex_home=None):
+        calls.append((thread_id, rollout_path, codex_home))
+        return main_resolution()
+
+    monkeypatch.setattr(migrate.pl, "resolve_parent_thread_id", resolve_parent_thread_id)
+
+    assert migrate.main(["--root", str(tmp_path)]) == 0
+
+    assert calls == [("child-thread", None, tmp_path / ".codex")]
+
+
+def test_apply_reads_parent_from_project_state_db(tmp_path):
+    migrate = load_migrate_child_sessions()
+    child_dir = write_session(tmp_path, "child-thread", "# Child\n")
+    parent_dir = write_session(tmp_path, "parent-thread", "# Parent\n")
+    db = tmp_path / ".codex" / "state_5.sqlite"
+    conn = sqlite3.connect(db)
+    conn.execute(
+        "CREATE TABLE thread_spawn_edges ("
+        "parent_thread_id TEXT NOT NULL, "
+        "child_thread_id TEXT NOT NULL PRIMARY KEY, "
+        "status TEXT NOT NULL)"
+    )
+    conn.execute(
+        "CREATE TABLE threads ("
+        "id TEXT PRIMARY KEY, "
+        "rollout_path TEXT NOT NULL, "
+        "source TEXT NOT NULL)"
+    )
+    conn.execute(
+        "INSERT INTO thread_spawn_edges VALUES (?, ?, ?)",
+        ("parent-thread", "child-thread", "open"),
+    )
+    conn.commit()
+    conn.close()
+
+    assert migrate.main(["--root", str(tmp_path), "--apply"]) == 0
+
+    destination = tmp_path / ".codex" / "sessions" / "_children" / "child-thread"
+    assert not child_dir.exists()
+    assert destination.is_dir()
+    child_index = (destination / "INDEX.md").read_text(encoding="utf-8")
+    assert "role: child" in child_index
+    assert "parent_session_id: parent-thread" in child_index
+    parent_index = (parent_dir / "INDEX.md").read_text(encoding="utf-8")
+    assert "- [child-th](../_children/child-thread/INDEX.md) - migrated child session" in parent_index
+
+
+def test_apply_normalizes_child_index_frontmatter_from_parent_locator(
+    monkeypatch,
+    tmp_path,
+):
+    migrate = load_migrate_child_sessions()
+    write_session(tmp_path, "child-thread", "# Legacy child\n")
+    write_session(tmp_path, "parent-thread", "# Parent\n")
+
+    monkeypatch.setattr(migrate.sl, "find_jsonl_by_thread", lambda thread_id: None)
+    def resolve_parent_thread_id(thread_id, rollout_path=None, **kwargs):
+        if thread_id == "child-thread":
+            return child_resolution("parent-thread")
+        return main_resolution()
+
+    monkeypatch.setattr(migrate.pl, "resolve_parent_thread_id", resolve_parent_thread_id)
+
+    assert migrate.main(["--root", str(tmp_path), "--apply"]) == 0
+
+    child_index = (
+        tmp_path
+        / ".codex"
+        / "sessions"
+        / "_children"
+        / "child-thread"
+        / "INDEX.md"
+    ).read_text(encoding="utf-8")
+    assert "session_id: child-thread" in child_index
+    assert "role: child" in child_index
+    assert "parent_session_id: parent-thread" in child_index
+    assert "# Legacy child" in child_index
 
 
 def test_apply_moves_candidate_and_warns_when_parent_index_is_missing(
@@ -139,7 +235,7 @@ def test_apply_moves_candidate_and_warns_when_parent_index_is_missing(
     monkeypatch.setattr(
         migrate.pl,
         "resolve_parent_thread_id",
-        lambda thread_id, rollout_path=None: child_resolution("missing-parent"),
+        lambda thread_id, rollout_path=None, **kwargs: child_resolution("missing-parent"),
     )
 
     assert migrate.main(["--root", str(tmp_path), "--apply"]) == 0
@@ -148,7 +244,10 @@ def test_apply_moves_candidate_and_warns_when_parent_index_is_missing(
     destination = tmp_path / ".codex" / "sessions" / "_children" / "child-thread"
     assert not child_dir.exists()
     assert destination.is_dir()
-    assert (destination / "INDEX.md").read_text(encoding="utf-8") == "# Child\n"
+    child_index = (destination / "INDEX.md").read_text(encoding="utf-8")
+    assert "role: child" in child_index
+    assert "parent_session_id: missing-parent" in child_index
+    assert "# Child" in child_index
     assert "WARNING parent INDEX.md missing for missing-parent" in captured.err
     assert "WARNING" not in captured.out
 
@@ -160,7 +259,7 @@ def test_parent_miss_or_child_without_parent_does_not_move(monkeypatch, tmp_path
 
     monkeypatch.setattr(migrate.sl, "find_jsonl_by_thread", lambda thread_id: None)
 
-    def resolve_parent_thread_id(thread_id, rollout_path=None):
+    def resolve_parent_thread_id(thread_id, rollout_path=None, **kwargs):
         if thread_id == "child-without-parent":
             return child_resolution(None)
         return main_resolution()
@@ -186,7 +285,7 @@ def test_destination_conflict_returns_2_and_leaves_source_intact(monkeypatch, tm
     monkeypatch.setattr(
         migrate.pl,
         "resolve_parent_thread_id",
-        lambda thread_id, rollout_path=None: child_resolution("parent-thread"),
+        lambda thread_id, rollout_path=None, **kwargs: child_resolution("parent-thread"),
     )
 
     assert migrate.main(["--root", str(tmp_path), "--apply"]) == 2
@@ -215,7 +314,7 @@ def test_apply_preflights_all_conflicts_before_moving_any_candidate(
     monkeypatch.setattr(
         migrate.pl,
         "resolve_parent_thread_id",
-        lambda thread_id, rollout_path=None: child_resolution("parent-thread"),
+        lambda thread_id, rollout_path=None, **kwargs: child_resolution("parent-thread"),
     )
 
     assert migrate.main(["--root", str(tmp_path), "--apply"]) == 2
@@ -241,7 +340,7 @@ def test_apply_does_not_duplicate_existing_parent_link(monkeypatch, tmp_path):
 
     monkeypatch.setattr(migrate.sl, "find_jsonl_by_thread", lambda thread_id: None)
 
-    def resolve_parent_thread_id(thread_id, rollout_path=None):
+    def resolve_parent_thread_id(thread_id, rollout_path=None, **kwargs):
         if thread_id == "child-thread":
             return child_resolution("parent-thread")
         return main_resolution()
@@ -266,7 +365,7 @@ def test_apply_dedupes_parent_link_by_target_when_suffix_differs(monkeypatch, tm
 
     monkeypatch.setattr(migrate.sl, "find_jsonl_by_thread", lambda thread_id: None)
 
-    def resolve_parent_thread_id(thread_id, rollout_path=None):
+    def resolve_parent_thread_id(thread_id, rollout_path=None, **kwargs):
         if thread_id == "child-thread":
             return child_resolution("parent-thread")
         return main_resolution()
@@ -292,7 +391,7 @@ def test_apply_preflights_parent_index_update_failure_before_moving(
 
     monkeypatch.setattr(migrate.sl, "find_jsonl_by_thread", lambda thread_id: None)
 
-    def resolve_parent_thread_id(thread_id, rollout_path=None):
+    def resolve_parent_thread_id(thread_id, rollout_path=None, **kwargs):
         if thread_id == "child-thread":
             return child_resolution("parent-thread")
         return main_resolution()
@@ -327,7 +426,7 @@ def test_apply_rolls_back_successful_moves_when_later_move_fails(
     monkeypatch.setattr(
         migrate.pl,
         "resolve_parent_thread_id",
-        lambda thread_id, rollout_path=None: child_resolution("parent-thread"),
+        lambda thread_id, rollout_path=None, **kwargs: child_resolution("parent-thread"),
     )
 
     def fail_second_child_move(source, destination):
@@ -372,7 +471,7 @@ def test_apply_rolls_back_moves_and_parent_text_when_parent_write_fails_after_mo
 
     monkeypatch.setattr(migrate.sl, "find_jsonl_by_thread", lambda thread_id: None)
 
-    def resolve_parent_thread_id(thread_id, rollout_path=None):
+    def resolve_parent_thread_id(thread_id, rollout_path=None, **kwargs):
         if thread_id == "child-a":
             return child_resolution("parent-a")
         if thread_id == "child-b":
@@ -380,7 +479,7 @@ def test_apply_rolls_back_moves_and_parent_text_when_parent_write_fails_after_mo
         return main_resolution()
 
     def fail_second_parent_write(path, text, *args, **kwargs):
-        if path == second_parent_index:
+        if path == atomic_temp_for(second_parent_index):
             raise OSError("parent write failed")
         return original_write_text(path, text, *args, **kwargs)
 
@@ -400,6 +499,134 @@ def test_apply_rolls_back_moves_and_parent_text_when_parent_write_fails_after_mo
     assert second_parent_index.read_text(encoding="utf-8") == second_parent_original
 
 
+def test_apply_rolls_back_moves_when_child_index_write_fails(
+    monkeypatch,
+    tmp_path,
+    capsys,
+):
+    migrate = load_migrate_child_sessions()
+    first_source = write_session(tmp_path, "child-a", "# Child A\n")
+    second_source = write_session(tmp_path, "child-b", "# Child B\n")
+    write_session(tmp_path, "parent-thread", "# Parent\n")
+    original_write_text = migrate.Path.write_text
+
+    monkeypatch.setattr(migrate.sl, "find_jsonl_by_thread", lambda thread_id: None)
+    monkeypatch.setattr(
+        migrate.pl,
+        "resolve_parent_thread_id",
+        lambda thread_id, rollout_path=None, **kwargs: child_resolution("parent-thread"),
+    )
+
+    def fail_second_child_index_write(path, text, *args, **kwargs):
+        if path.name == ".INDEX.md.tmp" and path.parent.name == "child-b":
+            raise OSError("child index write failed")
+        return original_write_text(path, text, *args, **kwargs)
+
+    monkeypatch.setattr(migrate.Path, "write_text", fail_second_child_index_write)
+
+    assert migrate.main(["--root", str(tmp_path), "--apply"]) == 2
+
+    captured = capsys.readouterr()
+    assert "ERROR child INDEX.md update failed" in captured.err
+    assert "MOVED" not in captured.out
+    assert first_source.is_dir()
+    assert second_source.is_dir()
+    assert not (tmp_path / ".codex" / "sessions" / "_children").exists()
+
+
+def test_apply_restores_child_index_when_parent_write_fails(
+    monkeypatch,
+    tmp_path,
+):
+    migrate = load_migrate_child_sessions()
+    original_child_text = "# Child\n"
+    source = write_session(tmp_path, "child-thread", original_child_text)
+    parent = write_session(tmp_path, "parent-thread", "# Parent\n")
+    parent_index = parent / "INDEX.md"
+    original_write_text = migrate.Path.write_text
+
+    monkeypatch.setattr(migrate.sl, "find_jsonl_by_thread", lambda thread_id: None)
+    monkeypatch.setattr(
+        migrate.pl,
+        "resolve_parent_thread_id",
+        lambda thread_id, rollout_path=None, **kwargs: child_resolution("parent-thread"),
+    )
+
+    def fail_parent_write(path, text, *args, **kwargs):
+        if path == atomic_temp_for(parent_index):
+            raise OSError("parent write failed")
+        return original_write_text(path, text, *args, **kwargs)
+
+    monkeypatch.setattr(migrate.Path, "write_text", fail_parent_write)
+
+    assert migrate.main(["--root", str(tmp_path), "--apply"]) == 2
+
+    assert source.is_dir()
+    assert (source / "INDEX.md").read_text(encoding="utf-8") == original_child_text
+    assert not (tmp_path / ".codex" / "sessions" / "_children").exists()
+
+
+def test_apply_does_not_corrupt_parent_index_when_partial_write_fails(
+    monkeypatch,
+    tmp_path,
+):
+    migrate = load_migrate_child_sessions()
+    source = write_session(tmp_path, "child-thread", "# Child\n")
+    parent = write_session(tmp_path, "parent-thread", "# Parent\n")
+    parent_index = parent / "INDEX.md"
+    original_write_text = migrate.Path.write_text
+
+    monkeypatch.setattr(migrate.sl, "find_jsonl_by_thread", lambda thread_id: None)
+    monkeypatch.setattr(
+        migrate.pl,
+        "resolve_parent_thread_id",
+        lambda thread_id, rollout_path=None, **kwargs: child_resolution("parent-thread"),
+    )
+
+    def corrupt_then_fail(path, text, *args, **kwargs):
+        if path == atomic_temp_for(parent_index):
+            path.write_bytes(b"partial")
+            raise OSError("partial parent write failed")
+        return original_write_text(path, text, *args, **kwargs)
+
+    monkeypatch.setattr(migrate.Path, "write_text", corrupt_then_fail)
+
+    assert migrate.main(["--root", str(tmp_path), "--apply"]) == 2
+
+    assert source.is_dir()
+    assert parent_index.read_text(encoding="utf-8") == "# Parent\n"
+
+
+def test_apply_does_not_corrupt_child_index_when_partial_write_fails(
+    monkeypatch,
+    tmp_path,
+):
+    migrate = load_migrate_child_sessions()
+    source = write_session(tmp_path, "child-thread", "# Child\n")
+    write_session(tmp_path, "parent-thread", "# Parent\n")
+    original_write_text = migrate.Path.write_text
+
+    monkeypatch.setattr(migrate.sl, "find_jsonl_by_thread", lambda thread_id: None)
+    monkeypatch.setattr(
+        migrate.pl,
+        "resolve_parent_thread_id",
+        lambda thread_id, rollout_path=None, **kwargs: child_resolution("parent-thread"),
+    )
+
+    def corrupt_then_fail(path, text, *args, **kwargs):
+        if path.name == ".INDEX.md.tmp" and path.parent.name == "child-thread":
+            path.write_bytes(b"partial")
+            raise OSError("partial child write failed")
+        return original_write_text(path, text, *args, **kwargs)
+
+    monkeypatch.setattr(migrate.Path, "write_text", corrupt_then_fail)
+
+    assert migrate.main(["--root", str(tmp_path), "--apply"]) == 2
+
+    assert source.is_dir()
+    assert (source / "INDEX.md").read_text(encoding="utf-8") == "# Child\n"
+
+
 def test_apply_rolls_back_successful_moves_when_later_move_raises_shutil_error(
     monkeypatch,
     tmp_path,
@@ -414,7 +641,7 @@ def test_apply_rolls_back_successful_moves_when_later_move_raises_shutil_error(
     monkeypatch.setattr(
         migrate.pl,
         "resolve_parent_thread_id",
-        lambda thread_id, rollout_path=None: child_resolution("missing-parent"),
+        lambda thread_id, rollout_path=None, **kwargs: child_resolution("missing-parent"),
     )
 
     def fail_second_child_move(source, destination):
@@ -450,7 +677,7 @@ def test_apply_reports_shutil_error_when_rollback_move_fails(
     monkeypatch.setattr(
         migrate.pl,
         "resolve_parent_thread_id",
-        lambda thread_id, rollout_path=None: child_resolution("missing-parent"),
+        lambda thread_id, rollout_path=None, **kwargs: child_resolution("missing-parent"),
     )
 
     def fail_second_child_and_rollback_move(source, destination):
@@ -492,7 +719,7 @@ def test_apply_reports_manual_cleanup_when_parent_restore_fails(
 
     monkeypatch.setattr(migrate.sl, "find_jsonl_by_thread", lambda thread_id: None)
 
-    def resolve_parent_thread_id(thread_id, rollout_path=None):
+    def resolve_parent_thread_id(thread_id, rollout_path=None, **kwargs):
         if thread_id == "child-a":
             return child_resolution("parent-a")
         if thread_id == "child-b":
@@ -500,10 +727,11 @@ def test_apply_reports_manual_cleanup_when_parent_restore_fails(
         return main_resolution()
 
     def fail_second_parent_write_and_first_restore(path, text, *args, **kwargs):
-        write_counts[path] = write_counts.get(path, 0) + 1
-        if path == second_parent_index:
+        target_path = path.with_name("INDEX.md") if path.name == ".INDEX.md.tmp" else path
+        write_counts[target_path] = write_counts.get(target_path, 0) + 1
+        if target_path == second_parent_index:
             raise OSError("parent write failed")
-        if path == first_parent_index and write_counts[path] == 2:
+        if target_path == first_parent_index and write_counts[target_path] == 2:
             raise OSError("parent restore failed")
         return original_write_text(path, text, *args, **kwargs)
 
@@ -533,7 +761,7 @@ def test_apply_preserves_preexisting_children_root_when_apply_fails(
     monkeypatch.setattr(
         migrate.pl,
         "resolve_parent_thread_id",
-        lambda thread_id, rollout_path=None: child_resolution("missing-parent"),
+        lambda thread_id, rollout_path=None, **kwargs: child_resolution("missing-parent"),
     )
 
     def fail_second_child_move(source, destination):

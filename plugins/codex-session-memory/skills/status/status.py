@@ -134,7 +134,11 @@ def main():
 
     root = csm_project_root.find_project_root(cwd)
     jsonl = csm_session_locator.find_jsonl_by_thread(thread_id)
-    parent_resolution = csm_parent_locator.resolve_parent_thread_id(thread_id, rollout_path=jsonl)
+    parent_resolution = csm_parent_locator.resolve_parent_thread_id(
+        thread_id,
+        rollout_path=jsonl,
+        codex_home=Path(root) / ".codex",
+    )
     session_dir = _current_session_dir(root, thread_id, parent_resolution=parent_resolution)
     index_path = session_dir / "INDEX.md"
     contexts_dir = session_dir / "contexts"
