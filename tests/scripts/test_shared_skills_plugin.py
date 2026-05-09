@@ -13,6 +13,7 @@ SKILLS = (
     "debugging-discipline",
     "review-checklist",
     "verification-evidence",
+    "tdd-test-writing",
 )
 
 
@@ -22,13 +23,29 @@ def read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
+def section_body(text: str, heading: str) -> str:
+    """Return the body until the next Markdown level-two heading line."""
+
+    lines = text.splitlines()
+    start_heading = f"## {heading}"
+    start_index = lines.index(start_heading) + 1
+    end_index = len(lines)
+
+    for index in range(start_index, len(lines)):
+        if lines[index].startswith("## "):
+            end_index = index
+            break
+
+    return "\n".join(lines[start_index:end_index])
+
+
 def test_manifest_exposes_shared_skills_plugin() -> None:
     manifest_path = PLUGIN_ROOT / ".codex-plugin" / "plugin.json"
 
     manifest = json.loads(read(manifest_path))
 
     assert manifest["name"] == "shared-skills"
-    assert manifest["version"] == "0.2.1"
+    assert manifest["version"] == "0.2.2"
     assert manifest["license"] == "MIT"
     assert manifest["skills"] == "./skills/"
     assert "main-session quality gates" in manifest["description"]
@@ -84,11 +101,100 @@ def test_review_and_verification_have_separate_responsibilities() -> None:
     assert "Do not claim completion without fresh evidence." in verification
 
 
+def test_tdd_test_writing_skill_defines_tdd_workflow() -> None:
+    text = read(PLUGIN_ROOT / "skills" / "tdd-test-writing" / "SKILL.md")
+
+    assert "Purpose" in text
+    assert "When to use" in text
+    assert "Inputs to inspect" in text
+    assert "Workflow" in text
+    assert "Test type decision matrix" in text
+    assert "Test writing rules" in text
+    assert "Stack detection rules" in text
+    assert "Review handoff" in text
+    assert "Output" in text
+    assert "Do not" in text
+    assert "TDD" in text
+    assert "failing test" in text
+    assert "detected stack" in text
+    assert "flaky" in text
+    assert "Arrange-Act-Assert" in text
+    assert "reviewer handoff" in text
+
+
+def test_tdd_test_types_reference_documents_required_types() -> None:
+    text = read(PLUGIN_ROOT / "references" / "tdd-test-types.md")
+    test_types = (
+        "Unit",
+        "Integration",
+        "Contract",
+        "Component",
+        "End-to-end",
+        "Smoke",
+        "Regression",
+        "Characterization",
+        "Property-based",
+        "Snapshot/Golden",
+        "Performance/Benchmark",
+        "Security",
+        "Accessibility",
+        "Migration/Schema",
+        "Infrastructure/IaC validation",
+    )
+    required_labels = (
+        "- **When to use:**",
+        "- **What to verify:**",
+        "- **What to avoid:**",
+        "- **Test code structure:**",
+        "- **Assertion standard:**",
+        "- **Fixture, mock, stub, fake use:**",
+        "- **Flaky test prevention:**",
+        "- **TDD first failing test:**",
+        "- **Use existing project tools first:**",
+    )
+
+    assert "# TDD Test Types" in text
+    double_priority = section_body(text, "Test double priority")
+    assert "inline minimal arrange" in double_priority
+    assert "real domain objects" in double_priority
+    assert "repeated arrange becomes clearer with a name" in double_priority
+    assert "unused setup does not hide test intent" in double_priority
+    assert "Use a mock only when the outbound interaction contract itself is the requirement" in double_priority
+
+    lines = text.splitlines()
+    previous_heading_index = -1
+    for test_type in test_types:
+        heading_index = lines.index(f"## {test_type}")
+        assert heading_index > previous_heading_index
+        previous_heading_index = heading_index
+
+        section = section_body(text, test_type)
+
+        previous_position = -1
+        for label in required_labels:
+            position = section.find(label)
+            assert position > previous_position
+            next_positions = [
+                section.find(next_label, position + len(label))
+                for next_label in required_labels
+                if section.find(next_label, position + len(label)) != -1
+            ]
+            end_position = min(next_positions) if next_positions else len(section)
+            assert section[position + len(label) : end_position].strip()
+            previous_position = position
+
+    assert "When to use" in text
+    assert "What to verify" in text
+    assert "What to avoid" in text
+    assert "TDD first failing test" in text
+
+
 def test_readme_documents_plugin_only_installation() -> None:
     readme = read(PLUGIN_ROOT / "README.md")
 
     assert "Plugin-only distribution" in readme
     assert "$shared-skills:" in readme
+    assert "- `tdd-test-writing`:" in readme
     assert "does not copy skills into" in readme
     assert "does not edit AGENTS.md" in readme
 

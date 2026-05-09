@@ -87,7 +87,7 @@ def test_plugin_manifest_exposes_scaffold_skill() -> None:
     skill = PLUGIN_ROOT / "skills" / "scaffold" / "SKILL.md"
 
     assert '"name": "shared-subagents"' in manifest
-    assert '"version": "0.2.0"' in manifest
+    assert '"version": "0.2.1"' in manifest
     assert '"skills": "./skills/"' in manifest
     assert skill.exists()
     assert "name: scaffold" in skill.read_text(encoding="utf-8")
@@ -160,3 +160,48 @@ def test_agents_md_block_defines_subagent_use_boundaries() -> None:
     assert "Keep simple or single-file work in the main session" in block
     assert "Do not delegate urgent blocking work" in block
     assert "Do not ask `reviewer` and `code-reviewer` the same question" in block
+
+
+def test_reviewer_includes_tdd_review_criteria() -> None:
+    text = (PLUGIN_ROOT / "agents" / "reviewer.toml").read_text(
+        encoding="utf-8"
+    )
+
+    assert "TDD review checks:" in text
+    assert "Return TDD review findings with:" in text
+    assert "TDD evidence" in text
+    assert "selected test type" in text
+    assert "observable behavior" in text
+    assert "unnecessary fixtures" in text
+    assert "broad fixtures" in text
+    assert "unused setup fields" in text
+    assert "fixtures that hide the failure cause" in text
+    assert "flaky" in text
+    assert "skipped tests" in text
+    assert "failing/passing test commands" in text
+    assert "failing test was written before or alongside" in text
+    assert "failure, edge, and regression cases" in text
+    assert "mocks and fakes" in text
+    assert "external boundaries" in text
+    assert "sleeps" in text
+    assert "real external services" in text
+    assert "unordered assumptions" in text
+    assert "environment-only success" in text
+    assert ".only" in text
+    assert "disabled assertions" in text
+    assert "snapshot updates without rationale" in text
+
+
+def test_agents_md_block_routes_tdd_review_to_reviewer() -> None:
+    block = (PLUGIN_ROOT / "references" / "agents-md-block.md").read_text(
+        encoding="utf-8"
+    )
+
+    reviewer_lines = [line for line in block.splitlines() if "`reviewer`" in line]
+    assert any(
+        "TDD" in line
+        and "evidence" in line
+        and "test adequacy" in line
+        and "test-writing" in line
+        for line in reviewer_lines
+    )

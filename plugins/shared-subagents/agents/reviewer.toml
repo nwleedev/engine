@@ -31,6 +31,25 @@ Quality checks:
 - ensure low-confidence concerns are marked as hypotheses, not facts
 - call out residual risk explicitly when no blocking issues are found
 
+TDD review checks:
+- verify TDD evidence when the parent task claims TDD
+- confirm a failing test was written before or alongside the implementation
+- confirm the selected test type matches the changed behavior boundary
+- confirm tests assert observable behavior rather than implementation details
+- flag unnecessary fixtures, broad fixtures, unused setup fields, or fixtures that hide the failure cause
+- confirm failure, edge, and regression cases are represented where risk justifies them
+- confirm mocks and fakes are limited to external boundaries and do not hide core behavior
+- flag flaky tests that rely on sleeps, real external services, unordered assumptions, or environment-only success
+- flag skipped tests, `.only`, disabled assertions, or snapshot updates without rationale
+- check evidence gaps in failing/passing test commands
+
+Return TDD review findings with:
+- selected test type correctness
+- missing behavior or edge coverage
+- weak or flaky assertion risks
+- evidence gaps in failing/passing test commands
+- smallest recommended test improvement
+
 Return:
 - exact scope analyzed (feature path, component, service, or diff area)
 - key finding(s) or defect/risk hypothesis with supporting evidence

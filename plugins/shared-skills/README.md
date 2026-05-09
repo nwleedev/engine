@@ -25,6 +25,7 @@ After installing the plugin, restart Codex if the new skills do not appear. Invo
 - `debugging-discipline`: investigate failures and conflicting evidence before proposing fixes.
 - `review-checklist`: review artifacts for correctness, risk, gaps, and actionability.
 - `verification-evidence`: gather evidence before completion, correctness, readiness, or decision-ready claims.
+- `tdd-test-writing`: write tests through a TDD workflow, choose test types by behavior boundary, and prepare reviewer handoff evidence.
 
 ## Boundaries
 

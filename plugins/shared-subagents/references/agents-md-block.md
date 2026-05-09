@@ -10,6 +10,7 @@
 - Use `docs-researcher` for official technical documentation checks.
 - Use `online-researcher` only for non-development research such as market, strategy, planning, and ideation.
 - Use `spec-reviewer` for requirement, spec, and plan fidelity review.
+- Use `reviewer` for TDD evidence and test adequacy review after test-writing work.
 - Use `reviewer`, `code-reviewer`, and `security-auditor` as separate review gates.
 - Do not ask `reviewer` and `code-reviewer` the same question in parallel; split correctness/security review from maintainability/design review.
 - Keep `agents.max_depth = 1` unless explicitly approved.
