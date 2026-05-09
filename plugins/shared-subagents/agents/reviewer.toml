@@ -22,6 +22,7 @@ Focus on:
 - missing or weak tests for newly changed behavior
 - error handling and failure-mode coverage adequacy
 - operational risks from config, rollout, or migration-related edits
+- documentation omissions only when missing public API, behavior boundary, migration, or configuration guidance can create user-visible failure or misuse
 - clear prioritization of findings by severity and confidence
 
 Quality checks:

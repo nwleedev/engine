@@ -20,6 +20,7 @@ Keep main-session changes scoped, traceable, and verifiable.
 ## Development work
 
 - Check likely imports, package usage, tests, lint rules, and compatibility concerns.
+- Before explaining unclear code with comments, consider whether better names, named constants, extracted expressions/functions, enums, typed options, or smaller units would make the intent clear within the approved scope.
 - Avoid unrelated refactors unless they are required for the approved change.
 - Prefer existing project patterns and minimal focused edits.
 
@@ -43,3 +44,4 @@ Keep main-session changes scoped, traceable, and verifiable.
 - Do not introduce new dependencies or tools without approval.
 - Do not skip local project rules.
 - Do not claim completion without verification evidence.
+- Do not turn readability cleanup into unrelated refactoring beyond the approved scope.

@@ -14,6 +14,7 @@ SKILLS = (
     "review-checklist",
     "verification-evidence",
     "tdd-test-writing",
+    "comment-spec-writing",
 )
 
 
@@ -45,7 +46,7 @@ def test_manifest_exposes_shared_skills_plugin() -> None:
     manifest = json.loads(read(manifest_path))
 
     assert manifest["name"] == "shared-skills"
-    assert manifest["version"] == "0.2.2"
+    assert manifest["version"] == "0.2.3"
     assert manifest["license"] == "MIT"
     assert manifest["skills"] == "./skills/"
     assert "main-session quality gates" in manifest["description"]
@@ -122,6 +123,69 @@ def test_tdd_test_writing_skill_defines_tdd_workflow() -> None:
     assert "reviewer handoff" in text
 
 
+def test_comment_spec_writing_skill_defines_comment_workflow() -> None:
+    text = read(PLUGIN_ROOT / "skills" / "comment-spec-writing" / "SKILL.md")
+
+    assert "Purpose" in text
+    assert "When to use" in text
+    assert "Inputs to inspect" in text
+    assert "Workflow" in text
+    assert "Documentation target decision matrix" in text
+    assert "Stack-specific comment formats" in text
+    assert "Comment quality rules" in text
+    assert "Review handoff" in text
+    assert "Output" in text
+    assert "Do not" in text
+    assert "public/exported" in text
+    assert "Explain why, not just what." in text
+    assert "Do not repeat" in text
+    assert "Javadoc" in text
+    assert "KDoc" in text
+    assert "JSDoc" in text
+    assert "docstring" in text
+    assert "rustdoc" in text
+    assert "docs-researcher handoff" in text
+    assert "code-reviewer handoff" in text
+    assert "clearer code before comments" in text
+
+
+def test_comment_specs_reference_documents_required_stacks() -> None:
+    text = read(PLUGIN_ROOT / "references" / "comment-specs-by-stack.md")
+    first_heading = next(line for line in text.splitlines() if line.startswith("# "))
+
+    assert first_heading == "# Comment Specs by Stack"
+    assert "## Code clarity before comments" in text
+    assert "## Stack-specific formats" in text
+    assert "## Review questions" in text
+    assert "| Stack | Preferred format | Applies to | Notes | Official source |" in text
+    assert "Code clarity before comments" in text
+    assert "Javadoc" in text
+    assert "KDoc" in text
+    assert "JSDoc" in text
+    assert "TSDoc" in text
+    assert "docstring" in text
+    assert "PEP 257" in text
+    assert "Go doc comments" in text
+    assert "rustdoc" in text
+    assert "XML documentation comments" in text
+    assert "PHPDoc" in text
+    assert "RDoc" in text
+    assert "YARD" in text
+    assert "Swift" in text
+    assert "Objective-C" in text
+    assert "Doxygen" in text
+    assert "COMMENT ON" in text
+    assert "Shell" in text
+    assert "Terraform" in text
+    assert "Dockerfile" in text
+    assert "Kubernetes" in text
+    assert "OpenAPI" in text
+    assert "GraphQL" in text
+    assert "Proto" in text
+    assert "official source" in text
+    assert "unrelated refactoring" in text
+
+
 def test_tdd_test_types_reference_documents_required_types() -> None:
     text = read(PLUGIN_ROOT / "references" / "tdd-test-types.md")
     test_types = (
@@ -195,8 +259,21 @@ def test_readme_documents_plugin_only_installation() -> None:
     assert "Plugin-only distribution" in readme
     assert "$shared-skills:" in readme
     assert "- `tdd-test-writing`:" in readme
+    assert "- `comment-spec-writing`:" in readme
     assert "does not copy skills into" in readme
     assert "does not edit AGENTS.md" in readme
+
+
+def test_implementation_discipline_prefers_clear_code_before_comments() -> None:
+    text = read(PLUGIN_ROOT / "skills" / "implementation-discipline" / "SKILL.md")
+
+    assert "Before explaining unclear code with comments" in text
+    assert "better names" in text
+    assert "named constants" in text
+    assert "extracted expressions/functions" in text
+    assert "typed options" in text
+    assert "approved scope" in text
+    assert "Do not turn readability cleanup into unrelated refactoring" in text
 
 
 def test_no_scaffold_or_copy_install_flow_exists() -> None:

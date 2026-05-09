@@ -7,10 +7,11 @@
 - Keep simple or single-file work in the main session unless the user explicitly requests delegation.
 - Do not delegate urgent blocking work that the main session needs before it can continue.
 - Use `context-manager` and `code-mapper` before broad subagent work.
-- Use `docs-researcher` for official technical documentation checks.
+- Use `docs-researcher` for official technical documentation checks, including official comment/documentation format requirements.
 - Use `online-researcher` only for non-development research such as market, strategy, planning, and ideation.
 - Use `spec-reviewer` for requirement, spec, and plan fidelity review.
 - Use `reviewer` for TDD evidence and test adequacy review after test-writing work.
+- Use `code-reviewer` for maintainability/design/readability review, including comment quality.
 - Use `reviewer`, `code-reviewer`, and `security-auditor` as separate review gates.
 - Do not ask `reviewer` and `code-reviewer` the same question in parallel; split correctness/security review from maintainability/design review.
 - Keep `agents.max_depth = 1` unless explicitly approved.

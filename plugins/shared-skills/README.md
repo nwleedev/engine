@@ -26,6 +26,7 @@ After installing the plugin, restart Codex if the new skills do not appear. Invo
 - `review-checklist`: review artifacts for correctness, risk, gaps, and actionability.
 - `verification-evidence`: gather evidence before completion, correctness, readiness, or decision-ready claims.
 - `tdd-test-writing`: write tests through a TDD workflow, choose test types by behavior boundary, and prepare reviewer handoff evidence.
+- `comment-spec-writing`: write language/technology-stack-appropriate comments and documentation comments for new-teammate understanding, with `docs-researcher` and `code-reviewer` handoff points.
 
 ## Boundaries
 
