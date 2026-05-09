@@ -15,7 +15,21 @@ Run the `checkpoint.py` script next to this `SKILL.md` file.
 python3 /path/to/codex-session-memory/skills/checkpoint/checkpoint.py prepare
 ```
 
-For subagent/review child sessions, pass the parent session id explicitly:
+For subagent/review child sessions, parent selection uses explicit `--parent`
+first, then `CODEX_SESSION_PARENT_ID`, then automatic detection.
+
+In normal child-session use, run:
+
+```bash
+python3 /path/to/codex-session-memory/skills/checkpoint/checkpoint.py prepare --role child
+```
+
+Within automatic detection, the helper reads rollout `session_meta` before state
+DB. If rollout metadata identifies a child but lacks parent id, it fails closed
+and does not ask state DB to guess. State DB fallback is used only when rollout
+metadata is absent or does not identify a child.
+
+If automatic detection fails, retry with the parent session id explicitly:
 
 ```bash
 python3 /path/to/codex-session-memory/skills/checkpoint/checkpoint.py prepare --role child --parent <parent-session-id>

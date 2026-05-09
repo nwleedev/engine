@@ -82,7 +82,15 @@ Confirm `.env` is in `.gitignore` before committing other changes.
 
 The same JSONL transcript at `~/.codex/sessions/YYYY/MM/DD/rollout-*-<thread>.jsonl` is read incrementally on each checkpoint.
 
-Subagent and review sessions are stored under `_children` when checkpointed with:
+Subagent and review sessions are stored under `_children` when checkpointed as
+child sessions. In normal use, run:
+
+```
+python3 /path/to/codex-session-memory/skills/checkpoint/checkpoint.py prepare --role child
+```
+
+Use `--parent` only when automatic resolution cannot find the parent, or when
+you need to override it explicitly:
 
 ```
 python3 /path/to/codex-session-memory/skills/checkpoint/checkpoint.py prepare --role child --parent <parent-session-id>
@@ -90,8 +98,25 @@ python3 /path/to/codex-session-memory/skills/checkpoint/checkpoint.py prepare --
 
 The child `INDEX.md` records `role: child` and `parent_session_id`. The parent
 `INDEX.md` should append a `Child Sessions` entry linking to the child session.
-Default session listing skips `_children` to keep resume/status output focused
-on main sessions.
+Default resume/session listing skips `_children` to stay focused on main
+sessions.
+
+## Child session checkpoints
+
+Overall parent decision order is:
+
+1. `--parent <thread-id>`
+2. `CODEX_SESSION_PARENT_ID`
+3. automatic detector
+
+Within automatic detection, the helper reads rollout `session_meta` before state
+DB. If rollout metadata identifies a child but lacks parent id, it fails closed
+and does not ask state DB to guess. State DB fallback is used only when rollout
+metadata is absent or does not identify a child. State DB fallback checks
+`thread_spawn_edges` first, then `threads.source`.
+
+If child evidence is detected but no parent id can be resolved, the helper exits
+with code 2 instead of emitting a top-level main session target.
 
 `INDEX.md` is append-only. If multiple checkpoints update the same HH00 context
 file, append a new INDEX entry instead of replacing the previous line. Resume
