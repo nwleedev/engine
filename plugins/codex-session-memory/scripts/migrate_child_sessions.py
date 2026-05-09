@@ -72,6 +72,36 @@ def _find_rollout_path(thread_id: str):
     return finder(thread_id)
 
 
+def _parse_frontmatter(index_path: Path) -> dict[str, str]:
+    try:
+        text = index_path.read_text(encoding="utf-8")
+    except OSError:
+        return {}
+    if not text.startswith("---"):
+        return {}
+    end = text.find("\n---", len("---"))
+    if end < 0:
+        return {}
+
+    frontmatter: dict[str, str] = {}
+    for line in text[len("---") : end].strip().splitlines():
+        if ":" not in line:
+            continue
+        key, _, value = line.partition(":")
+        frontmatter[key.strip()] = value.strip().strip("\"'")
+    return frontmatter
+
+
+def _frontmatter_parent_id(candidate: Path) -> str | None:
+    frontmatter = _parse_frontmatter(candidate / "INDEX.md")
+    if frontmatter.get("role") != "child":
+        return None
+    parent_session_id = frontmatter.get("parent_session_id")
+    if parent_session_id:
+        return parent_session_id
+    return None
+
+
 def _migratable_sessions(candidates: list[Path]) -> list[tuple[Path, str]]:
     migratable = []
     for candidate in candidates:
@@ -80,6 +110,10 @@ def _migratable_sessions(candidates: list[Path]) -> list[tuple[Path, str]]:
         resolution = pl.resolve_parent_thread_id(thread_id, rollout_path=rollout_path)
         if resolution.role == "child" and resolution.parent_thread_id:
             migratable.append((candidate, str(resolution.parent_thread_id)))
+            continue
+        parent_session_id = _frontmatter_parent_id(candidate)
+        if parent_session_id:
+            migratable.append((candidate, parent_session_id))
     return migratable
 
 

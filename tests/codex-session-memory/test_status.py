@@ -196,6 +196,112 @@ def test_status_prefers_child_session_when_both_main_and_child_indexes_exist(
     assert "Last saved: main-stale" not in output
 
 
+def test_status_reports_uncheckpointed_child_from_parent_evidence_before_stale_main(
+    monkeypatch,
+    tmp_path,
+    capsys,
+):
+    status = load_status()
+    main_dir = tmp_path / ".codex" / "sessions" / "child123"
+    main_dir.mkdir(parents=True)
+    (main_dir / "INDEX.md").write_text(
+        "---\n"
+        "last_updated: main-stale\n"
+        "last_processed_offset: 0\n"
+        "---\n\n"
+        "# Stale main\n",
+        encoding="utf-8",
+    )
+    jsonl_path = tmp_path / "rollout-child123.jsonl"
+    jsonl_path.write_text("", encoding="utf-8")
+    parent_index = tmp_path / ".codex" / "sessions" / "parent123" / "INDEX.md"
+    parent_index.parent.mkdir(parents=True)
+    parent_index.write_text("# Parent\n", encoding="utf-8")
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(status.csm_dotenv_loader, "load_project_dotenv", lambda cwd: None)
+    monkeypatch.setattr(status.csm_session_locator, "current_thread_id", lambda: "child123")
+    monkeypatch.setattr(status.csm_project_root, "find_project_root", lambda cwd: str(tmp_path))
+    monkeypatch.setattr(status.csm_session_locator, "find_jsonl_by_thread", lambda thread_id: jsonl_path)
+    monkeypatch.setattr(
+        status,
+        "csm_parent_locator",
+        SimpleNamespace(
+            resolve_parent_thread_id=lambda thread_id, rollout_path=None: SimpleNamespace(
+                role="child",
+                parent_thread_id="parent123",
+            )
+        ),
+        raising=False,
+    )
+    monkeypatch.setattr(
+        status.csm_agents_rules,
+        "check_agents_rules",
+        lambda root: SimpleNamespace(status="installed", missing=()),
+    )
+
+    assert status.main() == 0
+
+    output = capsys.readouterr().out
+    assert "Role: child" in output
+    assert "Parent session: parent123" in output
+    assert "Last saved: main-stale" not in output
+    assert "Child sessions:" not in output
+    assert "status: not yet checkpointed" in output
+
+
+def test_status_reports_uncheckpointed_child_with_unknown_parent_before_stale_main(
+    monkeypatch,
+    tmp_path,
+    capsys,
+):
+    status = load_status()
+    main_dir = tmp_path / ".codex" / "sessions" / "child123"
+    main_dir.mkdir(parents=True)
+    (main_dir / "INDEX.md").write_text(
+        "---\n"
+        "last_updated: main-stale\n"
+        "last_processed_offset: 0\n"
+        "---\n\n"
+        "# Stale main\n",
+        encoding="utf-8",
+    )
+    jsonl_path = tmp_path / "rollout-child123.jsonl"
+    jsonl_path.write_text("", encoding="utf-8")
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(status.csm_dotenv_loader, "load_project_dotenv", lambda cwd: None)
+    monkeypatch.setattr(status.csm_session_locator, "current_thread_id", lambda: "child123")
+    monkeypatch.setattr(status.csm_project_root, "find_project_root", lambda cwd: str(tmp_path))
+    monkeypatch.setattr(status.csm_session_locator, "find_jsonl_by_thread", lambda thread_id: jsonl_path)
+    monkeypatch.setattr(
+        status,
+        "csm_parent_locator",
+        SimpleNamespace(
+            resolve_parent_thread_id=lambda thread_id, rollout_path=None: SimpleNamespace(
+                role="child",
+                parent_thread_id=None,
+            )
+        ),
+        raising=False,
+    )
+    monkeypatch.setattr(
+        status.csm_agents_rules,
+        "check_agents_rules",
+        lambda root: SimpleNamespace(status="installed", missing=()),
+    )
+
+    assert status.main() == 0
+
+    output = capsys.readouterr().out
+    assert "Role: child" in output
+    assert "Parent session: unknown" in output
+    assert "Parent INDEX.md: missing" in output
+    assert "Last saved: main-stale" not in output
+    assert "Child sessions:" not in output
+    assert "status: not yet checkpointed" in output
+
+
 def test_status_old_data_session_dir_signature_still_finds_child_session(
     monkeypatch, tmp_path, capsys
 ):

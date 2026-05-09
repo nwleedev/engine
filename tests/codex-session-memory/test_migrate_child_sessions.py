@@ -96,6 +96,37 @@ def test_apply_moves_candidate_and_appends_parent_link(monkeypatch, tmp_path):
     assert "- [child-th](../_children/child-thread/INDEX.md) - migrated child session" in parent_index
 
 
+def test_apply_uses_child_frontmatter_parent_when_parent_locator_misses(monkeypatch, tmp_path):
+    migrate = load_migrate_child_sessions()
+    child_dir = write_session(
+        tmp_path,
+        "child-thread",
+        "---\n"
+        "role: child\n"
+        "parent_session_id: parent-thread\n"
+        "---\n\n"
+        "# Child\n",
+    )
+    parent_dir = write_session(tmp_path, "parent-thread", "# Parent\n")
+
+    monkeypatch.setattr(migrate.sl, "find_jsonl_by_thread", lambda thread_id: None)
+    monkeypatch.setattr(
+        migrate.pl,
+        "resolve_parent_thread_id",
+        lambda thread_id, rollout_path=None: main_resolution(),
+    )
+
+    assert migrate.main(["--root", str(tmp_path), "--apply"]) == 0
+
+    destination = tmp_path / ".codex" / "sessions" / "_children" / "child-thread"
+    assert not child_dir.exists()
+    assert destination.is_dir()
+    assert (destination / "INDEX.md").is_file()
+    parent_index = (parent_dir / "INDEX.md").read_text(encoding="utf-8")
+    assert "## Child Sessions" in parent_index
+    assert "- [child-th](../_children/child-thread/INDEX.md) - migrated child session" in parent_index
+
+
 def test_apply_moves_candidate_and_warns_when_parent_index_is_missing(
     monkeypatch,
     tmp_path,

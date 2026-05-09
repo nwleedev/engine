@@ -31,6 +31,9 @@ csm_session_locator = _load_script_module(
 csm_jsonl_parser = _load_script_module(
     "jsonl_parser.py", "codex_session_memory_status_jsonl_parser"
 )
+csm_parent_locator = _load_script_module(
+    "parent_locator.py", "codex_session_memory_status_parent_locator"
+)
 csm_index_io = _load_script_module(
     "index_io.py", "codex_session_memory_status_index_io"
 )
@@ -73,7 +76,18 @@ def _data_session_dir(root, thread_id, role="main"):
     return csm_session_locator.data_session_dir(root, thread_id)
 
 
-def _current_session_dir(root, thread_id):
+def _resolution_child_parent_id(parent_resolution):
+    parent_thread_id = getattr(parent_resolution, "parent_thread_id", None)
+    if parent_thread_id:
+        return str(parent_thread_id)
+    return None
+
+
+def _resolution_is_child(parent_resolution):
+    return getattr(parent_resolution, "role", None) == "child"
+
+
+def _current_session_dir(root, thread_id, parent_resolution=None):
     main_session_dir = _data_session_dir(root, thread_id)
     child_session_dir = _data_session_dir(root, thread_id, role="child")
     child_index_path = child_session_dir / "INDEX.md"
@@ -81,6 +95,8 @@ def _current_session_dir(root, thread_id):
         child_fm = csm_index_io.read_frontmatter(child_index_path) or {}
         if child_fm.get("role") == "child":
             return child_session_dir
+    if _resolution_is_child(parent_resolution):
+        return child_session_dir
     if (main_session_dir / "INDEX.md").exists():
         return main_session_dir
     if child_index_path.exists():
@@ -117,9 +133,10 @@ def main():
         return 0
 
     root = csm_project_root.find_project_root(cwd)
-    session_dir = _current_session_dir(root, thread_id)
-    index_path = session_dir / "INDEX.md"
     jsonl = csm_session_locator.find_jsonl_by_thread(thread_id)
+    parent_resolution = csm_parent_locator.resolve_parent_thread_id(thread_id, rollout_path=jsonl)
+    session_dir = _current_session_dir(root, thread_id, parent_resolution=parent_resolution)
+    index_path = session_dir / "INDEX.md"
     contexts_dir = session_dir / "contexts"
     ctx_count = len(list(contexts_dir.glob("CONTEXT-*.md"))) if contexts_dir.is_dir() else 0
 
@@ -130,6 +147,11 @@ def main():
 
     if not index_path.exists():
         print(f"Context files: {ctx_count}")
+        if _resolution_is_child(parent_resolution):
+            _print_child_parent_status(
+                root,
+                {"parent_session_id": _resolution_child_parent_id(parent_resolution)},
+            )
         print("Last saved: never")
         print("Pending offset: 0")
         print("status: not yet checkpointed")
