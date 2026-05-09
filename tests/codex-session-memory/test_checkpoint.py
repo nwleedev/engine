@@ -1,4 +1,5 @@
 import importlib.util
+import json
 from pathlib import Path
 
 
@@ -16,6 +17,7 @@ def load_checkpoint():
 
 def patch_project(monkeypatch, checkpoint, tmp_path):
     monkeypatch.setattr(checkpoint.os, "getcwd", lambda: str(tmp_path))
+    monkeypatch.delenv("CODEX_SESSION_PARENT_ID", raising=False)
     monkeypatch.setattr(checkpoint.dotenv_loader, "load_project_dotenv", lambda cwd: None)
     monkeypatch.setattr(checkpoint.pr, "find_project_root", lambda cwd: str(tmp_path))
     monkeypatch.setattr(checkpoint.pr, "assert_root_is_canonical", lambda root, cwd: None)
@@ -31,6 +33,28 @@ def write_valid_context(context: Path):
         "## [검증 결과]\nTests\n\n"
         "## [남은 위험 및 미해결 사항]\nNone\n\n"
         "## [다음 단계 (Next Steps)]\n- [ ] Next\n",
+        encoding="utf-8",
+    )
+
+
+def write_child_session_meta(jsonl: Path, *, parent_thread_id: str | None):
+    thread_spawn = {}
+    if parent_thread_id is not None:
+        thread_spawn["parent_thread_id"] = parent_thread_id
+    jsonl.write_text(
+        json.dumps(
+            {
+                "type": "session_meta",
+                "payload": {
+                    "source": {
+                        "subagent": {
+                            "thread_spawn": thread_spawn,
+                        },
+                    },
+                },
+            }
+        )
+        + "\n",
         encoding="utf-8",
     )
 
@@ -93,13 +117,162 @@ def test_prepare_uses_hh00_context_path_and_reuses_existing_file(monkeypatch, tm
     assert existing.read_text(encoding="utf-8") == "# Existing\n"
 
 
-def test_prepare_child_requires_parent_session_id(monkeypatch, tmp_path, capsys):
+def test_prepare_child_without_parent_uses_auto_resolution(monkeypatch, tmp_path, capsys):
     checkpoint = load_checkpoint()
+    jsonl = tmp_path / "rollout-child-thread.jsonl"
+    write_child_session_meta(jsonl, parent_thread_id="parent-thread")
+    child_dir = tmp_path / ".codex" / "sessions" / "_children" / "child-thread"
+
     patch_project(monkeypatch, checkpoint, tmp_path)
     monkeypatch.setattr(checkpoint.sl, "current_thread_id", lambda: "child-thread")
+    monkeypatch.setattr(checkpoint.sl, "find_jsonl_by_thread", lambda thread_id: jsonl)
+    monkeypatch.setattr(checkpoint.sl, "data_session_dir", lambda root, thread_id, role="main": child_dir)
+    monkeypatch.setattr(checkpoint.io, "read_frontmatter", lambda path: {"last_processed_offset": 0})
+    monkeypatch.setattr(checkpoint.jp, "extract_delta", lambda path, offset: ([], 10))
+
+    assert checkpoint.main(["prepare", "--role", "child"]) == 0
+
+    output = capsys.readouterr().out
+    assert "role: child" in output
+    assert "parent_session_id: parent-thread" in output
+    assert f"index_path: {child_dir / 'INDEX.md'}" in output
+
+
+def test_prepare_parent_without_role_is_child_intent(monkeypatch, tmp_path, capsys):
+    checkpoint = load_checkpoint()
+    jsonl = tmp_path / "rollout-child-thread.jsonl"
+    jsonl.write_text('{"type":"turn","payload":"ok"}\n', encoding="utf-8")
+    child_dir = tmp_path / ".codex" / "sessions" / "_children" / "child-thread"
+
+    patch_project(monkeypatch, checkpoint, tmp_path)
+    monkeypatch.setattr(checkpoint.sl, "current_thread_id", lambda: "child-thread")
+    monkeypatch.setattr(checkpoint.sl, "find_jsonl_by_thread", lambda thread_id: jsonl)
+    monkeypatch.setattr(checkpoint.sl, "data_session_dir", lambda root, thread_id, role="main": child_dir)
+    monkeypatch.setattr(checkpoint.io, "read_frontmatter", lambda path: {"last_processed_offset": 0})
+    monkeypatch.setattr(checkpoint.jp, "extract_delta", lambda path, offset: ([], 10))
+
+    assert checkpoint.main(["prepare", "--parent", "parent-thread"]) == 0
+
+    output = capsys.readouterr().out
+    assert "role: child" in output
+    assert "parent_session_id: parent-thread" in output
+    assert f"index_path: {child_dir / 'INDEX.md'}" in output
+
+
+def test_prepare_uses_env_parent_as_child_intent(monkeypatch, tmp_path, capsys):
+    checkpoint = load_checkpoint()
+    jsonl = tmp_path / "rollout-child-thread.jsonl"
+    jsonl.write_text('{"type":"turn","payload":"ok"}\n', encoding="utf-8")
+    child_dir = tmp_path / ".codex" / "sessions" / "_children" / "child-thread"
+
+    patch_project(monkeypatch, checkpoint, tmp_path)
+    monkeypatch.setenv("CODEX_SESSION_PARENT_ID", "env-parent-thread")
+    monkeypatch.setattr(checkpoint.sl, "current_thread_id", lambda: "child-thread")
+    monkeypatch.setattr(checkpoint.sl, "find_jsonl_by_thread", lambda thread_id: jsonl)
+    monkeypatch.setattr(checkpoint.sl, "data_session_dir", lambda root, thread_id, role="main": child_dir)
+    monkeypatch.setattr(checkpoint.io, "read_frontmatter", lambda path: {"last_processed_offset": 0})
+    monkeypatch.setattr(checkpoint.jp, "extract_delta", lambda path, offset: ([], 10))
+
+    assert checkpoint.main(["prepare"]) == 0
+
+    output = capsys.readouterr().out
+    assert "role: child" in output
+    assert "parent_session_id: env-parent-thread" in output
+    assert f"index_path: {child_dir / 'INDEX.md'}" in output
+
+
+def test_prepare_fails_when_main_role_conflicts_with_env_parent(monkeypatch, tmp_path, capsys):
+    checkpoint = load_checkpoint()
+    jsonl = tmp_path / "rollout-child-thread.jsonl"
+    jsonl.write_text('{"type":"turn","payload":"ok"}\n', encoding="utf-8")
+
+    patch_project(monkeypatch, checkpoint, tmp_path)
+    monkeypatch.setenv("CODEX_SESSION_PARENT_ID", "env-parent-thread")
+    monkeypatch.setattr(checkpoint.sl, "current_thread_id", lambda: "child-thread")
+    monkeypatch.setattr(checkpoint.sl, "find_jsonl_by_thread", lambda thread_id: jsonl)
+
+    assert checkpoint.main(["prepare", "--role", "main"]) == 2
+
+    captured = capsys.readouterr()
+    assert "conflicts" in captured.err
+    assert "role: main" not in captured.out
+
+
+def test_prepare_fails_when_main_role_conflicts_with_child_metadata(monkeypatch, tmp_path, capsys):
+    checkpoint = load_checkpoint()
+    jsonl = tmp_path / "rollout-child-thread.jsonl"
+    write_child_session_meta(jsonl, parent_thread_id="parent-thread")
+
+    patch_project(monkeypatch, checkpoint, tmp_path)
+    monkeypatch.setattr(checkpoint.sl, "current_thread_id", lambda: "child-thread")
+    monkeypatch.setattr(checkpoint.sl, "find_jsonl_by_thread", lambda thread_id: jsonl)
+
+    assert checkpoint.main(["prepare", "--role", "main"]) == 2
+
+    captured = capsys.readouterr()
+    assert "conflicts" in captured.err
+    assert "role: main" not in captured.out
+
+
+def test_prepare_fails_when_child_detected_without_parent(monkeypatch, tmp_path, capsys):
+    checkpoint = load_checkpoint()
+    jsonl = tmp_path / "rollout-child-thread.jsonl"
+    write_child_session_meta(jsonl, parent_thread_id=None)
+
+    patch_project(monkeypatch, checkpoint, tmp_path)
+    monkeypatch.setattr(checkpoint.sl, "current_thread_id", lambda: "child-thread")
+    monkeypatch.setattr(checkpoint.sl, "find_jsonl_by_thread", lambda thread_id: jsonl)
 
     assert checkpoint.main(["prepare", "--role", "child"]) == 2
-    assert "--parent" in capsys.readouterr().err
+
+    captured = capsys.readouterr()
+    assert "parent" in captured.err
+    assert "retry" in captured.err
+    assert "role: main" not in captured.out
+
+
+def test_prepare_checks_parent_resolution_before_jsonl_missing_failure(
+    monkeypatch, tmp_path, capsys
+):
+    checkpoint = load_checkpoint()
+    calls = []
+
+    def resolve_parent_thread_id(*, thread_id, rollout_path):
+        calls.append((thread_id, rollout_path))
+        return checkpoint.pl.ParentResolution(
+            role="child",
+            parent_thread_id="parent-thread",
+            source="state_db_thread_spawn_edges",
+            confidence="high",
+        )
+
+    patch_project(monkeypatch, checkpoint, tmp_path)
+    monkeypatch.setattr(checkpoint.sl, "current_thread_id", lambda: "child-thread")
+    monkeypatch.setattr(checkpoint.sl, "find_jsonl_by_thread", lambda thread_id: None)
+    monkeypatch.setattr(checkpoint.pl, "resolve_parent_thread_id", resolve_parent_thread_id)
+
+    assert checkpoint.main(["prepare"]) == 2
+
+    captured = capsys.readouterr()
+    assert calls == [("child-thread", None)]
+    assert "no rollout JSONL" in captured.err
+    assert "role: main" not in captured.out
+
+
+def test_prepare_invalid_role_prints_specific_error(capsys):
+    checkpoint = load_checkpoint()
+
+    assert checkpoint.main(["prepare", "--role", "nope"]) == 2
+
+    assert "--role must be main or child" in capsys.readouterr().err
+
+
+def test_prepare_unknown_argument_prints_specific_error(capsys):
+    checkpoint = load_checkpoint()
+
+    assert checkpoint.main(["prepare", "--bogus"]) == 2
+
+    assert "unknown prepare argument" in capsys.readouterr().err
 
 
 def test_prepare_child_outputs_hidden_child_target_and_parent_link(monkeypatch, tmp_path, capsys):

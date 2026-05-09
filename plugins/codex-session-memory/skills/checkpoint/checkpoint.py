@@ -31,6 +31,7 @@ ee = _load_script_module(
 )
 io = _load_script_module("index_io.py", "codex_session_memory_checkpoint_index_io")
 jp = _load_script_module("jsonl_parser.py", "codex_session_memory_checkpoint_jsonl_parser")
+pl = _load_script_module("parent_locator.py", "codex_session_memory_parent_locator")
 pr = _load_script_module("project_root.py", "codex_session_memory_checkpoint_project_root")
 sl = _load_script_module(
     "session_locator.py", "codex_session_memory_checkpoint_session_locator"
@@ -141,33 +142,85 @@ def _index_has_context_entry(index_text: str, filename: str) -> bool:
     return any(entry_re.match(line) for line in index_text.splitlines())
 
 
-def _parse_prepare_args(args: list[str]) -> tuple[str, str | None] | None:
-    role = "main"
+def _parse_prepare_args(args: list[str]) -> tuple[str | None, str | None] | None:
+    role = None
     parent = None
     i = 1
     while i < len(args):
         arg = args[i]
-        if arg == "--role" and i + 1 < len(args):
+        if arg == "--role":
+            if i + 1 >= len(args):
+                print("error: --role requires main or child", file=sys.stderr)
+                return None
             role = args[i + 1]
             i += 2
             continue
-        if arg == "--parent" and i + 1 < len(args):
+        if arg == "--parent":
+            if i + 1 >= len(args):
+                print("error: --parent requires <session-id>", file=sys.stderr)
+                return None
             parent = args[i + 1]
             i += 2
             continue
+        print(f"error: unknown prepare argument: {arg}", file=sys.stderr)
         return None
-    if role not in {"main", "child"}:
-        return None
-    if role == "child" and not parent:
-        print("error: --parent <session-id> is required for child checkpoints", file=sys.stderr)
-        return None
-    if role == "main" and parent:
-        print("error: --parent is only valid with --role child", file=sys.stderr)
+    if role is not None and role not in {"main", "child"}:
+        print("error: --role must be main or child", file=sys.stderr)
         return None
     return role, parent
 
 
-def _prepare(role: str = "main", parent_session_id: str | None = None) -> int:
+def _prepare_retry_guidance() -> str:
+    return "retry with --parent <session-id> or set CODEX_SESSION_PARENT_ID"
+
+
+def _resolve_prepare_target(
+    *,
+    requested_role: str | None,
+    requested_parent: str | None,
+    thread_id: str,
+    jsonl_path: Path | None,
+) -> tuple[str, str | None] | None:
+    if requested_parent:
+        if requested_role == "main":
+            print("error: --parent conflicts with --role main", file=sys.stderr)
+            return None
+        return "child", requested_parent
+
+    env_parent = os.environ.get("CODEX_SESSION_PARENT_ID")
+    if env_parent:
+        if requested_role == "main":
+            print("error: CODEX_SESSION_PARENT_ID conflicts with --role main", file=sys.stderr)
+            return None
+        return "child", env_parent
+
+    resolution = pl.resolve_parent_thread_id(thread_id=thread_id, rollout_path=jsonl_path)
+    if resolution.role == "child":
+        if requested_role == "main":
+            print(
+                "error: --role main conflicts with detected child checkpoint metadata",
+                file=sys.stderr,
+            )
+            return None
+        if resolution.parent_thread_id:
+            return "child", resolution.parent_thread_id
+        print(
+            f"error: child checkpoint detected without parent session id; {_prepare_retry_guidance()}",
+            file=sys.stderr,
+        )
+        return None
+
+    if requested_role == "child":
+        print(
+            f"error: child checkpoint requested but no parent session id was found; {_prepare_retry_guidance()}",
+            file=sys.stderr,
+        )
+        return None
+
+    return "main", None
+
+
+def _prepare(requested_role: str | None = None, requested_parent: str | None = None) -> int:
     cwd = os.getcwd()
     dotenv_loader.load_project_dotenv(cwd)
 
@@ -181,6 +234,17 @@ def _prepare(role: str = "main", parent_session_id: str | None = None) -> int:
         return 2
 
     jsonl_path = sl.find_jsonl_by_thread(thread_id)
+
+    resolved = _resolve_prepare_target(
+        requested_role=requested_role,
+        requested_parent=requested_parent,
+        thread_id=thread_id,
+        jsonl_path=jsonl_path,
+    )
+    if resolved is None:
+        return 2
+    role, parent_session_id = resolved
+
     if not jsonl_path:
         print(f"error: no rollout JSONL found for thread {thread_id}", file=sys.stderr)
         return 2
@@ -305,11 +369,10 @@ def main(argv=None) -> int:
     if command == "prepare":
         parsed = _parse_prepare_args(args)
         if parsed is None:
-            if not any(arg == "--parent" for arg in args):
-                _print_usage()
+            _print_usage()
             return 2
-        role, parent_session_id = parsed
-        return _prepare(role=role, parent_session_id=parent_session_id)
+        requested_role, requested_parent = parsed
+        return _prepare(requested_role=requested_role, requested_parent=requested_parent)
     if command == "verify" and len(args) == 2:
         return _verify(args[1])
 
