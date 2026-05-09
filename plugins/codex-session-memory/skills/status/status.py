@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import inspect
 import importlib.util
 import os
 import sys
@@ -59,6 +60,53 @@ def _count_child_sessions(root, thread_id):
     return count
 
 
+def _data_session_dir(root, thread_id, role="main"):
+    parameters = inspect.signature(csm_session_locator.data_session_dir).parameters
+    supports_role = "role" in parameters or any(
+        parameter.kind == inspect.Parameter.VAR_KEYWORD
+        for parameter in parameters.values()
+    )
+    if supports_role:
+        return csm_session_locator.data_session_dir(root, thread_id, role=role)
+    if role == "child":
+        return csm_session_locator.child_sessions_dir(root) / thread_id
+    return csm_session_locator.data_session_dir(root, thread_id)
+
+
+def _current_session_dir(root, thread_id):
+    main_session_dir = _data_session_dir(root, thread_id)
+    child_session_dir = _data_session_dir(root, thread_id, role="child")
+    child_index_path = child_session_dir / "INDEX.md"
+    if child_index_path.exists():
+        child_fm = csm_index_io.read_frontmatter(child_index_path) or {}
+        if child_fm.get("role") == "child":
+            return child_session_dir
+    if (main_session_dir / "INDEX.md").exists():
+        return main_session_dir
+    if child_index_path.exists():
+        return child_session_dir
+    return main_session_dir
+
+
+def _parent_index_path(root, parent_session_id):
+    if not parent_session_id:
+        return None
+    if hasattr(csm_session_locator, "parent_session_dir"):
+        return csm_session_locator.parent_session_dir(root, parent_session_id) / "INDEX.md"
+    return Path(root) / ".codex" / "sessions" / parent_session_id / "INDEX.md"
+
+
+def _print_child_parent_status(root, fm):
+    parent_session_id = fm.get("parent_session_id") or "unknown"
+    parent_index_path = _parent_index_path(root, fm.get("parent_session_id"))
+    print("Role: child")
+    print(f"Parent session: {parent_session_id}")
+    if parent_index_path and parent_index_path.exists():
+        print(f"Parent INDEX.md: {parent_index_path}")
+    else:
+        print("Parent INDEX.md: missing")
+
+
 def main():
     cwd = os.getcwd()
     csm_dotenv_loader.load_project_dotenv(cwd)
@@ -69,12 +117,11 @@ def main():
         return 0
 
     root = csm_project_root.find_project_root(cwd)
-    session_dir = csm_session_locator.data_session_dir(root, thread_id)
+    session_dir = _current_session_dir(root, thread_id)
     index_path = session_dir / "INDEX.md"
     jsonl = csm_session_locator.find_jsonl_by_thread(thread_id)
     contexts_dir = session_dir / "contexts"
     ctx_count = len(list(contexts_dir.glob("CONTEXT-*.md"))) if contexts_dir.is_dir() else 0
-    child_count = _count_child_sessions(root, thread_id)
 
     print(f"Project root: {root}")
     print(f"Thread id: {thread_id}")
@@ -89,6 +136,7 @@ def main():
         return 0
 
     fm = csm_index_io.read_frontmatter(index_path) or {}
+    is_child = fm.get("role") == "child"
     last_offset = int(fm.get("last_processed_offset", 0))
     pending = 0
     if jsonl and jsonl.is_file():
@@ -96,7 +144,10 @@ def main():
         pending = len(delta)
 
     print(f"Context files: {ctx_count}")
-    print(f"Child sessions: {child_count}")
+    if is_child:
+        _print_child_parent_status(root, fm)
+    else:
+        print(f"Child sessions: {_count_child_sessions(root, thread_id)}")
     print(f"Last saved: {fm.get('last_updated') or 'never'}")
     print(f"Pending offset: {last_offset}")
     print(f"started: {fm.get('started', '?')}")
