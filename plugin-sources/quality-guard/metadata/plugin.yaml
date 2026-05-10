@@ -1,0 +1,5 @@
+id: quality-guard
+codex_id: codex-quality-guard
+claude_id: quality-guard
+description: Detect superficial work and vague language across harnesses.
+package: quality_guard
