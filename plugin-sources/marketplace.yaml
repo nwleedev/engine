@@ -1,0 +1,71 @@
+name: engine
+display_name: Utils with session continuity
+description: Claude Code Harness System — plan enforcement, quality gates, domain knowledge, and session continuity
+owner:
+  name: nwleedev
+plugins:
+  - id: session-memory
+    version: 0.4.0
+    description: Automatic session context narration and injection
+    license: MIT
+    category: Productivity
+    harnesses:
+      claude:
+        name: session-memory
+        path: ./plugins/claude/session-memory
+      codex:
+        name: codex-session-memory
+        skills: ./skills/
+        path: ./plugins/codex/session-memory
+  - id: quality-guard
+    version: 0.1.0
+    description: Detects superficial code changes and vague language via hooks and skills
+    license: MIT
+    category: Productivity
+    harnesses:
+      claude:
+        name: quality-guard
+        path: ./plugins/claude/quality-guard
+      codex:
+        name: codex-quality-guard
+        skills: ./skills/
+        path: ./plugins/codex/quality-guard
+  - id: shared-subagents
+    version: 0.2.4
+    description: Project-local shared Codex subagent templates and installation guidance
+    license: MIT
+    category: Productivity
+    harnesses:
+      claude:
+        name: shared-subagents
+        path: ./plugins/claude/shared-subagents
+      codex:
+        name: shared-subagents
+        skills: ./skills/
+        path: ./plugins/codex/shared-subagents
+  - id: shared-skills
+    version: 0.2.4
+    description: Shared skills for main-session quality gates across development and non-development work
+    license: MIT
+    category: Productivity
+    harnesses:
+      claude:
+        name: shared-skills
+        path: ./plugins/claude/shared-skills
+      codex:
+        name: shared-skills
+        skills: ./skills/
+        path: ./plugins/codex/shared-skills
+  - id: harness-foundry
+    version: 0.3.0
+    description: Skill-only workflows for designing and auditing domain harnesses
+    license: MIT
+    category: Productivity
+    harnesses:
+      claude:
+        name: harness-foundry
+        path: ./plugins/claude/harness-foundry
+      codex:
+        name: harness-foundry
+        skills: ./skills/
+        path: ./plugins/codex/harness-foundry
