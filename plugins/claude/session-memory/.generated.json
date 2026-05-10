@@ -1,0 +1,124 @@
+{
+  "generated": [
+    {
+      "target": "README.ko.md",
+      "source": "plugin-sources/session-memory/adapters/claude/README.ko.md",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "README.md",
+      "source": "plugin-sources/session-memory/adapters/claude/README.md",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "commands/bind.md",
+      "source": "plugin-sources/session-memory/adapters/claude/commands/bind.md",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "commands/checkpoint.md",
+      "source": "plugin-sources/session-memory/adapters/claude/commands/checkpoint.md",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "commands/migrate.md",
+      "source": "plugin-sources/session-memory/adapters/claude/commands/migrate.md",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "commands/resume.md",
+      "source": "plugin-sources/session-memory/adapters/claude/commands/resume.md",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "commands/status.md",
+      "source": "plugin-sources/session-memory/adapters/claude/commands/status.md",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "hooks/pre_tool_use.py",
+      "source": "plugin-sources/session-memory/adapters/claude/hooks/pre_tool_use.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "hooks/session_end.py",
+      "source": "plugin-sources/session-memory/adapters/claude/hooks/session_end.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "hooks/session_start.py",
+      "source": "plugin-sources/session-memory/adapters/claude/hooks/session_start.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "hooks/stop.py",
+      "source": "plugin-sources/session-memory/adapters/claude/hooks/stop.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "scripts/bind.py",
+      "source": "plugin-sources/session-memory/adapters/claude/scripts/bind.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "scripts/index_io.py",
+      "source": "plugin-sources/session-memory/adapters/claude/scripts/index_io.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "scripts/injection.py",
+      "source": "plugin-sources/session-memory/adapters/claude/scripts/injection.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "scripts/lang_detect.py",
+      "source": "plugin-sources/session-memory/adapters/claude/scripts/lang_detect.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "scripts/log.py",
+      "source": "plugin-sources/session-memory/adapters/claude/scripts/log.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "scripts/migrate.py",
+      "source": "plugin-sources/session-memory/adapters/claude/scripts/migrate.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "scripts/narration_pipeline.py",
+      "source": "plugin-sources/session-memory/adapters/claude/scripts/narration_pipeline.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "scripts/narration_state.py",
+      "source": "plugin-sources/session-memory/adapters/claude/scripts/narration_state.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "scripts/one_liner.py",
+      "source": "plugin-sources/session-memory/adapters/claude/scripts/one_liner.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "scripts/policy.py",
+      "source": "plugin-sources/session-memory/adapters/claude/scripts/policy.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "scripts/project_root.py",
+      "source": "plugin-sources/session-memory/adapters/claude/scripts/project_root.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "scripts/reentry_guard.py",
+      "source": "plugin-sources/session-memory/adapters/claude/scripts/reentry_guard.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "scripts/retention.py",
+      "source": "plugin-sources/session-memory/adapters/claude/scripts/retention.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    }
+  ]
+}

@@ -17,10 +17,39 @@ from renderers.codex.marketplaces import render_codex_marketplace
 from renderers.codex.skills import render_codex_skill_tree
 from renderers.codex.subagents import render_codex_agent_tree
 from renderers.plugin_tree import render_plugin_text_tree
+from tools.build.generated_registry import registry_document, registry_entry
 from tools.build.json_io import write_json
-from tools.build.materialize import write_text_tree
+from tools.build.materialize import replace_tree, write_text_tree
 from tools.build.metadata import load_marketplace
 from tools.build.paths import plugin_manifest_path
+
+
+SESSION_MEMORY_TRACEABLE_SUFFIXES = frozenset({".md", ".py", ".toml"})
+
+
+def _registry_entries_for_copied_tree(
+    source_root: Path,
+) -> list[dict[str, str]]:
+    """Return generated registry entries for raw copied adapter files."""
+
+    return [
+        registry_entry(
+            source_path.relative_to(source_root).as_posix(),
+            source_path.relative_to(ROOT).as_posix(),
+        )
+        for source_path in sorted(source_root.rglob("*"))
+        if source_path.is_file()
+        and source_path.suffix in SESSION_MEMORY_TRACEABLE_SUFFIXES
+    ]
+
+
+def _write_copied_tree_registry(source_root: Path, target_root: Path) -> None:
+    """Write tracing metadata for copied files without inline headers."""
+
+    write_json(
+        target_root / ".generated.json",
+        registry_document(_registry_entries_for_copied_tree(source_root)),
+    )
 
 
 def main() -> int:
@@ -30,6 +59,16 @@ def main() -> int:
     shared_skills_source = ROOT / "plugin-sources" / "shared-skills"
     shared_subagents_source = ROOT / "plugin-sources" / "shared-subagents"
     harness_foundry_source = ROOT / "plugin-sources" / "harness-foundry"
+    session_memory_artifacts = (
+        (
+            ROOT / "plugin-sources" / "session-memory" / "adapters" / "codex",
+            ROOT / "plugins" / "codex" / "session-memory",
+        ),
+        (
+            ROOT / "plugin-sources" / "session-memory" / "adapters" / "claude",
+            ROOT / "plugins" / "claude" / "session-memory",
+        ),
+    )
     write_json(ROOT / ".agents/plugins/marketplace.json", render_codex_marketplace(metadata))
     write_json(ROOT / ".claude-plugin/marketplace.json", render_claude_marketplace(metadata))
     write_text_tree(
@@ -62,6 +101,9 @@ def main() -> int:
         ROOT / "plugins" / "claude" / "harness-foundry",
         render_plugin_text_tree(harness_foundry_source),
     )
+    for source_root, target_root in session_memory_artifacts:
+        replace_tree(ROOT, source_root, target_root)
+
     for plugin in metadata["plugins"]:
         harnesses = plugin["harnesses"]
         if "codex" in harnesses:
@@ -74,6 +116,9 @@ def main() -> int:
                 ROOT / plugin_manifest_path(plugin, "claude"),
                 render_claude_manifest(plugin),
             )
+    for source_root, target_root in session_memory_artifacts:
+        _write_copied_tree_registry(source_root, target_root)
+
     print("built plugin artifacts")
     return 0
 

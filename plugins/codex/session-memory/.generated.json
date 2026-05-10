@@ -1,0 +1,104 @@
+{
+  "generated": [
+    {
+      "target": "README.ko.md",
+      "source": "plugin-sources/session-memory/adapters/codex/README.ko.md",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "README.md",
+      "source": "plugin-sources/session-memory/adapters/codex/README.md",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "scripts/agents_rules.py",
+      "source": "plugin-sources/session-memory/adapters/codex/scripts/agents_rules.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "scripts/dotenv_loader.py",
+      "source": "plugin-sources/session-memory/adapters/codex/scripts/dotenv_loader.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "scripts/evidence_extractor.py",
+      "source": "plugin-sources/session-memory/adapters/codex/scripts/evidence_extractor.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "scripts/index_io.py",
+      "source": "plugin-sources/session-memory/adapters/codex/scripts/index_io.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "scripts/jsonl_parser.py",
+      "source": "plugin-sources/session-memory/adapters/codex/scripts/jsonl_parser.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "scripts/migrate_child_sessions.py",
+      "source": "plugin-sources/session-memory/adapters/codex/scripts/migrate_child_sessions.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "scripts/parent_locator.py",
+      "source": "plugin-sources/session-memory/adapters/codex/scripts/parent_locator.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "scripts/project_root.py",
+      "source": "plugin-sources/session-memory/adapters/codex/scripts/project_root.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "scripts/resume_prompt.py",
+      "source": "plugin-sources/session-memory/adapters/codex/scripts/resume_prompt.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "scripts/session_locator.py",
+      "source": "plugin-sources/session-memory/adapters/codex/scripts/session_locator.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "skills/checkpoint/SKILL.md",
+      "source": "plugin-sources/session-memory/adapters/codex/skills/checkpoint/SKILL.md",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "skills/checkpoint/checkpoint.py",
+      "source": "plugin-sources/session-memory/adapters/codex/skills/checkpoint/checkpoint.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "skills/install/SKILL.md",
+      "source": "plugin-sources/session-memory/adapters/codex/skills/install/SKILL.md",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "skills/install/install.py",
+      "source": "plugin-sources/session-memory/adapters/codex/skills/install/install.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "skills/resume/SKILL.md",
+      "source": "plugin-sources/session-memory/adapters/codex/skills/resume/SKILL.md",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "skills/resume/resume.py",
+      "source": "plugin-sources/session-memory/adapters/codex/skills/resume/resume.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "skills/status/SKILL.md",
+      "source": "plugin-sources/session-memory/adapters/codex/skills/status/SKILL.md",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "skills/status/status.py",
+      "source": "plugin-sources/session-memory/adapters/codex/skills/status/status.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    }
+  ]
+}
