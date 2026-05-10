@@ -1,0 +1,54 @@
+{
+  "generated": [
+    {
+      "target": "README.ko.md",
+      "source": "plugin-sources/quality-guard/adapters/codex/README.ko.md",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "README.md",
+      "source": "plugin-sources/quality-guard/adapters/codex/README.md",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "scripts/agents_rules.py",
+      "source": "plugin-sources/quality-guard/adapters/codex/scripts/agents_rules.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "scripts/project_root.py",
+      "source": "plugin-sources/quality-guard/adapters/codex/scripts/project_root.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "skills/install/SKILL.md",
+      "source": "plugin-sources/quality-guard/adapters/codex/skills/install/SKILL.md",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "skills/install/install.py",
+      "source": "plugin-sources/quality-guard/adapters/codex/skills/install/install.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "skills/retrospect/SKILL.md",
+      "source": "plugin-sources/quality-guard/adapters/codex/skills/retrospect/SKILL.md",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "tests/test_agents_rules.py",
+      "source": "plugin-sources/quality-guard/adapters/codex/tests/test_agents_rules.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "tests/test_docs_consistency.py",
+      "source": "plugin-sources/quality-guard/adapters/codex/tests/test_docs_consistency.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "tests/test_project_root.py",
+      "source": "plugin-sources/quality-guard/adapters/codex/tests/test_project_root.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    }
+  ]
+}

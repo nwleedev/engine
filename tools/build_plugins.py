@@ -24,7 +24,7 @@ from tools.build.metadata import load_marketplace
 from tools.build.paths import plugin_manifest_path
 
 
-SESSION_MEMORY_TRACEABLE_SUFFIXES = frozenset({".md", ".py", ".toml"})
+COPIED_TREE_TRACEABLE_SUFFIXES = frozenset({".md", ".py", ".toml"})
 
 
 def _registry_entries_for_copied_tree(
@@ -39,7 +39,7 @@ def _registry_entries_for_copied_tree(
         )
         for source_path in sorted(source_root.rglob("*"))
         if source_path.is_file()
-        and source_path.suffix in SESSION_MEMORY_TRACEABLE_SUFFIXES
+        and source_path.suffix in COPIED_TREE_TRACEABLE_SUFFIXES
     ]
 
 
@@ -69,6 +69,17 @@ def main() -> int:
             ROOT / "plugins" / "claude" / "session-memory",
         ),
     )
+    quality_guard_artifacts = (
+        (
+            ROOT / "plugin-sources" / "quality-guard" / "adapters" / "codex",
+            ROOT / "plugins" / "codex" / "quality-guard",
+        ),
+        (
+            ROOT / "plugin-sources" / "quality-guard" / "adapters" / "claude",
+            ROOT / "plugins" / "claude" / "quality-guard",
+        ),
+    )
+    copied_tree_artifacts = session_memory_artifacts + quality_guard_artifacts
     write_json(ROOT / ".agents/plugins/marketplace.json", render_codex_marketplace(metadata))
     write_json(ROOT / ".claude-plugin/marketplace.json", render_claude_marketplace(metadata))
     write_text_tree(
@@ -101,7 +112,7 @@ def main() -> int:
         ROOT / "plugins" / "claude" / "harness-foundry",
         render_plugin_text_tree(harness_foundry_source),
     )
-    for source_root, target_root in session_memory_artifacts:
+    for source_root, target_root in copied_tree_artifacts:
         replace_tree(ROOT, source_root, target_root)
 
     for plugin in metadata["plugins"]:
@@ -116,7 +127,7 @@ def main() -> int:
                 ROOT / plugin_manifest_path(plugin, "claude"),
                 render_claude_manifest(plugin),
             )
-    for source_root, target_root in session_memory_artifacts:
+    for source_root, target_root in copied_tree_artifacts:
         _write_copied_tree_registry(source_root, target_root)
 
     print("built plugin artifacts")

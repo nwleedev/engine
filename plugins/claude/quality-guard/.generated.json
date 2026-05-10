@@ -1,0 +1,84 @@
+{
+  "generated": [
+    {
+      "target": "README.md",
+      "source": "plugin-sources/quality-guard/adapters/claude/README.md",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "hooks/pre_tool_use.py",
+      "source": "plugin-sources/quality-guard/adapters/claude/hooks/pre_tool_use.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "hooks/session_start.py",
+      "source": "plugin-sources/quality-guard/adapters/claude/hooks/session_start.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "hooks/stop.py",
+      "source": "plugin-sources/quality-guard/adapters/claude/hooks/stop.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "hooks/user_prompt_submit.py",
+      "source": "plugin-sources/quality-guard/adapters/claude/hooks/user_prompt_submit.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "scripts/debiasing.py",
+      "source": "plugin-sources/quality-guard/adapters/claude/scripts/debiasing.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "scripts/feedback_compressor.py",
+      "source": "plugin-sources/quality-guard/adapters/claude/scripts/feedback_compressor.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "scripts/feedback_io.py",
+      "source": "plugin-sources/quality-guard/adapters/claude/scripts/feedback_io.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "scripts/project_root.py",
+      "source": "plugin-sources/quality-guard/adapters/claude/scripts/project_root.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "scripts/quality_analyzer.py",
+      "source": "plugin-sources/quality-guard/adapters/claude/scripts/quality_analyzer.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "scripts/reentry_guard.py",
+      "source": "plugin-sources/quality-guard/adapters/claude/scripts/reentry_guard.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "scripts/ref_index_reader.py",
+      "source": "plugin-sources/quality-guard/adapters/claude/scripts/ref_index_reader.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "scripts/superficial_detector.py",
+      "source": "plugin-sources/quality-guard/adapters/claude/scripts/superficial_detector.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "scripts/user_prompt_handler.py",
+      "source": "plugin-sources/quality-guard/adapters/claude/scripts/user_prompt_handler.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "skills/antivague/SKILL.md",
+      "source": "plugin-sources/quality-guard/adapters/claude/skills/antivague/SKILL.md",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "skills/triage/SKILL.md",
+      "source": "plugin-sources/quality-guard/adapters/claude/skills/triage/SKILL.md",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    }
+  ]
+}
