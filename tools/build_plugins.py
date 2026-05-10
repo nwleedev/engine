@@ -16,6 +16,7 @@ from renderers.codex.manifests import render_codex_manifest
 from renderers.codex.marketplaces import render_codex_marketplace
 from renderers.codex.skills import render_codex_skill_tree
 from renderers.codex.subagents import render_codex_agent_tree
+from renderers.plugin_tree import render_plugin_text_tree
 from tools.build.json_io import write_json
 from tools.build.materialize import write_text_tree
 from tools.build.metadata import load_marketplace
@@ -28,6 +29,7 @@ def main() -> int:
     metadata = load_marketplace(ROOT / "plugin-sources/marketplace.yaml")
     shared_skills_source = ROOT / "plugin-sources" / "shared-skills"
     shared_subagents_source = ROOT / "plugin-sources" / "shared-subagents"
+    harness_foundry_source = ROOT / "plugin-sources" / "harness-foundry"
     write_json(ROOT / ".agents/plugins/marketplace.json", render_codex_marketplace(metadata))
     write_json(ROOT / ".claude-plugin/marketplace.json", render_claude_marketplace(metadata))
     write_text_tree(
@@ -49,6 +51,16 @@ def main() -> int:
         ROOT,
         ROOT / "plugins" / "claude" / "shared-subagents",
         render_claude_agent_tree(shared_subagents_source),
+    )
+    write_text_tree(
+        ROOT,
+        ROOT / "plugins" / "codex" / "harness-foundry",
+        render_plugin_text_tree(harness_foundry_source),
+    )
+    write_text_tree(
+        ROOT,
+        ROOT / "plugins" / "claude" / "harness-foundry",
+        render_plugin_text_tree(harness_foundry_source),
     )
     for plugin in metadata["plugins"]:
         harnesses = plugin["harnesses"]

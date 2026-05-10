@@ -38,5 +38,17 @@ plugins/codex/shared-subagents/references/*.md/
 plugins/claude/shared-subagents/references/*
 !plugins/claude/shared-subagents/references/*.md
 plugins/claude/shared-subagents/references/*.md/
+!plugin-sources/harness-foundry/references/
+plugin-sources/harness-foundry/references/*
+!plugin-sources/harness-foundry/references/*.md
+plugin-sources/harness-foundry/references/*.md/
+!plugins/codex/harness-foundry/references/
+plugins/codex/harness-foundry/references/*
+!plugins/codex/harness-foundry/references/*.md
+plugins/codex/harness-foundry/references/*.md/
+!plugins/claude/harness-foundry/references/
+plugins/claude/harness-foundry/references/*
+!plugins/claude/harness-foundry/references/*.md
+plugins/claude/harness-foundry/references/*.md/
 /apps/harness-foundry-lab/corpus/domain-harness/repos/*
 !/apps/harness-foundry-lab/corpus/domain-harness/repos/.gitkeep
