@@ -1,0 +1,5 @@
+id: session-memory
+codex_id: codex-session-memory
+claude_id: session-memory
+description: Save and restore session context across harnesses.
+package: session_memory
