@@ -9,12 +9,27 @@
     {
       "name": "session-memory",
       "description": "Automatic session context narration and injection",
-      "source": "./plugins/session-memory"
+      "source": "./plugins/claude/session-memory"
     },
     {
       "name": "quality-guard",
       "description": "Detects superficial code changes and vague language via hooks and skills",
-      "source": "./plugins/quality-guard"
+      "source": "./plugins/claude/quality-guard"
+    },
+    {
+      "name": "shared-subagents",
+      "description": "Project-local shared Codex subagent templates and installation guidance",
+      "source": "./plugins/claude/shared-subagents"
+    },
+    {
+      "name": "shared-skills",
+      "description": "Shared skills for main-session quality gates across development and non-development work",
+      "source": "./plugins/claude/shared-skills"
+    },
+    {
+      "name": "harness-foundry",
+      "description": "Skill-only workflows for designing and auditing domain harnesses",
+      "source": "./plugins/claude/harness-foundry"
     }
   ]
 }

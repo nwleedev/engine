@@ -8,7 +8,7 @@
       "name": "codex-session-memory",
       "source": {
         "source": "local",
-        "path": "./plugins/codex-session-memory"
+        "path": "./plugins/codex/session-memory"
       },
       "policy": {
         "installation": "AVAILABLE",
@@ -20,7 +20,7 @@
       "name": "codex-quality-guard",
       "source": {
         "source": "local",
-        "path": "./plugins/codex-quality-guard"
+        "path": "./plugins/codex/quality-guard"
       },
       "policy": {
         "installation": "AVAILABLE",
@@ -32,7 +32,7 @@
       "name": "shared-subagents",
       "source": {
         "source": "local",
-        "path": "./plugins/shared-subagents"
+        "path": "./plugins/codex/shared-subagents"
       },
       "policy": {
         "installation": "AVAILABLE",
@@ -44,7 +44,7 @@
       "name": "shared-skills",
       "source": {
         "source": "local",
-        "path": "./plugins/shared-skills"
+        "path": "./plugins/codex/shared-skills"
       },
       "policy": {
         "installation": "AVAILABLE",
@@ -56,7 +56,7 @@
       "name": "harness-foundry",
       "source": {
         "source": "local",
-        "path": "./plugins/harness-foundry"
+        "path": "./plugins/codex/harness-foundry"
       },
       "policy": {
         "installation": "AVAILABLE",
