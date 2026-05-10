@@ -1,4 +1,5 @@
 import json
+import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -12,6 +13,7 @@ FIXTURES = ROOT / "corpus" / "domain-harness" / "synthetic"
 VALIDATOR = (
     REPO_ROOT
     / "plugins"
+    / "codex"
     / "harness-foundry"
     / "skills"
     / "audit-domain-harness"
@@ -45,6 +47,7 @@ def run_validator(project_root: Path, *extra_args: str) -> subprocess.CompletedP
     return subprocess.run(
         ["python3", str(VALIDATOR), str(project_root), *extra_args],
         check=False,
+        env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
         text=True,
         capture_output=True,
     )

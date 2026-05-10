@@ -1,7 +1,9 @@
 import importlib.util
 import json
+import os
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 
@@ -12,6 +14,7 @@ VALIDATOR = ROOT / "scripts" / "validate_domain_harness_corpus.py"
 BASE_VALIDATOR = (
     REPO_ROOT
     / "plugins"
+    / "codex"
     / "harness-foundry"
     / "skills"
     / "audit-domain-harness"
@@ -28,7 +31,12 @@ def load_validator_module():
     assert spec is not None
     assert spec.loader is not None
     module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+    previous = sys.dont_write_bytecode
+    sys.dont_write_bytecode = True
+    try:
+        spec.loader.exec_module(module)
+    finally:
+        sys.dont_write_bytecode = previous
     return module
 
 
@@ -43,6 +51,7 @@ def run_validator(project_root: Path, *extra_args: str) -> subprocess.CompletedP
     return subprocess.run(
         ["python3", str(VALIDATOR), str(project_root), *extra_args],
         check=False,
+        env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
         text=True,
         capture_output=True,
     )
@@ -52,6 +61,7 @@ def run_base_validator(project_root: Path, *extra_args: str) -> subprocess.Compl
     return subprocess.run(
         ["python3", str(BASE_VALIDATOR), str(project_root), *extra_args],
         check=False,
+        env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
         text=True,
         capture_output=True,
     )

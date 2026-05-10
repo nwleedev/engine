@@ -3,4 +3,5 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SCRIPTS_DIR = REPO_ROOT / "plugins" / "claude" / "session-memory" / "scripts"
+sys.modules.pop("project_root", None)
 sys.path.insert(0, str(SCRIPTS_DIR))

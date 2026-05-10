@@ -13,6 +13,7 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 BASE_VALIDATOR_PATH = (
     REPO_ROOT
     / "plugins"
+    / "codex"
     / "harness-foundry"
     / "skills"
     / "audit-domain-harness"
