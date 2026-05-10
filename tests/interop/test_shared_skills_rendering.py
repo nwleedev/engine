@@ -65,3 +65,23 @@ def test_codex_skill_rendering_rejects_reference_markdown_directory(
         assert str(error) == f"expected file: {source_root / 'references' / 'broken.md'}"
     else:
         raise AssertionError("Expected ValueError for a directory matched as a reference")
+
+
+def test_codex_skill_rendering_rejects_symlinked_skill_source(
+    tmp_path: Path, monkeypatch
+) -> None:
+    source_root = tmp_path / "plugin-sources" / "shared-skills"
+    skill_file = source_root / "skills" / "sample-skill" / "SKILL.md"
+    skill_file.parent.mkdir(parents=True)
+    outside = tmp_path / "outside.md"
+    outside.write_text("name: outside\n", encoding="utf-8")
+    skill_file.symlink_to(outside)
+    (source_root / "references").mkdir()
+    monkeypatch.setattr("renderers.codex.skills.ROOT", tmp_path)
+
+    try:
+        render_codex_skill_tree(source_root)
+    except ValueError as error:
+        assert "canonical source file must not be a symlink" in str(error)
+    else:
+        raise AssertionError("Expected ValueError for a symlinked SKILL.md source")

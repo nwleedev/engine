@@ -4,14 +4,13 @@ from pathlib import Path
 
 from tools.build.headers import markdown_header, python_header
 from tools.build.paths import ROOT
+from tools.build.source_files import ensure_source_file
 
 
 def _read_generated_file(path: Path, header: str) -> str:
     """Return a generated text file body with the provided header."""
 
-    if not path.is_file():
-        raise ValueError(f"expected file: {path}")
-
+    ensure_source_file(ROOT, path)
     return header + path.read_text(encoding="utf-8")
 
 

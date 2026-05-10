@@ -4,11 +4,13 @@ from pathlib import Path
 
 from tools.build.headers import markdown_header, python_header
 from tools.build.paths import ROOT
+from tools.build.source_files import ensure_source_file
 
 
 def _render_support_file(path: Path) -> str:
     """Return a generated support file body with the correct header type."""
 
+    ensure_source_file(ROOT, path)
     relative_source = path.relative_to(ROOT).as_posix()
     body = path.read_text(encoding="utf-8")
     if path.suffix == ".md":

@@ -8,6 +8,7 @@ from typing import Any
 from renderers.shared_subagents import render_shared_subagents_support_tree
 from tools.build.headers import markdown_header
 from tools.build.paths import ROOT
+from tools.build.source_files import ensure_source_file
 
 
 READ_ONLY_TOOLS = ("Read", "Grep", "Glob")
@@ -31,9 +32,7 @@ def _yaml_quoted_string(value: Any) -> str:
 def _load_agent(path: Path) -> dict[str, Any]:
     """Load a canonical shared-subagent TOML file."""
 
-    if not path.is_file():
-        raise ValueError(f"expected file: {path}")
-
+    ensure_source_file(ROOT, path)
     with path.open("rb") as agent_file:
         return tomllib.load(agent_file)
 

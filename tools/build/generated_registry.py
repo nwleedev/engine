@@ -6,6 +6,7 @@ from collections.abc import Callable
 from typing import Any
 
 from tools.build.headers import GENERATED_NOTICE, markdown_header, python_header
+from tools.build.source_files import source_file_exists
 
 
 TRACEABLE_SUFFIXES = frozenset({".json", ".md", ".py", ".toml"})
@@ -179,7 +180,7 @@ def _is_safe_registry_source(source: str) -> bool:
 
 
 def _source_exists(root: Path, source: str) -> bool:
-    return (root / source).is_file()
+    return source_file_exists(root, root / source)
 
 
 def _has_unsafe_raw_segment(path: str) -> bool:

@@ -5,14 +5,13 @@ from pathlib import Path
 from renderers.shared_subagents import render_shared_subagents_support_tree
 from tools.build.headers import python_header
 from tools.build.paths import ROOT
+from tools.build.source_files import ensure_source_file
 
 
 def _render_toml_file(path: Path) -> str:
     """Return a generated TOML file body with its canonical source header."""
 
-    if not path.is_file():
-        raise ValueError(f"expected file: {path}")
-
+    ensure_source_file(ROOT, path)
     relative_source = path.relative_to(ROOT).as_posix()
     return python_header(relative_source) + path.read_text(encoding="utf-8")
 

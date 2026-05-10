@@ -4,14 +4,13 @@ from pathlib import Path
 
 from tools.build.headers import markdown_header
 from tools.build.paths import ROOT
+from tools.build.source_files import ensure_source_file
 
 
 def _render_markdown_file(path: Path) -> str:
     """Return a generated Markdown file body with its canonical source header."""
 
-    if not path.is_file():
-        raise ValueError(f"expected file: {path}")
-
+    ensure_source_file(ROOT, path)
     relative_source = path.relative_to(ROOT).as_posix()
     return markdown_header(relative_source) + path.read_text(encoding="utf-8")
 

@@ -142,6 +142,20 @@ def test_renderer_rejects_unsupported_source_files(
         plugin_tree.render_plugin_text_tree(source_root)
 
 
+def test_renderer_rejects_symlinked_markdown_source(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(plugin_tree, "ROOT", tmp_path)
+    source_root = tmp_path / "plugin-sources" / "harness-foundry"
+    source_root.mkdir(parents=True)
+    outside = tmp_path / "outside.md"
+    outside.write_text("# Outside\n", encoding="utf-8")
+    (source_root / "README.md").symlink_to(outside)
+
+    with pytest.raises(ValueError, match="canonical source file must not be a symlink"):
+        plugin_tree.render_plugin_text_tree(source_root)
+
+
 @pytest.mark.parametrize("target", [CODEX_ARTIFACT, CLAUDE_ARTIFACT])
 @pytest.mark.parametrize("readme_name", ["README.md", "README.ko.md"])
 def test_generated_readme_validator_command_is_artifact_internal(

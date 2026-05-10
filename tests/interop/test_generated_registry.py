@@ -275,6 +275,34 @@ def test_validate_generated_headers_rejects_registry_entry_pointing_to_missing_s
     assert any("plugin-sources/session-memory/missing.md" in error for error in errors)
 
 
+def test_validate_generated_headers_rejects_registry_entry_pointing_to_symlink_source(
+    tmp_path: Path,
+) -> None:
+    _write_valid_generated_root(tmp_path)
+    _write_text(tmp_path, "outside.md", "# Outside source\n")
+    source = tmp_path / "plugin-sources" / "session-memory" / "linked.md"
+    source.parent.mkdir(parents=True, exist_ok=True)
+    source.symlink_to(tmp_path / "outside.md")
+    _write_text(tmp_path, "plugins/codex/session-memory/README.md", "# Session memory\n")
+    write_json(
+        tmp_path,
+        "plugins/codex/session-memory/.generated.json",
+        registry_document(
+            [
+                registry_entry(
+                    "README.md",
+                    "plugin-sources/session-memory/linked.md",
+                )
+            ]
+        ),
+    )
+
+    errors = validate_generated_headers(tmp_path)
+
+    assert any("generated registry source is missing" in error for error in errors)
+    assert any("plugin-sources/session-memory/linked.md" in error for error in errors)
+
+
 @pytest.mark.parametrize("missing_field", ["target", "source", "notice"])
 def test_validate_generated_headers_rejects_malformed_registry_entries(
     tmp_path: Path,
@@ -379,6 +407,26 @@ def test_validate_generated_headers_rejects_inline_header_pointing_to_missing_so
         tmp_path,
         "plugins/codex/session-memory/README.md",
         markdown_header("plugin-sources/session-memory/missing.md") + "# Session memory\n",
+    )
+
+    errors = validate_generated_headers(tmp_path)
+
+    assert any("missing generated tracing" in error for error in errors)
+    assert any("plugins/codex/session-memory/README.md" in error for error in errors)
+
+
+def test_validate_generated_headers_rejects_inline_header_pointing_to_symlink_source(
+    tmp_path: Path,
+) -> None:
+    _write_valid_generated_root(tmp_path)
+    _write_text(tmp_path, "outside.md", "# Outside source\n")
+    source = tmp_path / "plugin-sources" / "session-memory" / "linked.md"
+    source.parent.mkdir(parents=True, exist_ok=True)
+    source.symlink_to(tmp_path / "outside.md")
+    _write_text(
+        tmp_path,
+        "plugins/codex/session-memory/README.md",
+        markdown_header("plugin-sources/session-memory/linked.md") + "# Session memory\n",
     )
 
     errors = validate_generated_headers(tmp_path)
