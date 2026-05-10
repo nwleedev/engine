@@ -26,5 +26,17 @@ plugins/codex/shared-skills/references/*.md/
 plugins/claude/shared-skills/references/*
 !plugins/claude/shared-skills/references/*.md
 plugins/claude/shared-skills/references/*.md/
+!plugin-sources/shared-subagents/references/
+plugin-sources/shared-subagents/references/*
+!plugin-sources/shared-subagents/references/*.md
+plugin-sources/shared-subagents/references/*.md/
+!plugins/codex/shared-subagents/references/
+plugins/codex/shared-subagents/references/*
+!plugins/codex/shared-subagents/references/*.md
+plugins/codex/shared-subagents/references/*.md/
+!plugins/claude/shared-subagents/references/
+plugins/claude/shared-subagents/references/*
+!plugins/claude/shared-subagents/references/*.md
+plugins/claude/shared-subagents/references/*.md/
 /apps/harness-foundry-lab/corpus/domain-harness/repos/*
 !/apps/harness-foundry-lab/corpus/domain-harness/repos/.gitkeep

@@ -17,7 +17,7 @@ def test_marketplace_exposes_shared_subagents() -> None:
 
     assert plugin["source"] == {
         "source": "local",
-        "path": "./plugins/shared-subagents",
+        "path": "./plugins/codex/shared-subagents",
     }
     assert plugin["policy"] == {
         "installation": "AVAILABLE",

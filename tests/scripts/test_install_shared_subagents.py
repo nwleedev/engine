@@ -9,6 +9,7 @@ from pathlib import Path
 SCRIPT_PATH = (
     Path(__file__).resolve().parents[2]
     / "plugins"
+    / "codex"
     / "shared-subagents"
     / "scripts"
     / "install_shared_subagents.py"
