@@ -14,5 +14,17 @@ AGENTS.md
 /.codex/
 .env
 references/
+!plugin-sources/shared-skills/references/
+plugin-sources/shared-skills/references/*
+!plugin-sources/shared-skills/references/*.md
+plugin-sources/shared-skills/references/*.md/
+!plugins/codex/shared-skills/references/
+plugins/codex/shared-skills/references/*
+!plugins/codex/shared-skills/references/*.md
+plugins/codex/shared-skills/references/*.md/
+!plugins/claude/shared-skills/references/
+plugins/claude/shared-skills/references/*
+!plugins/claude/shared-skills/references/*.md
+plugins/claude/shared-skills/references/*.md/
 /apps/harness-foundry-lab/corpus/domain-harness/repos/*
 !/apps/harness-foundry-lab/corpus/domain-harness/repos/.gitkeep

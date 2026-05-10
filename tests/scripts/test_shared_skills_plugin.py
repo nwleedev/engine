@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 
-PLUGIN_ROOT = Path("plugins/shared-skills")
+PLUGIN_ROOT = Path("plugins/codex/shared-skills")
 SKILLS = (
     "requirements-clarifier",
     "research-crosscheck",
@@ -56,8 +56,10 @@ def test_all_lean_core_skills_exist_with_frontmatter() -> None:
     for skill_name in SKILLS:
         skill_path = PLUGIN_ROOT / "skills" / skill_name / "SKILL.md"
         text = read(skill_path)
+        source_path = f"plugin-sources/shared-skills/skills/{skill_name}/SKILL.md"
 
-        assert text.startswith("---\n")
+        assert text.startswith("<!-- GENERATED FILE - DO NOT EDIT -->\n")
+        assert f"<!-- source: {source_path} -->\n\n---\n" in text
         assert f"name: {skill_name}" in text
         assert "description: Use when" in text
         assert "metadata:\n  short-description:" in text
@@ -254,7 +256,7 @@ def test_tdd_test_types_reference_documents_required_types() -> None:
 
 
 def test_readme_documents_plugin_only_installation() -> None:
-    readme = read(PLUGIN_ROOT / "README.md")
+    readme = read(Path("plugins/shared-skills/README.md"))
 
     assert "Plugin-only distribution" in readme
     assert "$shared-skills:" in readme
