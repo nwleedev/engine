@@ -25,16 +25,17 @@ def test_readme_separates_current_state_from_migration_goal() -> None:
 
     for expected in (
         "plugin-sources/marketplace.yaml",
-        "plugin-sources/shared-skills/",
-        "source migration",
-        "later tasks",
+        "renders full plugin trees from `plugin-sources/`",
+        "`session-memory`,\n`quality-guard`, `shared-skills`, `shared-subagents`, and `harness-foundry`",
+        "`_packages/` directory",
     ):
         assert expected in readme
 
     for expected in (
         "plugin-sources/marketplace.yaml",
-        "plugin-sources/shared-skills/",
-        "이후 작업",
+        "`plugin-sources/`의 전체 플러그인 트리를 렌더링",
+        "`session-memory`, `quality-guard`,\n`shared-skills`, `shared-subagents`, `harness-foundry`",
+        "`_packages/`\n디렉터리",
     ):
         assert expected in korean_readme
 

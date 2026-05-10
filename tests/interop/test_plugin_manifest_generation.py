@@ -147,6 +147,69 @@ def test_validate_marketplaces_reports_stale_generated_plugin_manifest_payload(
     )
 
 
+def test_validate_marketplaces_reports_codex_marketplace_drift(
+    tmp_path: Path,
+) -> None:
+    write_minimal_generated_root(tmp_path, manifest_name="codex-session-memory")
+    write_json(
+        tmp_path,
+        ".agents/plugins/marketplace.json",
+        {
+            "name": "engine",
+            "interface": {"displayName": "Engine"},
+            "plugins": [
+                {
+                    "name": "codex-session-memory",
+                    "source": {
+                        "source": "local",
+                        "path": "./plugins/codex/stale-session-memory",
+                    },
+                    "policy": {
+                        "installation": "AVAILABLE",
+                        "authentication": "ON_INSTALL",
+                    },
+                    "category": "Productivity",
+                }
+            ],
+        },
+    )
+
+    errors = validate_marketplaces(tmp_path)
+
+    assert "generated marketplace drift: .agents/plugins/marketplace.json" in errors
+
+
+def test_validate_marketplaces_reports_claude_marketplace_drift(
+    tmp_path: Path,
+) -> None:
+    write_path_contract_generated_root(
+        tmp_path,
+        codex_manifest_path="plugins/codex-alt/session-memory/.codex-plugin/plugin.json",
+        claude_manifest_path="plugins/claude-alt/session-memory/.claude-plugin/plugin.json",
+    )
+    write_json(
+        tmp_path,
+        ".claude-plugin/marketplace.json",
+        {
+            "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+            "name": "engine",
+            "description": "Minimal metadata",
+            "owner": {"name": "nwleedev"},
+            "plugins": [
+                {
+                    "name": "session-memory",
+                    "description": "Session continuity",
+                    "source": "./plugins/claude/session-memory",
+                }
+            ],
+        },
+    )
+
+    errors = validate_marketplaces(tmp_path)
+
+    assert "generated marketplace drift: .claude-plugin/marketplace.json" in errors
+
+
 def test_validate_marketplaces_uses_metadata_harness_paths_for_plugin_manifests(
     tmp_path: Path,
 ) -> None:

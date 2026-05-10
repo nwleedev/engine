@@ -3,38 +3,35 @@
 engine is a multi-harness plugin monorepo for Codex and Claude Code.
 
 The repository separates plugin source material, shared domain logic,
-harness-specific renderers, and generated plugin artifacts. That structure is
-being introduced in stages so current generated outputs stay reproducible while
-more plugin families move behind the same source boundary.
+harness-specific renderers, and generated plugin artifacts. Current generated
+outputs are reproducible from tracked source and committed for direct use.
 
 ## Repository Layout
 
 | Path | Purpose |
 |---|---|
-| `plugin-sources/` | Current canonical source for marketplace metadata and shared-skills reference material. |
+| `plugin-sources/` | Canonical source for marketplace metadata, adapter trees, shared skills, shared subagents, and harness-foundry material. |
 | `packages/` | Runtime-agnostic Python domain logic shared by build and validation tools. |
 | `renderers/` | Harness renderers that translate canonical source into Codex and Claude Code plugin layouts. |
 | `plugins/codex/<plugin>` | Generated Codex plugin artifacts. |
 | `plugins/claude/<plugin>` | Generated Claude Code plugin artifacts. |
 
 Do not edit generated plugin artifacts directly when an equivalent source file
-already exists under `plugin-sources/`. Change that source, update shared logic
-in `packages/`, or update harness output rules in `renderers/`, then regenerate
-the artifacts. Some generated manifests exist before their full plugin source
-trees have migrated; those families will move into `plugin-sources/` in later
-tasks.
+exists under `plugin-sources/` or `packages/`. Change that source, update shared
+logic in `packages/`, or update harness output rules in `renderers/`, then
+regenerate the artifacts.
 
 ## Plugin Families
 
 The core plugin families include `session-memory` and `quality-guard`.
 
-The current generated multi-harness families include `shared-skills`,
-`shared-subagents`, and `harness-foundry`. Today, `tools/build_plugins.py`
-loads marketplace metadata from `plugin-sources/marketplace.yaml`, renders
-Codex and Claude Code manifests from that metadata, and renders the
-`shared-skills` trees from `plugin-sources/shared-skills/`. Full canonical
-source migration for `shared-subagents`, `harness-foundry`, and other plugin
-family material follows in later tasks.
+The generated multi-harness families include `session-memory`,
+`quality-guard`, `shared-skills`, `shared-subagents`, and `harness-foundry`.
+`tools/build_plugins.py` loads marketplace metadata from
+`plugin-sources/marketplace.yaml`, renders Codex and Claude Code manifests from
+that metadata, renders full plugin trees from `plugin-sources/`, and
+materializes shared package code from `packages/` into each runtime artifact's
+`_packages/` directory.
 
 ## Why `plugin-sources/`
 

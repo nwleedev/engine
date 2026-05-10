@@ -1,14 +1,14 @@
 # Plugin Architecture
 
-engine is a multi-harness plugin monorepo. The repository is moving toward one
-canonical plugin source boundary that renders harness-specific plugin layouts
-for Codex and Claude Code.
+engine is a multi-harness plugin monorepo. The repository uses one canonical
+plugin source boundary that renders harness-specific plugin layouts for Codex
+and Claude Code.
 
 ## Repository Layout
 
 | Path | Role |
 | --- | --- |
-| `plugin-sources/` | Canonical source material for marketplace metadata and migrated shared plugin assets. |
+| `plugin-sources/` | Canonical source material for marketplace metadata, adapter trees, shared skills, shared subagents, and harness-foundry material. |
 | `packages/` | Runtime-agnostic Python logic shared by build and validation tools. |
 | `renderers/` | Harness renderers that translate canonical inputs into plugin artifacts. |
 | `plugins/codex/` | Generated Codex plugin artifacts, one directory per public plugin family. |
@@ -16,13 +16,11 @@ for Codex and Claude Code.
 | `docs/` | Public repository documentation that should be committed and reviewed. |
 | `local-docs/` | Ignored planning and task notes for local work, not public documentation. |
 
-Some source migrations are still in progress. For example,
-`plugin-sources/marketplace.yaml` is the canonical marketplace source, and
-`plugin-sources/shared-skills/` is the canonical shared-skills source, while
-other plugin family source moves land in later tasks. Current build coverage is
-therefore narrower than the final architecture: manifests and marketplace files
-are generated for all public plugin families, while full tree materialization is
-currently implemented for `shared-skills`.
+`plugin-sources/marketplace.yaml` is the canonical marketplace source. The full tree materialization is implemented for `session-memory`, `quality-guard`, `shared-skills`, `shared-subagents`, and `harness-foundry`.
+Runtime-agnostic
+package code from `packages/` is copied into generated artifacts under
+`_packages/`. For example, `plugin-sources/shared-skills/` renders to both
+`plugins/codex/shared-skills/` and `plugins/claude/shared-skills/`.
 
 ## Source And Generated Boundary
 
@@ -54,9 +52,9 @@ python tools/validate_generated.py
 
 `python tools/build_plugins.py` reads marketplace metadata from
 `plugin-sources/marketplace.yaml`, renders harness manifests for public plugin
-families, renders marketplace metadata, and materializes migrated plugin trees
-such as `shared-skills`. Later migration tasks extend this source-to-artifact
-coverage to additional plugin families.
+families, renders marketplace metadata, materializes plugin trees from
+`plugin-sources/`, and copies runtime-agnostic package code from `packages/`
+into generated `_packages/` directories.
 
 `python tools/validate_generated.py` checks that generated outputs are
 structurally valid and in sync with the current source model.

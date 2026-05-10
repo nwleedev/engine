@@ -90,15 +90,9 @@ def write_minimal_generated_root(root: Path, manifest_name: str | None) -> None:
         {
             "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
             "name": "engine",
-            "description": "Engine plugins",
+            "description": "Minimal metadata",
             "owner": {"name": "nwleedev"},
-            "plugins": [
-                {
-                    "name": "session-memory",
-                    "description": "Session continuity",
-                    "source": "./plugins/claude/session-memory",
-                }
-            ],
+            "plugins": [],
         },
     )
     if manifest_name is not None:
@@ -179,12 +173,12 @@ def write_path_contract_generated_root(
         {
             "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
             "name": "engine",
-            "description": "Engine plugins",
+            "description": "Minimal metadata",
             "owner": {"name": "nwleedev"},
             "plugins": [
                 {
                     "name": "session-memory",
-                    "description": "Session continuity",
+                    "description": "Automatic session context narration and injection",
                     "source": "./plugins/claude-alt/session-memory",
                 }
             ],

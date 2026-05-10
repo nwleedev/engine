@@ -20,6 +20,14 @@ def test_unsafe_target_outside_generated_roots_is_rejected(tmp_path: Path) -> No
         write_text_tree(tmp_path, target, {"README.md": "unsafe\n"})
 
 
+@pytest.mark.parametrize("harness", ["codex", "claude"])
+def test_harness_root_target_is_rejected(tmp_path: Path, harness: str) -> None:
+    target = tmp_path / "plugins" / harness
+
+    with pytest.raises(ValueError, match="outside generated plugin root"):
+        write_text_tree(tmp_path, target, {"README.md": "unsafe\n"})
+
+
 def test_write_text_tree_removes_stale_files_and_writes_new_content(tmp_path: Path) -> None:
     target = tmp_path / "plugins" / "codex" / "sample"
     stale = target / "stale.md"

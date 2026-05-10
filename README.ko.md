@@ -3,37 +3,35 @@
 engine은 Codex와 Claude Code를 위한 멀티 하네스 플러그인 모노레포입니다.
 
 이 저장소는 플러그인 원본, 공유 도메인 로직, 하네스별 렌더러, 생성된
-플러그인 산출물을 분리합니다. 이 구조는 단계적으로 도입되고 있으며,
-현재 생성 산출물을 재현 가능하게 유지하면서 더 많은 플러그인 패밀리를
-같은 원본 경계로 옮기는 중입니다.
+플러그인 산출물을 분리합니다. 현재 생성 산출물은 추적되는 원본에서
+재현 가능하며, 사용자가 바로 확인하거나 설치할 수 있도록 커밋됩니다.
 
 ## 저장소 구조
 
 | 경로 | 역할 |
 |---|---|
-| `plugin-sources/` | 현재 마켓플레이스 메타데이터와 shared-skills 참조 자료의 표준 원본입니다. |
+| `plugin-sources/` | 마켓플레이스 메타데이터, adapter tree, shared skill, shared subagent, harness-foundry 자료의 표준 원본입니다. |
 | `packages/` | 빌드와 검증 도구가 공유하는 런타임 비종속 Python 도메인 로직입니다. |
 | `renderers/` | 표준 원본을 Codex와 Claude Code 플러그인 레이아웃으로 변환하는 하네스 렌더러입니다. |
 | `plugins/codex/<plugin>` | 생성된 Codex 플러그인 산출물입니다. |
 | `plugins/claude/<plugin>` | 생성된 Claude Code 플러그인 산출물입니다. |
 
-동등한 원본 파일이 `plugin-sources/` 아래에 이미 있는 경우 생성된 플러그인
-산출물을 직접 수정하지 마세요. 해당 원본, `packages/`의 공유 로직, 또는
-`renderers/`의 하네스 출력 규칙을 수정한 뒤 산출물을 다시 생성해야 합니다.
-일부 생성 manifest는 전체 플러그인 원본 트리가 이전되기 전에 이미 존재하며,
-해당 패밀리는 이후 작업에서 `plugin-sources/`로 옮겨집니다.
+동등한 원본 파일이 `plugin-sources/` 또는 `packages/` 아래에 있는 경우
+생성된 플러그인 산출물을 직접 수정하지 마세요. 해당 원본, `packages/`의
+공유 로직, 또는 `renderers/`의 하네스 출력 규칙을 수정한 뒤 산출물을 다시
+생성해야 합니다.
 
 ## 플러그인 패밀리
 
 핵심 플러그인 패밀리는 `session-memory`와 `quality-guard`입니다.
 
-현재 생성되는 멀티 하네스 패밀리에는 `shared-skills`, `shared-subagents`,
-`harness-foundry`가 있습니다. 지금 `tools/build_plugins.py`는
-`plugin-sources/marketplace.yaml`에서 마켓플레이스 메타데이터를 읽고,
-그 메타데이터로 Codex와 Claude Code manifest를 렌더링하며,
-`plugin-sources/shared-skills/`에서 `shared-skills` 트리를 렌더링합니다.
-`shared-subagents`, `harness-foundry`, 그리고 다른 플러그인 패밀리 자료의
-전체 표준 원본 이전은 이후 작업에서 진행됩니다.
+현재 생성되는 멀티 하네스 패밀리에는 `session-memory`, `quality-guard`,
+`shared-skills`, `shared-subagents`, `harness-foundry`가 있습니다.
+`tools/build_plugins.py`는 `plugin-sources/marketplace.yaml`에서
+마켓플레이스 메타데이터를 읽고, 그 메타데이터로 Codex와 Claude Code
+manifest를 렌더링하며, `plugin-sources/`의 전체 플러그인 트리를 렌더링하고,
+`packages/`의 공유 package 코드를 각 runtime artifact의 `_packages/`
+디렉터리로 materialize합니다.
 
 ## `plugin-sources/`를 사용하는 이유
 

@@ -19,6 +19,12 @@ from tools.build.headers import GENERATED_NOTICE, markdown_header, python_header
 from tools.build.validators import validate_generated_headers, validate_marketplaces
 
 
+MANIFEST_REGISTRY_ENTRY = registry_entry(
+    ".codex-plugin/plugin.json",
+    "plugin-sources/marketplace.yaml",
+)
+
+
 def _write_text(root: Path, relative_path: str, text: str) -> None:
     path = root / relative_path
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -27,6 +33,11 @@ def _write_text(root: Path, relative_path: str, text: str) -> None:
 
 def _write_valid_generated_root(root: Path) -> None:
     write_minimal_generated_root(root, manifest_name="codex-session-memory")
+    write_json(
+        root,
+        "plugins/codex/session-memory/.generated.json",
+        registry_document([MANIFEST_REGISTRY_ENTRY]),
+    )
 
 
 def test_registry_entry_returns_target_source_and_notice() -> None:
@@ -83,6 +94,7 @@ def test_validate_generated_headers_accepts_inline_and_registry_generated_tracin
         "plugins/codex/session-memory/.generated.json",
         registry_document(
             [
+                MANIFEST_REGISTRY_ENTRY,
                 registry_entry(
                     "README.md",
                     "plugin-sources/session-memory/README.md",
@@ -94,7 +106,7 @@ def test_validate_generated_headers_accepts_inline_and_registry_generated_tracin
     assert validate_generated_headers(tmp_path) == []
 
 
-@pytest.mark.parametrize("extension", [".py", ".md", ".toml"])
+@pytest.mark.parametrize("extension", [".py", ".md", ".toml", ".json"])
 def test_validate_generated_headers_rejects_generated_file_without_tracing(
     tmp_path: Path,
     extension: str,
@@ -110,6 +122,32 @@ def test_validate_generated_headers_rejects_generated_file_without_tracing(
 
     assert any("missing generated tracing" in error for error in errors)
     assert any(f"plugins/codex/session-memory/untraced{extension}" in error for error in errors)
+
+
+def test_validate_generated_headers_accepts_json_file_with_registry_tracing(
+    tmp_path: Path,
+) -> None:
+    _write_valid_generated_root(tmp_path)
+    write_json(
+        tmp_path,
+        "plugins/codex/session-memory/hooks/hooks.json",
+        {"hooks": {}},
+    )
+    write_json(
+        tmp_path,
+        "plugins/codex/session-memory/.generated.json",
+        registry_document(
+            [
+                MANIFEST_REGISTRY_ENTRY,
+                registry_entry(
+                    "hooks/hooks.json",
+                    "plugin-sources/session-memory/adapters/codex/hooks/hooks.json",
+                )
+            ]
+        ),
+    )
+
+    assert validate_generated_headers(tmp_path) == []
 
 
 @pytest.mark.parametrize(

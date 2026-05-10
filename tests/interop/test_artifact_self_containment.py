@@ -14,8 +14,13 @@ QUALITY_GUARD_ARTIFACTS = {
     "claude": ROOT / "plugins" / "claude" / "quality-guard",
 }
 RUNTIME_TEXT_SUFFIXES = frozenset({".py", ".md", ".json", ".toml"})
-TRACEABLE_SUFFIXES = frozenset({".py", ".md", ".toml"})
+TRACEABLE_SUFFIXES = frozenset({".py", ".md", ".toml", ".json"})
 FORBIDDEN_PACKAGE_REFERENCES = ("../packages", "../../packages")
+MARKETPLACE_SOURCE = "plugin-sources/marketplace.yaml"
+GENERATED_MANIFEST_TARGETS = {
+    "codex": ".codex-plugin/plugin.json",
+    "claude": ".claude-plugin/plugin.json",
+}
 SOURCE_TRACE_PREFIXES = {
     "quality-guard": "plugin-sources/quality-guard/adapters/",
     "session-memory": "plugin-sources/session-memory/adapters/",
@@ -71,7 +76,10 @@ def _source_traceable_targets(plugin_name: str, harness: str) -> set[str]:
     targets = {
         path.relative_to(source_root).as_posix()
         for path in _traceable_files(source_root)
+        if path.relative_to(source_root).as_posix()
+        != GENERATED_MANIFEST_TARGETS[harness]
     }
+    targets.add(GENERATED_MANIFEST_TARGETS[harness])
     package_target_prefix, _package_source_prefix = PACKAGE_TRACE_PREFIXES[plugin_name]
     targets.update(
         f"{package_target_prefix}{path.relative_to(PACKAGE_SOURCE_ROOTS[plugin_name]).as_posix()}"
@@ -82,6 +90,8 @@ def _source_traceable_targets(plugin_name: str, harness: str) -> set[str]:
 
 def _expected_registry_source(plugin_name: str, harness: str, target: str) -> str:
     package_target_prefix, package_source_prefix = PACKAGE_TRACE_PREFIXES[plugin_name]
+    if target == GENERATED_MANIFEST_TARGETS[harness]:
+        return MARKETPLACE_SOURCE
     if target.startswith(package_target_prefix):
         package_relative = target.removeprefix(package_target_prefix)
         return f"{package_source_prefix}{package_relative}"
@@ -104,7 +114,8 @@ def assert_generated_registry_traces_copied_runtime_files(
         for target, source in registry_targets.items():
             assert (root / target).is_file()
             assert source == _expected_registry_source(plugin_name, harness, target)
-            assert (root / target).read_bytes() == (ROOT / source).read_bytes()
+            if source != MARKETPLACE_SOURCE:
+                assert (root / target).read_bytes() == (ROOT / source).read_bytes()
 
 
 def assert_artifact_is_self_contained(root: Path) -> None:

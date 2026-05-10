@@ -1,6 +1,11 @@
 {
   "generated": [
     {
+      "target": ".codex-plugin/plugin.json",
+      "source": "plugin-sources/marketplace.yaml",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
       "target": "README.ko.md",
       "source": "plugin-sources/session-memory/adapters/codex/README.ko.md",
       "notice": "GENERATED FILE - DO NOT EDIT"

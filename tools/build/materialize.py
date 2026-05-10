@@ -43,7 +43,11 @@ def ensure_generated_target(root: Path, target: Path) -> Path:
         resolved_root / "plugins" / "claude",
     )
 
-    if not any(_is_relative_to(resolved_target, generated_root) for generated_root in generated_roots):
+    if not any(
+        _is_relative_to(resolved_target, generated_root)
+        and resolved_target != generated_root
+        for generated_root in generated_roots
+    ):
         raise ValueError(f"outside generated plugin root: {target}")
 
     return resolved_target

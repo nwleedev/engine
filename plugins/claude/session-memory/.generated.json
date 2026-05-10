@@ -1,6 +1,16 @@
 {
   "generated": [
     {
+      "target": ".claude-plugin/plugin.json",
+      "source": "plugin-sources/marketplace.yaml",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": ".version-bump.json",
+      "source": "plugin-sources/session-memory/adapters/claude/.version-bump.json",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
       "target": "README.ko.md",
       "source": "plugin-sources/session-memory/adapters/claude/README.ko.md",
       "notice": "GENERATED FILE - DO NOT EDIT"
@@ -48,6 +58,11 @@
     {
       "target": "commands/status.md",
       "source": "plugin-sources/session-memory/adapters/claude/commands/status.md",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "hooks/hooks.json",
+      "source": "plugin-sources/session-memory/adapters/claude/hooks/hooks.json",
       "notice": "GENERATED FILE - DO NOT EDIT"
     },
     {

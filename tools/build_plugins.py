@@ -24,7 +24,14 @@ from tools.build.metadata import load_marketplace
 from tools.build.paths import plugin_manifest_path
 
 
-COPIED_TREE_TRACEABLE_SUFFIXES = frozenset({".md", ".py", ".toml"})
+COPIED_TREE_TRACEABLE_SUFFIXES = frozenset({".json", ".md", ".py", ".toml"})
+GENERATED_MANIFEST_TARGETS = frozenset(
+    {
+        ".claude-plugin/plugin.json",
+        ".codex-plugin/plugin.json",
+    }
+)
+MARKETPLACE_SOURCE = "plugin-sources/marketplace.yaml"
 
 
 def _registry_entries_for_copied_tree(
@@ -41,7 +48,18 @@ def _registry_entries_for_copied_tree(
         for source_path in sorted(source_root.rglob("*"))
         if source_path.is_file()
         and source_path.suffix in COPIED_TREE_TRACEABLE_SUFFIXES
+        and source_path.relative_to(source_root).as_posix()
+        not in GENERATED_MANIFEST_TARGETS
     ]
+
+
+def _write_registry(target_root: Path, entries: list[dict[str, str]]) -> None:
+    """Write tracing metadata for files without inline generated headers."""
+
+    write_json(
+        target_root / ".generated.json",
+        registry_document(entries),
+    )
 
 
 def _write_copied_tree_registry(
@@ -49,6 +67,7 @@ def _write_copied_tree_registry(
     target_root: Path,
     package_source_root: Path,
     package_target_prefix: str,
+    manifest_entries: list[dict[str, str]],
 ) -> None:
     """Write tracing metadata for copied files without inline headers."""
 
@@ -59,9 +78,21 @@ def _write_copied_tree_registry(
             target_prefix=package_target_prefix,
         )
     )
-    write_json(
-        target_root / ".generated.json",
-        registry_document(entries),
+    entries.extend(manifest_entries)
+    _write_registry(target_root, entries)
+
+
+def _manifest_registry_entry(plugin: dict, harness: str) -> tuple[Path, dict[str, str]]:
+    """Return the generated plugin root and registry entry for its manifest."""
+
+    manifest_path = ROOT / plugin_manifest_path(plugin, harness)
+    plugin_root = manifest_path.parent.parent
+    return (
+        plugin_root,
+        registry_entry(
+            manifest_path.relative_to(plugin_root).as_posix(),
+            MARKETPLACE_SOURCE,
+        ),
     )
 
 
@@ -152,18 +183,19 @@ def main() -> int:
     for source_root, target_root, _package_name in package_artifacts:
         replace_tree(ROOT, source_root, target_root)
 
+    manifest_entries_by_target_root: dict[Path, list[dict[str, str]]] = {}
     for plugin in metadata["plugins"]:
         harnesses = plugin["harnesses"]
         if "codex" in harnesses:
-            write_json(
-                ROOT / plugin_manifest_path(plugin, "codex"),
-                render_codex_manifest(plugin),
-            )
+            manifest_path = ROOT / plugin_manifest_path(plugin, "codex")
+            write_json(manifest_path, render_codex_manifest(plugin))
+            plugin_root, entry = _manifest_registry_entry(plugin, "codex")
+            manifest_entries_by_target_root.setdefault(plugin_root, []).append(entry)
         if "claude" in harnesses:
-            write_json(
-                ROOT / plugin_manifest_path(plugin, "claude"),
-                render_claude_manifest(plugin),
-            )
+            manifest_path = ROOT / plugin_manifest_path(plugin, "claude")
+            write_json(manifest_path, render_claude_manifest(plugin))
+            plugin_root, entry = _manifest_registry_entry(plugin, "claude")
+            manifest_entries_by_target_root.setdefault(plugin_root, []).append(entry)
     package_artifacts_by_target_root = {
         target_root.parent.parent: (source_root, f"_packages/{package_name}/")
         for source_root, target_root, package_name in package_artifacts
@@ -177,7 +209,10 @@ def main() -> int:
             target_root,
             package_source_root,
             package_target_prefix,
+            manifest_entries_by_target_root.pop(target_root, []),
         )
+    for target_root, entries in manifest_entries_by_target_root.items():
+        _write_registry(target_root, entries)
 
     print("built plugin artifacts")
     return 0

@@ -87,7 +87,7 @@ def _assert_artifact_includes_generated_tree(target: Path, harness: str) -> None
         for source_path in SOURCE.rglob("*")
         if _is_rendered_source_file(source_path)
     }
-    assert artifact_files == {*source_files, manifest_path}
+    assert artifact_files == {*source_files, manifest_path, ".generated.json"}
 
 
 def _extract_validator_command_path(readme_path: Path) -> str:

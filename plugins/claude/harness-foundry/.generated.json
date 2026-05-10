@@ -1,0 +1,9 @@
+{
+  "generated": [
+    {
+      "target": ".claude-plugin/plugin.json",
+      "source": "plugin-sources/marketplace.yaml",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    }
+  ]
+}

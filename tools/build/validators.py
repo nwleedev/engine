@@ -5,7 +5,9 @@ from pathlib import Path
 from typing import Any
 
 from renderers.claude.manifests import render_claude_manifest
+from renderers.claude.marketplaces import render_claude_marketplace
 from renderers.codex.manifests import render_codex_manifest
+from renderers.codex.marketplaces import render_codex_marketplace
 from tools.build.generated_registry import validate_generated_tracing
 from tools.build.metadata import load_marketplace
 from tools.build.paths import plugin_manifest_path
@@ -169,49 +171,39 @@ def _append_manifest_errors(
         errors.append(f"generated plugin manifest drift: {relative_path}")
 
 
-def _validate_plugin_manifests(root: Path, errors: list[str]) -> None:
+def _load_metadata_for_validation(
+    root: Path,
+    errors: list[str],
+) -> dict[str, Any] | None:
+    """Load canonical marketplace metadata for generated drift validation."""
+
     metadata_path = root / METADATA_SOURCE
     if not metadata_path.exists():
-        return
+        return None
 
     try:
-        metadata = load_marketplace(metadata_path)
+        return load_marketplace(metadata_path)
     except ValueError as exc:
         errors.append(str(exc))
-        return
+        return None
 
-    for plugin in metadata["plugins"]:
-        harnesses = plugin["harnesses"]
-        if "codex" in harnesses:
-            try:
-                relative_path = plugin_manifest_path(plugin, "codex")
-            except ValueError as exc:
-                errors.append(str(exc))
-            else:
-                _append_manifest_errors(
-                    root,
-                    errors,
-                    relative_path,
-                    render_codex_manifest(plugin),
-                )
-        if "claude" in harnesses:
-            try:
-                relative_path = plugin_manifest_path(plugin, "claude")
-            except ValueError as exc:
-                errors.append(str(exc))
-            else:
-                _append_manifest_errors(
-                    root,
-                    errors,
-                    relative_path,
-                    render_claude_manifest(plugin),
-                )
+
+def _expected_marketplace(
+    relative_path: Path,
+    metadata: dict[str, Any],
+) -> dict[str, Any]:
+    if relative_path == CODEX_MARKETPLACE:
+        return render_codex_marketplace(metadata)
+    if relative_path == CLAUDE_MARKETPLACE:
+        return render_claude_marketplace(metadata)
+    raise ValueError(f"unknown marketplace target: {relative_path}")
 
 
 def validate_marketplaces(root: Path) -> list[str]:
     """Validate generated marketplace and plugin manifest artifacts."""
 
     errors: list[str] = []
+    metadata = _load_metadata_for_validation(root, errors)
 
     for relative_path in MARKETPLACE_TARGETS:
         path = root / relative_path
@@ -234,7 +226,36 @@ def validate_marketplaces(root: Path) -> list[str]:
         elif relative_path == CLAUDE_MARKETPLACE:
             _validate_claude_marketplace(relative_path, data, errors)
 
-    _validate_plugin_manifests(root, errors)
+        if metadata is not None and data != _expected_marketplace(relative_path, metadata):
+            errors.append(f"generated marketplace drift: {relative_path}")
+
+    if metadata is not None:
+        for plugin in metadata["plugins"]:
+            harnesses = plugin["harnesses"]
+            if "codex" in harnesses:
+                try:
+                    relative_path = plugin_manifest_path(plugin, "codex")
+                except ValueError as exc:
+                    errors.append(str(exc))
+                else:
+                    _append_manifest_errors(
+                        root,
+                        errors,
+                        relative_path,
+                        render_codex_manifest(plugin),
+                    )
+            if "claude" in harnesses:
+                try:
+                    relative_path = plugin_manifest_path(plugin, "claude")
+                except ValueError as exc:
+                    errors.append(str(exc))
+                else:
+                    _append_manifest_errors(
+                        root,
+                        errors,
+                        relative_path,
+                        render_claude_manifest(plugin),
+                    )
     return errors
 
 

@@ -19,9 +19,9 @@ def test_plugin_architecture_doc_describes_public_repo_layout() -> None:
         "Do not edit generated",
         "python tools/build_plugins.py",
         "python tools/validate_generated.py",
-        "full tree materialization is",
-        "currently implemented for `shared-skills`",
-        "Later migration tasks extend this source-to-artifact",
+        "full tree materialization is implemented",
+        "`session-memory`, `quality-guard`, `shared-skills`, `shared-subagents`, and `harness-foundry`",
+        "_packages/",
     ):
         assert expected in doc
 
@@ -36,8 +36,8 @@ def test_migration_guide_documents_harness_specific_paths() -> None:
         "No Compatibility Directories",
         "public plugin IDs",
         "migration target",
-        "Flat plugin directories may still exist",
-        "legacy in-progress material",
+        "Flat plugin directories are not current generated artifacts",
+        "Older flat directories may appear in history",
         "plugin-sources/marketplace.yaml",
     ):
         assert expected in doc

@@ -8,7 +8,7 @@ from typing import Any
 from tools.build.headers import GENERATED_NOTICE, markdown_header, python_header
 
 
-TRACEABLE_SUFFIXES = frozenset({".md", ".py", ".toml"})
+TRACEABLE_SUFFIXES = frozenset({".json", ".md", ".py", ".toml"})
 GENERATED_REGISTRY_NAME = ".generated.json"
 GENERATED_PLUGIN_ROOTS = (Path("plugins/codex"), Path("plugins/claude"))
 VALID_SOURCE_ROOTS = frozenset({"plugin-sources", "packages"})
@@ -62,7 +62,9 @@ def _iter_traceable_files(plugin_root: Path) -> list[Path]:
     return sorted(
         path
         for path in plugin_root.rglob("*")
-        if path.is_file() and path.suffix in TRACEABLE_SUFFIXES
+        if path.is_file()
+        and path.name != GENERATED_REGISTRY_NAME
+        and path.suffix in TRACEABLE_SUFFIXES
     )
 
 
