@@ -209,7 +209,7 @@ def _validate_plugin_manifests(root: Path, errors: list[str]) -> None:
 
 
 def validate_marketplaces(root: Path) -> list[str]:
-    """Validate generated plugin artifacts required by the build entrypoint."""
+    """Validate generated marketplace and plugin manifest artifacts."""
 
     errors: list[str] = []
 
@@ -235,9 +235,13 @@ def validate_marketplaces(root: Path) -> list[str]:
             _validate_claude_marketplace(relative_path, data, errors)
 
     _validate_plugin_manifests(root, errors)
-    errors.extend(validate_generated_tracing(root))
-
     return errors
 
 
-__all__ = ["validate_marketplaces"]
+def validate_generated_headers(root: Path) -> list[str]:
+    """Validate generated plugin tracing through inline headers or registry entries."""
+
+    return validate_generated_tracing(root)
+
+
+__all__ = ["validate_generated_headers", "validate_marketplaces"]

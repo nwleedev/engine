@@ -8,13 +8,15 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from tools.build.validators import validate_marketplaces
+from tools.build.validators import validate_generated_headers, validate_marketplaces
 
 
 def main() -> int:
-    """Validate generated plugin marketplace artifacts."""
+    """Validate generated plugin artifacts without rewriting them."""
 
-    errors = validate_marketplaces(ROOT)
+    errors = []
+    errors.extend(validate_marketplaces(ROOT))
+    errors.extend(validate_generated_headers(ROOT))
     if errors:
         for error in errors:
             print(error)

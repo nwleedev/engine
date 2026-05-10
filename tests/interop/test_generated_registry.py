@@ -16,7 +16,7 @@ if str(INTEROP) not in sys.path:
 from plugin_manifest_helpers import write_json, write_minimal_generated_root
 from tools.build.generated_registry import registry_document, registry_entry
 from tools.build.headers import GENERATED_NOTICE, markdown_header, python_header
-from tools.build.validators import validate_marketplaces
+from tools.build.validators import validate_generated_headers, validate_marketplaces
 
 
 def _write_text(root: Path, relative_path: str, text: str) -> None:
@@ -64,7 +64,7 @@ def test_registry_document_sorts_entries_by_target() -> None:
     }
 
 
-def test_validate_marketplaces_accepts_inline_and_registry_generated_tracing(
+def test_validate_generated_headers_accepts_inline_and_registry_generated_tracing(
     tmp_path: Path,
 ) -> None:
     _write_valid_generated_root(tmp_path)
@@ -91,11 +91,11 @@ def test_validate_marketplaces_accepts_inline_and_registry_generated_tracing(
         ),
     )
 
-    assert validate_marketplaces(tmp_path) == []
+    assert validate_generated_headers(tmp_path) == []
 
 
 @pytest.mark.parametrize("extension", [".py", ".md", ".toml"])
-def test_validate_marketplaces_rejects_generated_file_without_tracing(
+def test_validate_generated_headers_rejects_generated_file_without_tracing(
     tmp_path: Path,
     extension: str,
 ) -> None:
@@ -106,7 +106,7 @@ def test_validate_marketplaces_rejects_generated_file_without_tracing(
         "untraced = true\n",
     )
 
-    errors = validate_marketplaces(tmp_path)
+    errors = validate_generated_headers(tmp_path)
 
     assert any("missing generated tracing" in error for error in errors)
     assert any(f"plugins/codex/session-memory/untraced{extension}" in error for error in errors)
@@ -126,7 +126,7 @@ def test_validate_marketplaces_rejects_generated_file_without_tracing(
         ".generated.json",
     ],
 )
-def test_validate_marketplaces_rejects_registry_target_outside_plugin_root(
+def test_validate_generated_headers_rejects_registry_target_outside_plugin_root(
     tmp_path: Path,
     target: str,
 ) -> None:
@@ -144,7 +144,7 @@ def test_validate_marketplaces_rejects_registry_target_outside_plugin_root(
         ),
     )
 
-    errors = validate_marketplaces(tmp_path)
+    errors = validate_generated_headers(tmp_path)
 
     assert any("unsafe generated registry target" in error for error in errors)
 
@@ -162,7 +162,7 @@ def test_validate_marketplaces_rejects_registry_target_outside_plugin_root(
         "packages\\x.py",
     ],
 )
-def test_validate_marketplaces_rejects_registry_source_outside_generated_sources(
+def test_validate_generated_headers_rejects_registry_source_outside_generated_sources(
     tmp_path: Path,
     source: str,
 ) -> None:
@@ -174,12 +174,12 @@ def test_validate_marketplaces_rejects_registry_source_outside_generated_sources
         registry_document([registry_entry("README.md", source)]),
     )
 
-    errors = validate_marketplaces(tmp_path)
+    errors = validate_generated_headers(tmp_path)
 
     assert any("invalid generated registry source" in error for error in errors)
 
 
-def test_validate_marketplaces_rejects_registry_entry_pointing_to_missing_file(
+def test_validate_generated_headers_rejects_registry_entry_pointing_to_missing_file(
     tmp_path: Path,
 ) -> None:
     _write_valid_generated_root(tmp_path)
@@ -196,14 +196,14 @@ def test_validate_marketplaces_rejects_registry_entry_pointing_to_missing_file(
         ),
     )
 
-    errors = validate_marketplaces(tmp_path)
+    errors = validate_generated_headers(tmp_path)
 
     assert any("generated registry target is missing" in error for error in errors)
     assert any("plugins/codex/session-memory/README.md" in error for error in errors)
 
 
 @pytest.mark.parametrize("missing_field", ["target", "source", "notice"])
-def test_validate_marketplaces_rejects_malformed_registry_entries(
+def test_validate_generated_headers_rejects_malformed_registry_entries(
     tmp_path: Path,
     missing_field: str,
 ) -> None:
@@ -221,12 +221,12 @@ def test_validate_marketplaces_rejects_malformed_registry_entries(
         {"generated": [entry]},
     )
 
-    errors = validate_marketplaces(tmp_path)
+    errors = validate_generated_headers(tmp_path)
 
     assert any("malformed generated registry entry" in error for error in errors)
 
 
-def test_validate_marketplaces_rejects_duplicate_registry_targets(
+def test_validate_generated_headers_rejects_duplicate_registry_targets(
     tmp_path: Path,
 ) -> None:
     _write_valid_generated_root(tmp_path)
@@ -242,12 +242,12 @@ def test_validate_marketplaces_rejects_duplicate_registry_targets(
         },
     )
 
-    errors = validate_marketplaces(tmp_path)
+    errors = validate_generated_headers(tmp_path)
 
     assert any("duplicate generated registry target" in error for error in errors)
 
 
-def test_validate_marketplaces_rejects_inline_header_after_body_text(
+def test_validate_generated_headers_rejects_inline_header_after_body_text(
     tmp_path: Path,
 ) -> None:
     _write_valid_generated_root(tmp_path)
@@ -257,7 +257,7 @@ def test_validate_marketplaces_rejects_inline_header_after_body_text(
         "# Session memory\n" + markdown_header("plugin-sources/session-memory/README.md"),
     )
 
-    errors = validate_marketplaces(tmp_path)
+    errors = validate_generated_headers(tmp_path)
 
     assert any("missing generated tracing" in error for error in errors)
     assert any("plugins/codex/session-memory/README.md" in error for error in errors)
@@ -280,7 +280,7 @@ def test_validate_marketplaces_rejects_inline_header_after_body_text(
         ),
     ],
 )
-def test_validate_marketplaces_accepts_exact_inline_headers(
+def test_validate_generated_headers_accepts_exact_inline_headers(
     tmp_path: Path,
     relative_path: str,
     text: str,
@@ -288,4 +288,4 @@ def test_validate_marketplaces_accepts_exact_inline_headers(
     _write_valid_generated_root(tmp_path)
     _write_text(tmp_path, relative_path, text)
 
-    assert validate_marketplaces(tmp_path) == []
+    assert validate_generated_headers(tmp_path) == []
