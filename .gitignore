@@ -8,7 +8,7 @@ __pycache__/
 CLAUDE.md
 AGENTS.md
 /temps/
-/docs/
+/local-docs/
 /.worktrees/
 /.vscode/
 /.codex/
