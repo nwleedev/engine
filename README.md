@@ -55,7 +55,8 @@ pytest
 git diff --exit-code
 ```
 
-CI follows the same contract: regenerate plugin artifacts, validate generated
-outputs, run tests, detect drift with `git diff --exit-code`, and fail if the
-working tree changes. CI does not auto-commit generated changes; contributors
-must commit source updates and regenerated artifacts together.
+The `validate-generated` GitHub Actions workflow follows the same contract:
+regenerate plugin artifacts, validate generated outputs, run tests, detect
+drift with `git diff --exit-code`, and fail if the working tree changes. CI does
+not auto-commit generated changes; contributors must commit source updates and
+regenerated artifacts together.
