@@ -1,7 +1,7 @@
 from pathlib import Path
 
 
-ROOT = Path("plugins/codex-quality-guard")
+ROOT = Path("plugins/codex/quality-guard")
 
 
 def read(name):
@@ -21,12 +21,12 @@ def test_readmes_share_skill_names_and_command():
 
 
 def test_install_skill_uses_skill_relative_command():
-    skill = Path("plugins/codex-quality-guard/skills/install/SKILL.md").read_text(
+    skill = Path("plugins/codex/quality-guard/skills/install/SKILL.md").read_text(
         encoding="utf-8"
     )
 
     assert "python3 /path/to/codex-quality-guard/skills/install/install.py" in skill
-    assert "python3 plugins/codex-quality-guard/skills/install/install.py" not in skill
+    assert "python3 plugins/" not in skill
 
 
 def test_readmes_share_output_schema():

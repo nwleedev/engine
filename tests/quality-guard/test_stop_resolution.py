@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-SCRIPTS_DIR = Path(__file__).parent.parent.parent / "plugins/quality-guard/scripts"
+SCRIPTS_DIR = Path(__file__).parent.parent.parent / "plugins/claude/quality-guard/scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
 import quality_analyzer as qa

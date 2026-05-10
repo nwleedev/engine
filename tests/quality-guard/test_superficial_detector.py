@@ -4,7 +4,7 @@ import sys
 from contextlib import redirect_stdout, redirect_stderr
 from pathlib import Path
 
-SCRIPTS_DIR = Path(__file__).parent.parent.parent / "plugins/quality-guard/scripts"
+SCRIPTS_DIR = Path(__file__).parent.parent.parent / "plugins/claude/quality-guard/scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 import superficial_detector as sd
 

@@ -3,7 +3,7 @@ from pathlib import Path
 
 
 def load_project_root():
-    path = Path("plugins/codex-quality-guard/scripts/project_root.py").resolve()
+    path = Path("plugins/codex/quality-guard/scripts/project_root.py").resolve()
     spec = importlib.util.spec_from_file_location("test_cqg_project_root", path)
     module = importlib.util.module_from_spec(spec)
     assert spec.loader is not None

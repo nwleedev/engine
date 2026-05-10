@@ -4,8 +4,8 @@ import importlib
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
-SCRIPTS_DIR = Path(__file__).parent.parent.parent / "plugins/quality-guard/scripts"
-HOOKS_DIR = Path(__file__).parent.parent.parent / "plugins/quality-guard/hooks"
+SCRIPTS_DIR = Path(__file__).parent.parent.parent / "plugins/claude/quality-guard/scripts"
+HOOKS_DIR = Path(__file__).parent.parent.parent / "plugins/claude/quality-guard/hooks"
 sys.path.insert(0, str(SCRIPTS_DIR))
 import feedback_compressor as fc
 
