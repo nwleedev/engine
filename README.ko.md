@@ -52,10 +52,13 @@ python tools/build_plugins.py
 python tools/validate_generated.py
 pytest
 git diff --exit-code
+test -z "$(git status --porcelain --untracked-files=all)"
 ```
 
 `validate-generated` GitHub Actions 워크플로도 같은 계약을 따릅니다.
 플러그인 산출물을 다시 생성하고, 생성물을 검증하고, 테스트를 실행하고,
-`git diff --exit-code`로 drift를 감지한 뒤 작업 트리가 바뀌면 실패합니다.
-CI는 생성된 변경을 자동 커밋하지 않습니다. 기여자는 원본 수정과 다시
-생성된 산출물을 함께 커밋해야 합니다.
+`git diff --exit-code`로 tracked drift를 감지하며,
+`git status --porcelain --untracked-files=all`로 untracked 생성 파일까지
+감지한 뒤 작업 트리가 바뀌면 실패합니다. CI는 `pytest`를 명시적으로
+설치하고, 생성된 변경을 자동 커밋하지 않습니다. 기여자는 원본 수정과
+다시 생성된 산출물을 함께 커밋해야 합니다.

@@ -53,10 +53,13 @@ python tools/build_plugins.py
 python tools/validate_generated.py
 pytest
 git diff --exit-code
+test -z "$(git status --porcelain --untracked-files=all)"
 ```
 
 The `validate-generated` GitHub Actions workflow follows the same contract:
 regenerate plugin artifacts, validate generated outputs, run tests, detect
-drift with `git diff --exit-code`, and fail if the working tree changes. CI does
-not auto-commit generated changes; contributors must commit source updates and
-regenerated artifacts together.
+tracked drift with `git diff --exit-code`, detect untracked generated files with
+`git status --porcelain --untracked-files=all`, and fail if the working tree
+changes. CI installs `pytest` explicitly and does not auto-commit generated
+changes; contributors must commit source updates and regenerated artifacts
+together.
