@@ -1,0 +1,6 @@
+{
+  "name": "session-memory",
+  "version": "0.4.0",
+  "description": "Automatic session context narration and injection",
+  "license": "MIT"
+}

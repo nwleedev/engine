@@ -4,6 +4,11 @@ import json
 from pathlib import Path
 from typing import Any
 
+from renderers.claude.manifests import render_claude_manifest
+from renderers.codex.manifests import render_codex_manifest
+from tools.build.metadata import load_marketplace
+from tools.build.paths import plugin_manifest_path
+
 
 MARKETPLACE_TARGETS = (
     Path(".agents/plugins/marketplace.json"),
@@ -12,6 +17,7 @@ MARKETPLACE_TARGETS = (
 
 CODEX_MARKETPLACE = Path(".agents/plugins/marketplace.json")
 CLAUDE_MARKETPLACE = Path(".claude-plugin/marketplace.json")
+METADATA_SOURCE = Path("plugin-sources/marketplace.yaml")
 
 
 def _read_json(path: Path) -> Any:
@@ -137,8 +143,72 @@ def _validate_claude_marketplace(
                 errors.append(f"{relative_path} must have string {plugin_path}.{field}")
 
 
+def _append_manifest_errors(
+    root: Path,
+    errors: list[str],
+    relative_path: Path,
+    expected_manifest: dict[str, Any],
+) -> None:
+    path = root / relative_path
+    if not path.exists():
+        errors.append(f"missing generated plugin manifest: {relative_path}")
+        return
+
+    try:
+        data = _read_json(path)
+    except json.JSONDecodeError as exc:
+        errors.append(f"invalid JSON in {relative_path}: {exc.msg}")
+        return
+
+    if not isinstance(data, dict):
+        errors.append(f"generated plugin manifest is not an object: {relative_path}")
+        return
+
+    if data != expected_manifest:
+        errors.append(f"generated plugin manifest drift: {relative_path}")
+
+
+def _validate_plugin_manifests(root: Path, errors: list[str]) -> None:
+    metadata_path = root / METADATA_SOURCE
+    if not metadata_path.exists():
+        return
+
+    try:
+        metadata = load_marketplace(metadata_path)
+    except ValueError as exc:
+        errors.append(str(exc))
+        return
+
+    for plugin in metadata["plugins"]:
+        harnesses = plugin["harnesses"]
+        if "codex" in harnesses:
+            try:
+                relative_path = plugin_manifest_path(plugin, "codex")
+            except ValueError as exc:
+                errors.append(str(exc))
+            else:
+                _append_manifest_errors(
+                    root,
+                    errors,
+                    relative_path,
+                    render_codex_manifest(plugin),
+                )
+        if "claude" in harnesses:
+            try:
+                relative_path = plugin_manifest_path(plugin, "claude")
+            except ValueError as exc:
+                errors.append(str(exc))
+            else:
+                _append_manifest_errors(
+                    root,
+                    errors,
+                    relative_path,
+                    render_claude_manifest(plugin),
+                )
+
+
 def validate_marketplaces(root: Path) -> list[str]:
-    """Validate generated marketplace files required by the build entrypoint."""
+    """Validate generated plugin artifacts required by the build entrypoint."""
 
     errors: list[str] = []
 
@@ -162,6 +232,8 @@ def validate_marketplaces(root: Path) -> list[str]:
             _validate_codex_marketplace(relative_path, data, errors)
         elif relative_path == CLAUDE_MARKETPLACE:
             _validate_claude_marketplace(relative_path, data, errors)
+
+    _validate_plugin_manifests(root, errors)
 
     return errors
 

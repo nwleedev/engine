@@ -170,3 +170,30 @@ def test_validate_marketplace_metadata_rejects_typed_harness_string_fields(
 
     with pytest.raises(ValueError, match=f"{field} must be a string"):
         _validate_marketplace_metadata(metadata, tmp_path / "marketplace.yaml")
+
+
+@pytest.mark.parametrize(
+    ("harness_name", "path_value", "message"),
+    [
+        ("codex", "", "harness path must not be empty"),
+        ("claude", "   ", "harness path must not be empty"),
+        ("codex", ".", "harness path must not point to repository root"),
+        ("claude", "./", "harness path must not point to repository root"),
+        ("codex", "/abs/path", "harness path must be relative"),
+        ("claude", "../escape", "harness path must not escape the repository"),
+    ],
+)
+def test_validate_marketplace_metadata_rejects_unsafe_harness_paths(
+    tmp_path: Path,
+    harness_name: str,
+    path_value: str,
+    message: str,
+) -> None:
+    metadata = minimal_marketplace_metadata()
+    metadata["plugins"][0]["harnesses"][harness_name] = {
+        "name": f"{harness_name}-session-memory",
+        "path": path_value,
+    }
+
+    with pytest.raises(ValueError, match=message):
+        _validate_marketplace_metadata(metadata, tmp_path / "marketplace.yaml")

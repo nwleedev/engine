@@ -1,0 +1,7 @@
+{
+  "name": "harness-foundry",
+  "version": "0.3.0",
+  "description": "Skill-only workflows for designing and auditing domain harnesses",
+  "license": "MIT",
+  "skills": "./skills/"
+}

@@ -1,0 +1,7 @@
+{
+  "name": "shared-subagents",
+  "version": "0.2.4",
+  "description": "Project-local shared Codex subagent templates and installation guidance",
+  "license": "MIT",
+  "skills": "./skills/"
+}

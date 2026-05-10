@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+from tools.build.paths import normalize_harness_path
+
 
 TOP_LEVEL_REQUIRED_KEYS = {"name", "display_name", "description", "owner", "plugins"}
 TOP_LEVEL_ALLOWED_KEYS = TOP_LEVEL_REQUIRED_KEYS
@@ -173,6 +175,7 @@ def _validate_harness_metadata(
                 harness[key],
                 f"{path} plugin {plugin['id']} harness {harness_name}.{key}",
             )
+    normalize_harness_path(harness["path"])
 
 
 def _require_string_scalar(value: Any, context: str) -> None:

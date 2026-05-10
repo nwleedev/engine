@@ -1,0 +1,7 @@
+{
+  "name": "codex-quality-guard",
+  "version": "0.1.0",
+  "description": "Detects superficial code changes and vague language via hooks and skills",
+  "license": "MIT",
+  "skills": "./skills/"
+}
