@@ -23,6 +23,9 @@ MANIFEST_REGISTRY_ENTRY = registry_entry(
     ".codex-plugin/plugin.json",
     "plugin-sources/marketplace.yaml",
 )
+README_SOURCE = "plugin-sources/session-memory/README.md"
+PYTHON_SOURCE = "packages/session-memory/scripts/status.py"
+TOML_SOURCE = "packages/session-memory/settings.toml"
 
 
 def _write_text(root: Path, relative_path: str, text: str) -> None:
@@ -79,10 +82,12 @@ def test_validate_generated_headers_accepts_inline_and_registry_generated_tracin
     tmp_path: Path,
 ) -> None:
     _write_valid_generated_root(tmp_path)
+    _write_text(tmp_path, README_SOURCE, "# Session memory source\n")
+    _write_text(tmp_path, PYTHON_SOURCE, "VALUE = 1\n")
     _write_text(
         tmp_path,
         "plugins/codex/session-memory/scripts/status.py",
-        python_header("packages/session-memory/scripts/status.py") + "VALUE = 1\n",
+        python_header(PYTHON_SOURCE) + "VALUE = 1\n",
     )
     _write_text(
         tmp_path,
@@ -97,7 +102,7 @@ def test_validate_generated_headers_accepts_inline_and_registry_generated_tracin
                 MANIFEST_REGISTRY_ENTRY,
                 registry_entry(
                     "README.md",
-                    "plugin-sources/session-memory/README.md",
+                    README_SOURCE,
                 )
             ]
         ),
@@ -128,6 +133,11 @@ def test_validate_generated_headers_accepts_json_file_with_registry_tracing(
     tmp_path: Path,
 ) -> None:
     _write_valid_generated_root(tmp_path)
+    _write_text(
+        tmp_path,
+        "plugin-sources/session-memory/adapters/codex/hooks/hooks.json",
+        "{}\n",
+    )
     write_json(
         tmp_path,
         "plugins/codex/session-memory/hooks/hooks.json",
@@ -221,6 +231,7 @@ def test_validate_generated_headers_rejects_registry_entry_pointing_to_missing_f
     tmp_path: Path,
 ) -> None:
     _write_valid_generated_root(tmp_path)
+    _write_text(tmp_path, README_SOURCE, "# Session memory source\n")
     write_json(
         tmp_path,
         "plugins/codex/session-memory/.generated.json",
@@ -238,6 +249,30 @@ def test_validate_generated_headers_rejects_registry_entry_pointing_to_missing_f
 
     assert any("generated registry target is missing" in error for error in errors)
     assert any("plugins/codex/session-memory/README.md" in error for error in errors)
+
+
+def test_validate_generated_headers_rejects_registry_entry_pointing_to_missing_source(
+    tmp_path: Path,
+) -> None:
+    _write_valid_generated_root(tmp_path)
+    _write_text(tmp_path, "plugins/codex/session-memory/README.md", "# Session memory\n")
+    write_json(
+        tmp_path,
+        "plugins/codex/session-memory/.generated.json",
+        registry_document(
+            [
+                registry_entry(
+                    "README.md",
+                    "plugin-sources/session-memory/missing.md",
+                )
+            ]
+        ),
+    )
+
+    errors = validate_generated_headers(tmp_path)
+
+    assert any("generated registry source is missing" in error for error in errors)
+    assert any("plugin-sources/session-memory/missing.md" in error for error in errors)
 
 
 @pytest.mark.parametrize("missing_field", ["target", "source", "notice"])
@@ -268,6 +303,8 @@ def test_validate_generated_headers_rejects_duplicate_registry_targets(
     tmp_path: Path,
 ) -> None:
     _write_valid_generated_root(tmp_path)
+    _write_text(tmp_path, README_SOURCE, "# Session memory source\n")
+    _write_text(tmp_path, "packages/session-memory/README.md", "# Package source\n")
     _write_text(tmp_path, "plugins/codex/session-memory/README.md", "# Session memory\n")
     write_json(
         tmp_path,
@@ -302,19 +339,22 @@ def test_validate_generated_headers_rejects_inline_header_after_body_text(
 
 
 @pytest.mark.parametrize(
-    ("relative_path", "text"),
+    ("relative_path", "text", "source"),
     [
         (
             "plugins/codex/session-memory/README.md",
-            markdown_header("plugin-sources/session-memory/README.md") + "# Session memory\n",
+            markdown_header(README_SOURCE) + "# Session memory\n",
+            README_SOURCE,
         ),
         (
             "plugins/codex/session-memory/status.py",
-            python_header("packages/session-memory/status.py") + "VALUE = 1\n",
+            python_header(PYTHON_SOURCE) + "VALUE = 1\n",
+            PYTHON_SOURCE,
         ),
         (
             "plugins/codex/session-memory/settings.toml",
-            python_header("packages/session-memory/settings.toml") + "enabled = true\n",
+            python_header(TOML_SOURCE) + "enabled = true\n",
+            TOML_SOURCE,
         ),
     ],
 )
@@ -322,8 +362,26 @@ def test_validate_generated_headers_accepts_exact_inline_headers(
     tmp_path: Path,
     relative_path: str,
     text: str,
+    source: str,
 ) -> None:
     _write_valid_generated_root(tmp_path)
+    _write_text(tmp_path, source, "source\n")
     _write_text(tmp_path, relative_path, text)
 
     assert validate_generated_headers(tmp_path) == []
+
+
+def test_validate_generated_headers_rejects_inline_header_pointing_to_missing_source(
+    tmp_path: Path,
+) -> None:
+    _write_valid_generated_root(tmp_path)
+    _write_text(
+        tmp_path,
+        "plugins/codex/session-memory/README.md",
+        markdown_header("plugin-sources/session-memory/missing.md") + "# Session memory\n",
+    )
+
+    errors = validate_generated_headers(tmp_path)
+
+    assert any("missing generated tracing" in error for error in errors)
+    assert any("plugins/codex/session-memory/README.md" in error for error in errors)

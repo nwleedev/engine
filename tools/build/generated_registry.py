@@ -39,7 +39,7 @@ def validate_generated_tracing(root: Path) -> list[str]:
         for generated_file in _iter_traceable_files(plugin_root):
             relative_path = generated_file.relative_to(root)
             target = generated_file.relative_to(plugin_root).as_posix()
-            if target in registry_targets or _has_inline_tracing(generated_file):
+            if target in registry_targets or _has_inline_tracing(root, generated_file):
                 continue
             errors.append(f"missing generated tracing: {relative_path}")
 
@@ -145,6 +145,10 @@ def _validate_registry_entry(
         errors.append(f"invalid generated registry source: {entry_path} {source}")
         return None
 
+    if not _source_exists(root, source):
+        errors.append(f"generated registry source is missing: {entry_path} {source}")
+        return None
+
     target_path = plugin_root / target
     if not target_path.exists():
         errors.append(f"generated registry target is missing: {target_path.relative_to(root)}")
@@ -174,17 +178,22 @@ def _is_safe_registry_source(source: str) -> bool:
     )
 
 
+def _source_exists(root: Path, source: str) -> bool:
+    return (root / source).is_file()
+
+
 def _has_unsafe_raw_segment(path: str) -> bool:
     return any(segment in {"", ".", ".."} for segment in path.split("/"))
 
 
-def _has_inline_tracing(path: Path) -> bool:
+def _has_inline_tracing(root: Path, path: Path) -> bool:
     text = path.read_text(encoding="utf-8")
-    return _has_exact_markdown_header(text) or _has_exact_python_header(text)
+    return _has_exact_markdown_header(root, text) or _has_exact_python_header(root, text)
 
 
-def _has_exact_markdown_header(text: str) -> bool:
+def _has_exact_markdown_header(root: Path, text: str) -> bool:
     return _has_exact_header(
+        root,
         text,
         notice_line=f"<!-- {GENERATED_NOTICE} -->",
         source_prefix="<!-- source: ",
@@ -193,8 +202,9 @@ def _has_exact_markdown_header(text: str) -> bool:
     )
 
 
-def _has_exact_python_header(text: str) -> bool:
+def _has_exact_python_header(root: Path, text: str) -> bool:
     return _has_exact_header(
+        root,
         text,
         notice_line=f"# {GENERATED_NOTICE}",
         source_prefix="# source: ",
@@ -204,6 +214,7 @@ def _has_exact_python_header(text: str) -> bool:
 
 
 def _has_exact_header(
+    root: Path,
     text: str,
     *,
     notice_line: str,
@@ -225,7 +236,11 @@ def _has_exact_header(
             return False
         source = source.removesuffix(source_suffix)
 
-    return _is_safe_registry_source(source) and text.startswith(header_factory(source))
+    return (
+        _is_safe_registry_source(source)
+        and _source_exists(root, source)
+        and text.startswith(header_factory(source))
+    )
 
 
 __all__ = ["registry_document", "registry_entry", "validate_generated_tracing"]
