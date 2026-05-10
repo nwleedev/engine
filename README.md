@@ -1,39 +1,61 @@
 # engine
 
-4 Claude Code plugins that enforce work quality — session continuity, domain learning, research rigor, and plan adherence. Each plugin can be installed and used independently.
+engine is a multi-harness plugin monorepo for Codex and Claude Code.
 
-## What is engine?
+The repository separates plugin source material, shared domain logic,
+harness-specific renderers, and generated plugin artifacts. That structure is
+being introduced in stages so current generated outputs stay reproducible while
+more plugin families move behind the same source boundary.
 
-engine is a Claude Code plugin marketplace that installs four quality-enforcement plugins into your development environment. Together they ensure Claude maintains context across sessions, builds domain expertise on demand, validates research claims before answering, and adheres to project-specific coding standards.
+## Repository Layout
 
-Each plugin can be installed independently — install only what you need.
-
-## Plugins
-
-| Plugin | Description |
+| Path | Purpose |
 |---|---|
-| [session-memory](plugins/session-memory/README.md) | Automatically narrates and injects the last 3 session summaries at session start |
-| [domain-professor](plugins/domain-professor/README.md) | Generates structured learning materials for any domain on demand |
-| [better-research](plugins/better-research/README.md) | Enforces a 5-step research protocol — hypothesis, sources, counter-argument, root cause, answer |
-| [harness-engineer](plugins/harness-engineer/README.md) | Injects domain-specific coding standards and detects violations at session end |
+| `plugin-sources/` | Current canonical source for marketplace metadata and shared-skills reference material. |
+| `packages/` | Runtime-agnostic Python domain logic shared by build and validation tools. |
+| `renderers/` | Harness renderers that translate canonical source into Codex and Claude Code plugin layouts. |
+| `plugins/codex/<plugin>` | Generated Codex plugin artifacts. |
+| `plugins/claude/<plugin>` | Generated Claude Code plugin artifacts. |
 
-## Quick Install
+Do not edit generated plugin artifacts directly when an equivalent source file
+already exists under `plugin-sources/`. Change that source, update shared logic
+in `packages/`, or update harness output rules in `renderers/`, then regenerate
+the artifacts. Some generated manifests exist before their full plugin source
+trees have migrated; those families will move into `plugin-sources/` in later
+tasks.
 
-Install all 4 plugins at once:
+## Plugin Families
 
+The core plugin families include `session-memory` and `quality-guard`.
+
+The current generated multi-harness families include `shared-skills`,
+`shared-subagents`, and `harness-foundry`. Today, `tools/build_plugins.py`
+loads marketplace metadata from `plugin-sources/marketplace.yaml`, renders
+Codex and Claude Code manifests from that metadata, and renders the
+`shared-skills` trees from `plugin-sources/shared-skills/`. Full canonical
+source migration for `shared-subagents`, `harness-foundry`, and other plugin
+family material follows in later tasks.
+
+## Why `plugin-sources/`
+
+This repository uses `plugin-sources/` instead of a top-level `src/` directory
+because the canonical inputs are plugin manifests, skills, agents, docs, and
+metadata rather than one application runtime. The explicit name keeps the source
+boundary visible and avoids confusing canonical plugin material with generated
+plugin packages or Python implementation code.
+
+## Build And Validation
+
+Run the plugin build and validation workflow from the repository root:
+
+```bash
+python tools/build_plugins.py
+python tools/validate_generated.py
+pytest
+git diff --exit-code
 ```
-/plugin marketplace add nwleedev/engine
-```
 
-## Individual Installation
-
-To install a single plugin, see its README:
-
-- [session-memory](plugins/session-memory/README.md)
-- [domain-professor](plugins/domain-professor/README.md)
-- [better-research](plugins/better-research/README.md)
-- [harness-engineer](plugins/harness-engineer/README.md)
-
-## Requirements
-
-Claude Code with plugin marketplace support.
+CI follows the same contract: regenerate plugin artifacts, validate generated
+outputs, run tests, detect drift with `git diff --exit-code`, and fail if the
+working tree changes. CI does not auto-commit generated changes; contributors
+must commit source updates and regenerated artifacts together.
