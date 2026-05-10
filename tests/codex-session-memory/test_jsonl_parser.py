@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 
 
-SCRIPTS = Path(__file__).resolve().parents[2] / "plugins" / "codex-session-memory" / "scripts"
+SCRIPTS = Path(__file__).resolve().parents[2] / "plugins" / "codex" / "session-memory" / "scripts"
 
 
 def load_parser():

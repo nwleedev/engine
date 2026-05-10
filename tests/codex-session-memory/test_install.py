@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 
-PLUGIN = Path(__file__).resolve().parents[2] / "plugins" / "codex-session-memory"
+PLUGIN = Path(__file__).resolve().parents[2] / "plugins" / "codex" / "session-memory"
 SCRIPTS = PLUGIN / "scripts"
 
 

@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 
 
-SCRIPTS = Path(__file__).resolve().parents[2] / "plugins" / "codex-session-memory" / "scripts"
+SCRIPTS = Path(__file__).resolve().parents[2] / "plugins" / "codex" / "session-memory" / "scripts"
 
 
 def load_project_root():
@@ -22,7 +22,7 @@ def test_find_project_root_prefers_git_toplevel_over_parent_agents(monkeypatch, 
     project_root = load_project_root()
     parent = tmp_path / "engine"
     worktree = parent / ".worktrees" / "codex-session-memory-v2"
-    child = worktree / "plugins" / "codex-session-memory"
+    child = worktree / "plugins" / "codex" / "session-memory"
     child.mkdir(parents=True)
     (parent / "AGENTS.md").write_text("# parent rules\n", encoding="utf-8")
 

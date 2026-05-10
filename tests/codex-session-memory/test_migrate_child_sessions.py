@@ -5,7 +5,7 @@ from types import SimpleNamespace
 import sys
 
 
-SCRIPTS = Path(__file__).resolve().parents[2] / "plugins" / "codex-session-memory" / "scripts"
+SCRIPTS = Path(__file__).resolve().parents[2] / "plugins" / "codex" / "session-memory" / "scripts"
 MIGRATE = SCRIPTS / "migrate_child_sessions.py"
 
 

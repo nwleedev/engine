@@ -4,7 +4,7 @@ import sqlite3
 from pathlib import Path
 
 
-PLUGIN = Path(__file__).resolve().parents[2] / "plugins" / "codex-session-memory"
+PLUGIN = Path(__file__).resolve().parents[2] / "plugins" / "codex" / "session-memory"
 CHECKPOINT = PLUGIN / "skills" / "checkpoint" / "checkpoint.py"
 
 

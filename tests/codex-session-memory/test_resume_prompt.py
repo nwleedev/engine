@@ -5,8 +5,8 @@ import types
 from pathlib import Path
 
 
-SCRIPTS = Path(__file__).resolve().parents[2] / "plugins" / "codex-session-memory" / "scripts"
-RESUME = Path(__file__).resolve().parents[2] / "plugins" / "codex-session-memory" / "skills" / "resume" / "resume.py"
+SCRIPTS = Path(__file__).resolve().parents[2] / "plugins" / "codex" / "session-memory" / "scripts"
+RESUME = Path(__file__).resolve().parents[2] / "plugins" / "codex" / "session-memory" / "skills" / "resume" / "resume.py"
 
 
 def load_resume_prompt():
@@ -38,13 +38,13 @@ def test_builds_short_actionable_prompt(tmp_path):
     )
     (contexts / "CONTEXT-1.md").write_text(
         "# Policy Update\n\n## 다음\nresume handoff를 구현한다.\n\n"
-        "## Evidence\n\n### Files\n- plugins/codex-session-memory/scripts/session_locator.py\n"
+        "## Evidence\n\n### Files\n- plugins/codex/session-memory/scripts/session_locator.py\n"
     )
     prompt = load_resume_prompt().build_resume_prompt(session, budget_chars=1200)
     assert "current_goal" in prompt
     assert "next_action" in prompt
     assert "resume handoff를 구현한다" in prompt
-    assert "plugins/codex-session-memory/scripts/session_locator.py" in prompt
+    assert "plugins/codex/session-memory/scripts/session_locator.py" in prompt
 
 
 def test_uses_index_context_order_when_mtime_conflicts(tmp_path):
@@ -161,7 +161,7 @@ def test_preserves_root_config_and_plugin_file_evidence(tmp_path):
         "- README.md\n"
         "- pyproject.toml\n"
         "- .codex-plugin/plugin.json\n"
-        "- plugins/codex-session-memory/scripts/resume_prompt.py\n"
+        "- plugins/codex/session-memory/scripts/resume_prompt.py\n"
         "- 없음\n"
     )
 
@@ -170,7 +170,7 @@ def test_preserves_root_config_and_plugin_file_evidence(tmp_path):
     assert "- README.md" in prompt
     assert "- pyproject.toml" in prompt
     assert "- .codex-plugin/plugin.json" in prompt
-    assert "- plugins/codex-session-memory/scripts/resume_prompt.py" in prompt
+    assert "- plugins/codex/session-memory/scripts/resume_prompt.py" in prompt
     assert "- 없음" not in prompt
 
 
@@ -182,7 +182,7 @@ def test_preserves_structure_and_next_action_with_tight_budget(tmp_path):
         "# 세션 요약\n\n## 컨텍스트 목록\n\n- [CONTEXT-1.md] — many files\n"
     )
     long_files = "\n".join(
-        f"- plugins/codex-session-memory/scripts/{index:02d}-very-long-path-name-for-budget-testing.py"
+        f"- plugins/codex/session-memory/scripts/{index:02d}-very-long-path-name-for-budget-testing.py"
         for index in range(60)
     )
     (contexts / "CONTEXT-1.md").write_text(

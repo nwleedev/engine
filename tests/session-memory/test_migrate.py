@@ -2,8 +2,8 @@ from pathlib import Path
 import sys
 import os
 
-# Add scripts dir to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../plugins/session-memory/scripts"))
+# Add generated Claude harness scripts dir to path for imports
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../plugins/claude/session-memory/scripts"))
 
 import migrate as mg
 

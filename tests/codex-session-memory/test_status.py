@@ -6,7 +6,7 @@ from types import SimpleNamespace
 import pytest
 
 
-PLUGIN = Path(__file__).resolve().parents[2] / "plugins" / "codex-session-memory"
+PLUGIN = Path(__file__).resolve().parents[2] / "plugins" / "codex" / "session-memory"
 STATUS = PLUGIN / "skills" / "status" / "status.py"
 
 

@@ -2,7 +2,7 @@ import importlib.util
 from pathlib import Path
 
 
-SCRIPTS = Path(__file__).resolve().parents[2] / "plugins" / "codex-session-memory" / "scripts"
+SCRIPTS = Path(__file__).resolve().parents[2] / "plugins" / "codex" / "session-memory" / "scripts"
 
 
 def load_extractor():
@@ -18,11 +18,11 @@ def test_extracts_files_commands_failures_and_sources():
     extractor = load_extractor()
     delta = [
         {"role": "assistant", "text": "Run: `python -m pytest tests/foo.py -q`\nFAIL tests/foo.py::test_bar"},
-        {"role": "assistant", "text": "Edited plugins/codex-session-memory/scripts/session_locator.py"},
+        {"role": "assistant", "text": "Edited plugins/codex/session-memory/scripts/session_locator.py"},
         {"role": "assistant", "text": "Source: https://developers.openai.com/codex/hooks"},
     ]
     evidence = extractor.extract_evidence(delta)
-    assert "plugins/codex-session-memory/scripts/session_locator.py" in evidence["files"]
+    assert "plugins/codex/session-memory/scripts/session_locator.py" in evidence["files"]
     assert "python -m pytest tests/foo.py -q" in evidence["commands"]
     assert "FAIL tests/foo.py::test_bar" in evidence["failures"]
     assert "https://developers.openai.com/codex/hooks" in evidence["sources"]

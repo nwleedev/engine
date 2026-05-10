@@ -1,7 +1,7 @@
 import sys
 from pathlib import Path
 
-SCRIPTS_DIR = Path(__file__).parent.parent.parent / "plugins/session-memory/scripts"
+SCRIPTS_DIR = Path(__file__).parent.parent.parent / "plugins/claude/session-memory/scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
 import one_liner as ol

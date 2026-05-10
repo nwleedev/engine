@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 
-PLUGIN = Path(__file__).resolve().parents[2] / "plugins" / "codex-session-memory"
+PLUGIN = Path(__file__).resolve().parents[2] / "plugins" / "codex" / "session-memory"
 
 
 def test_plugin_manifest_is_skill_only():
