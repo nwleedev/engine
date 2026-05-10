@@ -20,6 +20,14 @@ SOURCE_TRACE_PREFIXES = {
     "quality-guard": "plugin-sources/quality-guard/adapters/",
     "session-memory": "plugin-sources/session-memory/adapters/",
 }
+PACKAGE_SOURCE_ROOTS = {
+    "quality-guard": ROOT / "packages" / "quality-guard" / "quality_guard",
+    "session-memory": ROOT / "packages" / "session-memory" / "session_memory",
+}
+PACKAGE_TRACE_PREFIXES = {
+    "quality-guard": ("_packages/quality_guard/", "packages/quality-guard/quality_guard/"),
+    "session-memory": ("_packages/session_memory/", "packages/session-memory/session_memory/"),
+}
 EXPECTED_RUNTIME_FILES = {
     "quality-guard": {
         "codex": ("scripts/agents_rules.py",),
@@ -60,10 +68,24 @@ def _source_traceable_targets(plugin_name: str, harness: str) -> set[str]:
     """Return copied source files that must appear in the generated registry."""
 
     source_root = ROOT / "plugin-sources" / plugin_name / "adapters" / harness
-    return {
+    targets = {
         path.relative_to(source_root).as_posix()
         for path in _traceable_files(source_root)
     }
+    package_target_prefix, _package_source_prefix = PACKAGE_TRACE_PREFIXES[plugin_name]
+    targets.update(
+        f"{package_target_prefix}{path.relative_to(PACKAGE_SOURCE_ROOTS[plugin_name]).as_posix()}"
+        for path in _traceable_files(PACKAGE_SOURCE_ROOTS[plugin_name])
+    )
+    return targets
+
+
+def _expected_registry_source(plugin_name: str, harness: str, target: str) -> str:
+    package_target_prefix, package_source_prefix = PACKAGE_TRACE_PREFIXES[plugin_name]
+    if target.startswith(package_target_prefix):
+        package_relative = target.removeprefix(package_target_prefix)
+        return f"{package_source_prefix}{package_relative}"
+    return f"{SOURCE_TRACE_PREFIXES[plugin_name]}{harness}/{target}"
 
 
 def assert_generated_registry_traces_copied_runtime_files(
@@ -81,7 +103,7 @@ def assert_generated_registry_traces_copied_runtime_files(
         assert set(registry_targets) == expected_targets
         for target, source in registry_targets.items():
             assert (root / target).is_file()
-            assert source == f"{SOURCE_TRACE_PREFIXES[plugin_name]}{harness}/{target}"
+            assert source == _expected_registry_source(plugin_name, harness, target)
             assert (root / target).read_bytes() == (ROOT / source).read_bytes()
 
 

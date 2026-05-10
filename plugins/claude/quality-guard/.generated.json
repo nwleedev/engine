@@ -6,6 +6,11 @@
       "notice": "GENERATED FILE - DO NOT EDIT"
     },
     {
+      "target": "_packages/quality_guard/__init__.py",
+      "source": "packages/quality-guard/quality_guard/__init__.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
       "target": "hooks/pre_tool_use.py",
       "source": "plugin-sources/quality-guard/adapters/claude/hooks/pre_tool_use.py",
       "notice": "GENERATED FILE - DO NOT EDIT"

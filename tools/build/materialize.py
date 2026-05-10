@@ -5,6 +5,10 @@ from collections.abc import Mapping
 from pathlib import Path
 
 
+IGNORED_COPY_TREE_NAMES = frozenset({"__pycache__"})
+IGNORED_COPY_TREE_SUFFIXES = frozenset({".pyc", ".pyo"})
+
+
 def _resolve_from_root(root: Path, path: Path) -> Path:
     """Return an absolute path, treating relative inputs as root-relative."""
 
@@ -72,6 +76,17 @@ def _ensure_source_tree_has_no_symlinks(source: Path) -> None:
             raise ValueError(f"canonical source must not contain symlinks: {entry}")
 
 
+def _ignore_copy_tree_noise(_directory: str, names: list[str]) -> set[str]:
+    """Return transient Python cache entries to omit from generated artifacts."""
+
+    return {
+        name
+        for name in names
+        if name in IGNORED_COPY_TREE_NAMES
+        or Path(name).suffix in IGNORED_COPY_TREE_SUFFIXES
+    }
+
+
 def replace_tree(root: Path, source: Path, target: Path) -> None:
     """Replace a generated plugin target tree with a canonical source tree."""
 
@@ -81,7 +96,11 @@ def replace_tree(root: Path, source: Path, target: Path) -> None:
 
     _remove_existing(resolved_target)
     resolved_target.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copytree(resolved_source, resolved_target)
+    shutil.copytree(
+        resolved_source,
+        resolved_target,
+        ignore=_ignore_copy_tree_noise,
+    )
 
 
 def _safe_text_path(target: Path, relative_path: str) -> Path:

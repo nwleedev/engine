@@ -29,12 +29,13 @@ COPIED_TREE_TRACEABLE_SUFFIXES = frozenset({".md", ".py", ".toml"})
 
 def _registry_entries_for_copied_tree(
     source_root: Path,
+    target_prefix: str = "",
 ) -> list[dict[str, str]]:
     """Return generated registry entries for raw copied adapter files."""
 
     return [
         registry_entry(
-            source_path.relative_to(source_root).as_posix(),
+            f"{target_prefix}{source_path.relative_to(source_root).as_posix()}",
             source_path.relative_to(ROOT).as_posix(),
         )
         for source_path in sorted(source_root.rglob("*"))
@@ -43,12 +44,24 @@ def _registry_entries_for_copied_tree(
     ]
 
 
-def _write_copied_tree_registry(source_root: Path, target_root: Path) -> None:
+def _write_copied_tree_registry(
+    source_root: Path,
+    target_root: Path,
+    package_source_root: Path,
+    package_target_prefix: str,
+) -> None:
     """Write tracing metadata for copied files without inline headers."""
 
+    entries = _registry_entries_for_copied_tree(source_root)
+    entries.extend(
+        _registry_entries_for_copied_tree(
+            package_source_root,
+            target_prefix=package_target_prefix,
+        )
+    )
     write_json(
         target_root / ".generated.json",
-        registry_document(_registry_entries_for_copied_tree(source_root)),
+        registry_document(entries),
     )
 
 
@@ -77,6 +90,28 @@ def main() -> int:
         (
             ROOT / "plugin-sources" / "quality-guard" / "adapters" / "claude",
             ROOT / "plugins" / "claude" / "quality-guard",
+        ),
+    )
+    package_artifacts = (
+        (
+            ROOT / "packages" / "session-memory" / "session_memory",
+            ROOT / "plugins" / "codex" / "session-memory" / "_packages" / "session_memory",
+            "session_memory",
+        ),
+        (
+            ROOT / "packages" / "session-memory" / "session_memory",
+            ROOT / "plugins" / "claude" / "session-memory" / "_packages" / "session_memory",
+            "session_memory",
+        ),
+        (
+            ROOT / "packages" / "quality-guard" / "quality_guard",
+            ROOT / "plugins" / "codex" / "quality-guard" / "_packages" / "quality_guard",
+            "quality_guard",
+        ),
+        (
+            ROOT / "packages" / "quality-guard" / "quality_guard",
+            ROOT / "plugins" / "claude" / "quality-guard" / "_packages" / "quality_guard",
+            "quality_guard",
         ),
     )
     copied_tree_artifacts = session_memory_artifacts + quality_guard_artifacts
@@ -114,6 +149,8 @@ def main() -> int:
     )
     for source_root, target_root in copied_tree_artifacts:
         replace_tree(ROOT, source_root, target_root)
+    for source_root, target_root, _package_name in package_artifacts:
+        replace_tree(ROOT, source_root, target_root)
 
     for plugin in metadata["plugins"]:
         harnesses = plugin["harnesses"]
@@ -127,8 +164,20 @@ def main() -> int:
                 ROOT / plugin_manifest_path(plugin, "claude"),
                 render_claude_manifest(plugin),
             )
+    package_artifacts_by_target_root = {
+        target_root.parent.parent: (source_root, f"_packages/{package_name}/")
+        for source_root, target_root, package_name in package_artifacts
+    }
     for source_root, target_root in copied_tree_artifacts:
-        _write_copied_tree_registry(source_root, target_root)
+        package_source_root, package_target_prefix = package_artifacts_by_target_root[
+            target_root
+        ]
+        _write_copied_tree_registry(
+            source_root,
+            target_root,
+            package_source_root,
+            package_target_prefix,
+        )
 
     print("built plugin artifacts")
     return 0

@@ -11,6 +11,21 @@
       "notice": "GENERATED FILE - DO NOT EDIT"
     },
     {
+      "target": "_packages/session_memory/__init__.py",
+      "source": "packages/session-memory/session_memory/__init__.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "_packages/session_memory/evidence_extractor.py",
+      "source": "packages/session-memory/session_memory/evidence_extractor.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "_packages/session_memory/jsonl_parser.py",
+      "source": "packages/session-memory/session_memory/jsonl_parser.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
       "target": "scripts/agents_rules.py",
       "source": "plugin-sources/session-memory/adapters/codex/scripts/agents_rules.py",
       "notice": "GENERATED FILE - DO NOT EDIT"
