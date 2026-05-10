@@ -6,6 +6,7 @@ from typing import Any
 
 from renderers.claude.manifests import render_claude_manifest
 from renderers.codex.manifests import render_codex_manifest
+from tools.build.generated_registry import validate_generated_tracing
 from tools.build.metadata import load_marketplace
 from tools.build.paths import plugin_manifest_path
 
@@ -234,6 +235,7 @@ def validate_marketplaces(root: Path) -> list[str]:
             _validate_claude_marketplace(relative_path, data, errors)
 
     _validate_plugin_manifests(root, errors)
+    errors.extend(validate_generated_tracing(root))
 
     return errors
 
