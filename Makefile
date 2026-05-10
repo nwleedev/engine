@@ -16,7 +16,7 @@ test-quality-guard:
 	$(PYTEST) tests/quality-guard/
 
 test-codex-quality-guard:
-	$(PYTEST) plugins/codex-quality-guard/tests/
+	$(PYTEST) plugins/codex/quality-guard/tests/
 
 test-codex-session-memory:
 	$(PYTEST) tests/codex-session-memory/

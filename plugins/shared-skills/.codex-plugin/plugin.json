@@ -1,7 +1,0 @@
-{
-  "name": "shared-skills",
-  "version": "0.2.4",
-  "description": "Shared Codex skills for main-session quality gates across development and non-development work.",
-  "license": "MIT",
-  "skills": "./skills/"
-}

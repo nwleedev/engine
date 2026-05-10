@@ -1,7 +1,0 @@
-{
-  "name": "harness-foundry",
-  "version": "0.3.0",
-  "description": "Codex-first skills for designing, scaffolding, and auditing project-specific domain harnesses.",
-  "license": "MIT",
-  "skills": "./skills/"
-}

@@ -13,26 +13,31 @@ METADATA = ROOT / "plugin-sources" / "marketplace.yaml"
 CODEX_MANIFESTS_BY_PUBLIC_NAME = {
     "codex-session-memory": ROOT
     / "plugins"
-    / "codex-session-memory"
+    / "codex"
+    / "session-memory"
     / ".codex-plugin"
     / "plugin.json",
     "codex-quality-guard": ROOT
     / "plugins"
-    / "codex-quality-guard"
+    / "codex"
+    / "quality-guard"
     / ".codex-plugin"
     / "plugin.json",
     "shared-subagents": ROOT
     / "plugins"
+    / "codex"
     / "shared-subagents"
     / ".codex-plugin"
     / "plugin.json",
     "shared-skills": ROOT
     / "plugins"
+    / "codex"
     / "shared-skills"
     / ".codex-plugin"
     / "plugin.json",
     "harness-foundry": ROOT
     / "plugins"
+    / "codex"
     / "harness-foundry"
     / ".codex-plugin"
     / "plugin.json",

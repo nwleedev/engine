@@ -6,7 +6,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-PLUGIN_ROOT = REPO_ROOT / "plugins" / "harness-foundry"
+PLUGIN_ROOT = REPO_ROOT / "plugins" / "codex" / "harness-foundry"
 VALIDATOR = REPO_ROOT / "apps" / "harness-foundry-lab" / "scripts" / "validate_plugin_package.py"
 SKILLS = (
     "diagnose-project",
@@ -244,7 +244,7 @@ def test_readmes_separate_public_validator_from_lab_validation():
     combined = english + "\n" + korean
 
     assert (
-        "plugins/harness-foundry/skills/audit-domain-harness/scripts/validate_domain_harness.py <project-root>"
+        "skills/audit-domain-harness/scripts/validate_domain_harness.py <project-root>"
         in combined
     )
     assert "`docs/domain-harness/**`" in english

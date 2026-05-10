@@ -10,7 +10,7 @@ from typing import Sequence
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-DEFAULT_PLUGIN_ROOT = REPO_ROOT / "plugins" / "harness-foundry"
+DEFAULT_PLUGIN_ROOT = REPO_ROOT / "plugins" / "codex" / "harness-foundry"
 SKILL_NAMES = {
     "diagnose-project",
     "design-domain-harness",
@@ -49,7 +49,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         nargs="?",
         default=DEFAULT_PLUGIN_ROOT,
         type=lambda value: Path(value).resolve(),
-        help="Path to the plugin root. Defaults to plugins/harness-foundry.",
+        help="Path to the plugin root. Defaults to plugins/codex/harness-foundry.",
     )
     args = parser.parse_args(argv)
     args.plugin_root = Path(args.plugin_root).resolve()
@@ -57,7 +57,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
 
 
 def parse_frontmatter(text: str) -> dict[str, str | dict[str, str]]:
-    match = re.match(r"^---\n(.*?)\n---", text, re.DOTALL)
+    match = re.search(r"(?m)^---\n(.*?)\n---", text, re.DOTALL)
     if not match:
         fail("missing frontmatter")
     result: dict[str, str | dict[str, str]] = {}

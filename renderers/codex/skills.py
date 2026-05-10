@@ -20,8 +20,12 @@ def render_codex_skill_tree(source_root: Path) -> dict[str, str]:
     """Render shared-skill source files into Codex plugin-relative paths."""
 
     files: dict[str, str] = {}
+    readme = source_root / "README.md"
     skills_root = source_root / "skills"
     references_root = source_root / "references"
+
+    if readme.exists():
+        files["README.md"] = _render_markdown_file(readme)
 
     for skill_file in sorted(skills_root.glob("*/SKILL.md")):
         files[f"skills/{skill_file.parent.name}/SKILL.md"] = _render_markdown_file(skill_file)

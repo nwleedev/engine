@@ -256,7 +256,7 @@ def test_tdd_test_types_reference_documents_required_types() -> None:
 
 
 def test_readme_documents_plugin_only_installation() -> None:
-    readme = read(Path("plugins/shared-skills/README.md"))
+    readme = read(PLUGIN_ROOT / "README.md")
 
     assert "Plugin-only distribution" in readme
     assert "$shared-skills:" in readme

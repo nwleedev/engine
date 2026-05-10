@@ -1,7 +1,7 @@
 # codex-session-memory 세션 메모리
 
 Codex CLI 세션의 진행 상황을 증분 컨텍스트 요약으로 저장하는 세션 메모리
-플러그인입니다. Claude용 `plugins/session-memory/`와 시맨틱은 닮았지만
+플러그인입니다. Claude artifact인 `plugins/claude/session-memory/`와 시맨틱은 닮았지만
 코드는 완전히 독립되어 있습니다.
 
 **검증된 Codex 버전:** 0.128.0
@@ -138,13 +138,13 @@ INDEX 이벤트 순서를 보존하되 실제 context 파일 주입은 filename 
 먼저 dry-run으로 이동 계획을 확인합니다.
 
 ```bash
-python3 plugins/codex-session-memory/scripts/migrate_child_sessions.py --root /path/to/project
+python3 plugins/codex/session-memory/scripts/migrate_child_sessions.py --root /path/to/project
 ```
 
 계획을 검토한 뒤 실제 적용합니다.
 
 ```bash
-python3 plugins/codex-session-memory/scripts/migrate_child_sessions.py --root /path/to/project --apply
+python3 plugins/codex/session-memory/scripts/migrate_child_sessions.py --root /path/to/project --apply
 ```
 
 도우미는 부모를 확인할 수 있는 자식 폴더를 `.codex/sessions/_children/`로

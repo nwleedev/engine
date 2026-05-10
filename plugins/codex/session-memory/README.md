@@ -1,7 +1,8 @@
 # codex-session-memory
 
-Codex CLI session memory for incremental context summaries. Companion to
-`plugins/session-memory/` (Claude Code), but independent with no shared code.
+Codex CLI session memory for incremental context summaries. Companion to the
+Claude artifact at `plugins/claude/session-memory/`, but independent with no
+shared code.
 
 **Verified Codex version:** 0.128.0
 
@@ -138,13 +139,13 @@ were created before child sessions were stored under `_children`.
 Dry-run first:
 
 ```bash
-python3 plugins/codex-session-memory/scripts/migrate_child_sessions.py --root /path/to/project
+python3 plugins/codex/session-memory/scripts/migrate_child_sessions.py --root /path/to/project
 ```
 
 Apply after reviewing the planned moves:
 
 ```bash
-python3 plugins/codex-session-memory/scripts/migrate_child_sessions.py --root /path/to/project --apply
+python3 plugins/codex/session-memory/scripts/migrate_child_sessions.py --root /path/to/project --apply
 ```
 
 The helper moves resolvable child folders to `.codex/sessions/_children/`,

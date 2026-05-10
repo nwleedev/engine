@@ -5,8 +5,8 @@
     "plugins/harness-engineer/scripts",
     "plugins/harness-builder/scripts",
     "plugins/nondev-builder/scripts",
-    "plugins/quality-guard/scripts",
-    "plugins/session-memory/scripts",
+    "plugins/claude/quality-guard/scripts",
+    "plugins/claude/session-memory/scripts",
     "scripts"
   ],
   "exclude": [
