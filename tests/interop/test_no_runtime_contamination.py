@@ -103,6 +103,20 @@ def _package_python_files() -> list[Path]:
     return sorted(PACKAGES.rglob("*.py"))
 
 
+def test_runtime_agnostic_session_memory_modules_are_extracted() -> None:
+    session_memory = PACKAGES / "session-memory" / "session_memory"
+
+    assert (session_memory / "__init__.py").exists()
+    assert (session_memory / "jsonl_parser.py").exists()
+    assert (session_memory / "evidence_extractor.py").exists()
+
+
+def test_quality_guard_package_boundary_exists_for_future_clean_modules() -> None:
+    quality_guard = PACKAGES / "quality-guard" / "quality_guard"
+
+    assert (quality_guard / "__init__.py").exists()
+
+
 def _imported_modules(tree: ast.AST) -> list[str]:
     modules: list[str] = []
     for node in ast.walk(tree):
