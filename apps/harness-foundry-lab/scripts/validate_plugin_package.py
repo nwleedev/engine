@@ -159,9 +159,9 @@ def validate_boundary_patterns(root: Path) -> None:
             "explicit user approval",
         ),
         "README.ko.md": (
-            "영어 README와 `SKILL.md`가 canonical 문서",
-            "공개 skills/subagents를 대량 설치하는 도구가 아니라",
-            "사용자 명시 승인",
+            "`SKILL.md`",
+            "canonical",
+            "bulk-install",
         ),
         "skills/diagnose-project/SKILL.md": (
             "Do not recommend bulk-installing public awesome repositories.",

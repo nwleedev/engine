@@ -34,17 +34,17 @@ def test_builds_short_actionable_prompt(tmp_path):
     contexts.mkdir(parents=True)
     (session / "INDEX.md").write_text(
         "---\nsession_id: abc123\nlast_processed_offset: 10\n---\n\n"
-        "# 세션 요약\n\n## 컨텍스트 목록\n\n"
-        "- [CONTEXT-1.md] — 자동 저장 정책을 분리했다.\n"
+        "# Session Summary\n\n## Contexts\n\n"
+        "- [CONTEXT-1.md] — Separated the autosave policy.\n"
     )
     (contexts / "CONTEXT-1.md").write_text(
-        "# Policy Update\n\n## 다음\nresume handoff를 구현한다.\n\n"
+        "# Policy Update\n\n## Next\nimplement the resume handoff.\n\n"
         "## Evidence\n\n### Files\n- plugins/codex/session-memory/scripts/session_locator.py\n"
     )
     prompt = load_resume_prompt().build_resume_prompt(session, budget_chars=1200)
     assert "current_goal" in prompt
     assert "next_action" in prompt
-    assert "resume handoff를 구현한다" in prompt
+    assert "implement the resume handoff" in prompt
     assert "plugins/codex/session-memory/scripts/session_locator.py" in prompt
 
 
@@ -54,21 +54,21 @@ def test_uses_index_context_order_when_mtime_conflicts(tmp_path):
     contexts.mkdir(parents=True)
     (session / "INDEX.md").write_text(
         "---\nsession_id: abc123\n---\n\n"
-        "# 세션 요약\n\n## 컨텍스트 목록\n\n"
+        "# Session Summary\n\n## Contexts\n\n"
         "- [CONTEXT-new.md] — durable latest\n"
         "- [CONTEXT-old.md] — stale but newer mtime\n"
     )
     new_context = contexts / "CONTEXT-new.md"
     old_context = contexts / "CONTEXT-old.md"
-    new_context.write_text("# New\n\n## 다음\nINDEX 순서의 최신 작업을 계속한다.\n")
-    old_context.write_text("# Old\n\n## 다음\nmtime 기준이면 이 오래된 작업이 먼저 나온다.\n")
+    new_context.write_text("# New\n\n## Next\ncontinue the latest work in INDEX order.\n")
+    old_context.write_text("# Old\n\n## Next\nmtime ordering would choose this stale work first.\n")
     os.utime(new_context, (100, 100))
     os.utime(old_context, (200, 200))
 
     prompt = load_resume_prompt().build_resume_prompt(session, budget_chars=1600)
 
     assert prompt.index("--- CONTEXT-new.md ---") < prompt.index("--- CONTEXT-old.md ---")
-    assert "INDEX 순서의 최신 작업을 계속한다" in prompt
+    assert "continue the latest work in INDEX order" in prompt
 
 
 def test_uses_latest_three_contexts_from_writer_append_order(tmp_path):
@@ -77,7 +77,7 @@ def test_uses_latest_three_contexts_from_writer_append_order(tmp_path):
     contexts.mkdir(parents=True)
     (session / "INDEX.md").write_text(
         "---\nsession_id: abc123\n---\n\n"
-        "# 세션 요약\n\n## 컨텍스트 목록\n\n"
+        "# Session Summary\n\n## Contexts\n\n"
         "- [CONTEXT-1.md] — first appended\n"
         "- [CONTEXT-2.md] — second appended\n"
         "- [CONTEXT-3.md] — third appended\n"
@@ -85,7 +85,7 @@ def test_uses_latest_three_contexts_from_writer_append_order(tmp_path):
     )
     for index in range(1, 5):
         (contexts / f"CONTEXT-{index}.md").write_text(
-            f"# Context {index}\n\n## 다음\nCONTEXT-{index} next action\n"
+            f"# Context {index}\n\n## Next\nCONTEXT-{index} next action\n"
         )
 
     prompt = load_resume_prompt().build_resume_prompt(session, budget_chars=2200)
@@ -104,7 +104,7 @@ def test_dedupes_duplicate_index_filenames_using_latest_append_event(tmp_path):
     contexts.mkdir(parents=True)
     (session / "INDEX.md").write_text(
         "---\nsession_id: abc123\n---\n\n"
-        "# 세션 요약\n\n## 컨텍스트 목록\n\n"
+        "# Session Summary\n\n## Contexts\n\n"
         "- [CONTEXT-1.md] — first event\n"
         "- [CONTEXT-2.md] — second event\n"
         "- [CONTEXT-1.md] — latest event for same HH00 file\n"
@@ -112,7 +112,7 @@ def test_dedupes_duplicate_index_filenames_using_latest_append_event(tmp_path):
     )
     for index in range(1, 4):
         (contexts / f"CONTEXT-{index}.md").write_text(
-            f"# Context {index}\n\n## 다음\nCONTEXT-{index} next action\n"
+            f"# Context {index}\n\n## Next\nCONTEXT-{index} next action\n"
         )
 
     prompt = load_resume_prompt().build_resume_prompt(session, budget_chars=2600)
@@ -134,11 +134,11 @@ def test_uses_latest_three_contexts_with_collision_safe_writer_names(tmp_path):
     ]
     (session / "INDEX.md").write_text(
         "---\nsession_id: abc123\n---\n\n"
-        "# 세션 요약\n\n## 컨텍스트 목록\n\n"
+        "# Session Summary\n\n## Contexts\n\n"
         + "".join(f"- [{name}] — writer append order\n" for name in context_names)
     )
     for name in context_names:
-        (contexts / name).write_text(f"# {name}\n\n## 다음\nnext action for {name}\n")
+        (contexts / name).write_text(f"# {name}\n\n## Next\nnext action for {name}\n")
 
     prompt = load_resume_prompt().build_resume_prompt(session, budget_chars=2600)
 
@@ -155,7 +155,7 @@ def test_preserves_root_config_and_plugin_file_evidence(tmp_path):
     contexts = session / "contexts"
     contexts.mkdir(parents=True)
     (session / "INDEX.md").write_text(
-        "# 세션 요약\n\n## 컨텍스트 목록\n\n- [CONTEXT-1.md] — evidence\n"
+        "# Session Summary\n\n## Contexts\n\n- [CONTEXT-1.md] — evidence\n"
     )
     (contexts / "CONTEXT-1.md").write_text(
         "# Evidence\n\n## Evidence\n\n### Files\n"
@@ -163,7 +163,7 @@ def test_preserves_root_config_and_plugin_file_evidence(tmp_path):
         "- pyproject.toml\n"
         "- .codex-plugin/plugin.json\n"
         "- plugins/codex/session-memory/scripts/resume_prompt.py\n"
-        "- 없음\n"
+        "- None\n"
     )
 
     prompt = load_resume_prompt().build_resume_prompt(session, budget_chars=1600)
@@ -172,7 +172,7 @@ def test_preserves_root_config_and_plugin_file_evidence(tmp_path):
     assert "- pyproject.toml" in prompt
     assert "- .codex-plugin/plugin.json" in prompt
     assert "- plugins/codex/session-memory/scripts/resume_prompt.py" in prompt
-    assert "- 없음" not in prompt
+    assert "- None" not in prompt
 
 
 def test_preserves_structure_and_next_action_with_tight_budget(tmp_path):
@@ -180,14 +180,14 @@ def test_preserves_structure_and_next_action_with_tight_budget(tmp_path):
     contexts = session / "contexts"
     contexts.mkdir(parents=True)
     (session / "INDEX.md").write_text(
-        "# 세션 요약\n\n## 컨텍스트 목록\n\n- [CONTEXT-1.md] — many files\n"
+        "# Session Summary\n\n## Contexts\n\n- [CONTEXT-1.md] — many files\n"
     )
     long_files = "\n".join(
         f"- plugins/codex/session-memory/scripts/{index:02d}-very-long-path-name-for-budget-testing.py"
         for index in range(60)
     )
     (contexts / "CONTEXT-1.md").write_text(
-        "# Many Files\n\n## 다음\n작은 예산에서도 다음 행동을 유지한다.\n\n"
+        "# Many Files\n\n## Next\npreserve the next action even with a small budget.\n\n"
         f"## Evidence\n\n### Files\n{long_files}\n"
     )
 
@@ -195,7 +195,7 @@ def test_preserves_structure_and_next_action_with_tight_budget(tmp_path):
 
     assert len(prompt) <= 700
     assert "next_action:" in prompt
-    assert "작은 예산에서도 다음 행동을 유지한다" in prompt
+    assert "preserve the next action even with a small budget" in prompt
     assert prompt.endswith("</codex-session-memory>")
 
 
@@ -204,10 +204,10 @@ def test_preserves_closing_tag_with_very_small_budgets(tmp_path):
     contexts = session / "contexts"
     contexts.mkdir(parents=True)
     (session / "INDEX.md").write_text(
-        "# 세션 요약\n\n## 컨텍스트 목록\n\n- [CONTEXT-1.md] — small budget\n"
+        "# Session Summary\n\n## Contexts\n\n- [CONTEXT-1.md] — small budget\n"
     )
     (contexts / "CONTEXT-1.md").write_text(
-        "# Small Budget\n\n## 다음\n작은 예산에서도 태그를 보존한다.\n"
+        "# Small Budget\n\n## Next\npreserve tags even with a small budget.\n"
     )
 
     for budget in range(80, 201):
@@ -224,11 +224,11 @@ def test_build_resume_prompt_includes_child_summary_when_provided(tmp_path):
     parent_contexts.mkdir(parents=True)
     (parent / "INDEX.md").write_text(
         "---\nthread_id: parent123-session\n---\n\n"
-        "# Parent\n\n## 컨텍스트 목록\n\n- [CONTEXT-parent.md] — parent\n",
+        "# Parent\n\n## Contexts\n\n- [CONTEXT-parent.md] — parent\n",
         encoding="utf-8",
     )
     (parent_contexts / "CONTEXT-parent.md").write_text(
-        "# Parent\n\n## 다음\nparent 작업을 계속한다.\n",
+        "# Parent\n\n## Next\ncontinue the parent work.\n",
         encoding="utf-8",
     )
     child = tmp_path / ".codex" / "session-memory" / "threads" / "child123-session"
@@ -236,12 +236,12 @@ def test_build_resume_prompt_includes_child_summary_when_provided(tmp_path):
     child_contexts.mkdir(parents=True)
     (child / "INDEX.md").write_text(
         "---\nthread_id: child123-session\n---\n\n"
-        "# Child\n\n## 컨텍스트 목록\n\n- [CONTEXT-child.md] — child\n",
+        "# Child\n\n## Contexts\n\n- [CONTEXT-child.md] — child\n",
         encoding="utf-8",
     )
     (child_contexts / "CONTEXT-child.md").write_text(
-        "# Child\n\n## 다음\nchild summary를 parent resume에 제공한다.\n\n"
-        "## Evidence\n\n### Files\n- 없음\n",
+        "# Child\n\n## Next\nprovide the child summary to the parent resume.\n\n"
+        "## Evidence\n\n### Files\n- None\n",
         encoding="utf-8",
     )
 
@@ -252,10 +252,10 @@ def test_build_resume_prompt_includes_child_summary_when_provided(tmp_path):
     )
 
     assert "--- CONTEXT-parent.md ---" in prompt
-    assert "parent 작업을 계속한다" in prompt
+    assert "continue the parent work" in prompt
     assert "--- related:child123-session:CONTEXT-child.md ---" in prompt
-    assert "child summary를 parent resume에 제공한다" in prompt
-    assert "- 없음" not in prompt
+    assert "provide the child summary to the parent resume" in prompt
+    assert "- None" not in prompt
 
 
 def test_build_resume_prompt_preserves_parent_and_child_with_tight_budget(tmp_path):
@@ -264,11 +264,11 @@ def test_build_resume_prompt_preserves_parent_and_child_with_tight_budget(tmp_pa
     parent_contexts.mkdir(parents=True)
     (parent / "INDEX.md").write_text(
         "---\nthread_id: parent123-session\n---\n\n"
-        "# Parent\n\n## 컨텍스트 목록\n\n- [CONTEXT-parent.md] — parent\n",
+        "# Parent\n\n## Contexts\n\n- [CONTEXT-parent.md] — parent\n",
         encoding="utf-8",
     )
     (parent_contexts / "CONTEXT-parent.md").write_text(
-        "# Parent\n\n## 다음\nparent critical next action remains.\n\n"
+        "# Parent\n\n## Next\nparent critical next action remains.\n\n"
         + ("parent detail fills the tight next_action budget.\n" * 60),
         encoding="utf-8",
     )
@@ -277,11 +277,11 @@ def test_build_resume_prompt_preserves_parent_and_child_with_tight_budget(tmp_pa
     child_contexts.mkdir(parents=True)
     (child / "INDEX.md").write_text(
         "---\nthread_id: child123-session\n---\n\n"
-        "# Child\n\n## 컨텍스트 목록\n\n- [CONTEXT-child.md] — child\n",
+        "# Child\n\n## Contexts\n\n- [CONTEXT-child.md] — child\n",
         encoding="utf-8",
     )
     (child_contexts / "CONTEXT-child.md").write_text(
-        "# Child\n\n## 다음\nchild critical summary remains.\n",
+        "# Child\n\n## Next\nchild critical summary remains.\n",
         encoding="utf-8",
     )
 
@@ -304,9 +304,9 @@ def test_resume_skill_ignores_preloaded_sibling_modules(tmp_path, monkeypatch, c
     contexts.mkdir(parents=True)
     (session / "INDEX.md").write_text(
         "---\nsession_id: abc12345\nlast_updated: 2026-05-02T00:00:00Z\n---\n\n"
-        "# 세션 요약\n\n## 컨텍스트 목록\n\n- [CONTEXT-1.md] — resume\n"
+        "# Session Summary\n\n## Contexts\n\n- [CONTEXT-1.md] — resume\n"
     )
-    (contexts / "CONTEXT-1.md").write_text("# Resume\n\n## 다음\n파일 경로 로더를 사용한다.\n")
+    (contexts / "CONTEXT-1.md").write_text("# Resume\n\n## Next\nuse the file path loader.\n")
     fake_dotenv = types.ModuleType("dotenv_loader")
     fake_dotenv.load_project_dotenv = lambda *_args, **_kwargs: (_ for _ in ()).throw(RuntimeError("wrong dotenv"))
     fake_project_root = types.ModuleType("project_root")
@@ -326,7 +326,7 @@ def test_resume_skill_ignores_preloaded_sibling_modules(tmp_path, monkeypatch, c
 
     assert resume_skill.main(["resume.py", "abc12345"]) == 0
     output = capsys.readouterr().out
-    assert "파일 경로 로더를 사용한다" in output
+    assert "use the file path loader" in output
     assert "wrong prompt" not in output
 
 
@@ -337,10 +337,10 @@ def test_resume_skill_output_stays_within_prompt_budget(tmp_path, monkeypatch, c
     contexts.mkdir(parents=True)
     (session / "INDEX.md").write_text(
         "---\nsession_id: abc12345\nlast_updated: 2026-05-02T00:00:00Z\n---\n\n"
-        "# 세션 요약\n\n## 컨텍스트 목록\n\n- [CONTEXT-1.md] — budget\n"
+        "# Session Summary\n\n## Contexts\n\n- [CONTEXT-1.md] — budget\n"
     )
     (contexts / "CONTEXT-1.md").write_text(
-        "# Budget\n\n## 다음\n출력은 닫는 태그로 끝난다.\n\n" + ("detail\n" * 2000)
+        "# Budget\n\n## Next\noutput ends with the closing tag.\n\n" + ("detail\n" * 2000)
     )
     monkeypatch.setenv("CODEX_PROJECT_DIR", str(project))
     monkeypatch.chdir(project)
@@ -465,11 +465,11 @@ def test_resume_skill_resumes_legacy_child_artifact_by_prefix(tmp_path, monkeypa
     contexts.mkdir(parents=True)
     (legacy_child / "INDEX.md").write_text(
         "---\nsession_id: child1234-session\nlast_updated: 2026-05-05T00:00:00Z\n---\n\n"
-        "# Legacy Child\n\n## 컨텍스트 목록\n\n- [CONTEXT-1.md] — resume\n",
+        "# Legacy Child\n\n## Contexts\n\n- [CONTEXT-1.md] — resume\n",
         encoding="utf-8",
     )
     (contexts / "CONTEXT-1.md").write_text(
-        "# Legacy Child\n\n## 다음\nlegacy child artifact를 prefix로 resume한다.\n",
+        "# Legacy Child\n\n## Next\nresume the legacy child artifact by prefix.\n",
         encoding="utf-8",
     )
     monkeypatch.setenv("CODEX_PROJECT_DIR", str(project))
@@ -478,7 +478,7 @@ def test_resume_skill_resumes_legacy_child_artifact_by_prefix(tmp_path, monkeypa
     resume_skill = load_resume_skill()
 
     assert resume_skill.main(["resume.py", "child123"]) == 0
-    assert "legacy child artifact를 prefix로 resume한다" in capsys.readouterr().out
+    assert "resume the legacy child artifact by prefix" in capsys.readouterr().out
 
 
 def test_resume_skill_includes_graph_child_flat_artifact_context(
@@ -490,11 +490,11 @@ def test_resume_skill_includes_graph_child_flat_artifact_context(
     parent_contexts.mkdir(parents=True)
     (parent / "INDEX.md").write_text(
         "---\nthread_id: parent12-session\nlast_updated: 2026-05-04T00:00:00Z\n---\n\n"
-        "# Parent\n\n## 컨텍스트 목록\n\n- [CONTEXT-parent.md] — parent\n",
+        "# Parent\n\n## Contexts\n\n- [CONTEXT-parent.md] — parent\n",
         encoding="utf-8",
     )
     (parent_contexts / "CONTEXT-parent.md").write_text(
-        "# Parent\n\n## 다음\nparent CLI resume를 계속한다.\n",
+        "# Parent\n\n## Next\ncontinue the parent CLI resume.\n",
         encoding="utf-8",
     )
     child = project / ".codex" / "session-memory" / "threads" / "child123-session"
@@ -502,11 +502,11 @@ def test_resume_skill_includes_graph_child_flat_artifact_context(
     child_contexts.mkdir(parents=True)
     (child / "INDEX.md").write_text(
         "---\nthread_id: child123-session\nlast_updated: 2026-05-04T00:05:00Z\n---\n\n"
-        "# Child\n\n## 컨텍스트 목록\n\n- [CONTEXT-child.md] — child\n",
+        "# Child\n\n## Contexts\n\n- [CONTEXT-child.md] — child\n",
         encoding="utf-8",
     )
     (child_contexts / "CONTEXT-child.md").write_text(
-        "# Child\n\n## 다음\ngraph child context를 CLI resume에 포함한다.\n",
+        "# Child\n\n## Next\ninclude graph child context in the CLI resume.\n",
         encoding="utf-8",
     )
     grandchild = project / ".codex" / "session-memory" / "threads" / "grand123-session"
@@ -514,11 +514,11 @@ def test_resume_skill_includes_graph_child_flat_artifact_context(
     grandchild_contexts.mkdir(parents=True)
     (grandchild / "INDEX.md").write_text(
         "---\nthread_id: grand123-session\nlast_updated: 2026-05-04T00:06:00Z\n---\n\n"
-        "# Grandchild\n\n## 컨텍스트 목록\n\n- [CONTEXT-grandchild.md] — grandchild\n",
+        "# Grandchild\n\n## Contexts\n\n- [CONTEXT-grandchild.md] — grandchild\n",
         encoding="utf-8",
     )
     (grandchild_contexts / "CONTEXT-grandchild.md").write_text(
-        "# Grandchild\n\n## 다음\ngrandchild context는 direct child가 아니다.\n",
+        "# Grandchild\n\n## Next\ngrandchild context is not a direct child.\n",
         encoding="utf-8",
     )
     legacy_child = project / ".codex" / "sessions" / "legacy99-child"
@@ -556,9 +556,9 @@ def test_resume_skill_includes_graph_child_flat_artifact_context(
 
     assert resume_skill.main(["resume.py", "parent12"]) == 0
     output = capsys.readouterr().out
-    assert "parent CLI resume를 계속한다" in output
-    assert "graph child context를 CLI resume에 포함한다" in output
-    assert "grandchild context는 direct child가 아니다" not in output
+    assert "continue the parent CLI resume" in output
+    assert "include graph child context in the CLI resume" in output
+    assert "grandchild context is not a direct child" not in output
     assert "Legacy Child" not in output
 
 
@@ -590,11 +590,11 @@ def test_resume_skill_reads_project_local_state_db_for_child_context(
     parent_contexts.mkdir(parents=True)
     (parent / "INDEX.md").write_text(
         "---\nthread_id: parent12-session\nlast_updated: 2026-05-04T00:00:00Z\n---\n\n"
-        "# Parent\n\n## 컨텍스트 목록\n\n- [CONTEXT-parent.md] — parent\n",
+        "# Parent\n\n## Contexts\n\n- [CONTEXT-parent.md] — parent\n",
         encoding="utf-8",
     )
     (parent_contexts / "CONTEXT-parent.md").write_text(
-        "# Parent\n\n## 다음\nparent sqlite resume를 계속한다.\n",
+        "# Parent\n\n## Next\ncontinue the parent sqlite resume.\n",
         encoding="utf-8",
     )
 
@@ -603,11 +603,11 @@ def test_resume_skill_reads_project_local_state_db_for_child_context(
     child_contexts.mkdir(parents=True)
     (child / "INDEX.md").write_text(
         "---\nthread_id: child123-session\nlast_updated: 2026-05-04T00:05:00Z\n---\n\n"
-        "# Child\n\n## 컨텍스트 목록\n\n- [CONTEXT-child.md] — child\n",
+        "# Child\n\n## Contexts\n\n- [CONTEXT-child.md] — child\n",
         encoding="utf-8",
     )
     (child_contexts / "CONTEXT-child.md").write_text(
-        "# Child\n\n## 다음\nproject-local sqlite child context를 포함한다.\n",
+        "# Child\n\n## Next\ninclude project-local sqlite child context.\n",
         encoding="utf-8",
     )
 
@@ -618,8 +618,8 @@ def test_resume_skill_reads_project_local_state_db_for_child_context(
 
     assert resume_skill.main(["resume.py", "parent12"]) == 0
     output = capsys.readouterr().out
-    assert "parent sqlite resume를 계속한다" in output
-    assert "project-local sqlite child context를 포함한다" in output
+    assert "continue the parent sqlite resume" in output
+    assert "include project-local sqlite child context" in output
 
 
 def test_resume_skill_uses_current_artifact_when_graph_unavailable(
@@ -631,11 +631,11 @@ def test_resume_skill_uses_current_artifact_when_graph_unavailable(
     contexts.mkdir(parents=True)
     (session / "INDEX.md").write_text(
         "---\nthread_id: solo1234-session\nlast_updated: 2026-05-04T00:00:00Z\n---\n\n"
-        "# Solo\n\n## 컨텍스트 목록\n\n- [CONTEXT-solo.md] — solo\n",
+        "# Solo\n\n## Contexts\n\n- [CONTEXT-solo.md] — solo\n",
         encoding="utf-8",
     )
     (contexts / "CONTEXT-solo.md").write_text(
-        "# Solo\n\n## 다음\ngraph 없이 현재 context만 사용한다.\n",
+        "# Solo\n\n## Next\nuse only the current context without graph.\n",
         encoding="utf-8",
     )
     monkeypatch.setenv("CODEX_PROJECT_DIR", str(project))
@@ -653,7 +653,7 @@ def test_resume_skill_uses_current_artifact_when_graph_unavailable(
 
     assert resume_skill.main(["resume.py", "solo1234"]) == 0
     output = capsys.readouterr().out
-    assert "graph 없이 현재 context만 사용한다" in output
+    assert "use only the current context without graph" in output
     assert "related:" not in output
 
 
@@ -700,7 +700,7 @@ def test_resume_skill_rejects_ambiguous_prefix(tmp_path, monkeypatch, capsys):
         session.mkdir(parents=True)
         (session / "INDEX.md").write_text(
             f"---\nsession_id: {session_id}\nlast_updated: {updated}\n---\n\n"
-            "# 세션 요약\n\n## 컨텍스트 목록\n\n",
+            "# Session Summary\n\n## Contexts\n\n",
             encoding="utf-8",
         )
     monkeypatch.setenv("CODEX_PROJECT_DIR", str(project))
@@ -721,7 +721,7 @@ def test_resume_skill_matches_sessions_beyond_display_limit(tmp_path, monkeypatc
         session.mkdir(parents=True)
         (session / "INDEX.md").write_text(
             f"---\nsession_id: {session_id}\nlast_updated: 2026-05-03T00:{index:02d}:00Z\n---\n\n"
-            "# 세션 요약\n\n## 컨텍스트 목록\n\n",
+            "# Session Summary\n\n## Contexts\n\n",
             encoding="utf-8",
         )
     target = sessions_root / "target99-session"
@@ -729,14 +729,14 @@ def test_resume_skill_matches_sessions_beyond_display_limit(tmp_path, monkeypatc
     contexts.mkdir(parents=True)
     (target / "INDEX.md").write_text(
         "---\nsession_id: target99-session\nlast_updated: 2026-05-02T00:00:00Z\n---\n\n"
-        "# 세션 요약\n\n## 컨텍스트 목록\n\n- [CONTEXT-1.md] — older target\n",
+        "# Session Summary\n\n## Contexts\n\n- [CONTEXT-1.md] — older target\n",
         encoding="utf-8",
     )
-    (contexts / "CONTEXT-1.md").write_text("# Target\n\n## 다음\n오래된 세션도 prefix로 찾는다.\n", encoding="utf-8")
+    (contexts / "CONTEXT-1.md").write_text("# Target\n\n## Next\nfind older sessions by prefix.\n", encoding="utf-8")
     monkeypatch.setenv("CODEX_PROJECT_DIR", str(project))
     monkeypatch.chdir(project)
 
     resume_skill = load_resume_skill()
 
     assert resume_skill.main(["resume.py", "target99"]) == 0
-    assert "오래된 세션도 prefix로 찾는다" in capsys.readouterr().out
+    assert "find older sessions by prefix" in capsys.readouterr().out

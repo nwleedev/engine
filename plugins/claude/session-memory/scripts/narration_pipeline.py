@@ -24,12 +24,6 @@ def _is_safe_session_id(s: str) -> bool:
     return bool(s) and bool(_SAFE_SESSION_ID_RE.match(s))
 
 SECTION_HEADERS = {
-    "ko": {
-        "what_why": "## 무엇을 왜",
-        "decisions": "## 주요 결정",
-        "incomplete": "## 미완료",
-        "next_instructions": "## 다음 세션 지침",
-    },
     "en": {
         "what_why": "## What & Why",
         "decisions": "## Key Decisions",
@@ -170,7 +164,7 @@ def _hourly_path(session_dir: Path, title: str) -> Path:
 def _write_context_file(session_dir: Path, title: str, lang: str, result: dict, session_id: str) -> str:
     path = _hourly_path(session_dir, title)
     headers = SECTION_HEADERS.get(lang, SECTION_HEADERS["en"])
-    none_label = "없음" if lang == "ko" else "None"
+    none_label = "None"
     now = _utcnow_iso()
     sid_short = session_id[:8]
 

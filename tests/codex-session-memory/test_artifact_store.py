@@ -125,6 +125,5 @@ def test_write_index_is_compatible_with_index_io_context_append(tmp_path):
     index_io.append_context_entry(store.index_path("thread-1"), "CONTEXT-next.md", "next")
 
     text = store.index_path("thread-1").read_text(encoding="utf-8")
-    assert text.count("## 컨텍스트 목록") == 1
-    assert "## Contexts" not in text
+    assert text.count("## Contexts") == 1
     assert text.index("- [CONTEXT-first.md] — first") < text.index("- [CONTEXT-next.md] — next")

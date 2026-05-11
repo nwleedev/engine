@@ -7,8 +7,8 @@ from typing import Any
 
 ARTIFACT_SCHEMA_VERSION = 2
 RELATIONSHIP_SOURCE_FIELDS = {"role", "parent_session_id"}
-CONTEXT_HEADING = "## 컨텍스트 목록"
-RESUME_HINT = "이 세션 재개: `$codex-session-memory:resume {session_prefix}`"
+CONTEXT_HEADING = "## Contexts"
+RESUME_HINT = "Resume this session: `$codex-session-memory:resume {session_prefix}`"
 
 
 class ArtifactStore:
@@ -64,7 +64,7 @@ class ArtifactStore:
         lines = ["---"]
         for key, value in clean_frontmatter.items():
             lines.append(f"{key}: {value}")
-        lines.extend(["---", "", "# 세션 요약", "", "(진행 중)", "", CONTEXT_HEADING, ""])
+        lines.extend(["---", "", "# Session Summary", "", "(in progress)", "", CONTEXT_HEADING, ""])
         for context in contexts:
             lines.append(f"- [{context['filename']}] — {context['summary']}")
         lines.extend(["", "---"])

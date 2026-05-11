@@ -180,9 +180,9 @@ destination conflict와 duplicate destination을 사전 검사하며, destinatio
 
 ## 개발
 
-Canonical source는 `plugin-sources/session-memory/adapters/codex/`에 있습니다.
-Generated plugin artifact는 `plugins/codex/session-memory/`에 있습니다. Canonical
-README, skill, script 파일을 바꾼 뒤에는 다음 명령을 실행합니다.
+Canonical source는 repository source tree에 있습니다. Generated plugin artifact는
+runtime session-memory plugin directory에 있습니다. Canonical README, skill,
+script 파일을 바꾼 뒤에는 다음 명령을 실행합니다.
 
 ```bash
 rtk python tools/build_plugins.py

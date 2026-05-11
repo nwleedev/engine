@@ -183,9 +183,9 @@ cleanup diagnostic.
 
 ## Development
 
-Canonical source lives under `plugin-sources/session-memory/adapters/codex/`.
-Generated plugin artifacts live under `plugins/codex/session-memory/`. After
-changing canonical README, skill, or script files, run:
+Canonical source lives in the repository source tree. Generated plugin artifacts
+live under the runtime session-memory plugin directory. After changing
+canonical README, skill, or script files, run:
 
 ```bash
 rtk python tools/build_plugins.py

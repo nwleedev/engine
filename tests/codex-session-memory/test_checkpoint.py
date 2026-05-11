@@ -510,7 +510,7 @@ def test_verify_requires_sections_and_index_entry(tmp_path, monkeypatch, capsys)
     context = tmp_path / ".codex" / "sessions" / "test-thread" / "contexts" / "CONTEXT-20260503-1200-test.md"
     write_valid_context(context)
     index = context.parent.parent / "INDEX.md"
-    index.write_text(f"## 컨텍스트 목록\n\n- [{context.name}] - test\n", encoding="utf-8")
+    index.write_text(f"## Contexts\n\n- [{context.name}] - test\n", encoding="utf-8")
 
     patch_project(monkeypatch, checkpoint, tmp_path)
 
@@ -554,7 +554,7 @@ def test_verify_accepts_hidden_child_session_context(tmp_path, monkeypatch, caps
     index = context.parent.parent / "INDEX.md"
     index.write_text(
         "---\nrole: child\nparent_session_id: parent-thread\n---\n\n"
-        f"## 컨텍스트 목록\n\n- [{context.name}] - child checkpoint\n",
+        f"## Contexts\n\n- [{context.name}] - child checkpoint\n",
         encoding="utf-8",
     )
 
@@ -650,7 +650,7 @@ def test_verify_fails_when_index_reference_missing(tmp_path, monkeypatch, capsys
     checkpoint = load_checkpoint()
     context = tmp_path / ".codex" / "sessions" / "test-thread" / "contexts" / "CONTEXT-20260503-1200-test.md"
     write_valid_context(context)
-    (context.parent.parent / "INDEX.md").write_text("## 컨텍스트 목록\n", encoding="utf-8")
+    (context.parent.parent / "INDEX.md").write_text("## Contexts\n", encoding="utf-8")
     patch_project(monkeypatch, checkpoint, tmp_path)
 
     assert checkpoint.main(["verify", str(context)]) == 1

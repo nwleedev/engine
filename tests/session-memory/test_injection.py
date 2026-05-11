@@ -158,5 +158,5 @@ def test_compact_systemMessage_lists_filenames(tmp_path, capsys):
     sm = obj.get("systemMessage", "")
     assert "CONTEXT-20260429-1300-alpha.md" in sm or "alpha" in sm
     assert "CONTEXT-20260429-1400-beta.md" in sm or "beta" in sm
-    assert "2개" in sm or "2 file" in sm.lower()
+    assert "2 file" in sm or "2 file" in sm.lower()
     assert "KB" in sm

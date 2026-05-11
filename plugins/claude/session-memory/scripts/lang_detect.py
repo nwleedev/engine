@@ -2,7 +2,7 @@ import json
 import os
 from pathlib import Path
 
-SUPPORTED = {"ko", "en"}
+SUPPORTED = {"en"}
 DEFAULT = "en"
 
 

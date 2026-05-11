@@ -255,7 +255,7 @@ def handle(payload: dict) -> None:
             total_kb = sum(s for _, s in metas) / 1024
             names = ", ".join(name for name, _ in metas)
             sm = (
-                f"session-memory: 압축 후 컨텍스트 복원 — {len(metas)}개 파일, "
+                f"session-memory: restored context after compaction — {len(metas)} file(s), "
                 f"{total_kb:.1f}KB ({names})"
             )
             _emit(f"<session-context>\n{body}\n</session-context>", system_message=sm)

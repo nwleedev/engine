@@ -12,7 +12,7 @@ def test_simple_first_sentence_english():
 
 
 def test_simple_first_sentence_korean():
-    assert ol.extract("첫 번째 문장이다。두 번째 문장이다。") == "첫 번째 문장이다"
+    assert ol.extract("This is the first sentence。This is the second sentence。") == "This is the first sentence"
 
 
 def test_protects_eg_abbreviation():

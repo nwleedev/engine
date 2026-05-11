@@ -13,7 +13,7 @@ def test_dedup_index_collapses_duplicates(tmp_path):
     sd.mkdir()
     body = (
         "---\nsession_id: s\n---\n"
-        "# 세션 요약\n\n## 컨텍스트 목록\n\n"
+        "# Session Summary\n\n## Contexts\n\n"
         "- [CONTEXT-X.md] — first\n"
         "- [CONTEXT-X.md] — second\n"
         "- [CONTEXT-X.md] — third\n"

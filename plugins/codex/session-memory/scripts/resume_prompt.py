@@ -4,7 +4,7 @@ from pathlib import Path
 
 
 TRUNCATION_MARKER = "\n...[truncated for Codex context budget]"
-PLACEHOLDER_FILE_VALUES = {"", "없음", "none", "None", "n/a", "N/A", "저장된 파일 근거 없음"}
+PLACEHOLDER_FILE_VALUES = {"", "none", "None", "n/a", "N/A", "no file evidence recorded"}
 MINIMAL_PROMPT = "<codex-session-memory>\n</codex-session-memory>"
 MIN_STRUCTURED_PROMPT_BUDGET = len(
     "\n".join([
@@ -21,7 +21,7 @@ MIN_CURRENT_CONTEXT_BUDGET_WITH_RELATED = 120
 MIN_RELATED_CONTEXT_BUDGET = 160
 STRUCTURED_PROMPT_EMPTY = "\n".join([
     "<codex-session-memory>",
-    "current_goal: 이어진 Codex 작업 맥락을 복원한다.",
+    "current_goal: Restore the continued Codex work context.",
     "last_known_state:",
     "",
     "files_and_branches:",
@@ -36,7 +36,7 @@ def _context_names_from_index(index_text: str) -> list[str]:
     names = []
     in_context_list = False
     for line in index_text.splitlines():
-        if line.strip() == "## 컨텍스트 목록":
+        if line.strip() == "## Contexts":
             in_context_list = True
             continue
         if in_context_list and line.startswith("## "):
@@ -220,7 +220,7 @@ def build_resume_prompt(
     next_section = _next_action_section(context_chunks, related_chunks, next_budget)
     fields = [
         "<codex-session-memory>",
-        "current_goal: 이어진 Codex 작업 맥락을 복원한다.",
+        "current_goal: Restore the continued Codex work context.",
         "last_known_state:",
         index_section,
         "files_and_branches:",

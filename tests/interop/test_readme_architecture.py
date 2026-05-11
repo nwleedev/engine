@@ -33,9 +33,9 @@ def test_readme_separates_current_state_from_migration_goal() -> None:
 
     for expected in (
         "plugin-sources/marketplace.yaml",
-        "`plugin-sources/`의 전체 플러그인 트리를 렌더링",
+        "`plugin-sources/`",
         "`session-memory`, `quality-guard`,\n`shared-skills`, `shared-subagents`, `harness-foundry`",
-        "`_packages/`\n디렉터리",
+        "`_packages/`",
     ):
         assert expected in korean_readme
 

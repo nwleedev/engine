@@ -10,29 +10,29 @@ import lang_detect
 def test_from_settings_json(tmp_path):
     (tmp_path / ".claude").mkdir()
     (tmp_path / ".claude" / "settings.json").write_text(
-        json.dumps({"env": {"SESSION_MEMORY_LANG": "ko"}}), encoding="utf-8"
+        json.dumps({"env": {"SESSION_MEMORY_LANG": "en"}}), encoding="utf-8"
     )
-    assert lang_detect.detect(str(tmp_path)) == "ko"
+    assert lang_detect.detect(str(tmp_path)) == "en"
 
 
 def test_settings_local_overrides_settings(tmp_path):
     (tmp_path / ".claude").mkdir()
     (tmp_path / ".claude" / "settings.json").write_text(
-        json.dumps({"env": {"SESSION_MEMORY_LANG": "en"}}), encoding="utf-8"
+        json.dumps({"env": {"SESSION_MEMORY_LANG": "fr"}}), encoding="utf-8"
     )
     (tmp_path / ".claude" / "settings.local.json").write_text(
-        json.dumps({"env": {"SESSION_MEMORY_LANG": "ko"}}), encoding="utf-8"
+        json.dumps({"env": {"SESSION_MEMORY_LANG": "en"}}), encoding="utf-8"
     )
-    assert lang_detect.detect(str(tmp_path)) == "ko"
+    assert lang_detect.detect(str(tmp_path)) == "en"
 
 
 def test_from_os_lang_env(tmp_path, monkeypatch):
-    monkeypatch.setenv("LANG", "ko_KR.UTF-8")
-    assert lang_detect.detect(str(tmp_path)) == "ko"
+    monkeypatch.setenv("LANG", "en_US.UTF-8")
+    assert lang_detect.detect(str(tmp_path)) == "en"
 
 
 def test_settings_takes_priority_over_os(tmp_path, monkeypatch):
-    monkeypatch.setenv("LANG", "ko_KR.UTF-8")
+    monkeypatch.setenv("LANG", "fr_FR.UTF-8")
     (tmp_path / ".claude").mkdir()
     (tmp_path / ".claude" / "settings.json").write_text(
         json.dumps({"env": {"SESSION_MEMORY_LANG": "en"}}), encoding="utf-8"

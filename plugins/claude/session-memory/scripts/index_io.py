@@ -56,9 +56,9 @@ def create_index(session_dir: "str | Path", session_id: str, cwd: str, started_u
         "last_context_written_at": "",
     }
     body = (
-        "\n# 세션 요약\n\n(진행 중)\n\n"
-        "## 컨텍스트 목록\n\n---\n"
-        f"이 세션 재개: `claude -r {session_id}`\n"
+        "\n# Session Summary\n\n(in progress)\n\n"
+        "## Contexts\n\n---\n"
+        f"Resume this session: `claude -r {session_id}`\n"
     )
     _atomic_write(sd / INDEX_NAME, _serialize(fm, body))
     return fm

@@ -1,15 +1,15 @@
 """INDEX.md frontmatter + body manipulation. Stdlib only.
 
 YAML subset: KEY: VALUE per line, integer/string scalars only.
-Body has stable section: '## 컨텍스트 목록' followed by '- [filename.md] — summary' lines.
+Body has stable section: '## Contexts' followed by '- [filename.md] — summary' lines.
 """
 from pathlib import Path
 from typing import Any
 
 
 _FENCE = "---"
-_CONTEXT_HEADING = "## 컨텍스트 목록"
-_RESUME_HINT = "이 세션 재개: `$codex-session-memory:resume {session_prefix}`"
+_CONTEXT_HEADING = "## Contexts"
+_RESUME_HINT = "Resume this session: `$codex-session-memory:resume {session_prefix}`"
 
 
 def _coerce(v: str):
@@ -69,7 +69,7 @@ def _render(fm: dict, body: str) -> str:
 def write_index(path: Path, frontmatter: dict, contexts: list) -> None:
     p = Path(path)
     p.parent.mkdir(parents=True, exist_ok=True)
-    body_lines = ["# 세션 요약", "", "(진행 중)", "", _CONTEXT_HEADING, ""]
+    body_lines = ["# Session Summary", "", "(in progress)", "", _CONTEXT_HEADING, ""]
     for c in contexts:
         body_lines.append(f"- [{c['filename']}] — {c['summary']}")
     body_lines.append("")
