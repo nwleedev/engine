@@ -50,6 +50,24 @@ REQUIRED_SECTIONS = (
     "## graph_context",
 )
 
+CONTEXT_TEMPLATE_GUIDANCE = (
+    ("## current_goal", "Capture the approved current goal and scope."),
+    ("## executive_summary", "Write 3-7 lines that make the state resumable."),
+    ("## detailed_state", "Record workflow, judgments, and confirmed facts."),
+    ("## decisions", "List decisions, rationale, alternatives, and fallback."),
+    ("## files", "Record per-file change reason and next check point."),
+    (
+        "## verification",
+        "Record commands, results, failure causes, and unverified items.",
+    ),
+    ("## risks", "List remaining risks and uncertain assumptions."),
+    ("## next_actions", "Record ordered steps the next person can run immediately."),
+    (
+        "## graph_context",
+        "Record thread id, graph role, parent id, and graph lookup status.",
+    ),
+)
+
 
 def _usage() -> str:
     return (
@@ -121,6 +139,33 @@ def _render_evidence(evidence: dict) -> str:
             _render_list(evidence.get("sources", [])),
         ]
     )
+
+
+def _render_required_context_template(
+    *,
+    thread_id: str,
+    role: str,
+    parent_session_id: str | None,
+    parent_resolution,
+) -> str:
+    lines = ["# <title>", ""]
+    for heading, guidance in CONTEXT_TEMPLATE_GUIDANCE:
+        lines.extend([heading, f"- guidance: {guidance}", ""])
+        if heading == "## graph_context":
+            lines.extend(
+                [
+                    f"thread_id: {thread_id}",
+                    f"graph_role: {role}",
+                    f"parent_session_id: {parent_session_id or ''}",
+                    f"graph_status: {_graph_status(parent_resolution)}",
+                    f"graph_source: {parent_resolution.source}",
+                    f"graph_confidence: {parent_resolution.confidence}",
+                    f"graph_reason: {parent_resolution.reason}",
+                    f"graph_warnings: {_render_graph_warnings(parent_resolution.warnings)}",
+                    "",
+                ]
+            )
+    return "\n".join(lines).rstrip()
 
 
 def _is_context_path_in_session_tree(context_path: Path, root: str) -> bool:
@@ -195,6 +240,39 @@ def _prepare_retry_guidance() -> str:
     return "retry with --parent <session-id> or set CODEX_SESSION_PARENT_ID"
 
 
+def _parent_resolution(
+    *,
+    role: str,
+    parent_thread_id: str | None = None,
+    source: str = "none",
+    confidence: str = "none",
+    reason: str = "",
+    warnings: tuple[str, ...] = (),
+):
+    return pl.ParentResolution(
+        role=role,
+        parent_thread_id=parent_thread_id,
+        source=source,
+        confidence=confidence,
+        reason=reason,
+        warnings=warnings,
+    )
+
+
+def _graph_status(resolution) -> str:
+    if resolution.source in {"argument", "environment"}:
+        return "provided"
+    if resolution.source == "none" and resolution.confidence == "none":
+        return "unavailable"
+    return "available"
+
+
+def _render_graph_warnings(warnings: tuple[str, ...]) -> str:
+    if not warnings:
+        return "(none)"
+    return "; ".join(warnings)
+
+
 def _resolve_prepare_target(
     *,
     requested_role: str | None,
@@ -202,19 +280,39 @@ def _resolve_prepare_target(
     thread_id: str,
     jsonl_path: Path | None,
     project_root: str | Path,
-) -> tuple[str, str | None] | None:
+) -> tuple[str, str | None, object] | None:
     if requested_parent:
         if requested_role == "main":
             print("error: --parent conflicts with --role main", file=sys.stderr)
             return None
-        return "child", requested_parent
+        return (
+            "child",
+            requested_parent,
+            _parent_resolution(
+                role="child",
+                parent_thread_id=requested_parent,
+                source="argument",
+                confidence="high",
+                reason="parent id provided by --parent",
+            ),
+        )
 
     env_parent = os.environ.get("CODEX_SESSION_PARENT_ID")
     if env_parent:
         if requested_role == "main":
             print("error: CODEX_SESSION_PARENT_ID conflicts with --role main", file=sys.stderr)
             return None
-        return "child", env_parent
+        return (
+            "child",
+            env_parent,
+            _parent_resolution(
+                role="child",
+                parent_thread_id=env_parent,
+                source="environment",
+                confidence="high",
+                reason="parent id provided by CODEX_SESSION_PARENT_ID",
+            ),
+        )
 
     resolution = pl.resolve_parent_thread_id(
         thread_id=thread_id,
@@ -229,7 +327,7 @@ def _resolve_prepare_target(
             )
             return None
         if resolution.parent_thread_id:
-            return "child", resolution.parent_thread_id
+            return "child", resolution.parent_thread_id, resolution
         print(
             f"error: child checkpoint detected without parent session id; {_prepare_retry_guidance()}",
             file=sys.stderr,
@@ -243,7 +341,7 @@ def _resolve_prepare_target(
         )
         return None
 
-    return "main", None
+    return "main", None, resolution
 
 
 def _prepare(requested_role: str | None = None, requested_parent: str | None = None) -> int:
@@ -270,7 +368,7 @@ def _prepare(requested_role: str | None = None, requested_parent: str | None = N
     )
     if resolved is None:
         return 2
-    role, parent_session_id = resolved
+    role, parent_session_id, parent_resolution = resolved
 
     if not jsonl_path:
         print(f"error: no rollout JSONL found for thread {thread_id}", file=sys.stderr)
@@ -316,17 +414,25 @@ def _prepare(requested_role: str | None = None, requested_parent: str | None = N
                 "  session_id: <thread_id>",
                 "",
                 "relationship_diagnostics:",
-                "  relationship_source: codex graph",
+                f"  relationship_source: {parent_resolution.source}",
                 f"  detected_role: {role}",
                 f"  detected_parent_session_id: {parent_session_id or ''}",
+                f"  graph_status: {_graph_status(parent_resolution)}",
+                f"  graph_source: {parent_resolution.source}",
+                f"  graph_confidence: {parent_resolution.confidence}",
+                f"  graph_reason: {parent_resolution.reason}",
+                f"  graph_warnings: {_render_graph_warnings(parent_resolution.warnings)}",
                 "",
                 "## evidence",
                 _render_evidence(evidence),
                 "",
                 "## required context template",
-                "# <title>",
-                "",
-                *REQUIRED_SECTIONS,
+                _render_required_context_template(
+                    thread_id=thread_id,
+                    role=role,
+                    parent_session_id=parent_session_id,
+                    parent_resolution=parent_resolution,
+                ),
                 "",
                 "After writing the context, update INDEX.md to reference the context filename.",
                 "Set INDEX.md frontmatter last_processed_offset to the printed new offset.",

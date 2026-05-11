@@ -42,6 +42,19 @@ def write_valid_context(context: Path):
     )
 
 
+SECTION_GUIDANCE = {
+    "## current_goal": "approved current goal and scope",
+    "## executive_summary": "3-7 lines",
+    "## detailed_state": "workflow, judgments, and confirmed facts",
+    "## decisions": "decisions, rationale, alternatives, and fallback",
+    "## files": "per-file change reason and next check point",
+    "## verification": "commands, results, failure causes, and unverified items",
+    "## risks": "remaining risks and uncertain assumptions",
+    "## next_actions": "ordered steps the next person can run immediately",
+    "## graph_context": "thread id, graph role, parent id, and graph lookup status",
+}
+
+
 def write_child_session_meta(jsonl: Path, *, parent_thread_id: str | None):
     thread_spawn = {}
     if parent_thread_id is not None:
@@ -121,8 +134,9 @@ def test_prepare_outputs_flat_artifact_target(monkeypatch, tmp_path, capsys):
     output = capsys.readouterr().out
     assert ".codex/session-memory/threads/test-thread/INDEX.md" in output
     assert "_children" not in output
-    assert "## current_goal" in output
-    assert "## graph_context" in output
+    for heading, guidance in SECTION_GUIDANCE.items():
+        assert heading in output
+        assert guidance in output
 
 
 def test_prepare_frontmatter_update_excludes_relationship_source_fields(
@@ -157,7 +171,55 @@ def test_prepare_frontmatter_update_excludes_relationship_source_fields(
     assert "role:" not in frontmatter_update
     assert "parent_session_id:" not in frontmatter_update
     assert "relationship_diagnostics:" in output
-    assert "relationship_source: codex graph" in output
+    assert "relationship_source: argument" in output
+
+
+def test_prepare_marks_graph_unavailable_when_parent_resolution_has_no_source(
+    monkeypatch,
+    tmp_path,
+    capsys,
+):
+    checkpoint = load_checkpoint()
+    jsonl = tmp_path / "rollout-test-thread.jsonl"
+    jsonl.write_text('{"type":"turn","payload":"ok"}\n', encoding="utf-8")
+
+    patch_project(monkeypatch, checkpoint, tmp_path)
+    monkeypatch.setattr(checkpoint.sl, "current_thread_id", lambda: "test-thread")
+    monkeypatch.setattr(checkpoint.sl, "find_jsonl_by_thread", lambda thread_id: jsonl)
+    monkeypatch.setattr(
+        checkpoint.sl,
+        "artifact_session_dir",
+        lambda root, thread_id: tmp_path
+        / ".codex"
+        / "session-memory"
+        / "threads"
+        / thread_id,
+    )
+    monkeypatch.setattr(checkpoint.io, "read_frontmatter", lambda path: {"last_processed_offset": 0})
+    monkeypatch.setattr(checkpoint.jp, "extract_delta", lambda path, offset: ([], 10))
+    monkeypatch.setattr(
+        checkpoint.pl,
+        "resolve_parent_thread_id",
+        lambda **kwargs: checkpoint.pl.ParentResolution(
+            role="main",
+            source="none",
+            confidence="none",
+            reason="graph unavailable",
+            warnings=("state db unavailable",),
+        ),
+    )
+
+    assert checkpoint.main(["prepare"]) == 0
+
+    output = capsys.readouterr().out
+    assert "## graph_context" in output
+    graph_context = output.split("## graph_context", 1)[1]
+    assert "thread_id: test-thread" in graph_context
+    assert "graph_role: main" in graph_context
+    assert "parent_session_id: " in graph_context
+    assert "graph_status: unavailable" in graph_context
+    assert "graph_reason: graph unavailable" in output
+    assert "graph_warnings: state db unavailable" in output
 
 
 def test_prepare_uses_hh00_context_path_and_reuses_existing_file(monkeypatch, tmp_path, capsys):
@@ -213,6 +275,7 @@ def test_prepare_child_without_parent_uses_auto_resolution(monkeypatch, tmp_path
     assert "role: child" in output
     assert "parent_session_id: parent-thread" in output
     assert f"index_path: {child_dir / 'INDEX.md'}" in output
+    assert "relationship_source: rollout_session_meta" in output
 
 
 def test_prepare_parent_without_role_is_child_intent(monkeypatch, tmp_path, capsys):
@@ -256,6 +319,7 @@ def test_prepare_uses_env_parent_as_child_intent(monkeypatch, tmp_path, capsys):
     assert "role: child" in output
     assert "parent_session_id: env-parent-thread" in output
     assert f"index_path: {child_dir / 'INDEX.md'}" in output
+    assert "relationship_source: environment" in output
 
 
 def test_prepare_fails_when_main_role_conflicts_with_env_parent(monkeypatch, tmp_path, capsys):
@@ -510,6 +574,40 @@ def test_verify_fails_when_required_section_missing(tmp_path, monkeypatch, capsy
 
     assert checkpoint.main(["verify", str(context)]) == 1
     assert "missing section" in capsys.readouterr().err
+
+
+def test_verify_rejects_partial_graph_first_flat_context(tmp_path, monkeypatch, capsys):
+    checkpoint = load_checkpoint()
+    context = (
+        tmp_path
+        / ".codex"
+        / "session-memory"
+        / "threads"
+        / "test-thread"
+        / "contexts"
+        / "CONTEXT-20260503-1200-test.md"
+    )
+    context.parent.mkdir(parents=True)
+    context.write_text(
+        "# test\n\n"
+        "## current_goal\nDone\n\n"
+        "## executive_summary\nSummary\n\n"
+        "## files\nFiles\n\n"
+        "## next_actions\n- [ ] Next\n\n"
+        "## graph_context\nthread_id: test-thread\n",
+        encoding="utf-8",
+    )
+    (context.parent.parent / "INDEX.md").write_text(
+        f"## contexts\n\n- [{context.name}] - test\n",
+        encoding="utf-8",
+    )
+    patch_project(monkeypatch, checkpoint, tmp_path)
+
+    assert checkpoint.main(["verify", str(context)]) == 1
+
+    captured = capsys.readouterr()
+    assert "missing section" in captured.err
+    assert "## detailed_state" in captured.err
 
 
 def test_prepare_fails_when_thread_id_missing(monkeypatch, tmp_path, capsys):
