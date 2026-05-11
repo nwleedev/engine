@@ -31,7 +31,7 @@ plugins:
         skills: ./skills/
         path: ./plugins/codex/quality-guard
   - id: shared-subagents
-    version: 0.2.4
+    version: 0.2.5
     description: Project-local shared Codex subagent templates and installation guidance
     license: MIT
     category: Productivity
@@ -44,7 +44,7 @@ plugins:
         skills: ./skills/
         path: ./plugins/codex/shared-subagents
   - id: shared-skills
-    version: 0.2.4
+    version: 0.2.5
     description: Shared skills for main-session quality gates across development and non-development work
     license: MIT
     category: Productivity
@@ -57,7 +57,7 @@ plugins:
         skills: ./skills/
         path: ./plugins/codex/shared-skills
   - id: harness-foundry
-    version: 0.3.0
+    version: 0.3.1
     description: Skill-only workflows for designing and auditing domain harnesses
     license: MIT
     category: Productivity
