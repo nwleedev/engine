@@ -1,26 +1,42 @@
 #!/usr/bin/env python3
-"""Move legacy top-level child session directories under _children."""
+"""Move legacy child session directories into flat session-memory artifacts."""
 from __future__ import annotations
 
 import argparse
+from dataclasses import dataclass
 import importlib.util
+import re
 import shutil
 import sys
-from dataclasses import dataclass
 from pathlib import Path
 
 
 HERE = Path(__file__).resolve().parent
-CHILD_SESSIONS_DIR = "_children"
-CHILD_SESSIONS_HEADING = "## Child Sessions"
+LEGACY_CHILD_SESSIONS_DIR = "_children"
+FLAT_THREADS_RELATIVE_PATH = "session-memory/threads"
 EXIT_OPERATION_FAILED = 2
 MOVE_ERRORS = (OSError, shutil.Error)
+RELATIONSHIP_SOURCE_FIELDS = {"role", "parent_session_id"}
+
+
+@dataclass
+class MigrationCandidate:
+    source: Path
+    parent_id: str | None
+
+
+@dataclass
+class MovedSession:
+    destination: Path
+    source: Path
+    parent_id: str | None
+    original_index_text: str | None
 
 
 @dataclass(frozen=True)
-class ParentIndexUpdate:
-    original_text: str
-    updated_text: str
+class IndexBackup:
+    path: Path
+    text: str
 
 
 def _load_script_module(filename: str, module_name: str):
@@ -39,7 +55,10 @@ sl = _load_script_module("session_locator.py", "codex_session_memory_migrate_ses
 
 def _parse_args(argv: list[str] | None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Move top-level child session directories under .codex/sessions/_children."
+        description=(
+            "Move legacy child session directories under "
+            ".codex/session-memory/threads."
+        )
     )
     parser.add_argument("--root", default=".", help="Project root. Defaults to current directory.")
     parser.add_argument("--apply", action="store_true", help="Move sessions instead of printing a dry-run.")
@@ -54,6 +73,17 @@ def _candidate_dirs(sessions_root: Path) -> list[Path]:
     if not sessions_root.is_dir():
         return []
     candidates = []
+    legacy_children_root = sessions_root / LEGACY_CHILD_SESSIONS_DIR
+    if legacy_children_root.is_dir():
+        for path in sorted(legacy_children_root.iterdir(), key=lambda item: item.name):
+            if not path.is_dir():
+                continue
+            if path.name.startswith((".", "_")):
+                continue
+            if not (path / "INDEX.md").is_file():
+                continue
+            candidates.append(path)
+
     for path in sorted(sessions_root.iterdir(), key=lambda item: item.name):
         if not path.is_dir():
             continue
@@ -92,42 +122,6 @@ def _parse_frontmatter(index_path: Path) -> dict[str, str]:
     return frontmatter
 
 
-def _split_index_text(text: str) -> tuple[dict[str, str], str]:
-    if not text.startswith("---"):
-        return {}, text
-    end = text.find("\n---", len("---"))
-    if end < 0:
-        return {}, text
-
-    frontmatter: dict[str, str] = {}
-    for line in text[len("---") : end].strip().splitlines():
-        if ":" not in line:
-            continue
-        key, _, value = line.partition(":")
-        frontmatter[key.strip()] = value.strip().strip("\"'")
-    body_start = end + len("\n---")
-    return frontmatter, text[body_start:].lstrip("\n")
-
-
-def _render_index_text(frontmatter: dict[str, str], body: str) -> str:
-    lines = ["---"]
-    for key, value in frontmatter.items():
-        lines.append(f"{key}: {value}")
-    lines.append("---")
-    return "\n".join(lines) + "\n\n" + body
-
-
-def _updated_child_index_text(text: str, child_id: str, parent_id: str) -> str:
-    frontmatter, body = _split_index_text(text)
-    updated = dict(frontmatter)
-    updated["session_id"] = child_id
-    updated["role"] = "child"
-    updated["parent_session_id"] = parent_id
-    if updated == frontmatter and text.startswith("---"):
-        return text
-    return _render_index_text(updated, body)
-
-
 def _frontmatter_parent_id(candidate: Path) -> str | None:
     frontmatter = _parse_frontmatter(candidate / "INDEX.md")
     if frontmatter.get("role") != "child":
@@ -138,7 +132,10 @@ def _frontmatter_parent_id(candidate: Path) -> str | None:
     return None
 
 
-def _migratable_sessions(project_root: Path, candidates: list[Path]) -> list[tuple[Path, str]]:
+def _migration_candidates(
+    project_root: Path,
+    candidates: list[Path],
+) -> list[MigrationCandidate]:
     migratable = []
     for candidate in candidates:
         thread_id = candidate.name
@@ -149,104 +146,13 @@ def _migratable_sessions(project_root: Path, candidates: list[Path]) -> list[tup
             codex_home=project_root / ".codex",
         )
         if resolution.role == "child" and resolution.parent_thread_id:
-            migratable.append((candidate, str(resolution.parent_thread_id)))
+            migratable.append(
+                MigrationCandidate(candidate, str(resolution.parent_thread_id))
+            )
             continue
         parent_session_id = _frontmatter_parent_id(candidate)
-        if parent_session_id:
-            migratable.append((candidate, parent_session_id))
+        migratable.append(MigrationCandidate(candidate, parent_session_id))
     return migratable
-
-
-def _child_link_target(child_id: str) -> str:
-    return f"../_children/{child_id}/INDEX.md"
-
-
-def _child_link(child_id: str) -> str:
-    return f"- [{child_id[:8]}]({_child_link_target(child_id)}) - migrated child session"
-
-
-def _updated_parent_index_text(text: str, child_id: str) -> str:
-    if _child_link_target(child_id) in text:
-        return text
-
-    link = _child_link(child_id)
-    lines = text.splitlines()
-    try:
-        heading_index = lines.index(CHILD_SESSIONS_HEADING)
-    except ValueError:
-        if lines and lines[-1] != "":
-            lines.append("")
-        lines.extend([CHILD_SESSIONS_HEADING, "", link])
-    else:
-        insert_at = heading_index + 1
-        if insert_at < len(lines) and lines[insert_at] == "":
-            insert_at += 1
-        while insert_at < len(lines) and lines[insert_at].startswith("- ["):
-            insert_at += 1
-        lines.insert(insert_at, link)
-
-    return "\n".join(lines) + "\n"
-
-
-def _parent_index_path(project_root: Path, parent_id: str) -> Path:
-    return _sessions_root(project_root) / parent_id / "INDEX.md"
-
-
-def _prepare_parent_index_updates(
-    project_root: Path,
-    migratable: list[tuple[Path, str]],
-) -> dict[Path, ParentIndexUpdate] | None:
-    updates: dict[Path, ParentIndexUpdate] = {}
-    for source, parent_id in migratable:
-        child_id = source.name
-        parent_index = _parent_index_path(project_root, parent_id)
-        if not parent_index.is_file():
-            print(f"WARNING parent INDEX.md missing for {parent_id}", file=sys.stderr)
-            continue
-        try:
-            update = updates.get(parent_index)
-            if update is None:
-                text = parent_index.read_text(encoding="utf-8")
-                original_text = text
-            else:
-                text = update.updated_text
-                original_text = update.original_text
-            updated_text = _updated_parent_index_text(text, child_id)
-        except OSError as exc:
-            print(
-                f"ERROR parent INDEX.md update unavailable for {parent_id}: {exc}",
-                file=sys.stderr,
-            )
-            return None
-        if updated_text != text or parent_index in updates:
-            updates[parent_index] = ParentIndexUpdate(
-                original_text=original_text,
-                updated_text=updated_text,
-            )
-    return updates
-
-
-def _prepare_child_index_updates(
-    migratable: list[tuple[Path, str]],
-) -> dict[Path, ParentIndexUpdate] | None:
-    updates: dict[Path, ParentIndexUpdate] = {}
-    for source, parent_id in migratable:
-        child_index = source / "INDEX.md"
-        try:
-            original_text = child_index.read_text(encoding="utf-8")
-        except OSError as exc:
-            print(
-                f"ERROR child INDEX.md update unavailable for {source.name}: {exc}",
-                file=sys.stderr,
-            )
-            return None
-        updated_text = _updated_child_index_text(original_text, source.name, parent_id)
-        if updated_text != original_text:
-            updates[child_index] = ParentIndexUpdate(
-                original_text=original_text,
-                updated_text=updated_text,
-            )
-    return updates
 
 
 def _print_manual_cleanup_required(message: str, paths: list[Path]) -> None:
@@ -254,25 +160,35 @@ def _print_manual_cleanup_required(message: str, paths: list[Path]) -> None:
     print(f"MANUAL CLEANUP REQUIRED: {message}: {joined_paths}", file=sys.stderr)
 
 
-def _restore_parent_index_updates(
-    written: list[Path],
-    updates: dict[Path, ParentIndexUpdate],
+def _destination_path(project_root: Path, child_id: str) -> Path:
+    return project_root / ".codex" / FLAT_THREADS_RELATIVE_PATH / child_id
+
+
+def _has_destination_conflicts(
+    project_root: Path,
+    migratable: list[MigrationCandidate],
 ) -> bool:
-    restored = True
-    for parent_index in reversed(written):
-        try:
-            _write_text_atomically(parent_index, updates[parent_index].original_text)
-        except OSError as exc:
-            restored = False
-            print(
-                f"ERROR rollback failed for parent INDEX.md {parent_index}: {exc}",
-                file=sys.stderr,
-            )
-            _print_manual_cleanup_required(
-                "restore parent INDEX.md manually",
-                [parent_index],
-            )
-    return restored
+    conflicts = []
+    seen_destinations: set[Path] = set()
+    for candidate in migratable:
+        child_id = candidate.source.name
+        destination = _destination_path(project_root, child_id)
+        if destination.exists():
+            conflicts.append((child_id, destination, "destination exists"))
+        elif destination in seen_destinations:
+            conflicts.append((child_id, destination, "duplicate destination"))
+        seen_destinations.add(destination)
+
+    for child_id, destination, reason in conflicts:
+        print(f"CONFLICT {child_id}: {reason} at {destination}", file=sys.stderr)
+    return bool(conflicts)
+
+
+def _apply_migration(project_root: Path, source: Path, parent_id: str | None) -> None:
+    child_id = source.name
+    destination = _destination_path(project_root, child_id)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    shutil.move(str(source), str(destination))
 
 
 def _write_text_atomically(path: Path, text: str) -> None:
@@ -281,101 +197,39 @@ def _write_text_atomically(path: Path, text: str) -> None:
         temp_path.write_text(text, encoding="utf-8")
         temp_path.replace(path)
     finally:
-        if temp_path.exists():
-            try:
-                temp_path.unlink()
-            except OSError:
-                pass
-
-
-def _write_parent_index_updates(updates: dict[Path, ParentIndexUpdate]) -> bool:
-    written = []
-    for parent_index, update in updates.items():
         try:
-            _write_text_atomically(parent_index, update.updated_text)
-        except OSError as exc:
-            print(
-                f"ERROR parent INDEX.md update failed for {parent_index}: {exc}",
-                file=sys.stderr,
-            )
-            _restore_parent_index_updates(written, updates)
-            return False
-        written.append(parent_index)
-    return True
+            temp_path.unlink()
+        except FileNotFoundError:
+            pass
+        except OSError:
+            pass
 
 
-def _restore_child_index_updates(
-    written: dict[Path, ParentIndexUpdate],
-) -> bool:
-    restored = True
-    for child_index, update in reversed(list(written.items())):
-        try:
-            _write_text_atomically(child_index, update.original_text)
-        except OSError as exc:
-            restored = False
-            print(
-                f"ERROR rollback failed for child INDEX.md {child_index}: {exc}",
-                file=sys.stderr,
-            )
-            _print_manual_cleanup_required(
-                "restore child INDEX.md manually",
-                [child_index],
-            )
-    return restored
+def _restore_moved_index_text(moved_session: MovedSession) -> bool:
+    if moved_session.original_index_text is None:
+        return True
+    index_path = moved_session.destination / "INDEX.md"
+    if not index_path.exists():
+        return True
+    try:
+        _write_text_atomically(index_path, moved_session.original_index_text)
+        return True
+    except OSError as exc:
+        print(f"ERROR rollback failed for {index_path}: {exc}", file=sys.stderr)
+        _print_manual_cleanup_required(
+            "restore original INDEX.md content manually",
+            [index_path],
+        )
+        return False
 
 
-def _write_child_index_updates(
-    moved: list[tuple[Path, Path, str]],
-    updates: dict[Path, ParentIndexUpdate],
-) -> tuple[bool, dict[Path, ParentIndexUpdate]]:
-    written: dict[Path, ParentIndexUpdate] = {}
-    for destination, source, _parent_id in moved:
-        source_index = source / "INDEX.md"
-        update = updates.get(source_index)
-        if update is None:
-            continue
-        child_index = destination / "INDEX.md"
-        try:
-            _write_text_atomically(child_index, update.updated_text)
-        except OSError as exc:
-            print(
-                f"ERROR child INDEX.md update failed for {child_index}: {exc}",
-                file=sys.stderr,
-            )
-            _restore_child_index_updates(written)
-            return False, written
-        written[child_index] = update
-    return True, written
-
-
-def _destination_path(project_root: Path, child_id: str) -> Path:
-    return _sessions_root(project_root) / CHILD_SESSIONS_DIR / child_id
-
-
-def _has_destination_conflicts(project_root: Path, migratable: list[tuple[Path, str]]) -> bool:
-    conflicts = []
-    for source, _parent_id in migratable:
-        child_id = source.name
-        destination = _destination_path(project_root, child_id)
-        if destination.exists():
-            conflicts.append((child_id, destination))
-
-    for child_id, destination in conflicts:
-        print(f"CONFLICT {child_id}: destination exists at {destination}", file=sys.stderr)
-    return bool(conflicts)
-
-
-def _apply_migration(project_root: Path, source: Path, parent_id: str) -> None:
-    child_id = source.name
-    children_root = _sessions_root(project_root) / CHILD_SESSIONS_DIR
-    destination = _destination_path(project_root, child_id)
-    children_root.mkdir(parents=True, exist_ok=True)
-    shutil.move(str(source), str(destination))
-
-
-def _rollback_moved_children(moved: list[tuple[Path, Path, str]]) -> bool:
+def _rollback_moved_sessions(moved: list[MovedSession]) -> bool:
     rolled_back = True
-    for destination, source, _parent_id in reversed(moved):
+    for moved_session in reversed(moved):
+        if not _restore_moved_index_text(moved_session):
+            rolled_back = False
+        destination = moved_session.destination
+        source = moved_session.source
         try:
             shutil.move(str(destination), str(source))
             print(f"ROLLBACK {destination.name}: restored source", file=sys.stderr)
@@ -392,62 +246,196 @@ def _rollback_moved_children(moved: list[tuple[Path, Path, str]]) -> bool:
     return rolled_back
 
 
-def _cleanup_created_children_root(children_root: Path, existed_before_apply: bool) -> bool:
-    if existed_before_apply or not children_root.exists():
+def _cleanup_created_artifacts_root(artifacts_root: Path, existed_before_apply: bool) -> bool:
+    if existed_before_apply or not artifacts_root.exists():
         return True
     try:
-        children_root.rmdir()
+        artifacts_root.rmdir()
         return True
     except OSError as exc:
-        print(f"ERROR cleanup failed for {children_root}: {exc}", file=sys.stderr)
+        print(f"ERROR cleanup failed for {artifacts_root}: {exc}", file=sys.stderr)
         _print_manual_cleanup_required(
-            "remove empty _children directory if appropriate",
-            [children_root],
+            "remove empty session-memory/threads directory if appropriate",
+            [artifacts_root],
         )
         return False
 
 
-def _print_committed_moves(moved: list[tuple[Path, Path, str]]) -> None:
-    for destination, _source, parent_id in moved:
-        child_id = destination.name
-        print(f"MOVED {child_id} -> _children/{child_id} parent={parent_id}")
+def _print_committed_moves(moved: list[MovedSession]) -> None:
+    for moved_session in moved:
+        child_id = moved_session.destination.name
+        parent_label = moved_session.parent_id or "none"
+        print(
+            f"MOVED {child_id} -> "
+            f"{FLAT_THREADS_RELATIVE_PATH}/{child_id} parent={parent_label}"
+        )
+
+
+def _strip_relationship_frontmatter_fields(text: str) -> str:
+    if not text.startswith("---\n"):
+        return text
+    end = text.find("\n---", len("---\n"))
+    if end < 0:
+        return text
+
+    frontmatter_text = text[len("---\n") : end]
+    body = text[end + len("\n---") :]
+    lines = frontmatter_text.splitlines()
+    kept_lines = []
+    for line in lines:
+        key, separator, _value = line.partition(":")
+        if separator and key.strip() in RELATIONSHIP_SOURCE_FIELDS:
+            continue
+        kept_lines.append(line)
+    return "---\n" + "\n".join(kept_lines) + "\n---" + body
+
+
+def _normalize_destination_index(destination: Path) -> tuple[bool, str | None]:
+    index_path = destination / "INDEX.md"
+    try:
+        original_text = index_path.read_text(encoding="utf-8")
+    except OSError as exc:
+        print(f"ERROR reading migrated INDEX.md for {destination.name}: {exc}", file=sys.stderr)
+        return False, None
+
+    normalized_text = _strip_relationship_frontmatter_fields(original_text)
+    if normalized_text == original_text:
+        return True, original_text
+    try:
+        _write_text_atomically(index_path, normalized_text)
+        return True, original_text
+    except OSError as exc:
+        print(f"ERROR normalizing migrated INDEX.md for {destination.name}: {exc}", file=sys.stderr)
+        return False, original_text
+
+
+def _parent_index_path(project_root: Path, parent_id: str, moved_by_id: dict[str, Path]) -> Path:
+    moved_parent = moved_by_id.get(parent_id)
+    if moved_parent is not None:
+        return moved_parent / "INDEX.md"
+    return project_root / ".codex" / "sessions" / parent_id / "INDEX.md"
+
+
+def _remove_legacy_child_link_lines(text: str, child_ids: set[str]) -> str:
+    if not child_ids:
+        return text
+    link_targets = "|".join(
+        re.escape(f"../{LEGACY_CHILD_SESSIONS_DIR}/{child_id}/INDEX.md")
+        for child_id in sorted(child_ids)
+    )
+    synthetic_link_line = re.compile(
+        rf"^[ \t]*-[ \t]*\[[^\]\n]*\]\((?:{link_targets})\)"
+        rf"[ \t]*-[ \t]*migrated child session[ \t]*(?:\r?\n)?$"
+    )
+    legacy_link_token = re.compile(rf"\[[^\]\n]*\]\((?:{link_targets})\)")
+    cleaned_lines = []
+    for line in text.splitlines(keepends=True):
+        if synthetic_link_line.match(line):
+            continue
+        cleaned_lines.append(legacy_link_token.sub("", line))
+    return "".join(cleaned_lines)
+
+
+def _cleanup_parent_legacy_links(
+    project_root: Path,
+    moved: list[MovedSession],
+) -> tuple[bool, list[IndexBackup]]:
+    child_ids_by_parent: dict[str, set[str]] = {}
+    moved_by_id = {session.destination.name: session.destination for session in moved}
+    for moved_session in moved:
+        if not moved_session.parent_id:
+            continue
+        child_ids_by_parent.setdefault(moved_session.parent_id, set()).add(
+            moved_session.destination.name
+        )
+
+    backups = []
+    for parent_id, child_ids in sorted(child_ids_by_parent.items()):
+        index_path = _parent_index_path(project_root, parent_id, moved_by_id)
+        if not index_path.is_file():
+            continue
+        try:
+            original_text = index_path.read_text(encoding="utf-8")
+        except OSError as exc:
+            print(f"ERROR reading parent INDEX.md for {parent_id}: {exc}", file=sys.stderr)
+            return False, backups
+        cleaned_text = _remove_legacy_child_link_lines(original_text, child_ids)
+        if cleaned_text == original_text:
+            continue
+        backups.append(IndexBackup(index_path, original_text))
+        try:
+            _write_text_atomically(index_path, cleaned_text)
+        except OSError as exc:
+            print(f"ERROR cleaning parent INDEX.md for {parent_id}: {exc}", file=sys.stderr)
+            return False, backups
+    return True, backups
+
+
+def _restore_index_backups(backups: list[IndexBackup]) -> bool:
+    restored = True
+    for backup in reversed(backups):
+        try:
+            _write_text_atomically(backup.path, backup.text)
+        except OSError as exc:
+            restored = False
+            print(f"ERROR rollback failed for {backup.path}: {exc}", file=sys.stderr)
+            _print_manual_cleanup_required(
+                "restore parent INDEX.md content manually",
+                [backup.path],
+            )
+    return restored
 
 
 def _apply_with_rollback(
     project_root: Path,
-    migratable: list[tuple[Path, str]],
-    child_updates: dict[Path, ParentIndexUpdate],
-    parent_updates: dict[Path, ParentIndexUpdate],
-    children_root_existed_before_apply: bool,
+    migratable: list[MigrationCandidate],
+    artifacts_root_existed_before_apply: bool,
 ) -> bool:
-    moved: list[tuple[Path, Path, str]] = []
-    children_root = _sessions_root(project_root) / CHILD_SESSIONS_DIR
-    for source, parent_id in migratable:
+    moved: list[MovedSession] = []
+    parent_backups: list[IndexBackup] = []
+    artifacts_root = project_root / ".codex" / FLAT_THREADS_RELATIVE_PATH
+    for candidate in migratable:
+        source = candidate.source
         child_id = source.name
         destination = _destination_path(project_root, child_id)
         try:
-            _apply_migration(project_root, source, parent_id)
+            _apply_migration(project_root, source, candidate.parent_id)
         except MOVE_ERRORS as exc:
             print(f"ERROR moving {child_id}: {exc}", file=sys.stderr)
-            _rollback_moved_children(moved)
-            _cleanup_created_children_root(children_root, children_root_existed_before_apply)
+            _restore_index_backups(parent_backups)
+            _rollback_moved_sessions(moved)
+            _cleanup_created_artifacts_root(
+                artifacts_root,
+                artifacts_root_existed_before_apply,
+            )
             return False
-        moved.append((destination, source, parent_id))
+        moved.append(MovedSession(destination, source, candidate.parent_id, None))
+        normalized, original_text = _normalize_destination_index(destination)
+        moved[-1].original_index_text = original_text
+        if not normalized:
+            _restore_index_backups(parent_backups)
+            _rollback_moved_sessions(moved)
+            _cleanup_created_artifacts_root(
+                artifacts_root,
+                artifacts_root_existed_before_apply,
+            )
+            return False
 
-    child_write_ok, written_child_updates = _write_child_index_updates(moved, child_updates)
-    if not child_write_ok:
-        _rollback_moved_children(moved)
-        _cleanup_created_children_root(children_root, children_root_existed_before_apply)
+    parent_links_cleaned, parent_backups = _cleanup_parent_legacy_links(
+        project_root,
+        moved,
+    )
+    if not parent_links_cleaned:
+        _restore_index_backups(parent_backups)
+        _rollback_moved_sessions(moved)
+        _cleanup_created_artifacts_root(
+            artifacts_root,
+            artifacts_root_existed_before_apply,
+        )
         return False
 
-    if _write_parent_index_updates(parent_updates):
-        _print_committed_moves(moved)
-        return True
-
-    _restore_child_index_updates(written_child_updates)
-    _rollback_moved_children(moved)
-    _cleanup_created_children_root(children_root, children_root_existed_before_apply)
-    return False
+    _print_committed_moves(moved)
+    return True
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -457,36 +445,30 @@ def main(argv: list[str] | None = None) -> int:
         print(f"error: root does not exist: {project_root}", file=sys.stderr)
         return 2
 
-    migratable = _migratable_sessions(
+    migratable = _migration_candidates(
         project_root,
         _candidate_dirs(_sessions_root(project_root)),
     )
     if not args.apply:
-        for source, parent_id in migratable:
-            child_id = source.name
-            print(f"DRY-RUN {child_id} -> _children/{child_id} parent={parent_id}")
+        for candidate in migratable:
+            child_id = candidate.source.name
+            parent_label = candidate.parent_id or "none"
+            print(
+                f"DRY-RUN {child_id} -> "
+                f"{FLAT_THREADS_RELATIVE_PATH}/{child_id} parent={parent_label}"
+            )
         return 0
 
     if _has_destination_conflicts(project_root, migratable):
         return EXIT_OPERATION_FAILED
 
-    child_updates = _prepare_child_index_updates(migratable)
-    if child_updates is None:
-        return EXIT_OPERATION_FAILED
-
-    parent_updates = _prepare_parent_index_updates(project_root, migratable)
-    if parent_updates is None:
-        return EXIT_OPERATION_FAILED
-
-    children_root_existed_before_apply = (
-        _sessions_root(project_root) / CHILD_SESSIONS_DIR
+    artifacts_root_existed_before_apply = (
+        project_root / ".codex" / FLAT_THREADS_RELATIVE_PATH
     ).exists()
     if not _apply_with_rollback(
         project_root,
         migratable,
-        child_updates,
-        parent_updates,
-        children_root_existed_before_apply,
+        artifacts_root_existed_before_apply,
     ):
         return EXIT_OPERATION_FAILED
     return 0
