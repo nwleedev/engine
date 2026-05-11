@@ -115,7 +115,7 @@ def test_load_marketplace_with_yaml_rejects_extra_keys_from_base_loader(
             ("description",),
             "2024-01-01T00:00:00Z",
         ),
-        ("    version: 0.4.0", "    version: 0x10", ("plugins", 0, "version"), "0x10"),
+        ("    version: 0.5.0", "    version: 0x10", ("plugins", 0, "version"), "0x10"),
         ("    license: MIT", "    license: 1:02", ("plugins", 0, "license"), "1:02"),
         ("    category: Productivity", "    category: .inf", ("plugins", 0, "category"), ".inf"),
         (

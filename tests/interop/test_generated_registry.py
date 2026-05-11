@@ -35,7 +35,7 @@ def _write_text(root: Path, relative_path: str, text: str) -> None:
 
 
 def _write_valid_generated_root(root: Path) -> None:
-    write_minimal_generated_root(root, manifest_name="codex-session-memory")
+    write_minimal_generated_root(root, manifest_name="session-memory")
     write_json(
         root,
         "plugins/codex/session-memory/.generated.json",
@@ -364,6 +364,22 @@ def test_validate_generated_headers_rejects_inline_header_after_body_text(
 
     assert any("missing generated tracing" in error for error in errors)
     assert any("plugins/codex/session-memory/README.md" in error for error in errors)
+
+
+def test_validate_generated_headers_accepts_markdown_header_after_frontmatter(
+    tmp_path: Path,
+) -> None:
+    _write_valid_generated_root(tmp_path)
+    _write_text(tmp_path, README_SOURCE, "# Session memory source\n")
+    _write_text(
+        tmp_path,
+        "plugins/codex/session-memory/README.md",
+        "---\nname: checkpoint\ndescription: Use when testing.\n---\n"
+        + markdown_header(README_SOURCE)
+        + "# Session memory\n",
+    )
+
+    assert validate_generated_headers(tmp_path) == []
 
 
 @pytest.mark.parametrize(

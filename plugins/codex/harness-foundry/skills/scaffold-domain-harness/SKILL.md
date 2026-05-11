@@ -1,12 +1,12 @@
-<!-- GENERATED FILE - DO NOT EDIT -->
-<!-- source: plugin-sources/harness-foundry/skills/scaffold-domain-harness/SKILL.md -->
-
 ---
 name: scaffold-domain-harness
 description: Use when a domain-harness spec is approved and needs a safe scaffold plan for project-local skills, subagents, rules, hooks, MCP guidance, and eval files.
 metadata:
   short-description: Plan safe harness scaffolding
 ---
+<!-- GENERATED FILE - DO NOT EDIT -->
+<!-- source: plugin-sources/harness-foundry/skills/scaffold-domain-harness/SKILL.md -->
+
 
 # Scaffold Domain Harness
 

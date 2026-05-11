@@ -20,7 +20,7 @@ Use the available evidence in this order:
 5. User-provided summaries or checkpoints.
 6. Optional session memory, only when present and clearly connected to the current work.
 
-Do not require `codex-session-memory`. If session memory is missing or appears to belong to a different thread or subagent, mark it as unavailable or mismatch and continue.
+Do not require `session-memory`. If session memory is missing or appears to belong to a different thread or subagent, mark it as unavailable or mismatch and continue.
 
 ## Superficial Work Definition
 

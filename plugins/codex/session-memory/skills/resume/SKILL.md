@@ -33,13 +33,13 @@ Do not auto-resume old sessions. When starting a new session, call this skill on
 No argument — list sessions:
 
 ```bash
-python3 /path/to/codex-session-memory/skills/resume/resume.py
+python3 /path/to/session-memory/skills/resume/resume.py
 ```
 
 With 8-character session id prefix — print a compact handoff:
 
 ```bash
-python3 /path/to/codex-session-memory/skills/resume/resume.py <prefix>
+python3 /path/to/session-memory/skills/resume/resume.py <prefix>
 ```
 
 The compact handoff includes the flat `INDEX.md`, recent 9-section CONTEXT

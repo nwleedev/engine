@@ -7,6 +7,24 @@ from tools.build.paths import ROOT
 from tools.build.source_files import ensure_source_file
 
 
+def _render_skill_file(path: Path) -> str:
+    """Return a generated SKILL.md body while preserving YAML frontmatter first."""
+
+    ensure_source_file(ROOT, path)
+    relative_source = path.relative_to(ROOT).as_posix()
+    text = path.read_text(encoding="utf-8")
+    marker = "---\n"
+    if not text.startswith(marker):
+        raise ValueError(f"missing YAML frontmatter: {path}")
+
+    end = text.find(f"\n{marker}", len(marker))
+    if end == -1:
+        raise ValueError(f"unterminated YAML frontmatter: {path}")
+
+    frontmatter_end = end + len(f"\n{marker}")
+    return text[:frontmatter_end] + markdown_header(relative_source) + text[frontmatter_end:]
+
+
 def _render_markdown_file(path: Path) -> str:
     """Return a generated Markdown file body with its canonical source header."""
 
@@ -27,7 +45,7 @@ def render_codex_skill_tree(source_root: Path) -> dict[str, str]:
         files["README.md"] = _render_markdown_file(readme)
 
     for skill_file in sorted(skills_root.glob("*/SKILL.md")):
-        files[f"skills/{skill_file.parent.name}/SKILL.md"] = _render_markdown_file(skill_file)
+        files[f"skills/{skill_file.parent.name}/SKILL.md"] = _render_skill_file(skill_file)
 
     for reference_file in sorted(references_root.glob("*.md")):
         files[f"references/{reference_file.name}"] = _render_markdown_file(reference_file)

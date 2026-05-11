@@ -1,12 +1,12 @@
-<!-- GENERATED FILE - DO NOT EDIT -->
-<!-- source: plugin-sources/shared-skills/skills/research-crosscheck/SKILL.md -->
-
 ---
 name: research-crosscheck
 description: Use when a task needs source-backed research, technical validation, market research, strategic analysis, or cross-checking claims before decisions.
 metadata:
   short-description: Cross-check claims with sources and counterevidence
 ---
+<!-- GENERATED FILE - DO NOT EDIT -->
+<!-- source: plugin-sources/shared-skills/skills/research-crosscheck/SKILL.md -->
+
 
 # Research Crosscheck
 

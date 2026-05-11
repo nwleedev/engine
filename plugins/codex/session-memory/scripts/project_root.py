@@ -1,4 +1,4 @@
-"""Project root resolution for codex-session-memory.
+"""Project root resolution for session-memory.
 
 5-tier resolution priority:
 1. CODEX_PROJECT_DIR env var (must be existing directory).

@@ -66,7 +66,7 @@ def render_table(rows):
         sid = str(r["session_id"])[:8]
         out.append(f"| {i} | {sid} | {r['last_updated']} |")
     out.append("")
-    out.append("Call `$codex-session-memory:resume <8-char-prefix>` to inject one.")
+    out.append("Call `$session-memory:resume <8-char-prefix>` to inject one.")
     return "\n".join(out)
 
 

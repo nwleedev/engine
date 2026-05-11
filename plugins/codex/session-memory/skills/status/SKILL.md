@@ -5,7 +5,7 @@ description: Show session-memory status for the current Codex session — pendin
 
 # Session Memory Status
 
-Read-only status report. It also reports whether the project AGENTS.md has the codex-session-memory rules installed, partially present, missing, or not found.
+Read-only status report. It also reports whether the project AGENTS.md has the session-memory rules installed, partially present, missing, or not found.
 
 Status reports the current flat artifact path under
 `<root>/.codex/session-memory/threads/<CODEX_THREAD_ID>/` when it exists.
@@ -22,5 +22,5 @@ frontmatter only for compatibility reporting.
 ## Run
 
 ```
-python3 /path/to/codex-session-memory/skills/status/status.py
+python3 /path/to/session-memory/skills/status/status.py
 ```

@@ -1,6 +1,6 @@
 {
-  "name": "codex-session-memory",
-  "version": "0.4.0",
+  "name": "session-memory",
+  "version": "0.5.0",
   "description": "Automatic session context narration and injection",
   "license": "MIT",
   "skills": "./skills/"

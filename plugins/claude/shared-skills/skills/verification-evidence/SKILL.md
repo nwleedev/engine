@@ -1,12 +1,12 @@
-<!-- GENERATED FILE - DO NOT EDIT -->
-<!-- source: plugin-sources/shared-skills/skills/verification-evidence/SKILL.md -->
-
 ---
 name: verification-evidence
 description: Use when claiming work is complete, correct, ready, verified, or decision-ready; gather evidence, checks, remaining risks, and unverified assumptions before the claim.
 metadata:
   short-description: Gather evidence before completion or readiness claims
 ---
+<!-- GENERATED FILE - DO NOT EDIT -->
+<!-- source: plugin-sources/shared-skills/skills/verification-evidence/SKILL.md -->
+
 
 # Verification Evidence
 

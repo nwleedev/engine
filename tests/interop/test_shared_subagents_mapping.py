@@ -54,6 +54,12 @@ def test_codex_agent_tree_includes_complete_plugin_support_files() -> None:
     assert "skills/scaffold/SKILL.md" in files
     assert "skills/scaffold/scaffold.py" in files
     assert "scripts/install_shared_subagents.py" in files
+    assert files["skills/scaffold/SKILL.md"].startswith("---\n")
+    assert (
+        "\n---\n"
+        + markdown_header("plugin-sources/shared-subagents/skills/scaffold/SKILL.md")
+        in files["skills/scaffold/SKILL.md"]
+    )
     assert files["README.md"].startswith(
         markdown_header("plugin-sources/shared-subagents/README.md")
     )

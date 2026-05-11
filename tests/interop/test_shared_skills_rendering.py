@@ -18,7 +18,8 @@ def test_codex_skill_rendering_adds_generated_header_with_source_path() -> None:
 
     text = files["skills/requirements-clarifier/SKILL.md"]
 
-    assert text.startswith(markdown_header(source_path))
+    assert text.startswith("---\n")
+    assert f"\n---\n{markdown_header(source_path)}" in text
     assert "name: requirements-clarifier" in text
 
 
@@ -55,7 +56,10 @@ def test_codex_skill_rendering_rejects_reference_markdown_directory(
     source_root = tmp_path / "shared-skills"
     skill_file = source_root / "skills" / "sample-skill" / "SKILL.md"
     skill_file.parent.mkdir(parents=True)
-    skill_file.write_text("name: sample-skill\n", encoding="utf-8")
+    skill_file.write_text(
+        "---\nname: sample-skill\ndescription: Use when testing.\n---\n",
+        encoding="utf-8",
+    )
     (source_root / "references" / "broken.md").mkdir(parents=True)
     monkeypatch.setattr("renderers.codex.skills.ROOT", tmp_path)
 

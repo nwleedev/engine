@@ -1,17 +1,17 @@
 ---
 name: install
-description: Use when verifying whether AGENTS.md contains the recommended codex-quality-guard diagnostic rules.
+description: Use when verifying whether AGENTS.md contains the recommended quality-guard diagnostic rules.
 ---
 
 # Codex Quality Guard Install
 
-Inspect the current project's AGENTS.md for codex-quality-guard rules.
+Inspect the current project's AGENTS.md for quality-guard rules.
 
 ## Run
 
 ```bash
-python3 /path/to/codex-quality-guard/skills/install/install.py
-python3 /path/to/codex-quality-guard/skills/install/install.py ko
+python3 /path/to/quality-guard/skills/install/install.py
+python3 /path/to/quality-guard/skills/install/install.py ko
 ```
 
 ## Status Meanings

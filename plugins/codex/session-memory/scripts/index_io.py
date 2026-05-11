@@ -9,7 +9,7 @@ from typing import Any
 
 _FENCE = "---"
 _CONTEXT_HEADING = "## Contexts"
-_RESUME_HINT = "Resume this session: `$codex-session-memory:resume {session_prefix}`"
+_RESUME_HINT = "Resume this session: `$session-memory:resume {session_prefix}`"
 
 
 def _coerce(v: str):

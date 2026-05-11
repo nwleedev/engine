@@ -1,4 +1,4 @@
-# codex-session-memory 세션 메모리
+# session-memory 세션 메모리
 
 Codex CLI 세션의 진행 상황을 증분 컨텍스트 요약으로 저장하는 세션 메모리
 플러그인입니다. Claude artifact인 `plugins/claude/session-memory/`와 시맨틱은 닮았지만
@@ -13,36 +13,36 @@ codex plugin marketplace add /path/to/this/repo
 ```
 
 Codex를 재시작한 뒤 `/plugins`를 열고 `Engine` marketplace에서
-`codex-session-memory`를 설치하거나 활성화합니다.
+`session-memory`를 설치하거나 활성화합니다.
 
 이 플러그인은 스킬을 먼저 호출하는 사용자 호출 방식으로 동작합니다. Codex 생명주기
 훅을 자동으로 설치하지 않습니다.
 
 사용 가능한 스킬:
 
-- `$codex-session-memory:install`
-- `$codex-session-memory:checkpoint`
-- `$codex-session-memory:resume`
-- `$codex-session-memory:status`
+- `$session-memory:install`
+- `$session-memory:checkpoint`
+- `$session-memory:resume`
+- `$session-memory:status`
 
 ## 스킬
 
 Codex는 플러그인에 포함된 스킬을 플러그인 네임스페이스와 함께 표시합니다.
-`/plugins`에는 플러그인 자체(`codex-session-memory`)가 보이며, 채팅에서
+`/plugins`에는 플러그인 자체(`session-memory`)가 보이며, 채팅에서
 스킬을 호출할 때는 아래 이름을 사용합니다.
 
 | 스킬 | 동작 | LLM 호출 |
 |---|---|---|
-| `$codex-session-memory:install` | 스킬 우선 세션 메모리를 위한 AGENTS.md 설정 안내 출력 | 0 |
-| `$codex-session-memory:checkpoint` | 컨텍스트 체크포인트 인계 준비 및 검증 | 0 |
-| `$codex-session-memory:resume [prefix]` | 이전 세션의 INDEX 목록 표시 또는 로드 | 0 |
-| `$codex-session-memory:status` | 대기 중인 턴, 컨텍스트 파일 수, 경로 표시 | 0 |
+| `$session-memory:install` | 스킬 우선 세션 메모리를 위한 AGENTS.md 설정 안내 출력 | 0 |
+| `$session-memory:checkpoint` | 컨텍스트 체크포인트 인계 준비 및 검증 | 0 |
+| `$session-memory:resume [prefix]` | 이전 세션의 INDEX 목록 표시 또는 로드 | 0 |
+| `$session-memory:status` | 대기 중인 턴, 컨텍스트 파일 수, 경로 표시 | 0 |
 
 ## 컨텍스트 압축 복구
 
 컨텍스트 압축 복구는 런타임 훅이 아니라 AGENTS.md 지침으로 수행됩니다.
 같은 Codex 세션에서 수동 또는 자동 컨텍스트 압축이 발생한 뒤에는 첫 번째
-작업으로 현재 세션 접두사와 함께 `$codex-session-memory:resume <prefix>`를
+작업으로 현재 세션 접두사와 함께 `$session-memory:resume <prefix>`를
 호출해 저장된 인계 내용을 다시 로드해야 합니다.
 
 ## 프로젝트 루트 해석 (모노레포 가드)
@@ -89,14 +89,14 @@ CODEX_PROJECT_DIR=/abs/path/to/monorepo/root
 자식 세션에서는 아래 명령을 실행합니다.
 
 ```
-python3 /path/to/codex-session-memory/skills/checkpoint/checkpoint.py prepare --role child
+python3 /path/to/session-memory/skills/checkpoint/checkpoint.py prepare --role child
 ```
 
 자동 부모 확인이 부모를 찾지 못하거나 명시적으로 재정의해야 할 때만
 `--parent`를 사용합니다.
 
 ```
-python3 /path/to/codex-session-memory/skills/checkpoint/checkpoint.py prepare --role child --parent <parent-session-id>
+python3 /path/to/session-memory/skills/checkpoint/checkpoint.py prepare --role child --parent <parent-session-id>
 ```
 
 Flat `INDEX.md` frontmatter에는 `session_id`, `last_processed_offset`,

@@ -1,12 +1,12 @@
-<!-- GENERATED FILE - DO NOT EDIT -->
-<!-- source: plugin-sources/harness-foundry/skills/update-registry/SKILL.md -->
-
 ---
 name: update-registry
 description: Use when creating or updating docs/domain-harness/index.md as the human-readable registry for domain harnesses.
 metadata:
   short-description: Update domain harness registry
 ---
+<!-- GENERATED FILE - DO NOT EDIT -->
+<!-- source: plugin-sources/harness-foundry/skills/update-registry/SKILL.md -->
+
 
 # Update Registry
 

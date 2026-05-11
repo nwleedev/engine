@@ -35,7 +35,7 @@ def _minimal_codex_marketplace() -> dict[str, object]:
         "interface": {"displayName": "Engine"},
         "plugins": [
             {
-                "name": "codex-session-memory",
+                "name": "session-memory",
                 "source": {"source": "local", "path": "./plugins/codex/session-memory"},
                 "policy": {
                     "installation": "AVAILABLE",

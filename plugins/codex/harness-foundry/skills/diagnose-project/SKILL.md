@@ -1,12 +1,12 @@
-<!-- GENERATED FILE - DO NOT EDIT -->
-<!-- source: plugin-sources/harness-foundry/skills/diagnose-project/SKILL.md -->
-
 ---
 name: diagnose-project
 description: Use when identifying project domains, work types, risks, and AI environment needs before designing a domain harness.
 metadata:
   short-description: Diagnose domain harness candidates
 ---
+<!-- GENERATED FILE - DO NOT EDIT -->
+<!-- source: plugin-sources/harness-foundry/skills/diagnose-project/SKILL.md -->
+
 
 # Diagnose Project
 

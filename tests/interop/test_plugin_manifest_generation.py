@@ -29,8 +29,8 @@ def test_render_codex_manifest_uses_canonical_harness_metadata() -> None:
     manifest = render_codex_manifest(session_memory_plugin())
 
     assert manifest == {
-        "name": "codex-session-memory",
-        "version": "0.4.0",
+        "name": "session-memory",
+        "version": "0.5.0",
         "description": "Automatic session context narration and injection",
         "license": "MIT",
         "skills": "./skills/",
@@ -42,7 +42,7 @@ def test_render_claude_manifest_uses_canonical_harness_metadata() -> None:
 
     assert manifest == {
         "name": "session-memory",
-        "version": "0.4.0",
+        "version": "0.5.0",
         "description": "Automatic session context narration and injection",
         "license": "MIT",
     }
@@ -62,7 +62,7 @@ def test_build_entrypoint_writes_session_memory_manifests() -> None:
         ).read_text(encoding="utf-8")
     )
 
-    assert codex_manifest["name"] == "codex-session-memory"
+    assert codex_manifest["name"] == "session-memory"
     assert claude_manifest["name"] == "session-memory"
 
 
@@ -83,7 +83,7 @@ def test_validate_marketplaces_reports_missing_generated_plugin_manifest(
 def test_validate_marketplaces_reports_wrong_generated_plugin_manifest_name(
     tmp_path: Path,
 ) -> None:
-    write_minimal_generated_root(tmp_path, manifest_name="session-memory")
+    write_minimal_generated_root(tmp_path, manifest_name="codex-session-memory")
 
     errors = validate_marketplaces(tmp_path)
 
@@ -106,8 +106,8 @@ def test_validate_marketplaces_reports_codex_skills_manifest_drift(
         tmp_path,
         "plugins/codex-alt/session-memory/.codex-plugin/plugin.json",
         {
-            "name": "codex-session-memory",
-            "version": "0.4.0",
+            "name": "session-memory",
+            "version": "0.0.0",
             "description": "Automatic session context narration and injection",
             "license": "MIT",
             "skills": "./stale-skills/",
@@ -126,12 +126,12 @@ def test_validate_marketplaces_reports_codex_skills_manifest_drift(
 def test_validate_marketplaces_reports_stale_generated_plugin_manifest_payload(
     tmp_path: Path,
 ) -> None:
-    write_minimal_generated_root(tmp_path, manifest_name="codex-session-memory")
+    write_minimal_generated_root(tmp_path, manifest_name="session-memory")
     write_json(
         tmp_path,
         "plugins/codex/session-memory/.codex-plugin/plugin.json",
         {
-            "name": "codex-session-memory",
+            "name": "session-memory",
             "version": "0.0.0",
             "description": "Automatic session context narration and injection",
             "license": "MIT",
@@ -150,7 +150,7 @@ def test_validate_marketplaces_reports_stale_generated_plugin_manifest_payload(
 def test_validate_marketplaces_reports_codex_marketplace_drift(
     tmp_path: Path,
 ) -> None:
-    write_minimal_generated_root(tmp_path, manifest_name="codex-session-memory")
+    write_minimal_generated_root(tmp_path, manifest_name="session-memory")
     write_json(
         tmp_path,
         ".agents/plugins/marketplace.json",
@@ -159,7 +159,7 @@ def test_validate_marketplaces_reports_codex_marketplace_drift(
             "interface": {"displayName": "Engine"},
             "plugins": [
                 {
-                    "name": "codex-session-memory",
+                    "name": "session-memory",
                     "source": {
                         "source": "local",
                         "path": "./plugins/codex/stale-session-memory",

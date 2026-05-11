@@ -733,7 +733,7 @@ def test_status_parent_index_path_falls_back_without_parent_session_dir(
     ("rules_status", "missing_markers"),
     (
         ("partial", ("CODEX_THREAD_ID", ".codex/")),
-        ("missing", ("$codex-session-memory:checkpoint", "CODEX_THREAD_ID", ".codex/")),
+        ("missing", ("$session-memory:checkpoint", "CODEX_THREAD_ID", ".codex/")),
     ),
 )
 def test_status_prints_missing_values_before_checkpoint(
@@ -772,8 +772,8 @@ def test_status_uses_real_partial_agents_rules_report(monkeypatch, tmp_path, cap
     session_dir = tmp_path / ".codex" / "sessions" / "abc123"
     (tmp_path / "AGENTS.md").write_text(
         "# Project Rules\n\n"
-        "$codex-session-memory:checkpoint\n"
-        "$codex-session-memory:status\n",
+        "$session-memory:checkpoint\n"
+        "$session-memory:status\n",
         encoding="utf-8",
     )
 
@@ -788,10 +788,10 @@ def test_status_uses_real_partial_agents_rules_report(monkeypatch, tmp_path, cap
 
     output = capsys.readouterr().out
     assert "AGENTS.md rules: partial" in output
-    assert "$codex-session-memory:resume" in output
+    assert "$session-memory:resume" in output
     assert "CODEX_THREAD_ID" in output
-    assert "$codex-session-memory:checkpoint" not in output
-    assert "$codex-session-memory:status" not in output
+    assert "$session-memory:checkpoint" not in output
+    assert "$session-memory:status" not in output
     assert "Hooks:" not in output
 
 
@@ -811,7 +811,7 @@ def test_status_uses_real_not_found_agents_rules_report(monkeypatch, tmp_path, c
     output = capsys.readouterr().out
     assert "AGENTS.md rules: not found" in output
     assert "AGENTS.md missing markers:" in output
-    assert "$codex-session-memory:checkpoint" in output
+    assert "$session-memory:checkpoint" in output
     assert "Hooks:" not in output
 
 

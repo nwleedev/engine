@@ -1,12 +1,12 @@
-<!-- GENERATED FILE - DO NOT EDIT -->
-<!-- source: plugin-sources/shared-skills/skills/tdd-test-writing/SKILL.md -->
-
 ---
 name: tdd-test-writing
 description: Use when writing or modifying tests with test-driven development across any language or technology stack.
 metadata:
   short-description: Write correct test code by test type using a TDD workflow.
 ---
+<!-- GENERATED FILE - DO NOT EDIT -->
+<!-- source: plugin-sources/shared-skills/skills/tdd-test-writing/SKILL.md -->
+
 
 # TDD Test Writing
 

@@ -1,12 +1,12 @@
-<!-- GENERATED FILE - DO NOT EDIT -->
-<!-- source: plugin-sources/shared-skills/skills/implementation-discipline/SKILL.md -->
-
 ---
 name: implementation-discipline
 description: Use when making code, documentation, configuration, or operational changes and needing disciplined execution without subagents.
 metadata:
   short-description: Keep main-session changes scoped and traceable
 ---
+<!-- GENERATED FILE - DO NOT EDIT -->
+<!-- source: plugin-sources/shared-skills/skills/implementation-discipline/SKILL.md -->
+
 
 # Implementation Discipline
 

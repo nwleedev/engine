@@ -29,7 +29,7 @@ def session_memory_plugin() -> dict[str, Any]:
 
     return {
         "id": "session-memory",
-        "version": "0.4.0",
+        "version": "0.5.0",
         "description": "Automatic session context narration and injection",
         "license": "MIT",
         "category": "Productivity",
@@ -39,7 +39,7 @@ def session_memory_plugin() -> dict[str, Any]:
                 "path": "./plugins/claude/session-memory",
             },
             "codex": {
-                "name": "codex-session-memory",
+                "name": "session-memory",
                 "skills": "./skills/",
                 "path": "./plugins/codex/session-memory",
             },
@@ -70,7 +70,7 @@ def write_minimal_generated_root(root: Path, manifest_name: str | None) -> None:
             "interface": {"displayName": "Engine"},
             "plugins": [
                 {
-                    "name": "codex-session-memory",
+                    "name": "session-memory",
                     "source": {
                         "source": "local",
                         "path": "./plugins/codex/session-memory",
@@ -101,7 +101,7 @@ def write_minimal_generated_root(root: Path, manifest_name: str | None) -> None:
             "plugins/codex/session-memory/.codex-plugin/plugin.json",
             {
                 "name": manifest_name,
-                "version": "0.4.0",
+                "version": "0.5.0",
                 "description": "Automatic session context narration and injection",
                 "license": "MIT",
             },
@@ -128,13 +128,13 @@ def write_path_contract_generated_root(
                 "  name: nwleedev",
                 "plugins:",
                 "  - id: session-memory",
-                "    version: 0.4.0",
+                "    version: 0.5.0",
                 "    description: Automatic session context narration and injection",
                 "    license: MIT",
                 "    category: Productivity",
                 "    harnesses:",
                 "      codex:",
-                "        name: codex-session-memory",
+                "        name: session-memory",
                 "        skills: ./skills/",
                 "        path: ./plugins/codex-alt/session-memory",
                 "      claude:",
@@ -153,7 +153,7 @@ def write_path_contract_generated_root(
             "interface": {"displayName": "Engine"},
             "plugins": [
                 {
-                    "name": "codex-session-memory",
+                    "name": "session-memory",
                     "source": {
                         "source": "local",
                         "path": "./plugins/codex-alt/session-memory",
@@ -189,8 +189,8 @@ def write_path_contract_generated_root(
             root,
             codex_manifest_path,
             {
-                "name": "codex-session-memory",
-                "version": "0.4.0",
+                "name": "session-memory",
+                "version": "0.5.0",
                 "description": "Automatic session context narration and injection",
                 "license": "MIT",
                 "skills": "./skills/",
@@ -202,7 +202,7 @@ def write_path_contract_generated_root(
             claude_manifest_path,
             {
                 "name": "session-memory",
-                "version": "0.4.0",
+                "version": "0.5.0",
                 "description": "Automatic session context narration and injection",
                 "license": "MIT",
             },

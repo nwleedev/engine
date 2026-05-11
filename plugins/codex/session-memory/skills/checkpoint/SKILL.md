@@ -12,7 +12,7 @@ Create a checkpoint through an active-Codex handoff. The helper script gathers d
 Run the `checkpoint.py` script next to this `SKILL.md` file.
 
 ```bash
-python3 /path/to/codex-session-memory/skills/checkpoint/checkpoint.py prepare
+python3 /path/to/session-memory/skills/checkpoint/checkpoint.py prepare
 ```
 
 For subagent/review child sessions, parent selection uses explicit `--parent`
@@ -21,7 +21,7 @@ first, then `CODEX_SESSION_PARENT_ID`, then automatic detection.
 In normal child-session use, run:
 
 ```bash
-python3 /path/to/codex-session-memory/skills/checkpoint/checkpoint.py prepare --role child
+python3 /path/to/session-memory/skills/checkpoint/checkpoint.py prepare --role child
 ```
 
 Within automatic detection, the helper reads rollout `session_meta` before state
@@ -35,7 +35,7 @@ project `.codex`, then user `~/.codex`.
 If automatic detection fails, retry with the parent session id explicitly:
 
 ```bash
-python3 /path/to/codex-session-memory/skills/checkpoint/checkpoint.py prepare --role child --parent <parent-session-id>
+python3 /path/to/session-memory/skills/checkpoint/checkpoint.py prepare --role child --parent <parent-session-id>
 ```
 
 Use the printed `context_path`, `index_path`, offsets, evidence, and required section template. New checkpoints are written under `<root>/.codex/session-memory/threads/<thread-id>/`. The active Codex must then:
@@ -52,7 +52,7 @@ Use the printed `context_path`, `index_path`, offsets, evidence, and required se
 After writing the files, verify the result:
 
 ```bash
-python3 /path/to/codex-session-memory/skills/checkpoint/checkpoint.py verify /path/to/context.md
+python3 /path/to/session-memory/skills/checkpoint/checkpoint.py verify /path/to/context.md
 ```
 
 `verify` succeeds when the context file is under `<root>/.codex/session-memory/threads/*/contexts/`, all required headings are present as exact Markdown heading lines, and `INDEX.md` contains a context list entry like `- [CONTEXT-...md]`. For read compatibility, legacy `<root>/.codex/sessions/*/contexts/` and `<root>/.codex/sessions/_children/*/contexts/` paths are still accepted.
