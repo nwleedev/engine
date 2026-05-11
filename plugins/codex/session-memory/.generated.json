@@ -36,6 +36,11 @@
       "notice": "GENERATED FILE - DO NOT EDIT"
     },
     {
+      "target": "scripts/artifact_store.py",
+      "source": "plugin-sources/session-memory/adapters/codex/scripts/artifact_store.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
       "target": "scripts/dotenv_loader.py",
       "source": "plugin-sources/session-memory/adapters/codex/scripts/dotenv_loader.py",
       "notice": "GENERATED FILE - DO NOT EDIT"
