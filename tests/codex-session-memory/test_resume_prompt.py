@@ -1,5 +1,6 @@
 import importlib.util
 import os
+import sqlite3
 import sys
 import types
 from pathlib import Path
@@ -217,6 +218,85 @@ def test_preserves_closing_tag_with_very_small_budgets(tmp_path):
         assert prompt.endswith("</codex-session-memory>")
 
 
+def test_build_resume_prompt_includes_child_summary_when_provided(tmp_path):
+    parent = tmp_path / ".codex" / "session-memory" / "threads" / "parent123-session"
+    parent_contexts = parent / "contexts"
+    parent_contexts.mkdir(parents=True)
+    (parent / "INDEX.md").write_text(
+        "---\nthread_id: parent123-session\n---\n\n"
+        "# Parent\n\n## 컨텍스트 목록\n\n- [CONTEXT-parent.md] — parent\n",
+        encoding="utf-8",
+    )
+    (parent_contexts / "CONTEXT-parent.md").write_text(
+        "# Parent\n\n## 다음\nparent 작업을 계속한다.\n",
+        encoding="utf-8",
+    )
+    child = tmp_path / ".codex" / "session-memory" / "threads" / "child123-session"
+    child_contexts = child / "contexts"
+    child_contexts.mkdir(parents=True)
+    (child / "INDEX.md").write_text(
+        "---\nthread_id: child123-session\n---\n\n"
+        "# Child\n\n## 컨텍스트 목록\n\n- [CONTEXT-child.md] — child\n",
+        encoding="utf-8",
+    )
+    (child_contexts / "CONTEXT-child.md").write_text(
+        "# Child\n\n## 다음\nchild summary를 parent resume에 제공한다.\n\n"
+        "## Evidence\n\n### Files\n- 없음\n",
+        encoding="utf-8",
+    )
+
+    prompt = load_resume_prompt().build_resume_prompt(
+        parent,
+        budget_chars=2200,
+        related_session_dirs=[child],
+    )
+
+    assert "--- CONTEXT-parent.md ---" in prompt
+    assert "parent 작업을 계속한다" in prompt
+    assert "--- related:child123-session:CONTEXT-child.md ---" in prompt
+    assert "child summary를 parent resume에 제공한다" in prompt
+    assert "- 없음" not in prompt
+
+
+def test_build_resume_prompt_preserves_parent_and_child_with_tight_budget(tmp_path):
+    parent = tmp_path / ".codex" / "session-memory" / "threads" / "parent123-session"
+    parent_contexts = parent / "contexts"
+    parent_contexts.mkdir(parents=True)
+    (parent / "INDEX.md").write_text(
+        "---\nthread_id: parent123-session\n---\n\n"
+        "# Parent\n\n## 컨텍스트 목록\n\n- [CONTEXT-parent.md] — parent\n",
+        encoding="utf-8",
+    )
+    (parent_contexts / "CONTEXT-parent.md").write_text(
+        "# Parent\n\n## 다음\nparent critical next action remains.\n\n"
+        + ("parent detail fills the tight next_action budget.\n" * 60),
+        encoding="utf-8",
+    )
+    child = tmp_path / ".codex" / "session-memory" / "threads" / "child123-session"
+    child_contexts = child / "contexts"
+    child_contexts.mkdir(parents=True)
+    (child / "INDEX.md").write_text(
+        "---\nthread_id: child123-session\n---\n\n"
+        "# Child\n\n## 컨텍스트 목록\n\n- [CONTEXT-child.md] — child\n",
+        encoding="utf-8",
+    )
+    (child_contexts / "CONTEXT-child.md").write_text(
+        "# Child\n\n## 다음\nchild critical summary remains.\n",
+        encoding="utf-8",
+    )
+
+    prompt = load_resume_prompt().build_resume_prompt(
+        parent,
+        budget_chars=900,
+        related_session_dirs=[child],
+    )
+
+    assert len(prompt) <= 900
+    assert "parent critical next action remains." in prompt
+    assert "child critical summary remains." in prompt
+    assert prompt.endswith("</codex-session-memory>")
+
+
 def test_resume_skill_ignores_preloaded_sibling_modules(tmp_path, monkeypatch, capsys):
     project = tmp_path / "project"
     session = project / ".codex" / "sessions" / "abc12345"
@@ -298,6 +378,211 @@ def test_resume_skill_lists_flat_artifact_and_legacy_sessions(tmp_path, monkeypa
     output = capsys.readouterr().out
     assert "flat1234" in output
     assert "legacy99" in output
+
+
+def test_resume_skill_prefers_flat_artifact_over_duplicate_legacy_session(
+    tmp_path, monkeypatch
+):
+    project = tmp_path / "project"
+    flat_session = project / ".codex" / "session-memory" / "threads" / "same1234-session"
+    flat_session.mkdir(parents=True)
+    (flat_session / "INDEX.md").write_text(
+        "---\nthread_id: same1234-session\nlast_updated: 2026-05-04T00:00:00Z\n---\n\n"
+        "# Flat\n",
+        encoding="utf-8",
+    )
+    legacy_session = project / ".codex" / "sessions" / "same1234-session"
+    legacy_session.mkdir(parents=True)
+    (legacy_session / "INDEX.md").write_text(
+        "---\nsession_id: same1234-session\nlast_updated: 2026-05-05T00:00:00Z\n---\n\n"
+        "# Legacy\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("CODEX_PROJECT_DIR", str(project))
+    monkeypatch.chdir(project)
+
+    resume_skill = load_resume_skill()
+
+    rows = resume_skill.list_sessions(str(project), limit=None)
+
+    assert len(rows) == 1
+    assert rows[0]["path"] == flat_session / "INDEX.md"
+
+
+def test_resume_skill_includes_graph_child_flat_artifact_context(
+    tmp_path, monkeypatch, capsys
+):
+    project = tmp_path / "project"
+    parent = project / ".codex" / "session-memory" / "threads" / "parent12-session"
+    parent_contexts = parent / "contexts"
+    parent_contexts.mkdir(parents=True)
+    (parent / "INDEX.md").write_text(
+        "---\nthread_id: parent12-session\nlast_updated: 2026-05-04T00:00:00Z\n---\n\n"
+        "# Parent\n\n## 컨텍스트 목록\n\n- [CONTEXT-parent.md] — parent\n",
+        encoding="utf-8",
+    )
+    (parent_contexts / "CONTEXT-parent.md").write_text(
+        "# Parent\n\n## 다음\nparent CLI resume를 계속한다.\n",
+        encoding="utf-8",
+    )
+    child = project / ".codex" / "session-memory" / "threads" / "child123-session"
+    child_contexts = child / "contexts"
+    child_contexts.mkdir(parents=True)
+    (child / "INDEX.md").write_text(
+        "---\nthread_id: child123-session\nlast_updated: 2026-05-04T00:05:00Z\n---\n\n"
+        "# Child\n\n## 컨텍스트 목록\n\n- [CONTEXT-child.md] — child\n",
+        encoding="utf-8",
+    )
+    (child_contexts / "CONTEXT-child.md").write_text(
+        "# Child\n\n## 다음\ngraph child context를 CLI resume에 포함한다.\n",
+        encoding="utf-8",
+    )
+    grandchild = project / ".codex" / "session-memory" / "threads" / "grand123-session"
+    grandchild_contexts = grandchild / "contexts"
+    grandchild_contexts.mkdir(parents=True)
+    (grandchild / "INDEX.md").write_text(
+        "---\nthread_id: grand123-session\nlast_updated: 2026-05-04T00:06:00Z\n---\n\n"
+        "# Grandchild\n\n## 컨텍스트 목록\n\n- [CONTEXT-grandchild.md] — grandchild\n",
+        encoding="utf-8",
+    )
+    (grandchild_contexts / "CONTEXT-grandchild.md").write_text(
+        "# Grandchild\n\n## 다음\ngrandchild context는 direct child가 아니다.\n",
+        encoding="utf-8",
+    )
+    legacy_child = project / ".codex" / "sessions" / "legacy99-child"
+    legacy_child.mkdir(parents=True)
+    (legacy_child / "INDEX.md").write_text(
+        "---\nsession_id: legacy99-child\nlast_updated: 2026-05-04T00:10:00Z\n---\n\n"
+        "# Legacy Child\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("CODEX_PROJECT_DIR", str(project))
+    monkeypatch.chdir(project)
+
+    resume_skill = load_resume_skill()
+    real_loader = resume_skill.load_script_module
+
+    class FakeGraphStore:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def children_of(self, thread_id):
+            assert thread_id == "parent12-session"
+            return ["child123-session", "legacy99-child", "missing99-child"]
+
+        def descendants_of(self, thread_id):
+            raise AssertionError("resume must only read direct children")
+
+    fake_graph_store = types.SimpleNamespace(GraphStore=FakeGraphStore)
+
+    def fake_loader(filename, module_name):
+        if filename == "graph_store.py":
+            return fake_graph_store
+        return real_loader(filename, module_name)
+
+    monkeypatch.setattr(resume_skill, "load_script_module", fake_loader)
+
+    assert resume_skill.main(["resume.py", "parent12"]) == 0
+    output = capsys.readouterr().out
+    assert "parent CLI resume를 계속한다" in output
+    assert "graph child context를 CLI resume에 포함한다" in output
+    assert "grandchild context는 direct child가 아니다" not in output
+    assert "Legacy Child" not in output
+
+
+def test_resume_skill_reads_project_local_state_db_for_child_context(
+    tmp_path, monkeypatch, capsys
+):
+    project = tmp_path / "project"
+    codex_home = project / ".codex"
+    state_db = codex_home / "state_5.sqlite"
+    state_db.parent.mkdir(parents=True)
+    conn = sqlite3.connect(state_db)
+    try:
+        conn.execute(
+            "CREATE TABLE thread_spawn_edges ("
+            "parent_thread_id TEXT, "
+            "child_thread_id TEXT, "
+            "status TEXT)"
+        )
+        conn.execute(
+            "INSERT INTO thread_spawn_edges VALUES (?, ?, ?)",
+            ("parent12-session", "child123-session", "completed"),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+    parent = codex_home / "session-memory" / "threads" / "parent12-session"
+    parent_contexts = parent / "contexts"
+    parent_contexts.mkdir(parents=True)
+    (parent / "INDEX.md").write_text(
+        "---\nthread_id: parent12-session\nlast_updated: 2026-05-04T00:00:00Z\n---\n\n"
+        "# Parent\n\n## 컨텍스트 목록\n\n- [CONTEXT-parent.md] — parent\n",
+        encoding="utf-8",
+    )
+    (parent_contexts / "CONTEXT-parent.md").write_text(
+        "# Parent\n\n## 다음\nparent sqlite resume를 계속한다.\n",
+        encoding="utf-8",
+    )
+
+    child = codex_home / "session-memory" / "threads" / "child123-session"
+    child_contexts = child / "contexts"
+    child_contexts.mkdir(parents=True)
+    (child / "INDEX.md").write_text(
+        "---\nthread_id: child123-session\nlast_updated: 2026-05-04T00:05:00Z\n---\n\n"
+        "# Child\n\n## 컨텍스트 목록\n\n- [CONTEXT-child.md] — child\n",
+        encoding="utf-8",
+    )
+    (child_contexts / "CONTEXT-child.md").write_text(
+        "# Child\n\n## 다음\nproject-local sqlite child context를 포함한다.\n",
+        encoding="utf-8",
+    )
+
+    monkeypatch.setenv("CODEX_PROJECT_DIR", str(project))
+    monkeypatch.chdir(project)
+
+    resume_skill = load_resume_skill()
+
+    assert resume_skill.main(["resume.py", "parent12"]) == 0
+    output = capsys.readouterr().out
+    assert "parent sqlite resume를 계속한다" in output
+    assert "project-local sqlite child context를 포함한다" in output
+
+
+def test_resume_skill_uses_current_artifact_when_graph_unavailable(
+    tmp_path, monkeypatch, capsys
+):
+    project = tmp_path / "project"
+    session = project / ".codex" / "session-memory" / "threads" / "solo1234-session"
+    contexts = session / "contexts"
+    contexts.mkdir(parents=True)
+    (session / "INDEX.md").write_text(
+        "---\nthread_id: solo1234-session\nlast_updated: 2026-05-04T00:00:00Z\n---\n\n"
+        "# Solo\n\n## 컨텍스트 목록\n\n- [CONTEXT-solo.md] — solo\n",
+        encoding="utf-8",
+    )
+    (contexts / "CONTEXT-solo.md").write_text(
+        "# Solo\n\n## 다음\ngraph 없이 현재 context만 사용한다.\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("CODEX_PROJECT_DIR", str(project))
+    monkeypatch.chdir(project)
+
+    resume_skill = load_resume_skill()
+    real_loader = resume_skill.load_script_module
+
+    def fake_loader(filename, module_name):
+        if filename == "graph_store.py":
+            raise RuntimeError("graph unavailable")
+        return real_loader(filename, module_name)
+
+    monkeypatch.setattr(resume_skill, "load_script_module", fake_loader)
+
+    assert resume_skill.main(["resume.py", "solo1234"]) == 0
+    output = capsys.readouterr().out
+    assert "graph 없이 현재 context만 사용한다" in output
+    assert "related:" not in output
 
 
 def test_resume_skill_falls_back_to_legacy_sessions_without_flat_root(

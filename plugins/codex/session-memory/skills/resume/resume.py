@@ -69,6 +69,31 @@ def render_table(rows):
     return "\n".join(out)
 
 
+def related_flat_session_dirs(root: str, session_id: str) -> list[Path]:
+    try:
+        graph_store = load_script_module("graph_store.py", "codex_session_memory_resume_graph_store")
+        artifact_store = load_script_module(
+            "artifact_store.py",
+            "codex_session_memory_resume_artifact_store",
+        )
+        graph = graph_store.GraphStore(codex_home=Path(root) / ".codex")
+        artifacts = artifact_store.ArtifactStore(root)
+        related_ids = graph.children_of(session_id)
+    except Exception:
+        return []
+
+    related_dirs = []
+    seen = set()
+    for related_id in related_ids:
+        if related_id in seen:
+            continue
+        seen.add(related_id)
+        index_path = artifacts.index_path(related_id)
+        if index_path.is_file():
+            related_dirs.append(index_path.parent)
+    return related_dirs
+
+
 def main(argv):
     cwd = os.getcwd()
     dotenv_loader.load_project_dotenv(cwd)
@@ -90,9 +115,17 @@ def main(argv):
     if len(matches) > 1:
         print(f"error: multiple sessions match prefix '{prefix}'", file=sys.stderr)
         return 2
+    target_session_id = str(matches[0]["session_id"])
     target_session_dir = matches[0]["path"].parent
+    related_session_dirs = related_flat_session_dirs(root, target_session_id)
     resume_prompt = load_script_module("resume_prompt.py", "codex_session_memory_resume_prompt")
-    sys.stdout.write(resume_prompt.build_resume_prompt(target_session_dir, budget_chars=MAX_INJECT_CHARS))
+    sys.stdout.write(
+        resume_prompt.build_resume_prompt(
+            target_session_dir,
+            budget_chars=MAX_INJECT_CHARS,
+            related_session_dirs=related_session_dirs,
+        )
+    )
     return 0
 
 
