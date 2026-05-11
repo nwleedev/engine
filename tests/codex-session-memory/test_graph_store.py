@@ -32,6 +32,18 @@ def make_state_db(path: Path):
     conn.close()
 
 
+def make_legacy_state_db(path: Path):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(path)
+    conn.execute(
+        "CREATE TABLE thread_spawn_edges ("
+        "parent_thread_id TEXT NOT NULL, "
+        "child_thread_id TEXT NOT NULL PRIMARY KEY)"
+    )
+    conn.commit()
+    conn.close()
+
+
 def make_empty_db(path: Path):
     path.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(path)
@@ -47,6 +59,13 @@ def insert_edge(path: Path, parent: str, child: str, status: str = "open"):
     conn.close()
 
 
+def insert_legacy_edge(path: Path, parent: str, child: str):
+    conn = sqlite3.connect(path)
+    conn.execute("INSERT INTO thread_spawn_edges VALUES (?, ?)", (parent, child))
+    conn.commit()
+    conn.close()
+
+
 def test_parent_children_and_role_from_state_db(tmp_path):
     graph_store = load_graph_store()
     db = tmp_path / ".codex" / "state_5.sqlite"
@@ -54,13 +73,35 @@ def test_parent_children_and_role_from_state_db(tmp_path):
     insert_edge(db, "parent", "child-b", "closed")
     insert_edge(db, "parent", "child-a", "open")
 
-    store = graph_store.GraphStore(codex_home=tmp_path / ".codex")
+    store = graph_store.GraphStore(
+        codex_home=tmp_path / ".codex",
+        include_default_home=False,
+    )
 
     assert store.parent_of("child-a").parent_thread_id == "parent"
     assert store.children_of("parent") == ["child-a", "child-b"]
     assert store.children_of("parent", status="open") == ["child-a"]
     assert store.role_of("child-a").role == "child"
     assert store.role_of("parent").role == "main"
+
+
+def test_parent_children_and_role_from_legacy_edge_schema_without_status(tmp_path):
+    graph_store = load_graph_store()
+    db = tmp_path / ".codex" / "state_5.sqlite"
+    make_legacy_state_db(db)
+    insert_legacy_edge(db, "parent", "child-b")
+    insert_legacy_edge(db, "parent", "child-a")
+
+    store = graph_store.GraphStore(
+        codex_home=tmp_path / ".codex",
+        include_default_home=False,
+    )
+
+    assert store.parent_of("child-a").parent_thread_id == "parent"
+    assert store.children_of("parent") == ["child-a", "child-b"]
+    assert store.role_of("child-a").role == "child"
+    assert store.role_of("parent").role == "main"
+    assert store.children_of("parent", status="open") == []
 
 
 def test_descendants_are_breadth_first_and_stable(tmp_path):

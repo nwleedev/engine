@@ -9,7 +9,8 @@ import tomllib
 from urllib.parse import quote
 
 
-REQUIRED_EDGE_COLUMNS = {"parent_thread_id", "child_thread_id", "status"}
+EDGE_COLUMNS = {"parent_thread_id", "child_thread_id"}
+EDGE_STATUS_COLUMNS = EDGE_COLUMNS | {"status"}
 
 
 @dataclass(frozen=True)
@@ -40,7 +41,7 @@ class GraphStore:
 
     def parent_of(self, thread_id: str) -> ParentLookup:
         available = False
-        for conn in self._connections():
+        for conn in self._connections(required_columns=EDGE_COLUMNS):
             available = True
             row = conn.execute(
                 "SELECT parent_thread_id FROM thread_spawn_edges "
@@ -52,7 +53,8 @@ class GraphStore:
         return ParentLookup(available=available)
 
     def children_of(self, parent_thread_id: str, status: str | None = None) -> list[str]:
-        for conn in self._connections():
+        required_columns = EDGE_COLUMNS if status is None else EDGE_STATUS_COLUMNS
+        for conn in self._connections(required_columns=required_columns):
             if status is None:
                 rows = conn.execute(
                     "SELECT child_thread_id FROM thread_spawn_edges "
@@ -97,7 +99,7 @@ class GraphStore:
             return RoleLookup(role="child", available=True)
         return RoleLookup(role="main", available=True)
 
-    def _connections(self):
+    def _connections(self, *, required_columns: set[str]):
         for db_path in _state_db_candidates(
             codex_home=self.codex_home,
             sqlite_home=self.sqlite_home,
@@ -109,7 +111,7 @@ class GraphStore:
                 continue
 
             try:
-                if _table_has_columns(conn, "thread_spawn_edges", REQUIRED_EDGE_COLUMNS):
+                if _table_has_columns(conn, "thread_spawn_edges", required_columns):
                     try:
                         yield conn
                     finally:
