@@ -34,6 +34,10 @@ def data_session_dir(project_root: str, thread_id: str, role: str = "main") -> P
     return (sessions_dir / thread_id).resolve()
 
 
+def artifact_session_dir(project_root: str, thread_id: str) -> Path:
+    return Path(project_root) / ".codex" / "session-memory" / "threads" / thread_id
+
+
 def parent_session_dir(project_root: str, parent_thread_id: str) -> Path:
     return (Path(project_root) / ".codex" / "sessions" / parent_thread_id).resolve()
 

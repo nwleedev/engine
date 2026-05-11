@@ -40,3 +40,11 @@ def test_data_session_dir_supports_hidden_child_sessions(tmp_path):
     assert locator.data_session_dir(str(tmp_path), "child-thread", role="child") == (
         tmp_path / ".codex" / "sessions" / "_children" / "child-thread"
     ).resolve()
+
+
+def test_artifact_session_dir_uses_graph_first_flat_store(tmp_path):
+    locator = load_session_locator()
+
+    assert locator.artifact_session_dir(str(tmp_path), "thread-1") == (
+        tmp_path / ".codex" / "session-memory" / "threads" / "thread-1"
+    )
