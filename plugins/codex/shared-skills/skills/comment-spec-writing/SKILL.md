@@ -1,12 +1,12 @@
-<!-- GENERATED FILE - DO NOT EDIT -->
-<!-- source: plugin-sources/shared-skills/skills/comment-spec-writing/SKILL.md -->
-
 ---
 name: comment-spec-writing
 description: Use when writing, reviewing, or updating comments and documentation comments across any language or technology stack.
 metadata:
   short-description: Write stack-appropriate comments that help new teammates understand code quickly.
 ---
+<!-- GENERATED FILE - DO NOT EDIT -->
+<!-- source: plugin-sources/shared-skills/skills/comment-spec-writing/SKILL.md -->
+
 
 # Comment Spec Writing
 

@@ -1,12 +1,12 @@
-<!-- GENERATED FILE - DO NOT EDIT -->
-<!-- source: plugin-sources/shared-skills/skills/requirements-clarifier/SKILL.md -->
-
 ---
 name: requirements-clarifier
 description: Use when a task has unclear requirements, acceptance criteria, scope, non-goals, constraints, or success conditions before planning or implementation.
 metadata:
   short-description: Clarify scope, acceptance criteria, and blocking questions
 ---
+<!-- GENERATED FILE - DO NOT EDIT -->
+<!-- source: plugin-sources/shared-skills/skills/requirements-clarifier/SKILL.md -->
+
 
 # Requirements Clarifier
 

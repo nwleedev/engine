@@ -366,6 +366,22 @@ def test_validate_generated_headers_rejects_inline_header_after_body_text(
     assert any("plugins/codex/session-memory/README.md" in error for error in errors)
 
 
+def test_validate_generated_headers_accepts_markdown_header_after_frontmatter(
+    tmp_path: Path,
+) -> None:
+    _write_valid_generated_root(tmp_path)
+    _write_text(tmp_path, README_SOURCE, "# Session memory source\n")
+    _write_text(
+        tmp_path,
+        "plugins/codex/session-memory/README.md",
+        "---\nname: checkpoint\ndescription: Use when testing.\n---\n"
+        + markdown_header(README_SOURCE)
+        + "# Session memory\n",
+    )
+
+    assert validate_generated_headers(tmp_path) == []
+
+
 @pytest.mark.parametrize(
     ("relative_path", "text", "source"),
     [

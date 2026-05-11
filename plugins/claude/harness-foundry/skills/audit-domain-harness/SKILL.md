@@ -1,12 +1,12 @@
-<!-- GENERATED FILE - DO NOT EDIT -->
-<!-- source: plugin-sources/harness-foundry/skills/audit-domain-harness/SKILL.md -->
-
 ---
 name: audit-domain-harness
 description: Use when reviewing existing domain-harness registry, specs, evals, scaffold plans, and project AI configuration for gaps, conflicts, and risk.
 metadata:
   short-description: Audit domain harness artifacts
 ---
+<!-- GENERATED FILE - DO NOT EDIT -->
+<!-- source: plugin-sources/harness-foundry/skills/audit-domain-harness/SKILL.md -->
+
 
 # Audit Domain Harness
 

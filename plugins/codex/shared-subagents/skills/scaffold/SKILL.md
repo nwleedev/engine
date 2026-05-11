@@ -1,10 +1,10 @@
-<!-- GENERATED FILE - DO NOT EDIT -->
-<!-- source: plugin-sources/shared-subagents/skills/scaffold/SKILL.md -->
-
 ---
 name: scaffold
 description: Use when installing or verifying project-local shared Codex subagent templates, printing the AGENTS.md guidance block, or setting up shared subagents across projects.
 ---
+<!-- GENERATED FILE - DO NOT EDIT -->
+<!-- source: plugin-sources/shared-subagents/skills/scaffold/SKILL.md -->
+
 
 # Shared Subagents Scaffold
 

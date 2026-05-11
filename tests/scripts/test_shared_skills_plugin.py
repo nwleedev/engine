@@ -58,8 +58,8 @@ def test_all_lean_core_skills_exist_with_frontmatter() -> None:
         text = read(skill_path)
         source_path = f"plugin-sources/shared-skills/skills/{skill_name}/SKILL.md"
 
-        assert text.startswith("<!-- GENERATED FILE - DO NOT EDIT -->\n")
-        assert f"<!-- source: {source_path} -->\n\n---\n" in text
+        assert text.startswith("---\n")
+        assert f"\n---\n<!-- GENERATED FILE - DO NOT EDIT -->\n<!-- source: {source_path} -->\n\n" in text
         assert f"name: {skill_name}" in text
         assert "description: Use when" in text
         assert "metadata:\n  short-description:" in text

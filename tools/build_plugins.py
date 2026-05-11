@@ -171,12 +171,12 @@ def main() -> int:
     write_text_tree(
         ROOT,
         ROOT / "plugins" / "codex" / "harness-foundry",
-        render_plugin_text_tree(harness_foundry_source),
+        render_plugin_text_tree(harness_foundry_source, preserve_skill_frontmatter=True),
     )
     write_text_tree(
         ROOT,
         ROOT / "plugins" / "claude" / "harness-foundry",
-        render_plugin_text_tree(harness_foundry_source),
+        render_plugin_text_tree(harness_foundry_source, preserve_skill_frontmatter=True),
     )
     for source_root, target_root in copied_tree_artifacts:
         replace_tree(ROOT, source_root, target_root)

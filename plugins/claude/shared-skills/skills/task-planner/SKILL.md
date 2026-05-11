@@ -1,12 +1,12 @@
-<!-- GENERATED FILE - DO NOT EDIT -->
-<!-- source: plugin-sources/shared-skills/skills/task-planner/SKILL.md -->
-
 ---
 name: task-planner
 description: Use when turning approved requirements or research into a small execution plan with ordered tasks, acceptance criteria, verification, and fallback paths.
 metadata:
   short-description: Create a small ordered plan with verification
 ---
+<!-- GENERATED FILE - DO NOT EDIT -->
+<!-- source: plugin-sources/shared-skills/skills/task-planner/SKILL.md -->
+
 
 # Task Planner
 

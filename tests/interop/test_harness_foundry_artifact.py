@@ -48,11 +48,12 @@ def _assert_artifact_includes_generated_tree(target: Path, harness: str) -> None
     )
 
     assert skill_path.exists()
-    assert skill_path.read_text(encoding="utf-8").startswith(
-        markdown_header(
-            "plugin-sources/harness-foundry/skills/design-domain-harness/SKILL.md"
-        )
+    skill_text = skill_path.read_text(encoding="utf-8")
+    skill_header = markdown_header(
+        "plugin-sources/harness-foundry/skills/design-domain-harness/SKILL.md"
     )
+    assert skill_text.startswith("---\n")
+    assert f"\n---\n{skill_header}" in skill_text
     assert helper_path.exists()
     assert helper_path.read_text(encoding="utf-8").startswith(
         python_header(

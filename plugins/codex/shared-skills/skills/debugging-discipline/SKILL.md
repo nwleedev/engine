@@ -1,12 +1,12 @@
-<!-- GENERATED FILE - DO NOT EDIT -->
-<!-- source: plugin-sources/shared-skills/skills/debugging-discipline/SKILL.md -->
-
 ---
 name: debugging-discipline
 description: Use when investigating bugs, test failures, inconsistent data, broken workflows, unexpected behavior, or conflicting evidence before proposing fixes.
 metadata:
   short-description: Investigate root cause before fixes
 ---
+<!-- GENERATED FILE - DO NOT EDIT -->
+<!-- source: plugin-sources/shared-skills/skills/debugging-discipline/SKILL.md -->
+
 
 # Debugging Discipline
 

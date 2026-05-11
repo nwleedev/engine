@@ -1,12 +1,12 @@
-<!-- GENERATED FILE - DO NOT EDIT -->
-<!-- source: plugin-sources/harness-foundry/skills/design-domain-harness/SKILL.md -->
-
 ---
 name: design-domain-harness
 description: Use when turning a selected project domain into a domain-harness spec with components, guardrails, and eval scenarios.
 metadata:
   short-description: Design a domain harness spec
 ---
+<!-- GENERATED FILE - DO NOT EDIT -->
+<!-- source: plugin-sources/harness-foundry/skills/design-domain-harness/SKILL.md -->
+
 
 # Design Domain Harness
 

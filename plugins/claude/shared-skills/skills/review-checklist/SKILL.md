@@ -1,12 +1,12 @@
-<!-- GENERATED FILE - DO NOT EDIT -->
-<!-- source: plugin-sources/shared-skills/skills/review-checklist/SKILL.md -->
-
 ---
 name: review-checklist
 description: Use when reviewing code, plans, specs, documents, research outputs, or strategy artifacts for correctness, risk, gaps, and actionability.
 metadata:
   short-description: Review artifacts for risks, gaps, and actionability
 ---
+<!-- GENERATED FILE - DO NOT EDIT -->
+<!-- source: plugin-sources/shared-skills/skills/review-checklist/SKILL.md -->
+
 
 # Review Checklist
 

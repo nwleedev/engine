@@ -193,6 +193,17 @@ def _has_inline_tracing(root: Path, path: Path) -> bool:
 
 
 def _has_exact_markdown_header(root: Path, text: str) -> bool:
+    if _has_exact_markdown_header_at_start(root, text):
+        return True
+
+    frontmatter_end = _yaml_frontmatter_end(text)
+    if frontmatter_end is None:
+        return False
+
+    return _has_exact_markdown_header_at_start(root, text[frontmatter_end:])
+
+
+def _has_exact_markdown_header_at_start(root: Path, text: str) -> bool:
     return _has_exact_header(
         root,
         text,
@@ -201,6 +212,18 @@ def _has_exact_markdown_header(root: Path, text: str) -> bool:
         source_suffix=" -->",
         header_factory=markdown_header,
     )
+
+
+def _yaml_frontmatter_end(text: str) -> int | None:
+    marker = "---\n"
+    if not text.startswith(marker):
+        return None
+
+    end = text.find(f"\n{marker}", len(marker))
+    if end == -1:
+        return None
+
+    return end + len(f"\n{marker}")
 
 
 def _has_exact_python_header(root: Path, text: str) -> bool:
