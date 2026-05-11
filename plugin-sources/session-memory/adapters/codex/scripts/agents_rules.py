@@ -17,7 +17,16 @@ REQUIRED_BLOCK_EN = """## Codex Session Memory
 - Do not commit `.codex/` session data.
 """
 
-REQUIRED_BLOCK_KO = REQUIRED_BLOCK_EN
+REQUIRED_BLOCK_KO = """## Codex Session Memory
+
+- 작업 턴을 끝내기 전에 변경 사항, 결정 사항, 검증 결과, 남은 작업이 있으면 `$codex-session-memory:checkpoint`를 실행한다.
+- 작업이 길어지거나 MCP/tool 사용으로 컨텍스트 소모가 커지면 중간 `$codex-session-memory:checkpoint`를 실행한다.
+- 같은 Codex 세션에서 수동 또는 자동 컨텍스트 압축이 발생한 직후 다음 턴에서는 `$codex-session-memory:resume <current-session-prefix>`를 첫 행동으로 실행한다.
+- 새 세션에서 과거 세션을 이어받는 경우에는 자동 resume하지 않는다. 사용자가 직접 `$codex-session-memory:resume <prefix>`를 호출한다.
+- 상태가 불확실하면 `$codex-session-memory:status`를 실행한다.
+- `CODEX_THREAD_ID`가 없으면 checkpoint를 진행하지 않고 사용자에게 보고한다.
+- `.codex/` 세션 데이터는 커밋하지 않는다.
+"""
 
 REQUIRED_BLOCK = REQUIRED_BLOCK_EN
 
@@ -67,7 +76,7 @@ def _codex_session_memory_section(text: str) -> str | None:
 
 
 def required_block(locale: str | None = None) -> str:
-    return REQUIRED_BLOCK_EN
+    return REQUIRED_BLOCK_KO if locale == "ko" else REQUIRED_BLOCK_EN
 
 
 def _patch_for(path: Path, locale: str | None = None) -> str:

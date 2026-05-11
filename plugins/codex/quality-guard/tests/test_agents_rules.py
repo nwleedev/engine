@@ -53,14 +53,14 @@ def test_partial_when_section_is_incomplete(tmp_path):
     assert "/review" in report.missing
 
 
-def test_locale_argument_keeps_english_guidance(tmp_path):
+def test_korean_guidance_contains_korean_block(tmp_path):
     rules = load_agents_rules()
     report = rules.check_agents_rules(tmp_path, locale="ko")
-    assert "Before ending each work turn" in report.guidance
+    assert "각 작업 턴을 마치기 전에" in report.guidance
     assert "codex-quality-guard:retrospect" in report.guidance
 
 
-def test_locale_alias_block_is_installed(tmp_path):
+def test_korean_block_is_installed(tmp_path):
     rules = load_agents_rules()
     (tmp_path / "AGENTS.md").write_text(rules.RECOMMENDED_BLOCK_KO, encoding="utf-8")
     report = rules.check_agents_rules(tmp_path)

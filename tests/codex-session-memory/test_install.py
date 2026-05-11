@@ -37,15 +37,15 @@ def test_detects_installed_rules(tmp_path):
     assert report.patch == ""
 
 
-def test_required_block_is_english_for_all_locales():
+def test_default_required_block_is_english_and_ko_block_is_opt_in():
     rules = load_agents_rules()
 
     assert rules.REQUIRED_BLOCK == rules.REQUIRED_BLOCK_EN
     assert "context compaction" in rules.REQUIRED_BLOCK_EN
     assert "Context compaction" not in rules.REQUIRED_BLOCK_EN
-    assert rules.REQUIRED_BLOCK_KO == rules.REQUIRED_BLOCK_EN
+    assert "컨텍스트 압축" in rules.REQUIRED_BLOCK_KO
     assert rules.required_block("en") == rules.REQUIRED_BLOCK_EN
-    assert rules.required_block("ko") == rules.REQUIRED_BLOCK_EN
+    assert rules.required_block("ko") == rules.REQUIRED_BLOCK_KO
     assert rules.required_block(None) == rules.REQUIRED_BLOCK_EN
 
 
@@ -74,8 +74,8 @@ def test_detects_missing_markers_from_incomplete_section(tmp_path):
         "$codex-session-memory:resume\n"
         "CODEX_THREAD_ID\n"
         ".codex/\n"
-        "Context compaction\n"
-        "first action\n",
+        "컨텍스트 압축\n"
+        "첫 행동\n",
         encoding="utf-8",
     )
 
@@ -95,8 +95,8 @@ def test_does_not_install_when_markers_are_scattered_outside_section(tmp_path):
         "$codex-session-memory:status\n"
         "CODEX_THREAD_ID\n"
         ".codex/\n"
-        "Context compaction\n"
-        "first action\n",
+        "컨텍스트 압축\n"
+        "첫 행동\n",
         encoding="utf-8",
     )
 
@@ -202,7 +202,7 @@ def test_install_skill_prints_missing_patch_without_modifying_agents(
     assert agents.read_text(encoding="utf-8") == "# Project Rules\n"
 
 
-def test_install_skill_prints_english_patch_when_ko_arg_is_passed(
+def test_install_skill_prints_korean_patch_when_ko_arg_is_passed(
     tmp_path, monkeypatch, capsys
 ):
     install = load_install_skill()
@@ -215,8 +215,7 @@ def test_install_skill_prints_english_patch_when_ko_arg_is_passed(
     output = capsys.readouterr().out
     assert "status: missing" in output
     assert "Add this block:" in output
-    assert "context compaction" in output
-    assert "Context compaction" not in output
+    assert "컨텍스트 압축" in output
 
 
 def test_install_skill_prints_english_patch_when_en_arg_is_passed(

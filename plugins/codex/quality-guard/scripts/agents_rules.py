@@ -15,7 +15,15 @@ RECOMMENDED_BLOCK = """## Codex Quality Guard
 - This process does not replace Codex `/review`. `/review` reviews diffs; `retrospect` reviews the current turn's working pattern.
 """
 
-RECOMMENDED_BLOCK_KO = RECOMMENDED_BLOCK
+RECOMMENDED_BLOCK_KO = """## Codex Quality Guard
+
+- 각 작업 턴을 마치기 전에 `codex-quality-guard:retrospect` 기준으로 superficial 작업 여부를 점검한다.
+- 코드 변경이 있는 턴에서는 변경 파일, 실행한 검증, 생략된 확인을 근거로 남긴다.
+- `Superficial risk`가 `medium`, `high`, `unknown`이면 완료로 보고하지 말고 한 가지 다음 조치를 제시한다.
+- 컨텍스트 압축이 발생했거나 근거가 부족하면 현재 대화에서 보이는 요청, AGENTS.md, 변경 파일, 작업 산출물, git 상태와 diff를 먼저 확인한 뒤 `retrospect`를 수행한다.
+- 세션 메모리나 별도 기록 파일이 있는 경우에는 보조 근거로만 참고하며, 없다는 이유로 점검을 생략하지 않는다.
+- 이 절차는 Codex `/review`를 대체하지 않는다. `/review`는 diff 리뷰이고, `retrospect`는 현재 턴의 작업 방식 회고다.
+"""
 
 REQUIRED_MARKER_GROUPS = (
     ("codex-quality-guard:retrospect", ("codex-quality-guard:retrospect",)),
@@ -24,8 +32,8 @@ REQUIRED_MARKER_GROUPS = (
     ("high", ("high",)),
     ("unknown", ("unknown",)),
     ("AGENTS.md", ("AGENTS.md",)),
-    ("git status", ("git status",)),
-    ("session memory", ("session memory", "Session memory")),
+    ("git status", ("git status", "git 상태")),
+    ("session memory", ("session memory", "Session memory", "세션 메모리")),
     ("/review", ("/review",)),
 )
 
@@ -39,7 +47,7 @@ class RuleReport:
 
 
 def recommended_block(locale: str | None = None) -> str:
-    return RECOMMENDED_BLOCK
+    return RECOMMENDED_BLOCK_KO if locale == "ko" else RECOMMENDED_BLOCK
 
 
 def _section(text: str) -> str | None:
