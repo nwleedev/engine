@@ -1,4 +1,5 @@
 import importlib.util
+import sqlite3
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -10,6 +11,12 @@ PLUGIN = Path(__file__).resolve().parents[2] / "plugins" / "codex" / "session-me
 STATUS = PLUGIN / "skills" / "status" / "status.py"
 
 
+@pytest.fixture(autouse=True)
+def isolate_default_codex_home(monkeypatch, tmp_path):
+    monkeypatch.delenv("CODEX_SQLITE_HOME", raising=False)
+    monkeypatch.setattr(Path, "home", classmethod(lambda cls: tmp_path / "home-without-codex"))
+
+
 def load_status():
     module_name = "test_codex_session_memory_status"
     spec = importlib.util.spec_from_file_location(module_name, STATUS)
@@ -19,6 +26,152 @@ def load_status():
     sys.modules[module_name] = module
     spec.loader.exec_module(module)
     return module
+
+
+def make_graph_state_db(path: Path):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(path)
+    conn.execute(
+        "CREATE TABLE thread_spawn_edges ("
+        "parent_thread_id TEXT NOT NULL, "
+        "child_thread_id TEXT NOT NULL PRIMARY KEY, "
+        "status TEXT NOT NULL)"
+    )
+    conn.commit()
+    conn.close()
+
+
+def insert_graph_edge(path: Path, parent: str, child: str, status: str = "open"):
+    conn = sqlite3.connect(path)
+    conn.execute("INSERT INTO thread_spawn_edges VALUES (?, ?, ?)", (parent, child, status))
+    conn.commit()
+    conn.close()
+
+
+def configure_status_common(monkeypatch, status, tmp_path, thread_id, jsonl_path=None):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("CODEX_SQLITE_HOME", raising=False)
+    monkeypatch.setattr(status.csm_dotenv_loader, "load_project_dotenv", lambda cwd: None)
+    monkeypatch.setattr(status.csm_session_locator, "current_thread_id", lambda: thread_id)
+    monkeypatch.setattr(status.csm_project_root, "find_project_root", lambda cwd: str(tmp_path))
+    monkeypatch.setattr(status.csm_session_locator, "find_jsonl_by_thread", lambda _thread_id: jsonl_path)
+    monkeypatch.setattr(
+        status.csm_agents_rules,
+        "check_agents_rules",
+        lambda root: SimpleNamespace(status="installed", missing=()),
+    )
+
+
+def write_flat_index(tmp_path, thread_id, *, last_updated="flat-current", last_offset=0):
+    flat_dir = tmp_path / ".codex" / "session-memory" / "threads" / thread_id
+    flat_dir.mkdir(parents=True)
+    (flat_dir / "INDEX.md").write_text(
+        "---\n"
+        f"last_updated: {last_updated}\n"
+        f"last_processed_offset: {last_offset}\n"
+        f"session_id: {thread_id}\n"
+        "---\n\n"
+        "# Flat\n",
+        encoding="utf-8",
+    )
+    return flat_dir
+
+
+def test_status_reports_main_role_and_direct_children_from_graph(
+    monkeypatch, tmp_path, capsys
+):
+    status = load_status()
+    write_flat_index(tmp_path, "parent-thread", last_offset=42)
+    db = tmp_path / ".codex" / "state_5.sqlite"
+    make_graph_state_db(db)
+    insert_graph_edge(db, "parent-thread", "child-thread")
+
+    configure_status_common(monkeypatch, status, tmp_path, "parent-thread")
+
+    assert status.main() == 0
+
+    output = capsys.readouterr().out
+    assert "Last saved: flat-current" in output
+    assert "Role: main" in output
+    assert "Direct children: 1" in output
+    assert "Child sessions:" not in output
+
+
+def test_status_reports_child_role_parent_and_zero_children_from_graph(
+    monkeypatch, tmp_path, capsys
+):
+    status = load_status()
+    write_flat_index(tmp_path, "child-thread")
+    db = tmp_path / ".codex" / "state_5.sqlite"
+    make_graph_state_db(db)
+    insert_graph_edge(db, "parent-thread", "child-thread")
+
+    configure_status_common(monkeypatch, status, tmp_path, "child-thread")
+
+    assert status.main() == 0
+
+    output = capsys.readouterr().out
+    assert "Role: child" in output
+    assert "Parent thread: parent-thread" in output
+    assert "Direct children: 0" in output
+    assert "Child sessions:" not in output
+
+
+def test_status_reports_graph_unavailable_without_failing(monkeypatch, tmp_path, capsys):
+    status = load_status()
+    write_flat_index(tmp_path, "thread-without-graph")
+    configure_status_common(monkeypatch, status, tmp_path, "thread-without-graph")
+    monkeypatch.setattr(
+        status.Path,
+        "home",
+        classmethod(lambda cls: tmp_path / "home-without-state-db"),
+    )
+
+    assert status.main() == 0
+
+    output = capsys.readouterr().out
+    assert "Graph: unavailable" in output
+    assert "Last saved: flat-current" in output
+
+
+def test_status_does_not_use_default_home_graph_when_project_graph_is_missing(
+    monkeypatch, tmp_path, capsys
+):
+    status = load_status()
+    write_flat_index(tmp_path, "project-thread")
+    fake_home = tmp_path / "fake-home"
+    home_db = fake_home / ".codex" / "state_5.sqlite"
+    make_graph_state_db(home_db)
+    insert_graph_edge(home_db, "project-thread", "home-child")
+
+    configure_status_common(monkeypatch, status, tmp_path, "project-thread")
+    monkeypatch.setattr(status.Path, "home", classmethod(lambda cls: fake_home))
+
+    assert status.main() == 0
+
+    output = capsys.readouterr().out
+    assert "Graph: unavailable" in output
+    assert "Direct children: 1" not in output
+
+
+def test_status_passes_project_codex_home_to_graph_store(monkeypatch, tmp_path):
+    status = load_status()
+    write_flat_index(tmp_path, "abc123")
+    configure_status_common(monkeypatch, status, tmp_path, "abc123")
+    calls = []
+
+    class FakeGraphStore:
+        def __init__(self, *, codex_home, include_default_home=True):
+            calls.append((codex_home, include_default_home))
+
+        def role_of(self, thread_id):
+            return SimpleNamespace(role="main", available=False)
+
+    monkeypatch.setattr(status, "GraphStore", FakeGraphStore)
+
+    assert status.main() == 0
+
+    assert calls == [(tmp_path / ".codex", False)]
 
 
 def test_status_prints_checkpointed_session_fields(monkeypatch, tmp_path, capsys):
@@ -108,10 +261,54 @@ def test_status_prefers_flat_artifact_current_session(monkeypatch, tmp_path, cap
     assert status.main() == 0
 
     output = capsys.readouterr().out
+    assert f"Artifact path: {flat_dir}" in output
     assert "Context files: 1" in output
     assert "Last saved: flat-current" in output
     assert "Pending offset: 42" in output
+    assert str(legacy_dir) not in output
     assert "Last saved: legacy-stale" not in output
+
+
+def test_status_uses_main_artifact_when_project_graph_role_is_main_with_stale_child(
+    monkeypatch, tmp_path, capsys
+):
+    status = load_status()
+    main_dir = tmp_path / ".codex" / "sessions" / "main-thread"
+    main_dir.mkdir(parents=True)
+    (main_dir / "INDEX.md").write_text(
+        "---\n"
+        "last_updated: main-current\n"
+        "last_processed_offset: 42\n"
+        "---\n\n"
+        "# Main\n",
+        encoding="utf-8",
+    )
+    child_dir = tmp_path / ".codex" / "sessions" / "_children" / "main-thread"
+    child_dir.mkdir(parents=True)
+    (child_dir / "INDEX.md").write_text(
+        "---\n"
+        "role: child\n"
+        "parent_session_id: stale-parent\n"
+        "last_updated: child-stale\n"
+        "last_processed_offset: 1\n"
+        "---\n\n"
+        "# Stale child\n",
+        encoding="utf-8",
+    )
+    db = tmp_path / ".codex" / "state_5.sqlite"
+    make_graph_state_db(db)
+    insert_graph_edge(db, "main-thread", "real-child")
+
+    configure_status_common(monkeypatch, status, tmp_path, "main-thread")
+
+    assert status.main() == 0
+
+    output = capsys.readouterr().out
+    assert "Role: main" in output
+    assert f"Artifact path: {main_dir}" in output
+    assert "Last saved: main-current" in output
+    assert str(child_dir) not in output
+    assert "Last saved: child-stale" not in output
 
 
 def test_status_uses_graph_child_info_for_flat_artifact_without_relationship_frontmatter(

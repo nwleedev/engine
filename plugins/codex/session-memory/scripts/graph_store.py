@@ -32,9 +32,11 @@ class GraphStore:
         *,
         codex_home: str | Path | None = None,
         sqlite_home: str | Path | None = None,
+        include_default_home: bool = True,
     ) -> None:
         self.codex_home = Path(codex_home).expanduser() if codex_home is not None else None
         self.sqlite_home = Path(sqlite_home).expanduser() if sqlite_home is not None else None
+        self.include_default_home = include_default_home
 
     def parent_of(self, thread_id: str) -> ParentLookup:
         available = False
@@ -99,6 +101,7 @@ class GraphStore:
         for db_path in _state_db_candidates(
             codex_home=self.codex_home,
             sqlite_home=self.sqlite_home,
+            include_default_home=self.include_default_home,
         ):
             try:
                 conn = sqlite3.connect(_readonly_sqlite_uri(db_path), uri=True)
@@ -121,9 +124,14 @@ def _state_db_candidates(
     *,
     codex_home: str | Path | None,
     sqlite_home: str | Path | None,
+    include_default_home: bool = True,
 ) -> list[Path]:
     homes: list[Path] = []
-    for home in _sqlite_home_candidates(codex_home=codex_home, sqlite_home=sqlite_home):
+    for home in _sqlite_home_candidates(
+        codex_home=codex_home,
+        sqlite_home=sqlite_home,
+        include_default_home=include_default_home,
+    ):
         path = Path(home).expanduser()
         if path not in homes:
             homes.append(path)
@@ -147,6 +155,7 @@ def _sqlite_home_candidates(
     *,
     codex_home: str | Path | None,
     sqlite_home: str | Path | None,
+    include_default_home: bool = True,
 ) -> list[Path | str]:
     homes: list[Path | str] = []
     if sqlite_home is not None:
@@ -156,22 +165,30 @@ def _sqlite_home_candidates(
     if env_home:
         homes.append(Path(env_home).expanduser())
 
-    configured = _configured_sqlite_home(codex_home)
+    configured = _configured_sqlite_home(
+        codex_home,
+        include_default_home=include_default_home,
+    )
     if configured is not None:
         homes.append(configured)
 
     if codex_home is not None:
         homes.append(codex_home)
-    homes.append(Path.home() / ".codex")
+    if include_default_home:
+        homes.append(Path.home() / ".codex")
     return homes
 
 
-def _configured_sqlite_home(codex_home: str | Path | None) -> Path | None:
+def _configured_sqlite_home(
+    codex_home: str | Path | None,
+    *,
+    include_default_home: bool = True,
+) -> Path | None:
     config_homes: list[Path] = []
     if codex_home is not None:
         config_homes.append(Path(codex_home))
     default_home = Path.home() / ".codex"
-    if default_home not in config_homes:
+    if include_default_home and default_home not in config_homes:
         config_homes.append(default_home)
 
     for home in config_homes:
