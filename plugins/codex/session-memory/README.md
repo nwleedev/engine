@@ -82,7 +82,8 @@ The same JSONL transcript at `~/.codex/sessions/YYYY/MM/DD/rollout-*-<thread>.js
 New checkpoints use the flat artifact store under `.codex/session-memory/threads`.
 Legacy `.codex/sessions/<thread>/contexts` and
 `.codex/sessions/_children/<thread>/contexts` files remain readable for
-compatibility.
+compatibility. `_children` is deprecated: new checkpoints do not create it, and
+the only supported uses are legacy reads and migration input.
 
 Subagent and review sessions are still detected as child sessions through the
 Codex graph. In normal child-session use, run:
@@ -101,8 +102,28 @@ python3 /path/to/codex-session-memory/skills/checkpoint/checkpoint.py prepare --
 Flat `INDEX.md` frontmatter records checkpoint metadata such as `session_id`,
 `last_processed_offset`, and `last_updated`; it does not store `role` or
 `parent_session_id` as relationship source-of-truth fields. Parent-child
-relationships come from the Codex graph, so new checkpoints do not create
-`_children` paths or parent `Child Sessions` links.
+relationships come from the Codex graph when available, or from
+`parent_locator` / `graph_store` diagnostics when the graph is degraded. New
+checkpoints therefore do not create `_children` paths or parent `Child Sessions`
+links.
+
+## Graph degraded mode
+
+The flat artifact is the durable recovery unit even when graph data is
+unavailable. In degraded mode:
+
+- `$codex-session-memory:status` can print `Graph: unavailable`.
+- `$codex-session-memory:resume <prefix>` resumes from the selected flat
+  `.codex/session-memory/threads/<id>/INDEX.md` and recent `contexts/`.
+- Checkpoint CONTEXT files still preserve graph diagnostics in `graph_context`,
+  including `unavailable`, `source`, `confidence`, `reason`, and `warnings`
+  fields when the helper can determine them.
+
+Checkpoint context is not reduced to a smaller summary in this model. The
+required 9-section CONTEXT template preserves `executive_summary`,
+`detailed_state`, `next_actions`, `graph_context`, and the other handoff
+sections so compaction recovery has both the concise state and the detailed
+working context.
 
 ## Child session checkpoints
 
@@ -135,8 +156,9 @@ avoid spending context budget on the same file more than once.
 
 ## Legacy child session migration
 
-Use the migration helper only for existing top-level child session folders that
-were created before child sessions were stored under `_children`.
+Use the migration helper for legacy session-memory artifacts that still live
+under `.codex/sessions`: legacy main sessions, top-level child sessions, and
+legacy `.codex/sessions/_children/<id>` child sessions.
 
 Dry-run first:
 
@@ -150,11 +172,25 @@ Apply after reviewing the planned moves:
 python3 plugins/codex/session-memory/scripts/migrate_child_sessions.py --root /path/to/project --apply
 ```
 
-The helper moves resolvable child folders to `.codex/sessions/_children/`,
-normalizes child `INDEX.md` frontmatter, and appends parent `Child Sessions`
-links. It preflights destination conflicts and rolls back failed apply runs on a
-best-effort basis; if rollback cannot restore a file, it prints a manual cleanup
-diagnostic.
+The helper moves each source to
+`.codex/session-memory/threads/<id>/`, preflights destination conflicts and
+duplicate destinations, and strips relationship frontmatter fields such as
+`role` and `parent_session_id` from the destination `INDEX.md`. When it finds
+synthetic legacy parent links to `_children`, it removes those broken links but
+does not add new parent `Child Sessions` links. Failed apply runs roll back on a
+best-effort basis; if rollback cannot restore a file, the helper prints a manual
+cleanup diagnostic.
+
+## Development
+
+Canonical source lives under `plugin-sources/session-memory/adapters/codex/`.
+Generated plugin artifacts live under `plugins/codex/session-memory/`. After
+changing canonical README, skill, or script files, run:
+
+```bash
+rtk python tools/build_plugins.py
+rtk python tools/validate_generated.py
+```
 
 ## Tests
 

@@ -82,7 +82,8 @@ CODEX_PROJECT_DIR=/abs/path/to/monorepo/root
 새 체크포인트는 `.codex/session-memory/threads` 아래 flat artifact store에
 저장됩니다. 기존 `.codex/sessions/<thread>/contexts`와
 `.codex/sessions/_children/<thread>/contexts` 파일은 호환성을 위해 계속 읽을 수
-있습니다.
+있습니다. `_children`는 deprecated 상태이며, 새 체크포인트가 만들지 않습니다.
+지원되는 용도는 legacy 읽기와 migration 입력뿐입니다.
 
 서브에이전트/리뷰 세션은 Codex graph를 통해 자식 세션으로 감지합니다. 일반적인
 자식 세션에서는 아래 명령을 실행합니다.
@@ -101,8 +102,26 @@ python3 /path/to/codex-session-memory/skills/checkpoint/checkpoint.py prepare --
 Flat `INDEX.md` frontmatter에는 `session_id`, `last_processed_offset`,
 `last_updated` 같은 체크포인트 메타데이터만 기록합니다. `role` 또는
 `parent_session_id`는 관계의 source-of-truth 필드로 기록하지 않습니다. 부모-자식
-관계는 Codex graph에서 오므로 새 체크포인트는 `_children` 경로나 부모
+관계는 Codex graph에서 오며, graph를 사용할 수 없을 때는 `parent_locator` /
+`graph_store` 진단에서 옵니다. 그래서 새 체크포인트는 `_children` 경로나 부모
 `Child Sessions` 링크를 만들지 않습니다.
+
+## Graph degraded mode
+
+Flat artifact는 graph 데이터를 사용할 수 없을 때도 영속적인 복구 단위입니다.
+Degraded mode에서는 다음처럼 동작합니다.
+
+- `$codex-session-memory:status`가 `Graph: unavailable`을 출력할 수 있습니다.
+- `$codex-session-memory:resume <prefix>`는 선택한 flat
+  `.codex/session-memory/threads/<id>/INDEX.md`와 최근 `contexts/` 중심으로
+  작업을 재개합니다.
+- 체크포인트 CONTEXT의 `graph_context`는 helper가 확인한 `unavailable`,
+  `source`, `confidence`, `reason`, `warnings` 필드를 보존합니다.
+
+이 모델은 작업 맥락 보존량을 줄이는 변경이 아닙니다. 필수 9-section CONTEXT
+template는 `executive_summary`, `detailed_state`, `next_actions`,
+`graph_context`와 나머지 인계 섹션을 함께 보존해, 압축 복구 시 간결한 상태와
+구체적인 작업 맥락을 모두 다시 읽을 수 있게 합니다.
 
 ## 자식 세션 체크포인트
 
@@ -135,8 +154,9 @@ INDEX 이벤트 순서를 보존하되 실제 context 파일 주입은 filename 
 
 ## 기존 자식 세션 마이그레이션
 
-마이그레이션 도우미는 자식 세션이 `_children` 아래 저장되기 전에 생성된 기존
-최상위 자식 세션 폴더에만 사용합니다.
+마이그레이션 도우미는 아직 `.codex/sessions` 아래 남아 있는 legacy session-memory
+artifact에 사용합니다. 대상은 legacy main session, 최상위 child session,
+그리고 legacy `.codex/sessions/_children/<id>` child session입니다.
 
 먼저 dry-run으로 이동 계획을 확인합니다.
 
@@ -150,10 +170,24 @@ python3 plugins/codex/session-memory/scripts/migrate_child_sessions.py --root /p
 python3 plugins/codex/session-memory/scripts/migrate_child_sessions.py --root /path/to/project --apply
 ```
 
-도우미는 부모를 확인할 수 있는 자식 폴더를 `.codex/sessions/_children/`로
-이동하고, 자식 `INDEX.md` frontmatter를 정규화하며, 부모 `INDEX.md`에
-`Child Sessions` 링크를 추가합니다. 대상 충돌은 사전 검사하고 적용 중 실패하면
-가능한 범위에서 롤백합니다. 파일 복구까지 실패하면 수동 정리 진단을 출력합니다.
+도우미는 각 source를 `.codex/session-memory/threads/<id>/`로 이동하고,
+destination conflict와 duplicate destination을 사전 검사하며, destination
+`INDEX.md`에서 `role`, `parent_session_id` 같은 relationship frontmatter를
+제거합니다. legacy parent INDEX에서 `_children`로 향하는 synthetic link를 찾으면
+깨진 링크를 제거하지만 새 `Child Sessions` 링크는 추가하지 않습니다. 적용 중
+실패하면 가능한 범위에서 롤백합니다. 파일 복구까지 실패하면 수동 정리 진단을
+출력합니다.
+
+## 개발
+
+Canonical source는 `plugin-sources/session-memory/adapters/codex/`에 있습니다.
+Generated plugin artifact는 `plugins/codex/session-memory/`에 있습니다. Canonical
+README, skill, script 파일을 바꾼 뒤에는 다음 명령을 실행합니다.
+
+```bash
+rtk python tools/build_plugins.py
+rtk python tools/validate_generated.py
+```
 
 ## 테스트
 
