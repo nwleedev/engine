@@ -56,7 +56,7 @@ def test_load_marketplace_without_yaml_rejects_inline_scalar_comments(
     tmp_path: Path,
 ) -> None:
     lines = minimal_marketplace_lines()
-    lines[lines.index("    version: 0.4.0")] = "    version: 0.4.0 # comment"
+    lines[lines.index("    version: 0.5.0")] = "    version: 0.5.0 # comment"
     metadata = write_metadata(tmp_path / "marketplace.yaml", lines)
 
     with pytest.raises(ValueError, match="Inline comments"):
@@ -108,7 +108,7 @@ def test_load_marketplace_rejects_aliases_or_merge_before_parsing(
     ("original_line", "replacement_line"),
     [
         ("name: engine", "name:  engine"),
-        ("    version: 0.4.0", "    version:  0.4.0"),
+        ("    version: 0.5.0", "    version:  0.5.0"),
         (
             "        path: ./plugins/codex/session-memory",
             "        path:  ./plugins/codex/session-memory",

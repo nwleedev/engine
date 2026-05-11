@@ -1,16 +1,16 @@
 ---
 name: install
-description: Use when setting up codex-session-memory in a project or verifying that AGENTS.md contains the checkpoint, resume, and status workflow rules.
+description: Use when setting up session-memory in a project or verifying that AGENTS.md contains the checkpoint, resume, and status workflow rules.
 ---
 
 # Session Memory Install
 
-Inspect the current project's AGENTS.md for codex-session-memory rules.
+Inspect the current project's AGENTS.md for session-memory rules.
 
 ## Run
 
 ```bash
-python3 /path/to/codex-session-memory/skills/install/install.py [en|ko]
+python3 /path/to/session-memory/skills/install/install.py [en|ko]
 ```
 
 ## Behavior

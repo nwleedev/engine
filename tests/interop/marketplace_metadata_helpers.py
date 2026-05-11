@@ -11,13 +11,13 @@ if str(ROOT) not in sys.path:
 
 METADATA = ROOT / "plugin-sources" / "marketplace.yaml"
 CODEX_MANIFESTS_BY_PUBLIC_NAME = {
-    "codex-session-memory": ROOT
+    "session-memory": ROOT
     / "plugins"
     / "codex"
     / "session-memory"
     / ".codex-plugin"
     / "plugin.json",
-    "codex-quality-guard": ROOT
+    "quality-guard": ROOT
     / "plugins"
     / "codex"
     / "quality-guard"
@@ -65,8 +65,8 @@ PLANNED_HARNESS_PATHS = {
     },
 }
 EXPECTED_HARNESS_PUBLIC_NAMES = {
-    "session-memory": {"claude": "session-memory", "codex": "codex-session-memory"},
-    "quality-guard": {"claude": "quality-guard", "codex": "codex-quality-guard"},
+    "session-memory": {"claude": "session-memory", "codex": "session-memory"},
+    "quality-guard": {"claude": "quality-guard", "codex": "quality-guard"},
     "shared-subagents": {"claude": "shared-subagents", "codex": "shared-subagents"},
     "shared-skills": {"claude": "shared-skills", "codex": "shared-skills"},
     "harness-foundry": {"claude": "harness-foundry", "codex": "harness-foundry"},
@@ -84,13 +84,13 @@ def minimal_marketplace_metadata() -> dict[Any, Any]:
         "plugins": [
             {
                 "id": "session-memory",
-                "version": "0.4.0",
+                "version": "0.5.0",
                 "description": "Automatic session context narration and injection",
                 "license": "MIT",
                 "category": "Productivity",
                 "harnesses": {
                     "codex": {
-                        "name": "codex-session-memory",
+                        "name": "session-memory",
                         "path": "./plugins/codex/session-memory",
                     }
                 },
@@ -117,12 +117,12 @@ def minimal_marketplace_lines() -> list[str]:
         "  name: nwleedev",
         "plugins:",
         "  - id: session-memory",
-        "    version: 0.4.0",
+        "    version: 0.5.0",
         "    description: Automatic session context narration and injection",
         "    license: MIT",
         "    category: Productivity",
         "    harnesses:",
         "      codex:",
-        "        name: codex-session-memory",
+        "        name: session-memory",
         "        path: ./plugins/codex/session-memory",
     ]

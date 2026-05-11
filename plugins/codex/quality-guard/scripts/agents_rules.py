@@ -1,4 +1,4 @@
-"""Detect codex-quality-guard AGENTS.md rules and render install guidance."""
+"""Detect quality-guard AGENTS.md rules and render install guidance."""
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -7,7 +7,7 @@ SECTION_HEADING = "## Codex Quality Guard"
 
 RECOMMENDED_BLOCK = """## Codex Quality Guard
 
-- Before ending each work turn, check for superficial work using `codex-quality-guard:retrospect`.
+- Before ending each work turn, check for superficial work using `quality-guard:retrospect`.
 - On turns with code or file changes, include changed files, verification run, and skipped checks as evidence.
 - If `Superficial risk` is `medium`, `high`, or `unknown`, do not report completion; provide one concrete next action.
 - If context was compacted or evidence is incomplete, inspect the visible request, AGENTS.md, changed files, project artifacts, and git status/diff before running `retrospect`.
@@ -17,7 +17,7 @@ RECOMMENDED_BLOCK = """## Codex Quality Guard
 
 RECOMMENDED_BLOCK_KO = """## Codex Quality Guard
 
-- 각 작업 턴을 마치기 전에 `codex-quality-guard:retrospect` 기준으로 superficial 작업 여부를 점검한다.
+- 각 작업 턴을 마치기 전에 `quality-guard:retrospect` 기준으로 superficial 작업 여부를 점검한다.
 - 코드 변경이 있는 턴에서는 변경 파일, 실행한 검증, 생략된 확인을 근거로 남긴다.
 - `Superficial risk`가 `medium`, `high`, `unknown`이면 완료로 보고하지 말고 한 가지 다음 조치를 제시한다.
 - 컨텍스트 압축이 발생했거나 근거가 부족하면 현재 대화에서 보이는 요청, AGENTS.md, 변경 파일, 작업 산출물, git 상태와 diff를 먼저 확인한 뒤 `retrospect`를 수행한다.
@@ -26,7 +26,7 @@ RECOMMENDED_BLOCK_KO = """## Codex Quality Guard
 """
 
 REQUIRED_MARKER_GROUPS = (
-    ("codex-quality-guard:retrospect", ("codex-quality-guard:retrospect",)),
+    ("quality-guard:retrospect", ("quality-guard:retrospect",)),
     ("Superficial risk", ("Superficial risk",)),
     ("medium", ("medium",)),
     ("high", ("high",)),

@@ -35,7 +35,7 @@ def _write_text(root: Path, relative_path: str, text: str) -> None:
 
 
 def _write_valid_generated_root(root: Path) -> None:
-    write_minimal_generated_root(root, manifest_name="codex-session-memory")
+    write_minimal_generated_root(root, manifest_name="session-memory")
     write_json(
         root,
         "plugins/codex/session-memory/.generated.json",

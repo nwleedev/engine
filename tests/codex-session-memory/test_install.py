@@ -52,15 +52,15 @@ def test_default_required_block_is_english_and_ko_block_is_opt_in():
 def test_detects_partial_rules(tmp_path):
     rules = load_agents_rules()
     (tmp_path / "AGENTS.md").write_text(
-        "$codex-session-memory:checkpoint\n"
-        "$codex-session-memory:status\n",
+        "$session-memory:checkpoint\n"
+        "$session-memory:status\n",
         encoding="utf-8",
     )
 
     report = rules.check_agents_rules(tmp_path)
 
     assert report.status == "partial"
-    assert "$codex-session-memory:resume" in "\n".join(report.missing)
+    assert "$session-memory:resume" in "\n".join(report.missing)
     assert "## Codex Session Memory" in report.patch
 
 
@@ -68,10 +68,10 @@ def test_detects_missing_markers_from_incomplete_section(tmp_path):
     rules = load_agents_rules()
     (tmp_path / "AGENTS.md").write_text(
         "## Codex Session Memory\n\n"
-        "- `$codex-session-memory:checkpoint`\n"
-        "- `$codex-session-memory:status`\n\n"
+        "- `$session-memory:checkpoint`\n"
+        "- `$session-memory:status`\n\n"
         "## Other Rules\n\n"
-        "$codex-session-memory:resume\n"
+        "$session-memory:resume\n"
         "CODEX_THREAD_ID\n"
         ".codex/\n"
         "컨텍스트 압축\n"
@@ -82,7 +82,7 @@ def test_detects_missing_markers_from_incomplete_section(tmp_path):
     report = rules.check_agents_rules(tmp_path)
 
     assert report.status == "partial"
-    assert "$codex-session-memory:resume" in report.missing
+    assert "$session-memory:resume" in report.missing
     assert "CODEX_THREAD_ID" in report.missing
 
 
@@ -90,9 +90,9 @@ def test_does_not_install_when_markers_are_scattered_outside_section(tmp_path):
     rules = load_agents_rules()
     (tmp_path / "AGENTS.md").write_text(
         "# Project Rules\n\n"
-        "$codex-session-memory:checkpoint\n"
-        "$codex-session-memory:resume\n"
-        "$codex-session-memory:status\n"
+        "$session-memory:checkpoint\n"
+        "$session-memory:resume\n"
+        "$session-memory:status\n"
         "CODEX_THREAD_ID\n"
         ".codex/\n"
         "컨텍스트 압축\n"
@@ -111,17 +111,17 @@ def test_no_section_partial_reports_only_actual_missing_markers(tmp_path):
     rules = load_agents_rules()
     (tmp_path / "AGENTS.md").write_text(
         "# Project Rules\n\n"
-        "$codex-session-memory:checkpoint\n"
-        "$codex-session-memory:status\n",
+        "$session-memory:checkpoint\n"
+        "$session-memory:status\n",
         encoding="utf-8",
     )
 
     report = rules.check_agents_rules(tmp_path)
 
     assert report.status == "partial"
-    assert "$codex-session-memory:checkpoint" not in report.missing
-    assert "$codex-session-memory:status" not in report.missing
-    assert "$codex-session-memory:resume" in report.missing
+    assert "$session-memory:checkpoint" not in report.missing
+    assert "$session-memory:status" not in report.missing
+    assert "$session-memory:resume" in report.missing
     assert "CODEX_THREAD_ID" in report.missing
 
 
@@ -140,7 +140,7 @@ def test_non_installed_reports_have_missing_markers(tmp_path):
     partial_root.mkdir()
     (partial_root / "AGENTS.md").write_text(
         "## Codex Session Memory\n"
-        "$codex-session-memory:checkpoint\n",
+        "$session-memory:checkpoint\n",
         encoding="utf-8",
     )
     reports.append(rules.check_agents_rules(partial_root))
@@ -265,7 +265,7 @@ def test_install_skill_returns_one_for_partial_rules(tmp_path, monkeypatch, caps
     install = load_install_skill()
     (tmp_path / "AGENTS.md").write_text(
         "## Codex Session Memory\n\n"
-        "- `$codex-session-memory:checkpoint`\n",
+        "- `$session-memory:checkpoint`\n",
         encoding="utf-8",
     )
     configure_install_root(install, monkeypatch, tmp_path)
@@ -275,7 +275,7 @@ def test_install_skill_returns_one_for_partial_rules(tmp_path, monkeypatch, caps
     output = capsys.readouterr().out
     assert "status: partial" in output
     assert "missing markers:" in output
-    assert "- $codex-session-memory:resume" in output
+    assert "- $session-memory:resume" in output
     assert "Add this block:" in output
 
 

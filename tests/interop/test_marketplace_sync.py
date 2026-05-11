@@ -18,13 +18,13 @@ def test_render_codex_marketplace_maps_session_memory_plugin() -> None:
 
     marketplace = render_codex_marketplace(metadata)
     session_memory = next(
-        plugin for plugin in marketplace["plugins"] if plugin["name"] == "codex-session-memory"
+        plugin for plugin in marketplace["plugins"] if plugin["name"] == "session-memory"
     )
 
     assert marketplace["name"] == "engine"
     assert marketplace["interface"] == {"displayName": "Utils with session continuity"}
     assert session_memory == {
-        "name": "codex-session-memory",
+        "name": "session-memory",
         "source": {"source": "local", "path": "./plugins/codex/session-memory"},
         "policy": {"installation": "AVAILABLE", "authentication": "ON_INSTALL"},
         "category": "Productivity",
@@ -68,8 +68,8 @@ def test_render_codex_marketplace_includes_all_codex_plugins() -> None:
     marketplace = render_codex_marketplace(metadata)
 
     assert [plugin["name"] for plugin in marketplace["plugins"]] == [
-        "codex-session-memory",
-        "codex-quality-guard",
+        "session-memory",
+        "quality-guard",
         "shared-subagents",
         "shared-skills",
         "harness-foundry",

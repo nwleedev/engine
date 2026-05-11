@@ -1,15 +1,15 @@
-# codex-quality-guard
+# quality-guard
 
-`codex-quality-guard` is a Codex plugin for checking whether a work turn ended with superficial work.
+`quality-guard` is a Codex plugin for checking whether a work turn ended with superficial work.
 
 It does not use Codex hooks. Instead, it provides reusable skills and AGENTS.md guidance:
 
-- `codex-quality-guard:retrospect` reviews the current turn for superficial work.
-- `codex-quality-guard:install` checks whether AGENTS.md contains the recommended retrospective rule block.
+- `quality-guard:retrospect` reviews the current turn for superficial work.
+- `quality-guard:install` checks whether AGENTS.md contains the recommended retrospective rule block.
 
 ## Skills
 
-### `codex-quality-guard:retrospect`
+### `quality-guard:retrospect`
 
 Use this before finalizing a work turn, especially after code or file changes.
 
@@ -35,12 +35,12 @@ Next action:
 
 `retrospect` is not a replacement for Codex `/review`. `/review` reviews a diff for defects. `retrospect` reviews the current turn's working pattern.
 
-### `codex-quality-guard:install`
+### `quality-guard:install`
 
 Use this to inspect AGENTS.md:
 
 ```bash
-python3 /path/to/codex-quality-guard/skills/install/install.py
+python3 /path/to/quality-guard/skills/install/install.py
 ```
 
 The command prints one of these statuses:

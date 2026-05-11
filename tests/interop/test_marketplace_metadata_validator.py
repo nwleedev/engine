@@ -27,7 +27,7 @@ def test_validate_marketplace_metadata_rejects_duplicate_plugin_ids(
     metadata = minimal_marketplace_metadata()
     duplicate = minimal_marketplace_metadata()["plugins"][0]
     duplicate["version"] = "0.4.1"
-    duplicate["harnesses"]["codex"]["name"] = "codex-session-memory-v2"
+    duplicate["harnesses"]["codex"]["name"] = "session-memory-v2"
     metadata["plugins"].append(duplicate)
 
     with pytest.raises(ValueError, match="duplicate plugin id"):
@@ -40,7 +40,7 @@ def test_validate_marketplace_metadata_rejects_duplicate_harness_public_names(
     metadata = minimal_marketplace_metadata()
     duplicate = minimal_marketplace_metadata()["plugins"][0]
     duplicate["id"] = "quality-guard"
-    duplicate["version"] = "0.1.0"
+    duplicate["version"] = "0.2.0"
     duplicate["harnesses"]["codex"]["path"] = "./plugins/codex/quality-guard"
     metadata["plugins"].append(duplicate)
 
@@ -128,7 +128,7 @@ def test_validate_marketplace_metadata_rejects_invalid_shapes(
         harness[1] = "bad"
     elif mutation == "non_string_harness_name_key":
         plugin["harnesses"][True] = {
-            "name": "codex-session-memory",
+            "name": "session-memory",
             "path": "./plugins/codex/session-memory",
         }
 

@@ -1,4 +1,4 @@
-"""Project root resolution for codex-quality-guard."""
+"""Project root resolution for quality-guard."""
 import os
 import subprocess
 from pathlib import Path

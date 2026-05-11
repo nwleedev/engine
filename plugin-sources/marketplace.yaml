@@ -5,7 +5,7 @@ owner:
   name: nwleedev
 plugins:
   - id: session-memory
-    version: 0.4.0
+    version: 0.5.0
     description: Automatic session context narration and injection
     license: MIT
     category: Productivity
@@ -14,11 +14,11 @@ plugins:
         name: session-memory
         path: ./plugins/claude/session-memory
       codex:
-        name: codex-session-memory
+        name: session-memory
         skills: ./skills/
         path: ./plugins/codex/session-memory
   - id: quality-guard
-    version: 0.1.0
+    version: 0.2.0
     description: Detects superficial code changes and vague language via hooks and skills
     license: MIT
     category: Productivity
@@ -27,7 +27,7 @@ plugins:
         name: quality-guard
         path: ./plugins/claude/quality-guard
       codex:
-        name: codex-quality-guard
+        name: quality-guard
         skills: ./skills/
         path: ./plugins/codex/quality-guard
   - id: shared-subagents

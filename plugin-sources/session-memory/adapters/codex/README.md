@@ -1,4 +1,4 @@
-# codex-session-memory
+# session-memory
 
 Codex CLI session memory for incremental context summaries. Companion to the
 Claude artifact at `plugins/claude/session-memory/`, but independent with no
@@ -13,36 +13,36 @@ codex plugin marketplace add /path/to/this/repo
 ```
 
 Restart Codex, open `/plugins`, choose the `Engine` marketplace, and install
-or enable `codex-session-memory`.
+or enable `session-memory`.
 
 This plugin is skill-first and user-invoked. It does not install automatic
 Codex lifecycle hooks.
 
 Available skills:
 
-- `$codex-session-memory:install`
-- `$codex-session-memory:checkpoint`
-- `$codex-session-memory:resume`
-- `$codex-session-memory:status`
+- `$session-memory:install`
+- `$session-memory:checkpoint`
+- `$session-memory:resume`
+- `$session-memory:status`
 
 ## Skills
 
 Codex shows plugin-bundled skills with the plugin namespace. `/plugins` lists
-the plugin itself (`codex-session-memory`); use the names below when invoking a
+the plugin itself (`session-memory`); use the names below when invoking a
 skill from chat.
 
 | Skill | What it does | LLM calls |
 |---|---|---|
-| `$codex-session-memory:install` | Print AGENTS.md setup guidance for skill-first session memory | 0 |
-| `$codex-session-memory:checkpoint` | Prepare and verify context checkpoint handoff | 0 |
-| `$codex-session-memory:resume [prefix]` | List or load a prior session's INDEX | 0 |
-| `$codex-session-memory:status` | Show pending turns, context count, paths | 0 |
+| `$session-memory:install` | Print AGENTS.md setup guidance for skill-first session memory | 0 |
+| `$session-memory:checkpoint` | Prepare and verify context checkpoint handoff | 0 |
+| `$session-memory:resume [prefix]` | List or load a prior session's INDEX | 0 |
+| `$session-memory:status` | Show pending turns, context count, paths | 0 |
 
 ## Compaction recovery
 
 Compaction recovery is driven by AGENTS.md instructions, not a runtime hook. After
 manual or automatic context compaction in the same Codex session, the first
-action should be invoking `$codex-session-memory:resume <prefix>` with the
+action should be invoking `$session-memory:resume <prefix>` with the
 current session prefix so Codex reloads the saved handoff before doing more
 work.
 
@@ -87,14 +87,14 @@ Subagent and review sessions are stored under `_children` when checkpointed as
 child sessions. In normal use, run:
 
 ```
-python3 /path/to/codex-session-memory/skills/checkpoint/checkpoint.py prepare --role child
+python3 /path/to/session-memory/skills/checkpoint/checkpoint.py prepare --role child
 ```
 
 Use `--parent` only when automatic resolution cannot find the parent, or when
 you need to override it explicitly:
 
 ```
-python3 /path/to/codex-session-memory/skills/checkpoint/checkpoint.py prepare --role child --parent <parent-session-id>
+python3 /path/to/session-memory/skills/checkpoint/checkpoint.py prepare --role child --parent <parent-session-id>
 ```
 
 The child `INDEX.md` records `role: child` and `parent_session_id`. The parent
