@@ -380,6 +380,26 @@ def test_resume_skill_lists_flat_artifact_and_legacy_sessions(tmp_path, monkeypa
     assert "legacy99" in output
 
 
+def test_resume_skill_lists_legacy_children_artifacts(tmp_path, monkeypatch, capsys):
+    project = tmp_path / "project"
+    legacy_child = project / ".codex" / "sessions" / "_children" / "child1234-session"
+    legacy_child.mkdir(parents=True)
+    (legacy_child / "INDEX.md").write_text(
+        "---\nsession_id: child1234-session\nlast_updated: 2026-05-05T00:00:00Z\n---\n\n"
+        "# Legacy Child\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("CODEX_PROJECT_DIR", str(project))
+    monkeypatch.chdir(project)
+
+    resume_skill = load_resume_skill()
+
+    assert resume_skill.main(["resume.py"]) == 0
+    output = capsys.readouterr().out
+    assert "child123" in output
+    assert "_children" not in output
+
+
 def test_resume_skill_prefers_flat_artifact_over_duplicate_legacy_session(
     tmp_path, monkeypatch
 ):
@@ -407,6 +427,58 @@ def test_resume_skill_prefers_flat_artifact_over_duplicate_legacy_session(
 
     assert len(rows) == 1
     assert rows[0]["path"] == flat_session / "INDEX.md"
+
+
+def test_resume_skill_prefers_flat_artifact_over_duplicate_legacy_child_session(
+    tmp_path, monkeypatch
+):
+    project = tmp_path / "project"
+    flat_session = project / ".codex" / "session-memory" / "threads" / "same1234-session"
+    flat_session.mkdir(parents=True)
+    (flat_session / "INDEX.md").write_text(
+        "---\nthread_id: same1234-session\nlast_updated: 2026-05-04T00:00:00Z\n---\n\n"
+        "# Flat\n",
+        encoding="utf-8",
+    )
+    legacy_child = project / ".codex" / "sessions" / "_children" / "same1234-session"
+    legacy_child.mkdir(parents=True)
+    (legacy_child / "INDEX.md").write_text(
+        "---\nsession_id: same1234-session\nlast_updated: 2026-05-05T00:00:00Z\n---\n\n"
+        "# Legacy Child\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("CODEX_PROJECT_DIR", str(project))
+    monkeypatch.chdir(project)
+
+    resume_skill = load_resume_skill()
+
+    rows = resume_skill.list_sessions(str(project), limit=None)
+
+    assert len(rows) == 1
+    assert rows[0]["path"] == flat_session / "INDEX.md"
+
+
+def test_resume_skill_resumes_legacy_child_artifact_by_prefix(tmp_path, monkeypatch, capsys):
+    project = tmp_path / "project"
+    legacy_child = project / ".codex" / "sessions" / "_children" / "child1234-session"
+    contexts = legacy_child / "contexts"
+    contexts.mkdir(parents=True)
+    (legacy_child / "INDEX.md").write_text(
+        "---\nsession_id: child1234-session\nlast_updated: 2026-05-05T00:00:00Z\n---\n\n"
+        "# Legacy Child\n\n## 컨텍스트 목록\n\n- [CONTEXT-1.md] — resume\n",
+        encoding="utf-8",
+    )
+    (contexts / "CONTEXT-1.md").write_text(
+        "# Legacy Child\n\n## 다음\nlegacy child artifact를 prefix로 resume한다.\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("CODEX_PROJECT_DIR", str(project))
+    monkeypatch.chdir(project)
+
+    resume_skill = load_resume_skill()
+
+    assert resume_skill.main(["resume.py", "child123"]) == 0
+    assert "legacy child artifact를 prefix로 resume한다" in capsys.readouterr().out
 
 
 def test_resume_skill_includes_graph_child_flat_artifact_context(

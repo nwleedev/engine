@@ -32,6 +32,7 @@ def list_sessions(root: str, limit: int | None = 10):
     session_roots = [
         Path(root) / ".codex" / "session-memory" / "threads",
         Path(root) / ".codex" / "sessions",
+        Path(root) / ".codex" / "sessions" / "_children",
     ]
     for sessions_dir in session_roots:
         if not sessions_dir.is_dir():
