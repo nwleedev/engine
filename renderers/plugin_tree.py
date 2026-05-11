@@ -81,16 +81,11 @@ def _is_skill_manifest(path: Path, source_root: Path) -> bool:
     )
 
 
-def _render_supported_file(
-    path: Path,
-    source_root: Path,
-    *,
-    preserve_skill_frontmatter: bool,
-) -> str:
+def _render_supported_file(path: Path, source_root: Path) -> str:
     """Render a supported plugin source file or fail on source drift."""
 
     if path.suffix == ".md":
-        if preserve_skill_frontmatter and _is_skill_manifest(path, source_root):
+        if _is_skill_manifest(path, source_root):
             return _render_skill_markdown(path)
         return _render_markdown(path)
     if _is_python_helper(path, source_root):
@@ -100,11 +95,7 @@ def _render_supported_file(
     raise ValueError(f"unsupported plugin source file: {relative_path}")
 
 
-def render_plugin_text_tree(
-    source_root: Path,
-    *,
-    preserve_skill_frontmatter: bool = False,
-) -> dict[str, str]:
+def render_plugin_text_tree(source_root: Path) -> dict[str, str]:
     """Render supported plugin source files into plugin-relative paths."""
 
     files: dict[str, str] = {}
@@ -113,11 +104,7 @@ def render_plugin_text_tree(
         if source_file.is_dir():
             continue
         relative_path = source_file.relative_to(source_root).as_posix()
-        files[relative_path] = _render_supported_file(
-            source_file,
-            source_root,
-            preserve_skill_frontmatter=preserve_skill_frontmatter,
-        )
+        files[relative_path] = _render_supported_file(source_file, source_root)
 
     return files
 

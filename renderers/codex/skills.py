@@ -33,11 +33,7 @@ def _render_markdown_file(path: Path) -> str:
     return markdown_header(relative_source) + path.read_text(encoding="utf-8")
 
 
-def render_codex_skill_tree(
-    source_root: Path,
-    *,
-    preserve_skill_frontmatter: bool = True,
-) -> dict[str, str]:
+def render_codex_skill_tree(source_root: Path) -> dict[str, str]:
     """Render shared-skill source files into Codex plugin-relative paths."""
 
     files: dict[str, str] = {}
@@ -49,8 +45,7 @@ def render_codex_skill_tree(
         files["README.md"] = _render_markdown_file(readme)
 
     for skill_file in sorted(skills_root.glob("*/SKILL.md")):
-        renderer = _render_skill_file if preserve_skill_frontmatter else _render_markdown_file
-        files[f"skills/{skill_file.parent.name}/SKILL.md"] = renderer(skill_file)
+        files[f"skills/{skill_file.parent.name}/SKILL.md"] = _render_skill_file(skill_file)
 
     for reference_file in sorted(references_root.glob("*.md")):
         files[f"references/{reference_file.name}"] = _render_markdown_file(reference_file)
