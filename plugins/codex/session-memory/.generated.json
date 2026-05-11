@@ -46,6 +46,11 @@
       "notice": "GENERATED FILE - DO NOT EDIT"
     },
     {
+      "target": "scripts/graph_store.py",
+      "source": "plugin-sources/session-memory/adapters/codex/scripts/graph_store.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
       "target": "scripts/index_io.py",
       "source": "plugin-sources/session-memory/adapters/codex/scripts/index_io.py",
       "notice": "GENERATED FILE - DO NOT EDIT"
