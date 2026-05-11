@@ -28,29 +28,38 @@ io = load_script_module("index_io.py", "codex_session_memory_resume_index_io")
 
 
 def list_sessions(root: str, limit: int | None = 10):
-    sessions_dir = Path(root) / ".codex" / "sessions"
-    if not sessions_dir.is_dir():
-        return []
-    rows = []
-    for d in sessions_dir.iterdir():
-        if not d.is_dir() or d.name.startswith(("_", ".")):
+    rows_by_session_id = {}
+    session_roots = [
+        Path(root) / ".codex" / "session-memory" / "threads",
+        Path(root) / ".codex" / "sessions",
+    ]
+    for sessions_dir in session_roots:
+        if not sessions_dir.is_dir():
             continue
-        idx = d / "INDEX.md"
-        if not idx.is_file():
-            continue
-        fm = io.read_frontmatter(idx) or {}
-        rows.append({
-            "session_id": fm.get("session_id", d.name),
-            "last_updated": fm.get("last_updated", ""),
-            "path": idx,
-        })
+        for d in sessions_dir.iterdir():
+            if not d.is_dir() or d.name.startswith(("_", ".")):
+                continue
+            idx = d / "INDEX.md"
+            if not idx.is_file():
+                continue
+            fm = io.read_frontmatter(idx) or {}
+            session_id = fm.get("thread_id") or fm.get("session_id", d.name)
+            rows_by_session_id.setdefault(
+                session_id,
+                {
+                    "session_id": session_id,
+                    "last_updated": fm.get("last_updated", ""),
+                    "path": idx,
+                },
+            )
+    rows = list(rows_by_session_id.values())
     rows.sort(key=lambda r: str(r["last_updated"]), reverse=True)
     return rows[:limit] if limit is not None else rows
 
 
 def render_table(rows):
     if not rows:
-        return "(no sessions found in <root>/.codex/sessions/)"
+        return "(no sessions found in <root>/.codex/session-memory/threads/ or <root>/.codex/sessions/)"
     out = ["| # | session_id (8) | last_updated |", "|---|---|---|"]
     for i, r in enumerate(rows, 1):
         sid = str(r["session_id"])[:8]

@@ -273,6 +273,54 @@ def test_resume_skill_output_stays_within_prompt_budget(tmp_path, monkeypatch, c
     assert output.endswith("</codex-session-memory>")
 
 
+def test_resume_skill_lists_flat_artifact_and_legacy_sessions(tmp_path, monkeypatch, capsys):
+    project = tmp_path / "project"
+    flat_session = project / ".codex" / "session-memory" / "threads" / "flat1234-session"
+    flat_session.mkdir(parents=True)
+    (flat_session / "INDEX.md").write_text(
+        "---\nthread_id: flat1234-session\nlast_updated: 2026-05-04T00:00:00Z\n---\n\n"
+        "# Flat\n",
+        encoding="utf-8",
+    )
+    legacy_session = project / ".codex" / "sessions" / "legacy99-session"
+    legacy_session.mkdir(parents=True)
+    (legacy_session / "INDEX.md").write_text(
+        "---\nsession_id: legacy99-session\nlast_updated: 2026-05-05T00:00:00Z\n---\n\n"
+        "# Legacy\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("CODEX_PROJECT_DIR", str(project))
+    monkeypatch.chdir(project)
+
+    resume_skill = load_resume_skill()
+
+    assert resume_skill.main(["resume.py"]) == 0
+    output = capsys.readouterr().out
+    assert "flat1234" in output
+    assert "legacy99" in output
+
+
+def test_resume_skill_falls_back_to_legacy_sessions_without_flat_root(
+    tmp_path, monkeypatch, capsys
+):
+    project = tmp_path / "project"
+    legacy_session = project / ".codex" / "sessions" / "legacy99-session"
+    legacy_session.mkdir(parents=True)
+    (legacy_session / "INDEX.md").write_text(
+        "---\nsession_id: legacy99-session\nlast_updated: 2026-05-05T00:00:00Z\n---\n\n"
+        "# Legacy\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("CODEX_PROJECT_DIR", str(project))
+    monkeypatch.chdir(project)
+
+    resume_skill = load_resume_skill()
+
+    assert resume_skill.main(["resume.py"]) == 0
+    output = capsys.readouterr().out
+    assert "legacy99" in output
+
+
 def test_resume_skill_rejects_non_8_character_prefix(tmp_path, monkeypatch, capsys):
     project = tmp_path / "project"
     (project / ".codex" / "sessions").mkdir(parents=True)

@@ -72,6 +72,100 @@ def test_status_prints_checkpointed_session_fields(monkeypatch, tmp_path, capsys
     assert "pending_turns: 1" in output
 
 
+def test_status_prefers_flat_artifact_current_session(monkeypatch, tmp_path, capsys):
+    status = load_status()
+    flat_dir = tmp_path / ".codex" / "session-memory" / "threads" / "abc123"
+    flat_contexts = flat_dir / "contexts"
+    flat_contexts.mkdir(parents=True)
+    (flat_contexts / "CONTEXT-20260504-1200-test.md").write_text("# flat\n", encoding="utf-8")
+    (flat_dir / "INDEX.md").write_text(
+        "---\nlast_updated: flat-current\nlast_processed_offset: 42\nsession_id: abc123\n---\n\n"
+        "# Flat\n",
+        encoding="utf-8",
+    )
+    legacy_dir = tmp_path / ".codex" / "sessions" / "abc123"
+    legacy_dir.mkdir(parents=True)
+    (legacy_dir / "INDEX.md").write_text(
+        "---\nlast_updated: legacy-stale\nlast_processed_offset: 1\n---\n\n"
+        "# Legacy\n",
+        encoding="utf-8",
+    )
+    jsonl_path = tmp_path / "rollout-test-abc123.jsonl"
+    jsonl_path.write_text("", encoding="utf-8")
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(status.csm_dotenv_loader, "load_project_dotenv", lambda cwd: None)
+    monkeypatch.setattr(status.csm_session_locator, "current_thread_id", lambda: "abc123")
+    monkeypatch.setattr(status.csm_project_root, "find_project_root", lambda cwd: str(tmp_path))
+    monkeypatch.setattr(status.csm_session_locator, "find_jsonl_by_thread", lambda thread_id: jsonl_path)
+    monkeypatch.setattr(
+        status.csm_agents_rules,
+        "check_agents_rules",
+        lambda root: SimpleNamespace(status="installed", missing=()),
+    )
+    monkeypatch.setattr(status.csm_jsonl_parser, "extract_delta", lambda path, offset: ([], 42))
+
+    assert status.main() == 0
+
+    output = capsys.readouterr().out
+    assert "Context files: 1" in output
+    assert "Last saved: flat-current" in output
+    assert "Pending offset: 42" in output
+    assert "Last saved: legacy-stale" not in output
+
+
+def test_status_uses_graph_child_info_for_flat_artifact_without_relationship_frontmatter(
+    monkeypatch, tmp_path, capsys
+):
+    status = load_status()
+    flat_dir = tmp_path / ".codex" / "session-memory" / "threads" / "child123"
+    flat_contexts = flat_dir / "contexts"
+    flat_contexts.mkdir(parents=True)
+    (flat_contexts / "CONTEXT-20260504-1200-test.md").write_text("# flat\n", encoding="utf-8")
+    (flat_dir / "INDEX.md").write_text(
+        "---\nlast_updated: flat-child\nlast_processed_offset: 42\nsession_id: child123\n---\n\n"
+        "# Flat Child\n",
+        encoding="utf-8",
+    )
+    parent_index = tmp_path / ".codex" / "sessions" / "parent123" / "INDEX.md"
+    parent_index.parent.mkdir(parents=True)
+    parent_index.write_text("# Parent\n", encoding="utf-8")
+    jsonl_path = tmp_path / "rollout-child123.jsonl"
+    jsonl_path.write_text("", encoding="utf-8")
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(status.csm_dotenv_loader, "load_project_dotenv", lambda cwd: None)
+    monkeypatch.setattr(status.csm_session_locator, "current_thread_id", lambda: "child123")
+    monkeypatch.setattr(status.csm_project_root, "find_project_root", lambda cwd: str(tmp_path))
+    monkeypatch.setattr(status.csm_session_locator, "find_jsonl_by_thread", lambda thread_id: jsonl_path)
+    monkeypatch.setattr(
+        status,
+        "csm_parent_locator",
+        SimpleNamespace(
+            resolve_parent_thread_id=lambda thread_id, rollout_path=None, **kwargs: SimpleNamespace(
+                role="child",
+                parent_thread_id="parent123",
+            )
+        ),
+        raising=False,
+    )
+    monkeypatch.setattr(
+        status.csm_agents_rules,
+        "check_agents_rules",
+        lambda root: SimpleNamespace(status="installed", missing=()),
+    )
+    monkeypatch.setattr(status.csm_jsonl_parser, "extract_delta", lambda path, offset: ([], 42))
+
+    assert status.main() == 0
+
+    output = capsys.readouterr().out
+    assert "Role: child" in output
+    assert "Parent session: parent123" in output
+    assert f"Parent INDEX.md: {parent_index}" in output
+    assert "Child sessions:" not in output
+    assert "Last saved: flat-child" in output
+
+
 @pytest.mark.parametrize(("children_present", "expected_count"), ((False, 0), (True, 1)))
 def test_status_child_count_is_stable_when_children_dir_absent_or_present(
     monkeypatch, tmp_path, capsys, children_present, expected_count

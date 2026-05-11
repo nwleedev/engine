@@ -71,11 +71,7 @@ CODEX_PROJECT_DIR=/abs/path/to/monorepo/root
 ## 데이터 레이아웃
 
 ```
-<root>/.codex/sessions/<CODEX_THREAD_ID>/
-├── INDEX.md
-└── contexts/CONTEXT-YYYYMMDD-HH00-checkpoint.md
-
-<root>/.codex/sessions/_children/<CHILD_CODEX_THREAD_ID>/
+<root>/.codex/session-memory/threads/<CODEX_THREAD_ID>/
 ├── INDEX.md
 └── contexts/CONTEXT-YYYYMMDD-HH00-checkpoint.md
 ```
@@ -83,8 +79,13 @@ CODEX_PROJECT_DIR=/abs/path/to/monorepo/root
 같은 JSONL transcript인 `~/.codex/sessions/YYYY/MM/DD/rollout-*-<thread>.jsonl`을
 각 체크포인트마다 증분으로 읽습니다.
 
-서브에이전트/리뷰 세션은 자식 세션으로 체크포인트를 만들면 `_children` 아래
-저장됩니다. 일반적으로는 아래 명령을 실행합니다.
+새 체크포인트는 `.codex/session-memory/threads` 아래 flat artifact store에
+저장됩니다. 기존 `.codex/sessions/<thread>/contexts`와
+`.codex/sessions/_children/<thread>/contexts` 파일은 호환성을 위해 계속 읽을 수
+있습니다.
+
+서브에이전트/리뷰 세션은 Codex graph를 통해 자식 세션으로 감지합니다. 일반적인
+자식 세션에서는 아래 명령을 실행합니다.
 
 ```
 python3 /path/to/codex-session-memory/skills/checkpoint/checkpoint.py prepare --role child
@@ -97,9 +98,11 @@ python3 /path/to/codex-session-memory/skills/checkpoint/checkpoint.py prepare --
 python3 /path/to/codex-session-memory/skills/checkpoint/checkpoint.py prepare --role child --parent <parent-session-id>
 ```
 
-자식 `INDEX.md`에는 `role: child`와 `parent_session_id`를 기록하고, 부모
-`INDEX.md`에는 `Child Sessions` 항목으로 자식 세션 링크를 추가합니다.
-기본 세션 목록은 `_children`을 숨겨 메인 세션 중심으로 표시합니다.
+Flat `INDEX.md` frontmatter에는 `session_id`, `last_processed_offset`,
+`last_updated` 같은 체크포인트 메타데이터만 기록합니다. `role` 또는
+`parent_session_id`는 관계의 source-of-truth 필드로 기록하지 않습니다. 부모-자식
+관계는 Codex graph에서 오므로 새 체크포인트는 `_children` 경로나 부모
+`Child Sessions` 링크를 만들지 않습니다.
 
 ## 자식 세션 체크포인트
 
@@ -128,7 +131,7 @@ INDEX 이벤트 순서를 보존하되 실제 context 파일 주입은 filename 
 
 ## 세션 연속성
 
-`CODEX_THREAD_ID`는 재개된 Codex CLI 세션 사이에서도 동일 유지 — 실측 확인됨. 같은 Codex 세션의 며칠 작업이 동일한 `<root>/.codex/sessions/<id>/INDEX.md`에 누적됩니다.
+`CODEX_THREAD_ID`는 재개된 Codex CLI 세션 사이에서도 동일 유지 — 실측 확인됨. 같은 Codex 세션의 며칠 작업이 동일한 `<root>/.codex/session-memory/threads/<id>/INDEX.md`에 누적됩니다.
 
 ## 기존 자식 세션 마이그레이션
 

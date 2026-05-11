@@ -76,6 +76,12 @@ def _data_session_dir(root, thread_id, role="main"):
     return csm_session_locator.data_session_dir(root, thread_id)
 
 
+def _artifact_session_dir(root, thread_id):
+    if hasattr(csm_session_locator, "artifact_session_dir"):
+        return csm_session_locator.artifact_session_dir(root, thread_id)
+    return Path(root) / ".codex" / "session-memory" / "threads" / thread_id
+
+
 def _resolution_child_parent_id(parent_resolution):
     parent_thread_id = getattr(parent_resolution, "parent_thread_id", None)
     if parent_thread_id:
@@ -88,6 +94,10 @@ def _resolution_is_child(parent_resolution):
 
 
 def _current_session_dir(root, thread_id, parent_resolution=None):
+    artifact_session_dir = _artifact_session_dir(root, thread_id)
+    if (artifact_session_dir / "INDEX.md").exists():
+        return artifact_session_dir
+
     main_session_dir = _data_session_dir(root, thread_id)
     child_session_dir = _data_session_dir(root, thread_id, role="child")
     child_index_path = child_session_dir / "INDEX.md"
@@ -162,7 +172,8 @@ def main():
         return 0
 
     fm = csm_index_io.read_frontmatter(index_path) or {}
-    is_child = fm.get("role") == "child"
+    graph_parent_session_id = _resolution_child_parent_id(parent_resolution)
+    is_child = fm.get("role") == "child" or _resolution_is_child(parent_resolution)
     last_offset = int(fm.get("last_processed_offset", 0))
     pending = 0
     if jsonl and jsonl.is_file():
@@ -171,7 +182,10 @@ def main():
 
     print(f"Context files: {ctx_count}")
     if is_child:
-        _print_child_parent_status(root, fm)
+        child_status = dict(fm)
+        if graph_parent_session_id and not child_status.get("parent_session_id"):
+            child_status["parent_session_id"] = graph_parent_session_id
+        _print_child_parent_status(root, child_status)
     else:
         print(f"Child sessions: {_count_child_sessions(root, thread_id)}")
     print(f"Last saved: {fm.get('last_updated') or 'never'}")

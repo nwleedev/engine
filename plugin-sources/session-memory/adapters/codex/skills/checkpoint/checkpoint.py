@@ -39,12 +39,15 @@ sl = _load_script_module(
 
 
 REQUIRED_SECTIONS = (
-    "## [현재 상태 (Phase)]",
-    "## [문제 및 아키텍처 결정 (ADR)]",
-    "## [도구 및 파일 변경 내역]",
-    "## [검증 결과]",
-    "## [남은 위험 및 미해결 사항]",
-    "## [다음 단계 (Next Steps)]",
+    "## current_goal",
+    "## executive_summary",
+    "## detailed_state",
+    "## decisions",
+    "## files",
+    "## verification",
+    "## risks",
+    "## next_actions",
+    "## graph_context",
 )
 
 
@@ -76,6 +79,12 @@ def _data_session_dir(root: str, thread_id: str, role: str) -> Path:
         if role == "main":
             return sl.data_session_dir(root, thread_id)
         raise
+
+
+def _artifact_session_dir(root: str, thread_id: str) -> Path:
+    if hasattr(sl, "artifact_session_dir"):
+        return sl.artifact_session_dir(root, thread_id)
+    return Path(root) / ".codex" / "session-memory" / "threads" / thread_id
 
 
 def _coerce_offset(value) -> int:
@@ -116,6 +125,18 @@ def _render_evidence(evidence: dict) -> str:
 
 def _is_context_path_in_session_tree(context_path: Path, root: str) -> bool:
     sessions_root = (Path(root) / ".codex" / "sessions").resolve()
+    artifact_threads_root = (
+        Path(root) / ".codex" / "session-memory" / "threads"
+    ).resolve()
+    try:
+        relative = context_path.relative_to(artifact_threads_root)
+    except ValueError:
+        pass
+    else:
+        if len(relative.parts) == 3 and relative.parts[1] == "contexts":
+            return not relative.parts[0].startswith(("_", "."))
+        return False
+
     try:
         relative = context_path.relative_to(sessions_root)
     except ValueError:
@@ -255,13 +276,11 @@ def _prepare(requested_role: str | None = None, requested_parent: str | None = N
         print(f"error: no rollout JSONL found for thread {thread_id}", file=sys.stderr)
         return 2
 
-    session_dir = _data_session_dir(root, thread_id, role)
+    session_dir = _artifact_session_dir(root, thread_id)
     index_path = session_dir / "INDEX.md"
     contexts_dir = session_dir / "contexts"
     contexts_dir.mkdir(parents=True, exist_ok=True)
     parent_index_path = None
-    if role == "child" and parent_session_id:
-        parent_index_path = sl.parent_session_dir(root, parent_session_id) / "INDEX.md"
 
     frontmatter = io.read_frontmatter(index_path) or {}
     last_processed_offset = _coerce_offset(frontmatter.get("last_processed_offset", 0))
@@ -290,18 +309,16 @@ def _prepare(requested_role: str | None = None, requested_parent: str | None = N
                 "",
                 "## index update",
                 f"index_entry: - [{context_path.name}] — <summary>",
-                (
-                    f"parent_child_entry: - [{thread_id[:8]}]"
-                    f"(../_children/{thread_id}/INDEX.md) — <role/summary>"
-                    if role == "child"
-                    else "parent_child_entry:"
-                ),
+                "parent_child_entry:",
                 "frontmatter_update:",
                 f"  last_processed_offset: {new_offset}",
                 "  last_updated: <ISO-8601 timestamp>",
                 "  session_id: <thread_id>",
-                f"  role: {role}",
-                f"  parent_session_id: {parent_session_id or ''}",
+                "",
+                "relationship_diagnostics:",
+                "  relationship_source: codex graph",
+                f"  detected_role: {role}",
+                f"  detected_parent_session_id: {parent_session_id or ''}",
                 "",
                 "## evidence",
                 _render_evidence(evidence),

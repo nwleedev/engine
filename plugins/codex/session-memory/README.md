@@ -72,19 +72,20 @@ Confirm `.env` is in `.gitignore` before committing other changes.
 ## Data layout
 
 ```
-<root>/.codex/sessions/<CODEX_THREAD_ID>/
-├── INDEX.md
-└── contexts/CONTEXT-YYYYMMDD-HH00-checkpoint.md
-
-<root>/.codex/sessions/_children/<CHILD_CODEX_THREAD_ID>/
+<root>/.codex/session-memory/threads/<CODEX_THREAD_ID>/
 ├── INDEX.md
 └── contexts/CONTEXT-YYYYMMDD-HH00-checkpoint.md
 ```
 
 The same JSONL transcript at `~/.codex/sessions/YYYY/MM/DD/rollout-*-<thread>.jsonl` is read incrementally on each checkpoint.
 
-Subagent and review sessions are stored under `_children` when checkpointed as
-child sessions. In normal use, run:
+New checkpoints use the flat artifact store under `.codex/session-memory/threads`.
+Legacy `.codex/sessions/<thread>/contexts` and
+`.codex/sessions/_children/<thread>/contexts` files remain readable for
+compatibility.
+
+Subagent and review sessions are still detected as child sessions through the
+Codex graph. In normal child-session use, run:
 
 ```
 python3 /path/to/codex-session-memory/skills/checkpoint/checkpoint.py prepare --role child
@@ -97,10 +98,11 @@ you need to override it explicitly:
 python3 /path/to/codex-session-memory/skills/checkpoint/checkpoint.py prepare --role child --parent <parent-session-id>
 ```
 
-The child `INDEX.md` records `role: child` and `parent_session_id`. The parent
-`INDEX.md` should append a `Child Sessions` entry linking to the child session.
-Default resume/session listing skips `_children` to stay focused on main
-sessions.
+Flat `INDEX.md` frontmatter records checkpoint metadata such as `session_id`,
+`last_processed_offset`, and `last_updated`; it does not store `role` or
+`parent_session_id` as relationship source-of-truth fields. Parent-child
+relationships come from the Codex graph, so new checkpoints do not create
+`_children` paths or parent `Child Sessions` links.
 
 ## Child session checkpoints
 
@@ -129,7 +131,7 @@ avoid spending context budget on the same file more than once.
 
 ## How session continuity works
 
-`CODEX_THREAD_ID` stays stable across resumed Codex CLI sessions — verified empirically. Multi-day work on the same Codex session accumulates into the same `<root>/.codex/sessions/<id>/INDEX.md`.
+`CODEX_THREAD_ID` stays stable across resumed Codex CLI sessions — verified empirically. Multi-day work on the same Codex session accumulates into the same `<root>/.codex/session-memory/threads/<id>/INDEX.md`.
 
 ## Legacy child session migration
 
