@@ -22,7 +22,7 @@ def test_render_codex_marketplace_maps_session_memory_plugin() -> None:
     )
 
     assert marketplace["name"] == "engine"
-    assert marketplace["interface"] == {"displayName": "Utils with session continuity"}
+    assert marketplace["interface"] == {"displayName": "Engine plugin suite"}
     assert session_memory == {
         "name": "session-memory",
         "source": {"source": "local", "path": "./plugins/codex/session-memory"},
@@ -42,13 +42,17 @@ def test_render_claude_marketplace_maps_session_memory_plugin() -> None:
     assert marketplace["$schema"] == "https://anthropic.com/claude-code/marketplace.schema.json"
     assert marketplace["name"] == "engine"
     assert marketplace["description"] == (
-        "Claude Code Harness System — plan enforcement, quality gates, "
-        "domain knowledge, and session continuity"
+        "Codex and Claude Code plugin suite for session continuity, quality gates, "
+        "shared skills, shared subagents, domain harness design, and Deep Research "
+        "prompt generation"
     )
     assert marketplace["owner"] == {"name": "nwleedev"}
     assert session_memory == {
         "name": "session-memory",
-        "description": "Automatic session context narration and injection",
+        "description": (
+            "Project-scoped session continuity for Codex and Claude Code with "
+            "checkpoint, resume, status, and monorepo-safe artifact storage"
+        ),
         "source": "./plugins/claude/session-memory",
     }
 

@@ -1,7 +1,7 @@
 {
   "name": "shared-skills",
   "version": "0.2.5",
-  "description": "Shared skills for main-session quality gates across development and non-development work",
+  "description": "Reusable main-session quality gates for comments, TDD, planning, reviews, verification, and disciplined implementation",
   "license": "MIT",
   "skills": "./skills/"
 }

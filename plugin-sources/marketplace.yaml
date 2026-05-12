@@ -1,12 +1,12 @@
 name: engine
-display_name: Utils with session continuity
-description: Claude Code Harness System — plan enforcement, quality gates, domain knowledge, and session continuity
+display_name: Engine plugin suite
+description: Codex and Claude Code plugin suite for session continuity, quality gates, shared skills, shared subagents, domain harness design, and Deep Research prompt generation
 owner:
   name: nwleedev
 plugins:
   - id: session-memory
     version: 0.5.0
-    description: Automatic session context narration and injection
+    description: Project-scoped session continuity for Codex and Claude Code with checkpoint, resume, status, and monorepo-safe artifact storage
     license: MIT
     category: Productivity
     harnesses:
@@ -19,7 +19,7 @@ plugins:
         path: ./plugins/codex/session-memory
   - id: quality-guard
     version: 0.2.0
-    description: Detects superficial code changes and vague language via hooks and skills
+    description: Quality gate helpers that catch superficial work, vague responses, and missing AGENTS.md guidance
     license: MIT
     category: Productivity
     harnesses:
@@ -32,7 +32,7 @@ plugins:
         path: ./plugins/codex/quality-guard
   - id: shared-subagents
     version: 0.2.5
-    description: Project-local shared Codex subagent templates and installation guidance
+    description: Reusable Codex subagent templates for mapping, reviewing, security auditing, and spec checks
     license: MIT
     category: Productivity
     harnesses:
@@ -45,7 +45,7 @@ plugins:
         path: ./plugins/codex/shared-subagents
   - id: shared-skills
     version: 0.2.5
-    description: Shared skills for main-session quality gates across development and non-development work
+    description: Reusable main-session quality gates for comments, TDD, planning, reviews, verification, and disciplined implementation
     license: MIT
     category: Productivity
     harnesses:
@@ -58,7 +58,7 @@ plugins:
         path: ./plugins/codex/shared-skills
   - id: harness-foundry
     version: 0.3.1
-    description: Skill-only workflows for designing and auditing domain harnesses
+    description: Skill workflows for diagnosing project domains and designing, scaffolding, and auditing domain harnesses
     license: MIT
     category: Productivity
     harnesses:
@@ -71,7 +71,7 @@ plugins:
         path: ./plugins/codex/harness-foundry
   - id: research-prompt
     version: 0.1.0
-    description: Generate Deep Research prompt artifacts from live project context
+    description: Generate ChatGPT Deep Research prompt artifacts from live project context without external API calls
     license: MIT
     category: Productivity
     harnesses:

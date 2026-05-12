@@ -1,39 +1,39 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "engine",
-  "description": "Claude Code Harness System — plan enforcement, quality gates, domain knowledge, and session continuity",
+  "description": "Codex and Claude Code plugin suite for session continuity, quality gates, shared skills, shared subagents, domain harness design, and Deep Research prompt generation",
   "owner": {
     "name": "nwleedev"
   },
   "plugins": [
     {
       "name": "session-memory",
-      "description": "Automatic session context narration and injection",
+      "description": "Project-scoped session continuity for Codex and Claude Code with checkpoint, resume, status, and monorepo-safe artifact storage",
       "source": "./plugins/claude/session-memory"
     },
     {
       "name": "quality-guard",
-      "description": "Detects superficial code changes and vague language via hooks and skills",
+      "description": "Quality gate helpers that catch superficial work, vague responses, and missing AGENTS.md guidance",
       "source": "./plugins/claude/quality-guard"
     },
     {
       "name": "shared-subagents",
-      "description": "Project-local shared Codex subagent templates and installation guidance",
+      "description": "Reusable Codex subagent templates for mapping, reviewing, security auditing, and spec checks",
       "source": "./plugins/claude/shared-subagents"
     },
     {
       "name": "shared-skills",
-      "description": "Shared skills for main-session quality gates across development and non-development work",
+      "description": "Reusable main-session quality gates for comments, TDD, planning, reviews, verification, and disciplined implementation",
       "source": "./plugins/claude/shared-skills"
     },
     {
       "name": "harness-foundry",
-      "description": "Skill-only workflows for designing and auditing domain harnesses",
+      "description": "Skill workflows for diagnosing project domains and designing, scaffolding, and auditing domain harnesses",
       "source": "./plugins/claude/harness-foundry"
     },
     {
       "name": "research-prompt",
-      "description": "Generate Deep Research prompt artifacts from live project context",
+      "description": "Generate ChatGPT Deep Research prompt artifacts from live project context without external API calls",
       "source": "./plugins/claude/research-prompt"
     }
   ]

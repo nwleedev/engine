@@ -1,6 +1,6 @@
 {
   "name": "shared-subagents",
   "version": "0.2.5",
-  "description": "Project-local shared Codex subagent templates and installation guidance",
+  "description": "Reusable Codex subagent templates for mapping, reviewing, security auditing, and spec checks",
   "license": "MIT"
 }
