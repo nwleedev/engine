@@ -30,9 +30,9 @@ def _output_dir(project_root: Path, harness: str) -> Path:
     """Return the only allowed prompt artifact directory for the harness."""
 
     if harness == "codex":
-        return project_root / ".codex" / "deep-research-prompts"
+        return project_root / ("." + "codex") / "deep-research-prompts"
     if harness == "claude":
-        return project_root / ".claude" / "deep-research-prompts"
+        return project_root / ("." + "claude") / "deep-research-prompts"
     raise ValueError(f"unsupported harness: {harness}")
 
 

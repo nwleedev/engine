@@ -41,6 +41,12 @@ CODEX_MANIFESTS_BY_PUBLIC_NAME = {
     / "harness-foundry"
     / ".codex-plugin"
     / "plugin.json",
+    "research-prompt": ROOT
+    / "plugins"
+    / "codex"
+    / "research-prompt"
+    / ".codex-plugin"
+    / "plugin.json",
 }
 PLANNED_HARNESS_PATHS = {
     "session-memory": {
@@ -63,6 +69,10 @@ PLANNED_HARNESS_PATHS = {
         "claude": "./plugins/claude/harness-foundry",
         "codex": "./plugins/codex/harness-foundry",
     },
+    "research-prompt": {
+        "claude": "./plugins/claude/research-prompt",
+        "codex": "./plugins/codex/research-prompt",
+    },
 }
 EXPECTED_HARNESS_PUBLIC_NAMES = {
     "session-memory": {"claude": "session-memory", "codex": "session-memory"},
@@ -70,6 +80,7 @@ EXPECTED_HARNESS_PUBLIC_NAMES = {
     "shared-subagents": {"claude": "shared-subagents", "codex": "shared-subagents"},
     "shared-skills": {"claude": "shared-skills", "codex": "shared-skills"},
     "harness-foundry": {"claude": "harness-foundry", "codex": "harness-foundry"},
+    "research-prompt": {"claude": "research-prompt", "codex": "research-prompt"},
 }
 
 
