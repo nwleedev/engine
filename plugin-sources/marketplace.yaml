@@ -69,3 +69,16 @@ plugins:
         name: harness-foundry
         skills: ./skills/
         path: ./plugins/codex/harness-foundry
+  - id: research-prompt
+    version: 0.1.0
+    description: Generate Deep Research prompt artifacts from live project context
+    license: MIT
+    category: Productivity
+    harnesses:
+      claude:
+        name: research-prompt
+        path: ./plugins/claude/research-prompt
+      codex:
+        name: research-prompt
+        skills: ./skills/
+        path: ./plugins/codex/research-prompt

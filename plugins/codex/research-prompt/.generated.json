@@ -1,0 +1,54 @@
+{
+  "generated": [
+    {
+      "target": ".codex-plugin/plugin.json",
+      "source": "plugin-sources/marketplace.yaml",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "_packages/research_prompt/__init__.py",
+      "source": "packages/research-prompt/research_prompt/__init__.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "_packages/research_prompt/cli.py",
+      "source": "packages/research-prompt/research_prompt/cli.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "_packages/research_prompt/composer.py",
+      "source": "packages/research-prompt/research_prompt/composer.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "_packages/research_prompt/redaction.py",
+      "source": "packages/research-prompt/research_prompt/redaction.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "_packages/research_prompt/relevance.py",
+      "source": "packages/research-prompt/research_prompt/relevance.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "_packages/research_prompt/scanner.py",
+      "source": "packages/research-prompt/research_prompt/scanner.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "_packages/research_prompt/snippets.py",
+      "source": "packages/research-prompt/research_prompt/snippets.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "skills/research-prompt/SKILL.md",
+      "source": "plugin-sources/research-prompt/adapters/codex/skills/research-prompt/SKILL.md",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "skills/research-prompt/scripts/research_prompt.py",
+      "source": "plugin-sources/research-prompt/adapters/codex/skills/research-prompt/scripts/research_prompt.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    }
+  ]
+}

@@ -30,6 +30,11 @@
       "name": "harness-foundry",
       "description": "Skill-only workflows for designing and auditing domain harnesses",
       "source": "./plugins/claude/harness-foundry"
+    },
+    {
+      "name": "research-prompt",
+      "description": "Generate Deep Research prompt artifacts from live project context",
+      "source": "./plugins/claude/research-prompt"
     }
   ]
 }

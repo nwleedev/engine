@@ -73,6 +73,7 @@ def test_render_codex_marketplace_includes_all_codex_plugins() -> None:
         "shared-subagents",
         "shared-skills",
         "harness-foundry",
+        "research-prompt",
     ]
 
 
@@ -87,4 +88,5 @@ def test_render_claude_marketplace_includes_all_claude_plugins() -> None:
         "shared-subagents",
         "shared-skills",
         "harness-foundry",
+        "research-prompt",
     ]

@@ -123,6 +123,16 @@ def main() -> int:
             ROOT / "plugins" / "claude" / "quality-guard",
         ),
     )
+    research_prompt_artifacts = (
+        (
+            ROOT / "plugin-sources" / "research-prompt" / "adapters" / "codex",
+            ROOT / "plugins" / "codex" / "research-prompt",
+        ),
+        (
+            ROOT / "plugin-sources" / "research-prompt" / "adapters" / "claude",
+            ROOT / "plugins" / "claude" / "research-prompt",
+        ),
+    )
     package_artifacts = (
         (
             ROOT / "packages" / "session-memory" / "session_memory",
@@ -144,8 +154,20 @@ def main() -> int:
             ROOT / "plugins" / "claude" / "quality-guard" / "_packages" / "quality_guard",
             "quality_guard",
         ),
+        (
+            ROOT / "packages" / "research-prompt" / "research_prompt",
+            ROOT / "plugins" / "codex" / "research-prompt" / "_packages" / "research_prompt",
+            "research_prompt",
+        ),
+        (
+            ROOT / "packages" / "research-prompt" / "research_prompt",
+            ROOT / "plugins" / "claude" / "research-prompt" / "_packages" / "research_prompt",
+            "research_prompt",
+        ),
     )
-    copied_tree_artifacts = session_memory_artifacts + quality_guard_artifacts
+    copied_tree_artifacts = (
+        session_memory_artifacts + quality_guard_artifacts + research_prompt_artifacts
+    )
     write_json(ROOT / ".agents/plugins/marketplace.json", render_codex_marketplace(metadata))
     write_json(ROOT / ".claude-plugin/marketplace.json", render_claude_marketplace(metadata))
     write_text_tree(
