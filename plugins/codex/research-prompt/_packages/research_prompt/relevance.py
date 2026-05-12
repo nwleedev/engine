@@ -21,6 +21,7 @@ class CandidateFile:
 
     path: Path
     signals: dict[str, int]
+    line: int | None = None
 
     @property
     def score(self) -> int:

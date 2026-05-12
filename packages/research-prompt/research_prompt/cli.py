@@ -7,7 +7,16 @@ import re
 from pathlib import Path
 
 from .composer import PromptInput, compose_prompt
-from .scanner import collect_code_blocks, collect_user_path_candidates
+from .redaction import is_denied_path, redact_text
+from .scanner import (
+    collect_code_blocks,
+    collect_dependency_candidates,
+    collect_git_context,
+    collect_git_diff_candidates,
+    collect_stack_trace_candidates,
+    collect_symbol_candidates,
+    collect_user_path_candidates,
+)
 
 
 def _slugify(value: str) -> str:
@@ -48,8 +57,38 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--harness", choices=("codex", "claude"), required=True)
     parser.add_argument("--problem", required=True)
     parser.add_argument("--path", action="append", default=[])
+    parser.add_argument("--log", action="append", default=[])
+    parser.add_argument("--repro", action="append", default=[])
+    parser.add_argument("--constraint", action="append", default=[])
+    parser.add_argument("--goal", action="append", default=[])
+    parser.add_argument("--expected-output", action="append", default=[])
+    parser.add_argument("--symbol", action="append", default=[])
+    parser.add_argument("--max-snippet-chars", type=int, default=4000)
     parser.add_argument("--date", required=True)
     return parser
+
+
+def _read_log_texts(project_root: Path, paths: list[str]) -> tuple[list[str], list[str]]:
+    """Read requested log files while preserving path and secret boundaries."""
+
+    logs: list[str] = []
+    warnings: list[str] = []
+    resolved_root = project_root.resolve()
+    for raw_path in paths:
+        if is_denied_path(raw_path):
+            warnings.append(f"Denied sensitive path: {raw_path}")
+            continue
+        log_path = (project_root / raw_path).resolve()
+        try:
+            log_path.relative_to(resolved_root)
+        except ValueError:
+            warnings.append(f"Denied path outside project: {raw_path}")
+            continue
+        try:
+            logs.append(redact_text(log_path.read_text(encoding="utf-8", errors="replace")))
+        except OSError as error:
+            warnings.append(f"Could not read {raw_path}: {error}")
+    return logs, warnings
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -57,25 +96,49 @@ def main(argv: list[str] | None = None) -> int:
 
     args = build_parser().parse_args(argv)
     project_root = Path(args.project_root).resolve()
-    candidates, candidate_warnings = collect_user_path_candidates(
+    context, context_warnings = collect_git_context(project_root)
+    logs, log_warnings = _read_log_texts(project_root, args.log)
+    user_candidates, candidate_warnings = collect_user_path_candidates(
         project_root,
         args.path,
     )
-    code_blocks, block_warnings = collect_code_blocks(project_root, candidates)
+    git_candidates, git_warnings = collect_git_diff_candidates(project_root)
+    symbol_candidates, symbol_warnings = collect_symbol_candidates(project_root, args.symbol)
+    dependency_candidates = collect_dependency_candidates(project_root)
+    candidates = (
+        user_candidates
+        + collect_stack_trace_candidates(logs)
+        + git_candidates
+        + symbol_candidates
+        + dependency_candidates
+    )
+    code_blocks, block_warnings = collect_code_blocks(
+        project_root,
+        candidates,
+        max_chars=args.max_snippet_chars,
+    )
     output_dir = _output_dir(project_root, args.harness)
     output_dir.mkdir(parents=True, exist_ok=True)
     output_path = _unique_output_path(output_dir, args.date, _slugify(args.problem))
     prompt = compose_prompt(
         PromptInput(
             problem=args.problem,
-            context=[f"Project root: {project_root}"],
+            context=[f"Project root: {project_root}", *context],
             code_blocks=code_blocks,
-            logs=[],
-            reproduction=[],
-            constraints=["Prefer official documentation and primary sources."],
-            research_goals=["Investigate the problem using the supplied project context."],
-            expected_output=["Source-backed findings and recommended next steps."],
-            warnings=candidate_warnings + block_warnings,
+            logs=logs,
+            reproduction=args.repro,
+            constraints=args.constraint
+            or ["Prefer official documentation and primary sources."],
+            research_goals=args.goal
+            or ["Investigate the problem using the supplied project context."],
+            expected_output=args.expected_output
+            or ["Source-backed findings and recommended next steps."],
+            warnings=context_warnings
+            + log_warnings
+            + candidate_warnings
+            + git_warnings
+            + symbol_warnings
+            + block_warnings,
         )
     )
     output_path.write_text(prompt, encoding="utf-8")
