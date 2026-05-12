@@ -1,10 +1,10 @@
-PYTEST = pytest -q
+PYTEST = uv run --isolated --python /usr/local/bin/python3.12 --with pytest pytest -q
 
-.PHONY: test test-session-memory test-scripts test-quality-guard test-codex-quality-guard test-shared-subagents test-shared-skills build-plugins validate-generated test-interop
+.PHONY: test test-session-memory test-scripts test-quality-guard test-codex-quality-guard test-shared-subagents test-shared-skills test-research-prompt build-plugins validate-generated test-interop
 
 # Run each plugin test suite in its own process to prevent sys.modules collision
 # between plugins that share script filenames.
-test: test-session-memory test-scripts test-quality-guard test-codex-quality-guard test-shared-skills test-interop
+test: test-research-prompt test-session-memory test-scripts test-quality-guard test-codex-quality-guard test-shared-skills test-interop
 
 test-session-memory:
 	$(PYTEST) tests/session-memory/
@@ -23,6 +23,9 @@ test-shared-subagents:
 
 test-shared-skills:
 	$(PYTEST) tests/scripts/test_shared_skills_plugin.py
+
+test-research-prompt: build-plugins validate-generated
+	$(PYTEST) tests/research-prompt/
 
 build-plugins:
 	python tools/build_plugins.py
