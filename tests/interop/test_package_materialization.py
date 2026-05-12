@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import os
+import subprocess
+import sys
 from pathlib import Path
 
 
@@ -42,4 +45,51 @@ def test_research_prompt_package_is_materialized_into_generated_artifacts() -> N
     ).exists()
     assert (
         ROOT / "plugins/claude/research-prompt/_packages/research_prompt/redaction.py"
+    ).exists()
+
+
+def test_research_prompt_generated_wrappers_run_with_defaults(tmp_path: Path) -> None:
+    project = tmp_path / "project"
+    project.mkdir()
+    env = {**os.environ, "RESEARCH_PROMPT_DATE": "2026-05-13"}
+
+    subprocess.run(
+        [
+            sys.executable,
+            str(
+                ROOT
+                / "plugins/codex/research-prompt/skills/research-prompt/scripts/research_prompt.py"
+            ),
+            "--harness",
+            "codex",
+            "--problem",
+            "Wrapper defaults",
+        ],
+        cwd=project,
+        env=env,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    subprocess.run(
+        [
+            sys.executable,
+            str(ROOT / "plugins/claude/research-prompt/scripts/research_prompt.py"),
+            "--harness",
+            "claude",
+            "--problem",
+            "Wrapper defaults",
+        ],
+        cwd=project,
+        env=env,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    assert (
+        project / ".codex/deep-research-prompts/2026-05-13-wrapper-defaults.md"
+    ).exists()
+    assert (
+        project / ".claude/deep-research-prompts/2026-05-13-wrapper-defaults.md"
     ).exists()

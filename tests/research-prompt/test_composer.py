@@ -24,6 +24,7 @@ def test_compose_prompt_includes_required_sections() -> None:
                 {
                     "path": "src/App.tsx",
                     "reason": "user mentioned path",
+                    "line_range": "10-14",
                     "excerpt": "export function App() { return <main /> }",
                 }
             ],
@@ -39,6 +40,7 @@ def test_compose_prompt_includes_required_sections() -> None:
     for heading in REQUIRED_HEADINGS:
         assert heading in prompt
     assert "src/App.tsx" in prompt
+    assert "Lines: 10-14" in prompt
     assert "Warning: Text content did not match" in prompt
 
 

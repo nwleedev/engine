@@ -12,8 +12,13 @@ Create one Deep Research prompt artifact from the current project.
 Use the helper script next to this skill:
 
 ```bash
-python3 /path/to/skills/research-prompt/scripts/research_prompt.py --harness codex --problem "<research question>" --path <relative-path>
+python3 plugins/codex/research-prompt/skills/research-prompt/scripts/research_prompt.py --harness codex --problem "<research question>" --path <relative-path>
 ```
+
+Run it from the project root. The helper uses the current working directory as
+`--project-root` and today's date for the output file when those arguments are
+not supplied. If the plugin is installed outside this repository, replace
+`plugins/codex/research-prompt` with that installed plugin root.
 
 ## Output
 

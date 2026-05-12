@@ -9,7 +9,16 @@ Create one Deep Research prompt artifact from the current project.
 
 ## Run
 
-Use the plugin command or helper script with `--harness claude`.
+Use the plugin command or helper script with `--harness claude`:
+
+```bash
+python3 plugins/claude/research-prompt/scripts/research_prompt.py --harness claude --problem "<research question>" --path <relative-path>
+```
+
+Run it from the project root. The helper uses the current working directory as
+`--project-root` and today's date for the output file when those arguments are
+not supplied. If the plugin is installed outside this repository, replace
+`plugins/claude/research-prompt` with that installed plugin root.
 
 ## Output
 

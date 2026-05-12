@@ -1,4 +1,4 @@
-"""Collect prompt-ready source context from user-provided project paths."""
+"""Collect prompt-ready source context from project-local evidence."""
 
 from __future__ import annotations
 
@@ -12,6 +12,9 @@ from .snippets import extract_excerpt
 
 
 STACK_TRACE_PATH = re.compile(r'File "([^"]+)", line (\d+)')
+DEFAULT_CONTEXT_LINES = 4
+MAX_CANDIDATES = 20
+MAX_TOTAL_SNIPPET_CHARS = 12000
 DEPENDENCY_FILE_NAMES = frozenset(
     {
         "package.json",
@@ -23,6 +26,32 @@ DEPENDENCY_FILE_NAMES = frozenset(
         "Dockerfile",
     }
 )
+
+
+def _resolve_inside_project(project_root: Path, path: Path) -> tuple[Path | None, str | None]:
+    """Resolve a candidate path and reject project escape, including symlinks."""
+
+    resolved_root = project_root.resolve()
+    resolved_path = (project_root / path).resolve()
+    try:
+        resolved_path.relative_to(resolved_root)
+    except ValueError:
+        return None, f"Denied path outside project: {path.as_posix()}"
+    return resolved_path, None
+
+
+def _line_range(path: Path, line: int | None, context_lines: int = DEFAULT_CONTEXT_LINES) -> str | None:
+    """Return the bounded line range used for a line-window excerpt."""
+
+    if line is None:
+        return None
+    try:
+        total_lines = len(path.read_text(encoding="utf-8", errors="replace").splitlines())
+    except OSError:
+        return str(line)
+    start = max(1, line - context_lines)
+    end = min(total_lines, line + context_lines)
+    return f"{start}-{end}"
 
 
 def _run_read_only(
@@ -56,18 +85,15 @@ def collect_user_path_candidates(
 
     candidates: list[CandidateFile] = []
     warnings: list[str] = []
-    resolved_root = project_root.resolve()
     for raw_path in paths:
         if is_denied_path(raw_path):
             warnings.append(f"Denied sensitive path: {raw_path}")
             continue
-        candidate_path = (project_root / raw_path).resolve()
-        try:
-            candidate_path.relative_to(resolved_root)
-        except ValueError:
-            warnings.append(f"Denied path outside project: {raw_path}")
+        candidate_path, warning = _resolve_inside_project(project_root, Path(raw_path))
+        if warning:
+            warnings.append(warning)
             continue
-        if candidate_path.is_file():
+        if candidate_path and candidate_path.is_file():
             candidates.append(CandidateFile(path=Path(raw_path), signals={"user_path": 1}))
         else:
             warnings.append(f"Path not found or not a file: {raw_path}")
@@ -140,8 +166,11 @@ def collect_symbol_candidates(
                 rel = path.relative_to(project_root)
                 if is_denied_path(rel.as_posix()):
                     continue
+                resolved, _resolve_warning = _resolve_inside_project(project_root, rel)
+                if resolved is None:
+                    continue
                 try:
-                    if symbol in path.read_text(encoding="utf-8", errors="replace"):
+                    if symbol in resolved.read_text(encoding="utf-8", errors="replace"):
                         candidates[rel] = CandidateFile(path=rel, signals={"symbol": 1})
                 except OSError:
                     continue
@@ -162,6 +191,9 @@ def collect_dependency_candidates(project_root: Path) -> list[CandidateFile]:
             continue
         rel = path.relative_to(project_root)
         rel_text = rel.as_posix()
+        resolved, _warning = _resolve_inside_project(project_root, rel)
+        if resolved is None:
+            continue
         if (
             path.name in DEPENDENCY_FILE_NAMES
             or rel_text.startswith(".github/workflows/")
@@ -171,28 +203,73 @@ def collect_dependency_candidates(project_root: Path) -> list[CandidateFile]:
     return rank_candidates(candidates)
 
 
+def merge_candidates(candidates: list[CandidateFile]) -> list[CandidateFile]:
+    """Merge duplicate path candidates so multiple signals strengthen relevance."""
+
+    merged: dict[Path, CandidateFile] = {}
+    for candidate in candidates:
+        existing = merged.get(candidate.path)
+        if existing is None:
+            merged[candidate.path] = candidate
+            continue
+        signals = dict(existing.signals)
+        for name, count in candidate.signals.items():
+            signals[name] = signals.get(name, 0) + count
+        merged[candidate.path] = CandidateFile(
+            path=candidate.path,
+            signals=signals,
+            line=existing.line if existing.line is not None else candidate.line,
+        )
+    return rank_candidates(list(merged.values()))
+
+
 def collect_code_blocks(
     project_root: Path,
     candidates: list[CandidateFile],
     *,
     max_chars: int = 4000,
+    max_total_chars: int = MAX_TOTAL_SNIPPET_CHARS,
+    max_candidates: int = MAX_CANDIDATES,
 ) -> tuple[list[dict[str, str]], list[str]]:
     """Read candidate file excerpts and return prompt-ready code blocks."""
 
     blocks: list[dict[str, str]] = []
     warnings: list[str] = []
-    for candidate in candidates:
-        absolute = project_root / candidate.path
+    used_chars = 0
+    for candidate in merge_candidates(candidates)[:max_candidates]:
+        if is_denied_path(candidate.path.as_posix()):
+            warnings.append(f"Denied sensitive path: {candidate.path.as_posix()}")
+            continue
+        absolute, warning = _resolve_inside_project(project_root, candidate.path)
+        if warning:
+            warnings.append(warning)
+            continue
+        if absolute is None or not absolute.is_file():
+            warnings.append(f"Path not found or not a file: {candidate.path.as_posix()}")
+            continue
         try:
-            excerpt = extract_excerpt(absolute, line=candidate.line, max_chars=max_chars)
+            excerpt = extract_excerpt(
+                absolute,
+                line=candidate.line,
+                context_lines=DEFAULT_CONTEXT_LINES,
+                max_chars=max_chars,
+            )
         except OSError as error:
             warnings.append(f"Could not read {candidate.path.as_posix()}: {error}")
             continue
+        if blocks and used_chars + len(excerpt) > max_total_chars:
+            warnings.append(f"not included due to budget: {candidate.path.as_posix()}")
+            continue
+        used_chars += len(excerpt)
         blocks.append(
             {
                 "path": candidate.path.as_posix(),
                 "reason": ", ".join(sorted(candidate.signals)),
+                "line_range": _line_range(absolute, candidate.line) or "",
                 "excerpt": excerpt,
             }
         )
+    omitted = len(merge_candidates(candidates)) - max_candidates
+    if omitted > 0:
+        warnings.append(f"not included due to budget: {omitted} lower-ranked candidates")
     return blocks, warnings

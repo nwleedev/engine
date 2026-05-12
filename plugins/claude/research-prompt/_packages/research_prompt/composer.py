@@ -45,6 +45,8 @@ def _code_or_default(blocks: list[dict[str, str]]) -> str:
     for block in blocks:
         rendered.append(f"## `{block['path']}`")
         rendered.append(f"Reason: {block['reason']}")
+        if line_range := block.get("line_range"):
+            rendered.append(f"Lines: {line_range}")
         rendered.append("")
         rendered.append("```text")
         rendered.append(block["excerpt"].rstrip())

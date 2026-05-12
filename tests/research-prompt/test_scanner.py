@@ -3,12 +3,16 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
+import research_prompt.scanner as scanner
 from research_prompt.scanner import (
+    collect_code_blocks,
     collect_dependency_candidates,
     collect_git_context,
     collect_git_diff_candidates,
     collect_symbol_candidates,
+    merge_candidates,
 )
+from research_prompt.relevance import CandidateFile
 
 
 def _git(project: Path, *args: str) -> None:
@@ -78,3 +82,76 @@ def test_collect_dependency_candidates_finds_config_and_lock_files(tmp_path: Pat
     paths = {candidate.path.as_posix() for candidate in candidates}
 
     assert {"package.json", "pnpm-lock.yaml", "Dockerfile", ".github/workflows/ci.yml"} <= paths
+
+
+def test_merge_candidates_combines_signals_and_preserves_line() -> None:
+    candidates = [
+        CandidateFile(path=Path("src/app.py"), signals={"user_path": 1}),
+        CandidateFile(path=Path("src/app.py"), signals={"stack_trace": 1}, line=7),
+        CandidateFile(path=Path("src/app.py"), signals={"symbol": 1}),
+    ]
+
+    merged = merge_candidates(candidates)
+
+    assert len(merged) == 1
+    assert merged[0].signals == {"user_path": 1, "stack_trace": 1, "symbol": 1}
+    assert merged[0].line == 7
+
+
+def test_collect_code_blocks_records_line_range_and_budget_warnings(tmp_path: Path) -> None:
+    project = tmp_path / "project"
+    project.mkdir()
+    (project / "first.py").write_text("\n".join(f"line {index}" for index in range(1, 20)), encoding="utf-8")
+    (project / "second.py").write_text("second = True\n" * 20, encoding="utf-8")
+
+    blocks, warnings = collect_code_blocks(
+        project,
+        [
+            CandidateFile(path=Path("first.py"), signals={"user_path": 1, "stack_trace": 1}, line=5),
+            CandidateFile(path=Path("second.py"), signals={"symbol": 1}),
+        ],
+        max_chars=200,
+        max_total_chars=80,
+    )
+
+    assert blocks[0]["line_range"] == "1-9"
+    assert any("not included due to budget: second.py" in warning for warning in warnings)
+
+
+def test_collect_code_blocks_denies_outside_and_symlink_targets(tmp_path: Path) -> None:
+    project = tmp_path / "project"
+    project.mkdir()
+    outside = tmp_path / "outside.txt"
+    outside.write_text("private notes\n", encoding="utf-8")
+    link = project / "linked.txt"
+    link.symlink_to(outside)
+
+    blocks, warnings = collect_code_blocks(
+        project,
+        [
+            CandidateFile(path=Path("/etc/hosts"), signals={"stack_trace": 1}),
+            CandidateFile(path=Path("../outside.txt"), signals={"stack_trace": 1}),
+            CandidateFile(path=Path("linked.txt"), signals={"dependency": 1}),
+        ],
+    )
+
+    assert blocks == []
+    assert any("Denied path outside project: /etc/hosts" in warning for warning in warnings)
+    assert any("Denied path outside project: ../outside.txt" in warning for warning in warnings)
+    assert any("Denied path outside project: linked.txt" in warning for warning in warnings)
+
+
+def test_collect_symbol_candidates_falls_back_when_rg_fails(tmp_path: Path, monkeypatch) -> None:
+    project = tmp_path / "project"
+    project.mkdir()
+    (project / "auth.py").write_text("def login_user():\n    return True\n", encoding="utf-8")
+
+    def fail_rg(command: list[str], project_root: Path, timeout_seconds: int = 3) -> tuple[str, str | None]:
+        return "", "rg failed: not found"
+
+    monkeypatch.setattr(scanner, "_run_read_only", fail_rg)
+
+    candidates, warnings = collect_symbol_candidates(project, ["login_user"], timeout_seconds=2)
+
+    assert warnings == ["rg failed: not found"]
+    assert candidates[0].path == Path("auth.py")

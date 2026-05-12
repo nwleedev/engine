@@ -249,3 +249,130 @@ def test_cli_scoped_scan_ignores_unmentioned_large_tree(tmp_path: Path) -> None:
     text = prompt.read_text(encoding="utf-8")
     assert "def target()" in text
     assert "file_199.py" not in text
+
+
+def test_cli_defaults_project_root_and_date_to_current_context(tmp_path: Path, monkeypatch) -> None:
+    project = tmp_path / "project"
+    project.mkdir()
+    monkeypatch.chdir(project)
+    monkeypatch.setenv("RESEARCH_PROMPT_DATE", "2026-05-13")
+
+    assert main(["--harness", "codex", "--problem", "Default context"]) == 0
+
+    prompts = list((project / ".codex" / "deep-research-prompts").glob("*.md"))
+    assert len(prompts) == 1
+
+
+def test_cli_merges_duplicate_candidates_and_records_line_range(tmp_path: Path) -> None:
+    project = tmp_path / "project"
+    project.mkdir()
+    (project / "src").mkdir()
+    source = project / "src" / "server.py"
+    source.write_text(
+        "\n".join(
+            [
+                "def setup():",
+                "    return None",
+                "",
+                "def handler():",
+                "    login_user()",
+                "    raise RuntimeError()",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (project / "failure.log").write_text(
+        'Traceback\n  File "src/server.py", line 6, in handler\nRuntimeError: boom\n',
+        encoding="utf-8",
+    )
+
+    assert main(
+        [
+            "--project-root",
+            str(project),
+            "--harness",
+            "codex",
+            "--problem",
+            "Merged context",
+            "--path",
+            "src/server.py",
+            "--log",
+            "failure.log",
+            "--symbol",
+            "login_user",
+            "--date",
+            "2026-05-13",
+        ]
+    ) == 0
+
+    prompt = next((project / ".codex" / "deep-research-prompts").glob("*.md"))
+    text = prompt.read_text(encoding="utf-8")
+    assert text.count("## `src/server.py`") == 1
+    assert "Reason: stack_trace, symbol, user_path" in text
+    assert "Lines:" in text
+
+
+def test_cli_records_prompt_budget_exclusions(tmp_path: Path) -> None:
+    project = tmp_path / "project"
+    project.mkdir()
+    (project / "first.py").write_text("first = True\n" * 20, encoding="utf-8")
+    (project / "second.py").write_text("second = True\n" * 20, encoding="utf-8")
+
+    assert main(
+        [
+            "--project-root",
+            str(project),
+            "--harness",
+            "codex",
+            "--problem",
+            "Budget exclusions",
+            "--path",
+            "first.py",
+            "--path",
+            "second.py",
+            "--max-snippet-chars",
+            "120",
+            "--max-total-snippet-chars",
+            "150",
+            "--date",
+            "2026-05-13",
+        ]
+    ) == 0
+
+    prompt = next((project / ".codex" / "deep-research-prompts").glob("*.md"))
+    text = prompt.read_text(encoding="utf-8")
+    assert "not included due to budget: second.py" in text
+
+
+def test_cli_denies_stack_trace_paths_outside_project(tmp_path: Path) -> None:
+    project = tmp_path / "project"
+    project.mkdir()
+    outside = tmp_path / "outside.py"
+    outside.write_text("PRIVATE_NOTE='do not include'\n", encoding="utf-8")
+    (project / "failure.log").write_text(
+        f'Traceback\n  File "{outside}", line 1, in <module>\nRuntimeError: boom\n'
+        '  File "../outside.py", line 1, in <module>\nRuntimeError: boom\n',
+        encoding="utf-8",
+    )
+
+    assert main(
+        [
+            "--project-root",
+            str(project),
+            "--harness",
+            "codex",
+            "--problem",
+            "Outside trace",
+            "--log",
+            "failure.log",
+            "--date",
+            "2026-05-13",
+        ]
+    ) == 0
+
+    prompt = next((project / ".codex" / "deep-research-prompts").glob("*.md"))
+    text = prompt.read_text(encoding="utf-8")
+    assert "PRIVATE_NOTE" not in text
+    assert f"Denied path outside project: {outside}" in text
+    assert "Denied path outside project: ../outside.py" in text

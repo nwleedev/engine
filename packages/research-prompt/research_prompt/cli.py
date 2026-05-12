@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import argparse
+import os
 import re
+from datetime import date
 from pathlib import Path
 
 from .composer import PromptInput, compose_prompt
@@ -13,6 +15,7 @@ from .scanner import (
     collect_dependency_candidates,
     collect_git_context,
     collect_git_diff_candidates,
+    merge_candidates,
     collect_stack_trace_candidates,
     collect_symbol_candidates,
     collect_user_path_candidates,
@@ -53,7 +56,7 @@ def build_parser() -> argparse.ArgumentParser:
     """Build the research-prompt CLI parser."""
 
     parser = argparse.ArgumentParser(prog="research-prompt")
-    parser.add_argument("--project-root", required=True)
+    parser.add_argument("--project-root")
     parser.add_argument("--harness", choices=("codex", "claude"), required=True)
     parser.add_argument("--problem", required=True)
     parser.add_argument("--path", action="append", default=[])
@@ -64,7 +67,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--expected-output", action="append", default=[])
     parser.add_argument("--symbol", action="append", default=[])
     parser.add_argument("--max-snippet-chars", type=int, default=4000)
-    parser.add_argument("--date", required=True)
+    parser.add_argument("--max-total-snippet-chars", type=int, default=12000)
+    parser.add_argument("--date")
     return parser
 
 
@@ -95,7 +99,8 @@ def main(argv: list[str] | None = None) -> int:
     """Generate a single Deep Research prompt Markdown artifact."""
 
     args = build_parser().parse_args(argv)
-    project_root = Path(args.project_root).resolve()
+    project_root = Path(args.project_root or Path.cwd()).resolve()
+    run_date = args.date or os.environ.get("RESEARCH_PROMPT_DATE") or date.today().isoformat()
     context, context_warnings = collect_git_context(project_root)
     logs, log_warnings = _read_log_texts(project_root, args.log)
     user_candidates, candidate_warnings = collect_user_path_candidates(
@@ -105,7 +110,7 @@ def main(argv: list[str] | None = None) -> int:
     git_candidates, git_warnings = collect_git_diff_candidates(project_root)
     symbol_candidates, symbol_warnings = collect_symbol_candidates(project_root, args.symbol)
     dependency_candidates = collect_dependency_candidates(project_root)
-    candidates = (
+    candidates = merge_candidates(
         user_candidates
         + collect_stack_trace_candidates(logs)
         + git_candidates
@@ -116,10 +121,11 @@ def main(argv: list[str] | None = None) -> int:
         project_root,
         candidates,
         max_chars=args.max_snippet_chars,
+        max_total_chars=args.max_total_snippet_chars,
     )
     output_dir = _output_dir(project_root, args.harness)
     output_dir.mkdir(parents=True, exist_ok=True)
-    output_path = _unique_output_path(output_dir, args.date, _slugify(args.problem))
+    output_path = _unique_output_path(output_dir, run_date, _slugify(args.problem))
     prompt = compose_prompt(
         PromptInput(
             problem=args.problem,
