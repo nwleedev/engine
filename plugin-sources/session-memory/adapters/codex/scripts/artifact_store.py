@@ -8,7 +8,7 @@ from typing import Any
 ARTIFACT_SCHEMA_VERSION = 2
 RELATIONSHIP_SOURCE_FIELDS = {"role", "parent_session_id"}
 CONTEXT_HEADING = "## Contexts"
-RESUME_HINT = "Resume this session: `$codex-session-memory:resume {session_prefix}`"
+RESUME_HINT = "Resume this session: `$session-memory:resume {session_prefix}`"
 
 
 class ArtifactStore:
