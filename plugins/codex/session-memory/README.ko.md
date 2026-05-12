@@ -31,12 +31,12 @@ Codex는 플러그인에 포함된 스킬을 플러그인 네임스페이스와 
 `/plugins`에는 플러그인 자체(`session-memory`)가 보이며, 채팅에서
 스킬을 호출할 때는 아래 이름을 사용합니다.
 
-| 스킬 | 동작 | LLM 호출 |
-|---|---|---|
-| `$session-memory:install` | 스킬 우선 세션 메모리를 위한 AGENTS.md 설정 안내 출력 | 0 |
-| `$session-memory:checkpoint` | 컨텍스트 체크포인트 인계 준비 및 검증 | 0 |
-| `$session-memory:resume [prefix]` | 이전 세션의 INDEX 목록 표시 또는 로드 | 0 |
-| `$session-memory:status` | 대기 중인 턴, 컨텍스트 파일 수, 경로 표시 | 0 |
+| 스킬                              | 동작                                                  | LLM 호출 |
+| --------------------------------- | ----------------------------------------------------- | -------- |
+| `$session-memory:install`         | 스킬 우선 세션 메모리를 위한 AGENTS.md 설정 안내 출력 | 0        |
+| `$session-memory:checkpoint`      | 컨텍스트 체크포인트 인계 준비 및 검증                 | 0        |
+| `$session-memory:resume [prefix]` | 이전 세션의 INDEX 목록 표시 또는 로드                 | 0        |
+| `$session-memory:status`          | 대기 중인 턴, 컨텍스트 파일 수, 경로 표시             | 0        |
 
 ## 컨텍스트 압축 복구
 
@@ -111,8 +111,8 @@ Flat `INDEX.md` frontmatter에는 `session_id`, `last_processed_offset`,
 Flat artifact는 graph 데이터를 사용할 수 없을 때도 영속적인 복구 단위입니다.
 Degraded mode에서는 다음처럼 동작합니다.
 
-- `$codex-session-memory:status`가 `Graph: unavailable`을 출력할 수 있습니다.
-- `$codex-session-memory:resume <prefix>`는 선택한 flat
+- `$session-memory:status`가 `Graph: unavailable`을 출력할 수 있습니다.
+- `$session-memory:resume <prefix>`는 선택한 flat
   `.codex/session-memory/threads/<id>/INDEX.md`와 최근 `contexts/` 중심으로
   작업을 재개합니다.
 - 체크포인트 CONTEXT의 `graph_context`는 helper가 확인한 `unavailable`,
@@ -192,5 +192,5 @@ rtk python tools/validate_generated.py
 ## 테스트
 
 ```
-python -m pytest tests/codex-session-memory -q
+python -m pytest tests/session-memory -q
 ```

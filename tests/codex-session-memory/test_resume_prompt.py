@@ -196,7 +196,7 @@ def test_preserves_structure_and_next_action_with_tight_budget(tmp_path):
     assert len(prompt) <= 700
     assert "next_action:" in prompt
     assert "preserve the next action even with a small budget" in prompt
-    assert prompt.endswith("</codex-session-memory>")
+    assert prompt.endswith("</session-memory>")
 
 
 def test_preserves_closing_tag_with_very_small_budgets(tmp_path):
@@ -214,8 +214,8 @@ def test_preserves_closing_tag_with_very_small_budgets(tmp_path):
         prompt = load_resume_prompt().build_resume_prompt(session, budget_chars=budget)
 
         assert len(prompt) <= budget
-        assert prompt.startswith("<codex-session-memory>")
-        assert prompt.endswith("</codex-session-memory>")
+        assert prompt.startswith("<session-memory>")
+        assert prompt.endswith("</session-memory>")
 
 
 def test_build_resume_prompt_includes_child_summary_when_provided(tmp_path):
@@ -294,7 +294,7 @@ def test_build_resume_prompt_preserves_parent_and_child_with_tight_budget(tmp_pa
     assert len(prompt) <= 900
     assert "parent critical next action remains." in prompt
     assert "child critical summary remains." in prompt
-    assert prompt.endswith("</codex-session-memory>")
+    assert prompt.endswith("</session-memory>")
 
 
 def test_resume_skill_ignores_preloaded_sibling_modules(tmp_path, monkeypatch, capsys):
@@ -350,7 +350,7 @@ def test_resume_skill_output_stays_within_prompt_budget(tmp_path, monkeypatch, c
     assert resume_skill.main(["resume.py", "abc12345"]) == 0
     output = capsys.readouterr().out
     assert len(output) <= resume_skill.MAX_INJECT_CHARS
-    assert output.endswith("</codex-session-memory>")
+    assert output.endswith("</session-memory>")
 
 
 def test_resume_skill_lists_flat_artifact_and_legacy_sessions(tmp_path, monkeypatch, capsys):

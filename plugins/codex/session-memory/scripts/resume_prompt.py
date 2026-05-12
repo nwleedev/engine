@@ -5,22 +5,22 @@ from pathlib import Path
 
 TRUNCATION_MARKER = "\n...[truncated for Codex context budget]"
 PLACEHOLDER_FILE_VALUES = {"", "none", "None", "n/a", "N/A", "no file evidence recorded"}
-MINIMAL_PROMPT = "<codex-session-memory>\n</codex-session-memory>"
+MINIMAL_PROMPT = "<session-memory>\n</session-memory>"
 MIN_STRUCTURED_PROMPT_BUDGET = len(
     "\n".join([
-        "<codex-session-memory>",
+        "<session-memory>",
         "current_goal:",
         "last_known_state:",
         "files_and_branches:",
         "next_action:",
-        "</codex-session-memory>",
+        "</session-memory>",
     ])
 )
 MIN_SMALL_BUDGET_WITH_TAGS = 120
 MIN_CURRENT_CONTEXT_BUDGET_WITH_RELATED = 120
 MIN_RELATED_CONTEXT_BUDGET = 160
 STRUCTURED_PROMPT_EMPTY = "\n".join([
-    "<codex-session-memory>",
+    "<session-memory>",
     "current_goal: Restore the continued Codex work context.",
     "last_known_state:",
     "",
@@ -28,7 +28,7 @@ STRUCTURED_PROMPT_EMPTY = "\n".join([
     "",
     "next_action:",
     "",
-    "</codex-session-memory>",
+    "</session-memory>",
 ])
 
 
@@ -219,7 +219,7 @@ def build_resume_prompt(
     files_section = _clip(files_text, files_budget)
     next_section = _next_action_section(context_chunks, related_chunks, next_budget)
     fields = [
-        "<codex-session-memory>",
+        "<session-memory>",
         "current_goal: Restore the continued Codex work context.",
         "last_known_state:",
         index_section,
@@ -227,7 +227,7 @@ def build_resume_prompt(
         files_section,
         "next_action:",
         next_section,
-        "</codex-session-memory>",
+        "</session-memory>",
     ]
     prompt = "\n".join(fields)
     if len(prompt) <= budget_chars:

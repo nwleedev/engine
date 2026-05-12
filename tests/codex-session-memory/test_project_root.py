@@ -21,7 +21,7 @@ def load_project_root():
 def test_find_project_root_prefers_git_toplevel_over_parent_agents(monkeypatch, tmp_path):
     project_root = load_project_root()
     parent = tmp_path / "engine"
-    worktree = parent / ".worktrees" / "codex-session-memory-v2"
+    worktree = parent / ".worktrees" / "session-memory-v2"
     child = worktree / "plugins" / "codex" / "session-memory"
     child.mkdir(parents=True)
     (parent / "AGENTS.md").write_text("# parent rules\n", encoding="utf-8")

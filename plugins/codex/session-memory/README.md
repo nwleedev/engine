@@ -31,12 +31,12 @@ Codex shows plugin-bundled skills with the plugin namespace. `/plugins` lists
 the plugin itself (`session-memory`); use the names below when invoking a
 skill from chat.
 
-| Skill | What it does | LLM calls |
-|---|---|---|
-| `$session-memory:install` | Print AGENTS.md setup guidance for skill-first session memory | 0 |
-| `$session-memory:checkpoint` | Prepare and verify context checkpoint handoff | 0 |
-| `$session-memory:resume [prefix]` | List or load a prior session's INDEX | 0 |
-| `$session-memory:status` | Show pending turns, context count, paths | 0 |
+| Skill                             | What it does                                                  | LLM calls |
+| --------------------------------- | ------------------------------------------------------------- | --------- |
+| `$session-memory:install`         | Print AGENTS.md setup guidance for skill-first session memory | 0         |
+| `$session-memory:checkpoint`      | Prepare and verify context checkpoint handoff                 | 0         |
+| `$session-memory:resume [prefix]` | List or load a prior session's INDEX                          | 0         |
+| `$session-memory:status`          | Show pending turns, context count, paths                      | 0         |
 
 ## Compaction recovery
 
@@ -112,8 +112,8 @@ links.
 The flat artifact is the durable recovery unit even when graph data is
 unavailable. In degraded mode:
 
-- `$codex-session-memory:status` can print `Graph: unavailable`.
-- `$codex-session-memory:resume <prefix>` resumes from the selected flat
+- `$session-memory:status` can print `Graph: unavailable`.
+- `$session-memory:resume <prefix>` resumes from the selected flat
   `.codex/session-memory/threads/<id>/INDEX.md` and recent `contexts/`.
 - Checkpoint CONTEXT files still preserve graph diagnostics in `graph_context`,
   including `unavailable`, `source`, `confidence`, `reason`, and `warnings`
@@ -195,5 +195,5 @@ rtk python tools/validate_generated.py
 ## Tests
 
 ```
-python -m pytest tests/codex-session-memory -q
+python -m pytest tests/session-memory -q
 ```

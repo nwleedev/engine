@@ -83,7 +83,7 @@ def test_validate_marketplaces_reports_missing_generated_plugin_manifest(
 def test_validate_marketplaces_reports_wrong_generated_plugin_manifest_name(
     tmp_path: Path,
 ) -> None:
-    write_minimal_generated_root(tmp_path, manifest_name="codex-session-memory")
+    write_minimal_generated_root(tmp_path, manifest_name="wrong-session-memory")
 
     errors = validate_marketplaces(tmp_path)
 
