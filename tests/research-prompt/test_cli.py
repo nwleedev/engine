@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import research_prompt.cli as cli
 from research_prompt.cli import main
 
 
@@ -249,6 +250,106 @@ def test_cli_scoped_scan_ignores_unmentioned_large_tree(tmp_path: Path) -> None:
     text = prompt.read_text(encoding="utf-8")
     assert "def target()" in text
     assert "file_199.py" not in text
+
+
+def test_cli_scoped_scan_skips_full_dependency_walk_for_explicit_path(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    project = tmp_path / "project"
+    project.mkdir()
+    (project / "target.py").write_text("def target():\n    return 1\n", encoding="utf-8")
+
+    def fail_if_full_dependency_scan(project_root: Path):
+        raise AssertionError("dependency scan should not run for explicit path scope")
+
+    monkeypatch.setattr(cli, "collect_dependency_candidates", fail_if_full_dependency_scan)
+
+    assert main(
+        [
+            "--project-root",
+            str(project),
+            "--harness",
+            "codex",
+            "--problem",
+            "Scoped scan",
+            "--path",
+            "target.py",
+            "--date",
+            "2026-05-13",
+        ]
+    ) == 0
+
+
+def test_cli_symbol_match_uses_symbol_line_window(tmp_path: Path) -> None:
+    project = tmp_path / "project"
+    project.mkdir()
+    source = project / "large_module.py"
+    source.write_text(
+        "\n".join(
+            [
+                "def unrelated_1():",
+                "    return 1",
+                "",
+                "def unrelated_2():",
+                "    return 2",
+                "",
+                "def target_symbol():",
+                "    return 3",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    assert main(
+        [
+            "--project-root",
+            str(project),
+            "--harness",
+            "codex",
+            "--problem",
+            "Symbol locality",
+            "--symbol",
+            "target_symbol",
+            "--max-snippet-chars",
+            "80",
+            "--date",
+            "2026-05-13",
+        ]
+    ) == 0
+
+    prompt = next((project / ".codex" / "deep-research-prompts").glob("*.md"))
+    text = prompt.read_text(encoding="utf-8")
+    assert "def target_symbol()" in text
+    assert "Lines: 3-8" in text
+
+
+def test_cli_context_includes_dependency_versions(tmp_path: Path) -> None:
+    project = tmp_path / "project"
+    project.mkdir()
+    (project / "package.json").write_text(
+        '{"dependencies":{"pytest":"9.0.0"},"devDependencies":{"ruff":"0.8.0"}}\n',
+        encoding="utf-8",
+    )
+
+    assert main(
+        [
+            "--project-root",
+            str(project),
+            "--harness",
+            "codex",
+            "--problem",
+            "Dependency context",
+            "--date",
+            "2026-05-13",
+        ]
+    ) == 0
+
+    prompt = next((project / ".codex" / "deep-research-prompts").glob("*.md"))
+    text = prompt.read_text(encoding="utf-8")
+    assert "Dependency versions:" in text
+    assert "pytest: 9.0.0" in text
+    assert "ruff: 0.8.0" in text
 
 
 def test_cli_defaults_project_root_and_date_to_current_context(tmp_path: Path, monkeypatch) -> None:

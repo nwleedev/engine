@@ -58,7 +58,18 @@ def test_collect_git_diff_candidates_marks_changed_files(tmp_path: Path) -> None
 def test_collect_symbol_candidates_uses_rg_style_text_search(tmp_path: Path) -> None:
     project = tmp_path / "project"
     project.mkdir()
-    (project / "auth.py").write_text("def login_user():\n    return True\n", encoding="utf-8")
+    (project / "auth.py").write_text(
+        "\n".join(
+            [
+                "def before():",
+                "    return False",
+                "",
+                "def login_user():",
+                "    return True",
+            ]
+        ),
+        encoding="utf-8",
+    )
     (project / "other.py").write_text("def render():\n    return None\n", encoding="utf-8")
 
     candidates, warnings = collect_symbol_candidates(project, ["login_user"], timeout_seconds=2)
@@ -66,6 +77,7 @@ def test_collect_symbol_candidates_uses_rg_style_text_search(tmp_path: Path) -> 
     assert isinstance(warnings, list)
     assert candidates[0].path == Path("auth.py")
     assert candidates[0].signals == {"symbol": 1}
+    assert candidates[0].line == 4
 
 
 def test_collect_dependency_candidates_finds_config_and_lock_files(tmp_path: Path) -> None:
@@ -144,7 +156,7 @@ def test_collect_code_blocks_denies_outside_and_symlink_targets(tmp_path: Path) 
 def test_collect_symbol_candidates_falls_back_when_rg_fails(tmp_path: Path, monkeypatch) -> None:
     project = tmp_path / "project"
     project.mkdir()
-    (project / "auth.py").write_text("def login_user():\n    return True\n", encoding="utf-8")
+    (project / "auth.py").write_text("def setup():\n    return None\n\ndef login_user():\n    return True\n", encoding="utf-8")
 
     def fail_rg(command: list[str], project_root: Path, timeout_seconds: int = 3) -> tuple[str, str | None]:
         return "", "rg failed: not found"
@@ -155,3 +167,4 @@ def test_collect_symbol_candidates_falls_back_when_rg_fails(tmp_path: Path, monk
 
     assert warnings == ["rg failed: not found"]
     assert candidates[0].path == Path("auth.py")
+    assert candidates[0].line == 4

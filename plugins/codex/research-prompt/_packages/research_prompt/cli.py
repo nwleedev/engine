@@ -13,6 +13,7 @@ from .redaction import is_denied_path, redact_text
 from .scanner import (
     collect_code_blocks,
     collect_dependency_candidates,
+    collect_dependency_context,
     collect_git_context,
     collect_git_diff_candidates,
     merge_candidates,
@@ -102,6 +103,7 @@ def main(argv: list[str] | None = None) -> int:
     project_root = Path(args.project_root or Path.cwd()).resolve()
     run_date = args.date or os.environ.get("RESEARCH_PROMPT_DATE") or date.today().isoformat()
     context, context_warnings = collect_git_context(project_root)
+    dependency_context = collect_dependency_context(project_root)
     logs, log_warnings = _read_log_texts(project_root, args.log)
     user_candidates, candidate_warnings = collect_user_path_candidates(
         project_root,
@@ -109,13 +111,15 @@ def main(argv: list[str] | None = None) -> int:
     )
     git_candidates, git_warnings = collect_git_diff_candidates(project_root)
     symbol_candidates, symbol_warnings = collect_symbol_candidates(project_root, args.symbol)
-    dependency_candidates = collect_dependency_candidates(project_root)
-    candidates = merge_candidates(
+    scoped_candidates = (
         user_candidates
         + collect_stack_trace_candidates(logs)
         + git_candidates
         + symbol_candidates
-        + dependency_candidates
+    )
+    dependency_candidates = [] if scoped_candidates else collect_dependency_candidates(project_root)
+    candidates = merge_candidates(
+        scoped_candidates + dependency_candidates
     )
     code_blocks, block_warnings = collect_code_blocks(
         project_root,
@@ -129,7 +133,7 @@ def main(argv: list[str] | None = None) -> int:
     prompt = compose_prompt(
         PromptInput(
             problem=args.problem,
-            context=[f"Project root: {project_root}", *context],
+            context=[f"Project root: {project_root}", *context, *dependency_context],
             code_blocks=code_blocks,
             logs=logs,
             reproduction=args.repro,

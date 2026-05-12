@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import json
 import re
 import subprocess
+import tomllib
 from pathlib import Path
 
 from .redaction import is_denied_path
@@ -127,6 +129,19 @@ def collect_git_diff_candidates(project_root: Path) -> tuple[list[CandidateFile]
     return rank_candidates(candidates), warnings
 
 
+def _first_symbol_line(path: Path, symbol: str) -> int | None:
+    """Find the first matching line so symbol snippets stay near the relevant code."""
+
+    try:
+        lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError:
+        return None
+    for index, line in enumerate(lines, start=1):
+        if symbol in line:
+            return index
+    return None
+
+
 def collect_stack_trace_candidates(log_texts: list[str]) -> list[CandidateFile]:
     """Extract file path candidates from stack traces."""
 
@@ -154,7 +169,7 @@ def collect_symbol_candidates(
     warnings: list[str] = []
     for symbol in symbols:
         output, warning = _run_read_only(
-            ["rg", "--files-with-matches", symbol],
+            ["rg", "--line-number", "--no-heading", symbol],
             project_root,
             timeout_seconds,
         )
@@ -170,16 +185,70 @@ def collect_symbol_candidates(
                 if resolved is None:
                     continue
                 try:
-                    if symbol in resolved.read_text(encoding="utf-8", errors="replace"):
-                        candidates[rel] = CandidateFile(path=rel, signals={"symbol": 1})
+                    line = _first_symbol_line(resolved, symbol)
+                    if line is not None:
+                        candidates[rel] = CandidateFile(path=rel, signals={"symbol": 1}, line=line)
                 except OSError:
                     continue
             continue
         for line in output.splitlines():
-            rel = Path(line.strip())
-            if line.strip() and not is_denied_path(rel.as_posix()):
-                candidates[rel] = CandidateFile(path=rel, signals={"symbol": 1})
+            raw_path, separator, raw_line = line.partition(":")
+            if not separator:
+                continue
+            rel = Path(raw_path.strip())
+            if not raw_path.strip() or is_denied_path(rel.as_posix()):
+                continue
+            try:
+                line_number = int(raw_line.split(":", 1)[0])
+            except ValueError:
+                line_number = None
+            candidates[rel] = CandidateFile(path=rel, signals={"symbol": 1}, line=line_number)
     return rank_candidates(list(candidates.values())), warnings
+
+
+def collect_dependency_context(project_root: Path, max_items: int = 12) -> list[str]:
+    """Summarize dependency versions from root manifest files without a tree walk."""
+
+    versions: list[str] = []
+    package_json = project_root / "package.json"
+    if package_json.is_file():
+        try:
+            data = json.loads(package_json.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            data = {}
+        for section in ("dependencies", "devDependencies", "peerDependencies", "optionalDependencies"):
+            entries = data.get(section)
+            if isinstance(entries, dict):
+                versions.extend(
+                    f"{name}: {version}"
+                    for name, version in sorted(entries.items())
+                    if isinstance(name, str) and isinstance(version, str)
+                )
+
+    pyproject = project_root / "pyproject.toml"
+    if pyproject.is_file():
+        try:
+            data = tomllib.loads(pyproject.read_text(encoding="utf-8"))
+        except (OSError, tomllib.TOMLDecodeError):
+            data = {}
+        project = data.get("project", {})
+        dependencies = project.get("dependencies", []) if isinstance(project, dict) else []
+        versions.extend(item for item in dependencies if isinstance(item, str))
+
+    requirements = project_root / "requirements.txt"
+    if requirements.is_file():
+        try:
+            versions.extend(
+                line.strip()
+                for line in requirements.read_text(encoding="utf-8", errors="replace").splitlines()
+                if line.strip() and not line.lstrip().startswith("#")
+            )
+        except OSError:
+            pass
+
+    if not versions:
+        return []
+    return ["Dependency versions:", *[f"- {item}" for item in versions[:max_items]]]
 
 
 def collect_dependency_candidates(project_root: Path) -> list[CandidateFile]:
