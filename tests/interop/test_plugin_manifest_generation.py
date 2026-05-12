@@ -30,8 +30,8 @@ def test_render_codex_manifest_uses_canonical_harness_metadata() -> None:
 
     assert manifest == {
         "name": "session-memory",
-        "version": "0.5.0",
-        "description": "Automatic session context narration and injection",
+        "version": "0.5.1",
+        "description": "Project-scoped session continuity for Codex and Claude Code with checkpoint, resume, status, and monorepo-safe artifact storage",
         "license": "MIT",
         "skills": "./skills/",
     }
@@ -42,8 +42,8 @@ def test_render_claude_manifest_uses_canonical_harness_metadata() -> None:
 
     assert manifest == {
         "name": "session-memory",
-        "version": "0.5.0",
-        "description": "Automatic session context narration and injection",
+        "version": "0.5.1",
+        "description": "Project-scoped session continuity for Codex and Claude Code with checkpoint, resume, status, and monorepo-safe artifact storage",
         "license": "MIT",
     }
 

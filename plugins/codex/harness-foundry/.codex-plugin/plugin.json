@@ -1,6 +1,6 @@
 {
   "name": "harness-foundry",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Skill workflows for diagnosing project domains and designing, scaffolding, and auditing domain harnesses",
   "license": "MIT",
   "skills": "./skills/"

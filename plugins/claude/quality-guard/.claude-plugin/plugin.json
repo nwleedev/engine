@@ -1,6 +1,6 @@
 {
   "name": "quality-guard",
-  "version": "0.2.0",
+  "version": "0.2.3",
   "description": "Quality gate helpers that catch superficial work, vague responses, and missing AGENTS.md guidance",
   "license": "MIT"
 }

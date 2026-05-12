@@ -29,8 +29,8 @@ def session_memory_plugin() -> dict[str, Any]:
 
     return {
         "id": "session-memory",
-        "version": "0.5.0",
-        "description": "Automatic session context narration and injection",
+        "version": "0.5.1",
+        "description": "Project-scoped session continuity for Codex and Claude Code with checkpoint, resume, status, and monorepo-safe artifact storage",
         "license": "MIT",
         "category": "Productivity",
         "harnesses": {

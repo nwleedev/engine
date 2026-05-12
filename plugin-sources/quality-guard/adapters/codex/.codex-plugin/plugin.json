@@ -1,6 +1,6 @@
 {
   "name": "codex-quality-guard",
-  "version": "0.1.0",
+  "version": "0.2.3",
   "description": "Retrospect on superficial work and install AGENTS.md guidance for Codex CLI workflows.",
   "license": "MIT",
   "skills": "./skills/"

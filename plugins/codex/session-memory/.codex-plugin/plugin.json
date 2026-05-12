@@ -1,6 +1,6 @@
 {
   "name": "session-memory",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Project-scoped session continuity for Codex and Claude Code with checkpoint, resume, status, and monorepo-safe artifact storage",
   "license": "MIT",
   "skills": "./skills/"
