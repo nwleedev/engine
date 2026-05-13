@@ -6,6 +6,86 @@ import research_prompt.cli as cli
 from research_prompt.cli import main
 
 
+ROOT = Path(__file__).resolve().parents[2]
+
+
+def assert_skill_documents_general_stack_support(skill: str) -> None:
+    required_markers = [
+        "## Purpose",
+        "## When to use",
+        "## Inputs to inspect",
+        "## Stack detection rules",
+        "## Output",
+        "## Do not",
+        "Node/TypeScript",
+        "Python",
+        "Java/Kotlin",
+        "Go",
+        "Rust",
+        "Docker/Kubernetes",
+    ]
+
+    missing_markers = [marker for marker in required_markers if marker not in skill]
+
+    assert missing_markers == []
+    assert "guidance for choosing user-provided paths, logs, symbols" in skill
+    assert "not a promise that the helper automatically analyzes every stack" in skill
+
+
+def test_codex_skill_documents_general_stack_support() -> None:
+    skill = (
+        ROOT
+        / "plugin-sources"
+        / "research-prompt"
+        / "adapters"
+        / "codex"
+        / "skills"
+        / "research-prompt"
+        / "SKILL.md"
+    ).read_text(encoding="utf-8")
+
+    assert_skill_documents_general_stack_support(skill)
+    assert "--harness codex" in skill
+    assert ".codex/deep-research-prompts/" in skill
+
+
+def test_claude_skill_documents_general_stack_support() -> None:
+    skill = (
+        ROOT
+        / "plugin-sources"
+        / "research-prompt"
+        / "adapters"
+        / "claude"
+        / "skills"
+        / "research-prompt"
+        / "SKILL.md"
+    ).read_text(encoding="utf-8")
+
+    assert_skill_documents_general_stack_support(skill)
+    assert "--harness claude" in skill
+    assert ".claude/deep-research-prompts/" in skill
+
+
+def test_claude_command_documents_stack_agnostic_purpose_and_path() -> None:
+    command = (
+        ROOT
+        / "plugin-sources"
+        / "research-prompt"
+        / "adapters"
+        / "claude"
+        / "commands"
+        / "research-prompt.md"
+    ).read_text(encoding="utf-8")
+
+    command_index = command.index("```bash")
+    purpose = command[:command_index]
+
+    assert "stack-agnostic" in purpose
+    assert "user-provided paths, logs, symbols" in purpose
+    assert "--harness claude" in command
+    assert ".claude/deep-research-prompts/" in command
+
+
 def test_cli_writes_only_codex_prompt_artifact(tmp_path: Path) -> None:
     project = tmp_path / "project"
     project.mkdir()

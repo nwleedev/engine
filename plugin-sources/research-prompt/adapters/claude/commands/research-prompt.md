@@ -1,4 +1,4 @@
-Generate a Deep Research prompt artifact for the current project.
+Generate one stack-agnostic ChatGPT Deep Research Markdown prompt from live project context. Use user-provided paths, logs, symbols, and visible project signals instead of assuming one language or runtime.
 
 Run the research-prompt helper from the project root:
 
@@ -7,3 +7,4 @@ python3 plugins/claude/research-prompt/scripts/research_prompt.py --harness clau
 ```
 
 Pass the user's research question as `--problem`, and include explicitly mentioned project paths with repeated `--path` arguments. The helper fills `--project-root` from the current working directory and the output date from today's date when they are not supplied.
+It writes exactly one prompt under `.claude/deep-research-prompts/`.
