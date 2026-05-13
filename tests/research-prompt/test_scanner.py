@@ -6,6 +6,7 @@ from pathlib import Path
 import research_prompt.scanner as scanner
 from research_prompt.scanner import (
     collect_code_blocks,
+    collect_dependency_context,
     collect_dependency_candidates,
     collect_git_context,
     collect_git_diff_candidates,
@@ -94,6 +95,24 @@ def test_collect_dependency_candidates_finds_config_and_lock_files(tmp_path: Pat
     paths = {candidate.path.as_posix() for candidate in candidates}
 
     assert {"package.json", "pnpm-lock.yaml", "Dockerfile", ".github/workflows/ci.yml"} <= paths
+
+
+def test_collect_dependency_context_reads_pyproject_dependencies(tmp_path: Path) -> None:
+    project = tmp_path / "project"
+    project.mkdir()
+    (project / "pyproject.toml").write_text(
+        "\n".join(
+            [
+                "[project]",
+                'dependencies = ["pytest==8.0.0", "ruff==0.6.0"]',
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    context = collect_dependency_context(project)
+
+    assert context == ["Dependency versions:", "- pytest==8.0.0", "- ruff==0.6.0"]
 
 
 def test_merge_candidates_combines_signals_and_preserves_line() -> None:
