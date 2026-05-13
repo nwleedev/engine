@@ -1,6 +1,6 @@
 {
   "name": "session-memory",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "Save and restore Codex CLI session progress with skill-first checkpoint, resume, status, and install workflows.",
   "license": "MIT",
   "skills": "./skills/"
