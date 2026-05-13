@@ -1,6 +1,6 @@
 {
   "name": "research-prompt",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Generate ChatGPT Deep Research prompt artifacts from live project context without external API calls",
   "license": "MIT",
   "skills": "./skills/"

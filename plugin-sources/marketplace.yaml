@@ -5,7 +5,7 @@ owner:
   name: nwleedev
 plugins:
   - id: session-memory
-    version: 0.5.1
+    version: 0.5.2
     description: Project-scoped session continuity for Codex and Claude Code with checkpoint, resume, status, and monorepo-safe artifact storage
     license: MIT
     category: Productivity
@@ -18,7 +18,7 @@ plugins:
         skills: ./skills/
         path: ./plugins/codex/session-memory
   - id: quality-guard
-    version: 0.2.3
+    version: 0.2.4
     description: Quality gate helpers that catch superficial work, vague responses, and missing AGENTS.md guidance
     license: MIT
     category: Productivity
@@ -70,7 +70,7 @@ plugins:
         skills: ./skills/
         path: ./plugins/codex/harness-foundry
   - id: research-prompt
-    version: 0.1.1
+    version: 0.1.2
     description: Generate ChatGPT Deep Research prompt artifacts from live project context without external API calls
     license: MIT
     category: Productivity
