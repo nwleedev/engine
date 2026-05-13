@@ -2,6 +2,7 @@ import importlib.util
 import json
 import sqlite3
 from pathlib import Path
+from typing import Optional
 
 
 PLUGIN = Path(__file__).resolve().parents[2] / "plugins" / "codex" / "session-memory"
@@ -55,7 +56,7 @@ SECTION_GUIDANCE = {
 }
 
 
-def write_child_session_meta(jsonl: Path, *, parent_thread_id: str | None):
+def write_child_session_meta(jsonl: Path, *, parent_thread_id: Optional[str]):
     thread_spawn = {}
     if parent_thread_id is not None:
         thread_spawn["parent_thread_id"] = parent_thread_id

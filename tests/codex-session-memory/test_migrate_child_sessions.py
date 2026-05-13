@@ -3,6 +3,7 @@ import sqlite3
 import sys
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Optional
 
 
 SCRIPTS = Path(__file__).resolve().parents[2] / "plugins" / "codex" / "session-memory" / "scripts"
@@ -41,7 +42,7 @@ def flat_destination(root: Path, session_id: str) -> Path:
     return root / ".codex" / "session-memory" / "threads" / session_id
 
 
-def child_resolution(parent_thread_id: str | None = "parent-thread"):
+def child_resolution(parent_thread_id: Optional[str] = "parent-thread"):
     return SimpleNamespace(
         role="child",
         parent_thread_id=parent_thread_id,
