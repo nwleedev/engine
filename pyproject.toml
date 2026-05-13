@@ -1,5 +1,5 @@
 [tool.pytest.ini_options]
 addopts = "--import-mode=importlib"
 pythonpath = ["."]
-testpaths = ["tests"]
+testpaths = ["tests", "apps/harness-foundry-lab/tests"]
 norecursedirs = ["temps", ".worktrees"]
