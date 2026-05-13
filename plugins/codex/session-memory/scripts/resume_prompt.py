@@ -1,4 +1,6 @@
 """Build compact resume handoff context from saved session memory."""
+from __future__ import annotations
+
 import re
 from pathlib import Path
 

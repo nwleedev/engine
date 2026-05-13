@@ -31,6 +31,31 @@
       "notice": "GENERATED FILE - DO NOT EDIT"
     },
     {
+      "target": "_packages/tomli/LICENSE",
+      "source": "packages/vendor/tomli/LICENSE",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "_packages/tomli/__init__.py",
+      "source": "packages/vendor/tomli/tomli/__init__.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "_packages/tomli/_parser.py",
+      "source": "packages/vendor/tomli/tomli/_parser.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "_packages/tomli/_re.py",
+      "source": "packages/vendor/tomli/tomli/_re.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "_packages/tomli/_types.py",
+      "source": "packages/vendor/tomli/tomli/_types.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
       "target": "scripts/agents_rules.py",
       "source": "plugin-sources/session-memory/adapters/codex/scripts/agents_rules.py",
       "notice": "GENERATED FILE - DO NOT EDIT"
@@ -88,6 +113,11 @@
     {
       "target": "scripts/session_locator.py",
       "source": "plugin-sources/session-memory/adapters/codex/scripts/session_locator.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "scripts/toml_compat.py",
+      "source": "plugin-sources/session-memory/adapters/codex/scripts/toml_compat.py",
       "notice": "GENERATED FILE - DO NOT EDIT"
     },
     {

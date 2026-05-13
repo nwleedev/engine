@@ -2,6 +2,8 @@
 
 Slash-command companion. No file writes — output only.
 """
+from __future__ import annotations
+
 import json
 import os
 import sys

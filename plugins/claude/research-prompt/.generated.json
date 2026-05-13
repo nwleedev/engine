@@ -41,6 +41,36 @@
       "notice": "GENERATED FILE - DO NOT EDIT"
     },
     {
+      "target": "_packages/research_prompt/toml_compat.py",
+      "source": "packages/research-prompt/research_prompt/toml_compat.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "_packages/tomli/LICENSE",
+      "source": "packages/vendor/tomli/LICENSE",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "_packages/tomli/__init__.py",
+      "source": "packages/vendor/tomli/tomli/__init__.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "_packages/tomli/_parser.py",
+      "source": "packages/vendor/tomli/tomli/_parser.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "_packages/tomli/_re.py",
+      "source": "packages/vendor/tomli/tomli/_re.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "_packages/tomli/_types.py",
+      "source": "packages/vendor/tomli/tomli/_types.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
       "target": "commands/research-prompt.md",
       "source": "plugin-sources/research-prompt/adapters/claude/commands/research-prompt.md",
       "notice": "GENERATED FILE - DO NOT EDIT"
