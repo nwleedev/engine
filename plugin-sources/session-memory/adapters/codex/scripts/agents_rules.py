@@ -1,8 +1,8 @@
 """Detect session-memory AGENTS.md rules and render install guidance."""
-from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Optional, Union
 
 
 SECTION_HEADING = "## Codex Session Memory"
@@ -55,7 +55,7 @@ def _missing_markers(text: str) -> tuple[str, ...]:
     return tuple(marker for marker in REQUIRED_MARKERS if marker not in text)
 
 
-def _codex_session_memory_section(text: str) -> str | None:
+def _codex_session_memory_section(text: str) -> Optional[str]:
     lines = text.splitlines()
     section_lines: list[str] = []
     in_section = False
@@ -77,11 +77,11 @@ def _codex_session_memory_section(text: str) -> str | None:
     return "\n".join(section_lines)
 
 
-def required_block(locale: str | None = None) -> str:
+def required_block(locale: Optional[str] = None) -> str:
     return REQUIRED_BLOCK_KO if locale == "ko" else REQUIRED_BLOCK_EN
 
 
-def _patch_for(path: Path, locale: str | None = None) -> str:
+def _patch_for(path: Path, locale: Optional[str] = None) -> str:
     return (
         f"AGENTS.md path: {path}\n\n"
         "Recommended insertion point: after the existing context/session-memory section, "
@@ -91,7 +91,9 @@ def _patch_for(path: Path, locale: str | None = None) -> str:
     )
 
 
-def check_agents_rules(project_root: str | Path, locale: str | None = None) -> RuleReport:
+def check_agents_rules(
+    project_root: Union[str, Path], locale: Optional[str] = None
+) -> RuleReport:
     root = Path(project_root)
     agents_path = root / "AGENTS.md"
     if not agents_path.is_file():

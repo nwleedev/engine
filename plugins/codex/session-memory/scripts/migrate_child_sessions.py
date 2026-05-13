@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 """Move legacy child session directories into flat session-memory artifacts."""
-from __future__ import annotations
 
 import argparse
 from dataclasses import dataclass
@@ -9,6 +8,7 @@ import re
 import shutil
 import sys
 from pathlib import Path
+from typing import Optional
 
 
 HERE = Path(__file__).resolve().parent
@@ -22,15 +22,15 @@ RELATIONSHIP_SOURCE_FIELDS = {"role", "parent_session_id"}
 @dataclass
 class MigrationCandidate:
     source: Path
-    parent_id: str | None
+    parent_id: Optional[str]
 
 
 @dataclass
 class MovedSession:
     destination: Path
     source: Path
-    parent_id: str | None
-    original_index_text: str | None
+    parent_id: Optional[str]
+    original_index_text: Optional[str]
 
 
 @dataclass(frozen=True)
@@ -53,7 +53,7 @@ pl = _load_script_module("parent_locator.py", "codex_session_memory_migrate_pare
 sl = _load_script_module("session_locator.py", "codex_session_memory_migrate_session_locator")
 
 
-def _parse_args(argv: list[str] | None) -> argparse.Namespace:
+def _parse_args(argv: Optional[list[str]]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
             "Move legacy child session directories under "
@@ -122,7 +122,7 @@ def _parse_frontmatter(index_path: Path) -> dict[str, str]:
     return frontmatter
 
 
-def _frontmatter_parent_id(candidate: Path) -> str | None:
+def _frontmatter_parent_id(candidate: Path) -> Optional[str]:
     frontmatter = _parse_frontmatter(candidate / "INDEX.md")
     if frontmatter.get("role") != "child":
         return None
@@ -184,7 +184,7 @@ def _has_destination_conflicts(
     return bool(conflicts)
 
 
-def _apply_migration(project_root: Path, source: Path, parent_id: str | None) -> None:
+def _apply_migration(project_root: Path, source: Path, parent_id: Optional[str]) -> None:
     child_id = source.name
     destination = _destination_path(project_root, child_id)
     destination.parent.mkdir(parents=True, exist_ok=True)
@@ -290,7 +290,7 @@ def _strip_relationship_frontmatter_fields(text: str) -> str:
     return "---\n" + "\n".join(kept_lines) + "\n---" + body
 
 
-def _normalize_destination_index(destination: Path) -> tuple[bool, str | None]:
+def _normalize_destination_index(destination: Path) -> tuple[bool, Optional[str]]:
     index_path = destination / "INDEX.md"
     try:
         original_text = index_path.read_text(encoding="utf-8")
@@ -438,7 +438,7 @@ def _apply_with_rollback(
     return True
 
 
-def main(argv: list[str] | None = None) -> int:
+def main(argv: Optional[list[str]] = None) -> int:
     args = _parse_args(argv)
     project_root = Path(args.root).resolve()
     if not project_root.is_dir():

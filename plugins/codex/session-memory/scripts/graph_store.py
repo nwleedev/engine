@@ -1,11 +1,11 @@
 """Read Codex thread graph edges from state DB files."""
-from __future__ import annotations
 
 from dataclasses import dataclass
 import importlib.util
 import os
 from pathlib import Path
 import sqlite3
+from typing import Optional, Union
 from urllib.parse import quote
 
 
@@ -28,7 +28,7 @@ EDGE_STATUS_COLUMNS = EDGE_COLUMNS | {"status"}
 @dataclass(frozen=True)
 class ParentLookup:
     available: bool
-    parent_thread_id: str | None = None
+    parent_thread_id: Optional[str] = None
 
 
 @dataclass(frozen=True)
@@ -43,8 +43,8 @@ class GraphStore:
     def __init__(
         self,
         *,
-        codex_home: str | Path | None = None,
-        sqlite_home: str | Path | None = None,
+        codex_home: Optional[Union[str, Path]] = None,
+        sqlite_home: Optional[Union[str, Path]] = None,
         include_default_home: bool = True,
     ) -> None:
         self.codex_home = Path(codex_home).expanduser() if codex_home is not None else None
@@ -64,7 +64,7 @@ class GraphStore:
                 return ParentLookup(available=True, parent_thread_id=str(row[0]))
         return ParentLookup(available=available)
 
-    def children_of(self, parent_thread_id: str, status: str | None = None) -> list[str]:
+    def children_of(self, parent_thread_id: str, status: Optional[str] = None) -> list[str]:
         required_columns = EDGE_COLUMNS if status is None else EDGE_STATUS_COLUMNS
         for conn in self._connections(required_columns=required_columns):
             if status is None:
@@ -136,8 +136,8 @@ class GraphStore:
 
 def _state_db_candidates(
     *,
-    codex_home: str | Path | None,
-    sqlite_home: str | Path | None,
+    codex_home: Optional[Union[str, Path]],
+    sqlite_home: Optional[Union[str, Path]],
     include_default_home: bool = True,
 ) -> list[Path]:
     homes: list[Path] = []
@@ -167,11 +167,11 @@ def _state_db_candidates(
 
 def _sqlite_home_candidates(
     *,
-    codex_home: str | Path | None,
-    sqlite_home: str | Path | None,
+    codex_home: Optional[Union[str, Path]],
+    sqlite_home: Optional[Union[str, Path]],
     include_default_home: bool = True,
-) -> list[Path | str]:
-    homes: list[Path | str] = []
+) -> list[Union[Path, str]]:
+    homes: list[Union[Path, str]] = []
     if sqlite_home is not None:
         homes.append(sqlite_home)
 
@@ -194,10 +194,10 @@ def _sqlite_home_candidates(
 
 
 def _configured_sqlite_home(
-    codex_home: str | Path | None,
+    codex_home: Optional[Union[str, Path]],
     *,
     include_default_home: bool = True,
-) -> Path | None:
+) -> Optional[Path]:
     config_homes: list[Path] = []
     if codex_home is not None:
         config_homes.append(Path(codex_home))

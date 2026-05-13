@@ -1,5 +1,4 @@
 """Resolve Codex parent thread ids from rollout metadata and state DB files."""
-from __future__ import annotations
 
 from dataclasses import dataclass, field
 import importlib.util
@@ -7,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import sqlite3
+from typing import Optional, Union
 from urllib.parse import quote
 
 
@@ -28,7 +28,7 @@ ROLLOUT_SCAN_LIMIT = 50
 @dataclass(frozen=True)
 class ParentResolution:
     role: str
-    parent_thread_id: str | None = None
+    parent_thread_id: Optional[str] = None
     source: str = "none"
     confidence: str = "none"
     reason: str = ""
@@ -37,9 +37,9 @@ class ParentResolution:
 
 def resolve_parent_thread_id(
     thread_id: str,
-    rollout_path: str | Path | None = None,
-    codex_home: str | Path | None = None,
-    sqlite_home: str | Path | None = None,
+    rollout_path: Optional[Union[str, Path]] = None,
+    codex_home: Optional[Union[str, Path]] = None,
+    sqlite_home: Optional[Union[str, Path]] = None,
 ) -> ParentResolution:
     """Return parent resolution evidence for the current Codex thread."""
     rollout_result = _from_rollout_session_meta(rollout_path)
@@ -60,7 +60,9 @@ def resolve_parent_thread_id(
     )
 
 
-def _from_rollout_session_meta(rollout_path: str | Path | None) -> ParentResolution:
+def _from_rollout_session_meta(
+    rollout_path: Optional[Union[str, Path]]
+) -> ParentResolution:
     if rollout_path is None:
         return ParentResolution(role="main", reason="rollout path missing")
 
@@ -120,8 +122,8 @@ def _from_rollout_session_meta(rollout_path: str | Path | None) -> ParentResolut
 def _from_state_db(
     thread_id: str,
     *,
-    codex_home: str | Path | None,
-    sqlite_home: str | Path | None,
+    codex_home: Optional[Union[str, Path]],
+    sqlite_home: Optional[Union[str, Path]],
 ) -> ParentResolution:
     warnings: list[str] = []
     for db_path in _state_db_candidates(codex_home=codex_home, sqlite_home=sqlite_home):
@@ -139,8 +141,8 @@ def _from_state_db(
 
 def _state_db_candidates(
     *,
-    codex_home: str | Path | None,
-    sqlite_home: str | Path | None,
+    codex_home: Optional[Union[str, Path]],
+    sqlite_home: Optional[Union[str, Path]],
 ) -> list[Path]:
     homes: list[Path] = []
     for home in _sqlite_home_candidates(codex_home=codex_home, sqlite_home=sqlite_home):
@@ -166,10 +168,10 @@ def _state_db_candidates(
 
 
 def _sqlite_home_candidates(
-    codex_home: str | Path | None,
-    sqlite_home: str | Path | None,
-) -> list[Path | str]:
-    homes: list[Path | str] = []
+    codex_home: Optional[Union[str, Path]],
+    sqlite_home: Optional[Union[str, Path]],
+) -> list[Union[Path, str]]:
+    homes: list[Union[Path, str]] = []
     if sqlite_home is not None:
         homes.append(sqlite_home)
 
@@ -187,7 +189,7 @@ def _sqlite_home_candidates(
     return homes
 
 
-def _configured_sqlite_home(codex_home: str | Path | None) -> Path | None:
+def _configured_sqlite_home(codex_home: Optional[Union[str, Path]]) -> Optional[Path]:
     config_homes: list[Path] = []
     if codex_home is not None:
         config_homes.append(Path(codex_home))

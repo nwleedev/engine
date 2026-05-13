@@ -1,8 +1,8 @@
 """Detect quality-guard AGENTS.md rules and render install guidance."""
-from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Optional, Union
 
 
 SECTION_HEADING = "## Codex Quality Guard"
@@ -48,11 +48,11 @@ class RuleReport:
     guidance: str
 
 
-def recommended_block(locale: str | None = None) -> str:
+def recommended_block(locale: Optional[str] = None) -> str:
     return RECOMMENDED_BLOCK_KO if locale == "ko" else RECOMMENDED_BLOCK
 
 
-def _section(text: str) -> str | None:
+def _section(text: str) -> Optional[str]:
     lines = text.splitlines()
     section_lines: list[str] = []
     in_section = False
@@ -93,7 +93,7 @@ def _missing_markers(text: str) -> tuple[str, ...]:
     return _missing_markers_for_groups(text, REQUIRED_MARKER_GROUPS)
 
 
-def _guidance_for(path: Path, locale: str | None = None) -> str:
+def _guidance_for(path: Path, locale: Optional[str] = None) -> str:
     return (
         f"AGENTS.md path: {path}\n\n"
         "Recommended insertion point: near other workflow or final-response rules.\n\n"
@@ -102,7 +102,9 @@ def _guidance_for(path: Path, locale: str | None = None) -> str:
     )
 
 
-def check_agents_rules(project_root: str | Path, locale: str | None = None) -> RuleReport:
+def check_agents_rules(
+    project_root: Union[str, Path], locale: Optional[str] = None
+) -> RuleReport:
     root = Path(project_root)
     agents_path = root / "AGENTS.md"
     guidance = _guidance_for(agents_path, locale)
