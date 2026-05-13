@@ -32,6 +32,7 @@ GENERATED_MANIFEST_TARGETS = frozenset(
     }
 )
 MARKETPLACE_SOURCE = "plugin-sources/marketplace.yaml"
+PackageArtifact = tuple[Path, Path, str]
 
 
 def _registry_entries_for_copied_tree(
@@ -53,6 +54,25 @@ def _registry_entries_for_copied_tree(
     ]
 
 
+def _package_license_source(source_root: Path) -> Path | None:
+    """Return the package-level license file that must follow vendored code."""
+
+    license_source = source_root.parent / "LICENSE"
+    if license_source.is_file():
+        return license_source
+    return None
+
+
+def _copy_package_license(source_root: Path, target_root: Path) -> None:
+    """Copy a package-level license notice into the materialized package."""
+
+    license_source = _package_license_source(source_root)
+    if license_source is None:
+        return
+
+    (target_root / "LICENSE").write_bytes(license_source.read_bytes())
+
+
 def _write_registry(target_root: Path, entries: list[dict[str, str]]) -> None:
     """Write tracing metadata for files without inline generated headers."""
 
@@ -65,19 +85,27 @@ def _write_registry(target_root: Path, entries: list[dict[str, str]]) -> None:
 def _write_copied_tree_registry(
     source_root: Path,
     target_root: Path,
-    package_source_root: Path,
-    package_target_prefix: str,
+    package_entries: list[tuple[Path, str]],
     manifest_entries: list[dict[str, str]],
 ) -> None:
     """Write tracing metadata for copied files without inline headers."""
 
     entries = _registry_entries_for_copied_tree(source_root)
-    entries.extend(
-        _registry_entries_for_copied_tree(
-            package_source_root,
-            target_prefix=package_target_prefix,
+    for package_source_root, package_target_prefix in package_entries:
+        entries.extend(
+            _registry_entries_for_copied_tree(
+                package_source_root,
+                target_prefix=package_target_prefix,
+            )
         )
-    )
+        license_source = _package_license_source(package_source_root)
+        if license_source is not None:
+            entries.append(
+                registry_entry(
+                    f"{package_target_prefix}LICENSE",
+                    license_source.relative_to(ROOT).as_posix(),
+                )
+            )
     entries.extend(manifest_entries)
     _write_registry(target_root, entries)
 
@@ -94,6 +122,76 @@ def _manifest_registry_entry(plugin: dict, harness: str) -> tuple[Path, dict[str
             MARKETPLACE_SOURCE,
         ),
     )
+
+
+def _package_artifacts() -> tuple[PackageArtifact, ...]:
+    """Return package copy operations for generated plugin bundles."""
+
+    return (
+        (
+            ROOT / "packages" / "session-memory" / "session_memory",
+            ROOT / "plugins" / "codex" / "session-memory" / "_packages" / "session_memory",
+            "session_memory",
+        ),
+        (
+            ROOT / "packages" / "session-memory" / "session_memory",
+            ROOT / "plugins" / "claude" / "session-memory" / "_packages" / "session_memory",
+            "session_memory",
+        ),
+        (
+            ROOT / "packages" / "quality-guard" / "quality_guard",
+            ROOT / "plugins" / "codex" / "quality-guard" / "_packages" / "quality_guard",
+            "quality_guard",
+        ),
+        (
+            ROOT / "packages" / "quality-guard" / "quality_guard",
+            ROOT / "plugins" / "claude" / "quality-guard" / "_packages" / "quality_guard",
+            "quality_guard",
+        ),
+        (
+            ROOT / "packages" / "research-prompt" / "research_prompt",
+            ROOT / "plugins" / "codex" / "research-prompt" / "_packages" / "research_prompt",
+            "research_prompt",
+        ),
+        (
+            ROOT / "packages" / "research-prompt" / "research_prompt",
+            ROOT / "plugins" / "claude" / "research-prompt" / "_packages" / "research_prompt",
+            "research_prompt",
+        ),
+        (
+            ROOT / "packages" / "vendor" / "tomli" / "tomli",
+            ROOT / "plugins" / "codex" / "session-memory" / "_packages" / "tomli",
+            "tomli",
+        ),
+        (
+            ROOT / "packages" / "vendor" / "tomli" / "tomli",
+            ROOT / "plugins" / "claude" / "session-memory" / "_packages" / "tomli",
+            "tomli",
+        ),
+        (
+            ROOT / "packages" / "vendor" / "tomli" / "tomli",
+            ROOT / "plugins" / "codex" / "research-prompt" / "_packages" / "tomli",
+            "tomli",
+        ),
+        (
+            ROOT / "packages" / "vendor" / "tomli" / "tomli",
+            ROOT / "plugins" / "claude" / "research-prompt" / "_packages" / "tomli",
+            "tomli",
+        ),
+    )
+
+
+def _package_artifacts_by_target_root(
+    package_artifacts: tuple[PackageArtifact, ...],
+) -> dict[Path, list[tuple[Path, str]]]:
+    """Group package registry sources by generated plugin root."""
+
+    artifacts_by_target_root: dict[Path, list[tuple[Path, str]]] = {}
+    for source_root, target_root, package_name in package_artifacts:
+        artifacts_by_target_root.setdefault(target_root.parent.parent, []).append(
+            (source_root, f"_packages/{package_name}/")
+        )
+    return artifacts_by_target_root
 
 
 def main() -> int:
@@ -133,38 +231,7 @@ def main() -> int:
             ROOT / "plugins" / "claude" / "research-prompt",
         ),
     )
-    package_artifacts = (
-        (
-            ROOT / "packages" / "session-memory" / "session_memory",
-            ROOT / "plugins" / "codex" / "session-memory" / "_packages" / "session_memory",
-            "session_memory",
-        ),
-        (
-            ROOT / "packages" / "session-memory" / "session_memory",
-            ROOT / "plugins" / "claude" / "session-memory" / "_packages" / "session_memory",
-            "session_memory",
-        ),
-        (
-            ROOT / "packages" / "quality-guard" / "quality_guard",
-            ROOT / "plugins" / "codex" / "quality-guard" / "_packages" / "quality_guard",
-            "quality_guard",
-        ),
-        (
-            ROOT / "packages" / "quality-guard" / "quality_guard",
-            ROOT / "plugins" / "claude" / "quality-guard" / "_packages" / "quality_guard",
-            "quality_guard",
-        ),
-        (
-            ROOT / "packages" / "research-prompt" / "research_prompt",
-            ROOT / "plugins" / "codex" / "research-prompt" / "_packages" / "research_prompt",
-            "research_prompt",
-        ),
-        (
-            ROOT / "packages" / "research-prompt" / "research_prompt",
-            ROOT / "plugins" / "claude" / "research-prompt" / "_packages" / "research_prompt",
-            "research_prompt",
-        ),
-    )
+    package_artifacts = _package_artifacts()
     copied_tree_artifacts = (
         session_memory_artifacts + quality_guard_artifacts + research_prompt_artifacts
     )
@@ -204,6 +271,7 @@ def main() -> int:
         replace_tree(ROOT, source_root, target_root)
     for source_root, target_root, _package_name in package_artifacts:
         replace_tree(ROOT, source_root, target_root)
+        _copy_package_license(source_root, target_root)
 
     manifest_entries_by_target_root: dict[Path, list[dict[str, str]]] = {}
     for plugin in metadata["plugins"]:
@@ -218,19 +286,12 @@ def main() -> int:
             write_json(manifest_path, render_claude_manifest(plugin))
             plugin_root, entry = _manifest_registry_entry(plugin, "claude")
             manifest_entries_by_target_root.setdefault(plugin_root, []).append(entry)
-    package_artifacts_by_target_root = {
-        target_root.parent.parent: (source_root, f"_packages/{package_name}/")
-        for source_root, target_root, package_name in package_artifacts
-    }
+    package_artifacts_by_target_root = _package_artifacts_by_target_root(package_artifacts)
     for source_root, target_root in copied_tree_artifacts:
-        package_source_root, package_target_prefix = package_artifacts_by_target_root[
-            target_root
-        ]
         _write_copied_tree_registry(
             source_root,
             target_root,
-            package_source_root,
-            package_target_prefix,
+            package_artifacts_by_target_root[target_root],
             manifest_entries_by_target_root.pop(target_root, []),
         )
     for target_root, entries in manifest_entries_by_target_root.items():

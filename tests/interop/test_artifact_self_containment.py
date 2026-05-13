@@ -33,6 +33,15 @@ PACKAGE_TRACE_PREFIXES = {
     "quality-guard": ("_packages/quality_guard/", "packages/quality-guard/quality_guard/"),
     "session-memory": ("_packages/session_memory/", "packages/session-memory/session_memory/"),
 }
+VENDORED_PACKAGE_TRACE_PREFIXES = {
+    "session-memory": (
+        (
+            "_packages/tomli/",
+            "packages/vendor/tomli/tomli/",
+            ROOT / "packages" / "vendor" / "tomli" / "tomli",
+        ),
+    ),
+}
 EXPECTED_RUNTIME_FILES = {
     "quality-guard": {
         "codex": ("scripts/agents_rules.py",),
@@ -88,6 +97,22 @@ def _source_traceable_targets(plugin_name: str, harness: str) -> set[str]:
     return targets
 
 
+def _optional_vendored_traceable_targets(plugin_name: str) -> set[str]:
+    """Return vendored files that may appear after generated artifacts refresh."""
+
+    targets: set[str] = set()
+    for vendored_target_prefix, _vendored_source_prefix, vendored_root in (
+        VENDORED_PACKAGE_TRACE_PREFIXES.get(plugin_name, ())
+    ):
+        targets.update(
+            f"{vendored_target_prefix}{path.relative_to(vendored_root).as_posix()}"
+            for path in _traceable_files(vendored_root)
+        )
+        if (vendored_root.parent / "LICENSE").is_file():
+            targets.add(f"{vendored_target_prefix}LICENSE")
+    return targets
+
+
 def _expected_registry_source(plugin_name: str, harness: str, target: str) -> str:
     package_target_prefix, package_source_prefix = PACKAGE_TRACE_PREFIXES[plugin_name]
     if target == GENERATED_MANIFEST_TARGETS[harness]:
@@ -95,6 +120,14 @@ def _expected_registry_source(plugin_name: str, harness: str, target: str) -> st
     if target.startswith(package_target_prefix):
         package_relative = target.removeprefix(package_target_prefix)
         return f"{package_source_prefix}{package_relative}"
+    for vendored_target_prefix, vendored_source_prefix, _vendored_root in (
+        VENDORED_PACKAGE_TRACE_PREFIXES.get(plugin_name, ())
+    ):
+        if target == f"{vendored_target_prefix}LICENSE":
+            return vendored_source_prefix.removesuffix("tomli/") + "LICENSE"
+        if target.startswith(vendored_target_prefix):
+            package_relative = target.removeprefix(vendored_target_prefix)
+            return f"{vendored_source_prefix}{package_relative}"
     return f"{SOURCE_TRACE_PREFIXES[plugin_name]}{harness}/{target}"
 
 
@@ -109,8 +142,12 @@ def assert_generated_registry_traces_copied_runtime_files(
             entry["target"]: entry["source"] for entry in _registry_entries(root)
         }
         expected_targets = _source_traceable_targets(plugin_name, harness)
+        allowed_targets = expected_targets | _optional_vendored_traceable_targets(
+            plugin_name
+        )
 
-        assert set(registry_targets) == expected_targets
+        assert expected_targets <= set(registry_targets)
+        assert set(registry_targets) <= allowed_targets
         for target, source in registry_targets.items():
             assert (root / target).is_file()
             assert source == _expected_registry_source(plugin_name, harness, target)

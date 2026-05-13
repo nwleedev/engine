@@ -1,12 +1,26 @@
 from __future__ import annotations
 
+import json
 import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 
 ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+import renderers.claude.subagents as claude_subagents
+import renderers.codex.skills as codex_skills
+import renderers.codex.subagents as codex_subagents
+import renderers.plugin_tree as plugin_tree
+import renderers.shared_subagents as shared_subagents
+from tools.build.headers import GENERATED_NOTICE
+import tools.build_plugins as build_plugins
 
 
 def test_session_memory_package_is_materialized_into_generated_artifacts() -> None:
@@ -46,6 +60,83 @@ def test_research_prompt_package_is_materialized_into_generated_artifacts() -> N
     assert (
         ROOT / "plugins/claude/research-prompt/_packages/research_prompt/redaction.py"
     ).exists()
+
+
+def test_tomli_package_is_configured_for_python39_plugin_artifacts() -> None:
+    artifacts = build_plugins._package_artifacts()
+    tomli_source = ROOT / "packages/vendor/tomli/tomli"
+    expected_targets = {
+        ROOT / "plugins/codex/session-memory/_packages/tomli",
+        ROOT / "plugins/claude/session-memory/_packages/tomli",
+        ROOT / "plugins/codex/research-prompt/_packages/tomli",
+        ROOT / "plugins/claude/research-prompt/_packages/tomli",
+    }
+
+    assert (tomli_source / "__init__.py").is_file()
+    assert (tomli_source / "_parser.py").is_file()
+    assert {
+        target_root
+        for source_root, target_root, package_name in artifacts
+        if source_root == tomli_source and package_name == "tomli"
+    } == expected_targets
+
+
+def test_tomli_license_is_materialized_by_generated_build(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    tmp_root = tmp_path / "root"
+    tmp_root.mkdir()
+    shutil.copytree(ROOT / "plugin-sources", tmp_root / "plugin-sources")
+    shutil.copytree(ROOT / "packages", tmp_root / "packages")
+    monkeypatch.setattr(build_plugins, "ROOT", tmp_root)
+    monkeypatch.setattr(codex_skills, "ROOT", tmp_root)
+    monkeypatch.setattr(codex_subagents, "ROOT", tmp_root)
+    monkeypatch.setattr(claude_subagents, "ROOT", tmp_root)
+    monkeypatch.setattr(plugin_tree, "ROOT", tmp_root)
+    monkeypatch.setattr(shared_subagents, "ROOT", tmp_root)
+
+    assert build_plugins.main() == 0
+
+    expected_license_targets = {
+        tmp_root / "plugins/codex/session-memory/_packages/tomli/LICENSE",
+        tmp_root / "plugins/claude/session-memory/_packages/tomli/LICENSE",
+        tmp_root / "plugins/codex/research-prompt/_packages/tomli/LICENSE",
+        tmp_root / "plugins/claude/research-prompt/_packages/tomli/LICENSE",
+    }
+    for license_target in expected_license_targets:
+        plugin_root = license_target.parents[2]
+        registry = json.loads(
+            (plugin_root / ".generated.json").read_text(encoding="utf-8")
+        )
+
+        assert license_target.read_bytes() == (
+            tmp_root / "packages/vendor/tomli/LICENSE"
+        ).read_bytes()
+        assert {
+            "target": "_packages/tomli/LICENSE",
+            "source": "packages/vendor/tomli/LICENSE",
+            "notice": GENERATED_NOTICE,
+        } in registry["generated"]
+
+
+def test_package_artifacts_are_grouped_by_generated_plugin_root() -> None:
+    artifacts_by_target_root = build_plugins._package_artifacts_by_target_root(
+        build_plugins._package_artifacts()
+    )
+
+    assert artifacts_by_target_root[
+        ROOT / "plugins/codex/session-memory"
+    ] == [
+        (ROOT / "packages/session-memory/session_memory", "_packages/session_memory/"),
+        (ROOT / "packages/vendor/tomli/tomli", "_packages/tomli/"),
+    ]
+    assert artifacts_by_target_root[
+        ROOT / "plugins/claude/research-prompt"
+    ] == [
+        (ROOT / "packages/research-prompt/research_prompt", "_packages/research_prompt/"),
+        (ROOT / "packages/vendor/tomli/tomli", "_packages/tomli/"),
+    ]
 
 
 def test_research_prompt_generated_wrappers_run_with_defaults(tmp_path: Path) -> None:
