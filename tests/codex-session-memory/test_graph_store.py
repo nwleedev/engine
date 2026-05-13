@@ -7,10 +7,29 @@ from pathlib import Path
 
 SCRIPTS = Path(__file__).resolve().parents[2] / "plugins" / "codex" / "session-memory" / "scripts"
 GRAPH_STORE = SCRIPTS / "graph_store.py"
+SOURCE_TOML_COMPAT = (
+    Path(__file__).resolve().parents[2]
+    / "plugin-sources"
+    / "session-memory"
+    / "adapters"
+    / "codex"
+    / "scripts"
+    / "toml_compat.py"
+)
 
 
 def load_graph_store():
     spec = importlib.util.spec_from_file_location("graph_store", GRAPH_STORE)
+    assert spec is not None
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def load_source_toml_compat():
+    spec = importlib.util.spec_from_file_location("source_toml_compat", SOURCE_TOML_COMPAT)
     assert spec is not None
     module = importlib.util.module_from_spec(spec)
     assert spec.loader is not None
@@ -64,6 +83,25 @@ def insert_legacy_edge(path: Path, parent: str, child: str):
     conn.execute("INSERT INTO thread_spawn_edges VALUES (?, ?)", (parent, child))
     conn.commit()
     conn.close()
+
+
+def test_source_toml_compat_falls_back_to_repo_vendor_when_imports_missing(monkeypatch):
+    toml_compat = load_source_toml_compat()
+    real_import_module = importlib.import_module
+
+    def missing_stdlib_and_site_package(name: str):
+        if name in {"tomllib", "tomli"}:
+            raise ModuleNotFoundError(f"No module named {name!r}", name=name)
+        return real_import_module(name)
+
+    monkeypatch.setattr(toml_compat.importlib, "import_module", missing_stdlib_and_site_package)
+
+    tomli = toml_compat.load_toml_module()
+
+    assert tomli.loads("value = 1\n") == {"value": 1}
+    assert Path(tomli.__file__).resolve() == (
+        Path(__file__).resolve().parents[2] / "packages/vendor/tomli/tomli/__init__.py"
+    )
 
 
 def test_parent_children_and_role_from_state_db(tmp_path):

@@ -2,12 +2,24 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import importlib.util
 import os
 from pathlib import Path
 import sqlite3
-import tomllib
 from urllib.parse import quote
 
+
+def _load_toml_module():
+    compat_path = Path(__file__).resolve().with_name("toml_compat.py")
+    spec = importlib.util.spec_from_file_location("_session_memory_toml_compat", compat_path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"cannot load TOML compatibility module from {compat_path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.load_toml_module()
+
+
+tomllib = _load_toml_module()
 
 EDGE_COLUMNS = {"parent_thread_id", "child_thread_id"}
 EDGE_STATUS_COLUMNS = EDGE_COLUMNS | {"status"}
