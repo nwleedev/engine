@@ -67,3 +67,21 @@ def test_tomli_is_aliased_when_tomllib_is_unavailable(
     assert module.tomllib.loads("value = 1\n") == {"source": "value = 1\n"}
     with pytest.raises(module.tomllib.TOMLDecodeError):
         raise module.tomllib.TOMLDecodeError("invalid toml")
+
+
+def test_source_vendor_is_loaded_when_tomllib_and_tomli_are_unavailable(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def import_module(name: str) -> ModuleType:
+        if name in {"tomllib", "tomli"}:
+            raise ModuleNotFoundError(f"No module named {name!r}", name=name)
+        return importlib.import_module(name)
+
+    monkeypatch.setattr(importlib, "import_module", import_module)
+
+    module = _load_source_toml_compat()
+
+    assert module.tomllib.loads("name = 'research-prompt'\n") == {
+        "name": "research-prompt",
+    }
+    assert module.tomllib.__name__ == "tomli"
