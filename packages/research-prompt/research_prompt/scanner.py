@@ -5,12 +5,12 @@ from __future__ import annotations
 import json
 import re
 import subprocess
-import tomllib
 from pathlib import Path
 
 from .redaction import is_denied_path
 from .relevance import CandidateFile, rank_candidates
 from .snippets import extract_excerpt
+from .toml_compat import tomllib
 
 
 STACK_TRACE_PATH = re.compile(r'File "([^"]+)", line (\d+)')
