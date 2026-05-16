@@ -77,3 +77,55 @@ def test_workflow_validation_accepts_minimal_codex_and_claude_shape(
     )
 
     assert validate_workflow_plugins(tmp_path) == []
+
+
+def test_workflow_validation_reports_exact_missing_required_artifact_errors(
+    tmp_path: Path,
+) -> None:
+    write_minimal_workflow_plugin_shape(tmp_path)
+    (
+        tmp_path
+        / "plugins"
+        / "claude"
+        / "shared-skills"
+        / "references"
+        / "workflow-artifacts.md"
+    ).unlink()
+    (
+        tmp_path
+        / "plugins"
+        / "codex"
+        / "shared-subagents"
+        / "agents"
+        / "closure-reviewer.toml"
+    ).unlink()
+
+    errors = validate_workflow_plugins(tmp_path)
+
+    assert (
+        "missing required shared-skills reference for claude: "
+        "plugins/claude/shared-skills/references/workflow-artifacts.md"
+    ) in errors
+    assert (
+        "missing required shared-subagents agent for codex: "
+        "plugins/codex/shared-subagents/agents/closure-reviewer.toml"
+    ) in errors
+
+
+def test_workflow_validation_ignores_passive_legacy_support_reference_paths(
+    tmp_path: Path,
+) -> None:
+    write_minimal_workflow_plugin_shape(tmp_path)
+    touch(
+        tmp_path
+        / "plugins"
+        / "codex"
+        / "shared-skills"
+        / "references"
+        / "requirements-clarifier"
+        / "notes.md"
+    )
+
+    errors = validate_workflow_plugins(tmp_path)
+
+    assert not any("legacy generated artifact" in error for error in errors)

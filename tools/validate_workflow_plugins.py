@@ -47,26 +47,23 @@ def validate_workflow_plugins(root: Path) -> list[str]:
 
 def _validate_no_legacy_artifacts(root: Path) -> list[str]:
     errors: list[str] = []
-    generated_roots = [path for _, path in SHARED_SKILL_ROOTS] + [
-        path for _, path, _ in SHARED_SUBAGENT_ROOTS
-    ]
 
-    for generated_root in generated_roots:
-        absolute_root = root / generated_root
-        if not absolute_root.exists():
-            continue
-        for path in absolute_root.rglob("*"):
-            if not path.exists():
-                continue
-            relative_path = path.relative_to(root).as_posix()
-            legacy_name = next(
-                (name for name in FORBIDDEN_LEGACY_NAMES if name in path.parts),
-                None,
-            )
-            if legacy_name is not None:
+    for _, relative_root in SHARED_SKILL_ROOTS:
+        for legacy_name in FORBIDDEN_LEGACY_NAMES:
+            path = root / relative_root / "skills" / legacy_name / "SKILL.md"
+            if path.exists():
                 errors.append(
                     "legacy generated artifact found: "
-                    f"{relative_path} contains {legacy_name}"
+                    f"{path.relative_to(root).as_posix()} contains {legacy_name}"
+                )
+
+    for _, relative_root, suffix in SHARED_SUBAGENT_ROOTS:
+        for legacy_name in FORBIDDEN_LEGACY_NAMES:
+            path = root / relative_root / "agents" / f"{legacy_name}{suffix}"
+            if path.exists():
+                errors.append(
+                    "legacy generated artifact found: "
+                    f"{path.relative_to(root).as_posix()} contains {legacy_name}"
                 )
 
     return errors
