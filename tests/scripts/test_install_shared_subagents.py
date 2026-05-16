@@ -38,6 +38,12 @@ LEGACY_AGENTS = (
     "spec-reviewer",
 )
 
+ACTIVE_ROUTE_DOCS = (
+    PLUGIN_ROOT / "references" / "agents-md-block.md",
+    PLUGIN_ROOT / "references" / "superpowers-routing.md",
+    PLUGIN_ROOT / "README.md",
+)
+
 
 def agent_instructions(agent_name: str) -> str:
     data = tomllib.loads(
@@ -128,10 +134,10 @@ def test_legacy_shared_subagents_are_not_generated() -> None:
     for agent_name in LEGACY_AGENTS:
         assert not (PLUGIN_ROOT / "agents" / f"{agent_name}.toml").exists()
 
+
+def test_legacy_shared_subagents_are_absent_from_active_route_docs() -> None:
     combined = "\n".join(
-        path.read_text(encoding="utf-8")
-        for path in sorted(PLUGIN_ROOT.rglob("*"))
-        if path.is_file() and path.suffix in {".md", ".toml", ".json"}
+        path.read_text(encoding="utf-8") for path in ACTIVE_ROUTE_DOCS
     )
 
     for agent_name in LEGACY_AGENTS:

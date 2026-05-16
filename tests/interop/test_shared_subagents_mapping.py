@@ -1,15 +1,11 @@
 from __future__ import annotations
 
 import json
-import sys
 from pathlib import Path
 
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
-# pytest importlib mode does not add the project root for this interop import.
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
 
 import renderers.claude.subagents as claude_subagents
 from renderers.claude.subagents import render_claude_agent_markdown
