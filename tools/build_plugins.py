@@ -204,7 +204,7 @@ def _prune_stale_generated_plugin_roots(root: Path = ROOT) -> None:
 
     for stale_root in STALE_GENERATED_PLUGIN_ROOTS:
         target = root / stale_root
-        if target.exists():
+        if target.is_dir() and (target / ".generated.json").is_file():
             shutil.rmtree(target)
 
 

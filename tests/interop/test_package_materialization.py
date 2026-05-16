@@ -122,18 +122,52 @@ def test_tomli_license_is_materialized_by_generated_build(
 
 def test_renamed_research_prompt_roots_are_pruned_before_materialization(
     tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    tmp_root = tmp_path / "root"
+    tmp_root.mkdir()
+    shutil.copytree(ROOT / "plugin-sources", tmp_root / "plugin-sources")
+    shutil.copytree(ROOT / "packages", tmp_root / "packages")
     stale_roots = [
-        tmp_path / "plugins/codex/research-prompt",
-        tmp_path / "plugins/claude/research-prompt",
+        tmp_root / "plugins/codex/research-prompt",
+        tmp_root / "plugins/claude/research-prompt",
     ]
     for stale_root in stale_roots:
         stale_root.mkdir(parents=True)
+        (stale_root / ".generated.json").write_text('{"generated":[]}', encoding="utf-8")
         (stale_root / "stale.txt").write_text("stale", encoding="utf-8")
+
+    monkeypatch.setattr(build_plugins, "ROOT", tmp_root)
+    monkeypatch.setattr(codex_skills, "ROOT", tmp_root)
+    monkeypatch.setattr(codex_subagents, "ROOT", tmp_root)
+    monkeypatch.setattr(claude_subagents, "ROOT", tmp_root)
+    monkeypatch.setattr(plugin_tree, "ROOT", tmp_root)
+    monkeypatch.setattr(shared_subagents, "ROOT", tmp_root)
+
+    assert build_plugins.main() == 0
+
+    assert all(not stale_root.exists() for stale_root in stale_roots)
+    assert (
+        tmp_root
+        / "plugins/codex/deep-research-prompt-export/_packages/research_prompt/__init__.py"
+    ).is_file()
+    assert (
+        tmp_root
+        / "plugins/claude/deep-research-prompt-export/_packages/research_prompt/__init__.py"
+    ).is_file()
+
+
+def test_renamed_research_prompt_prune_preserves_untracked_manual_roots(
+    tmp_path: Path,
+) -> None:
+    manual_root = tmp_path / "plugins/codex/research-prompt"
+    manual_root.mkdir(parents=True)
+    manual_file = manual_root / "manual-note.md"
+    manual_file.write_text("manual", encoding="utf-8")
 
     build_plugins._prune_stale_generated_plugin_roots(tmp_path)
 
-    assert all(not stale_root.exists() for stale_root in stale_roots)
+    assert manual_file.read_text(encoding="utf-8") == "manual"
 
 
 def test_package_artifacts_are_grouped_by_generated_plugin_root() -> None:
