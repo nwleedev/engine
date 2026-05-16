@@ -104,6 +104,7 @@ def test_claude_agent_tree_excludes_codex_scaffold_support() -> None:
     files = render_claude_agent_tree(ROOT / "plugin-sources" / "shared-subagents")
 
     assert "scripts/install_shared_subagents.py" not in files
+    assert "scripts/print_agents_md_block.py" not in files
     assert "skills/scaffold/SKILL.md" not in files
     assert "skills/scaffold/scaffold.py" not in files
 
@@ -117,6 +118,7 @@ def test_claude_generated_bundle_does_not_advertise_codex_install_surface() -> N
     assert ".toml" not in readme
     assert "restart Codex" not in readme
     assert "install_shared_subagents.py" not in readme
+    assert "print_agents_md_block.py" not in readme
     assert "skills/scaffold/scaffold.py" not in readme
 
 
@@ -133,6 +135,7 @@ def test_claude_generated_bundle_excludes_codex_scaffold_files() -> None:
     plugin_root = ROOT / "plugins" / "claude" / "shared-subagents"
 
     assert not (plugin_root / "scripts" / "install_shared_subagents.py").exists()
+    assert not (plugin_root / "scripts" / "print_agents_md_block.py").exists()
     assert not (plugin_root / "skills" / "scaffold" / "SKILL.md").exists()
     assert not (plugin_root / "skills" / "scaffold" / "scaffold.py").exists()
 
