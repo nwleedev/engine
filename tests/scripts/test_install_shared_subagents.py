@@ -17,6 +17,27 @@ SCRIPT_PATH = (
 
 PLUGIN_ROOT = SCRIPT_PATH.parents[1]
 
+EXPECTED_AGENTS = (
+    "context-manager",
+    "code-mapper",
+    "docs-researcher",
+    "source-researcher",
+    "requirements-reviewer",
+    "plan-reviewer",
+    "citation-verifier",
+    "test-adequacy-reviewer",
+    "closure-reviewer",
+    "risk-reviewer",
+    "reviewer",
+    "code-reviewer",
+    "security-auditor",
+)
+
+LEGACY_AGENTS = (
+    "online-researcher",
+    "spec-reviewer",
+)
+
 
 def agent_instructions(agent_name: str) -> str:
     data = tomllib.loads(
@@ -49,8 +70,10 @@ def test_dry_run_returns_expected_targets(tmp_path: Path) -> None:
 
     targets = module.install_agents(tmp_path, dry_run=True)
 
-    assert len(targets) == 8
-    assert targets[0] == tmp_path / ".codex" / "agents" / "context-manager.toml"
+    assert len(targets) == len(EXPECTED_AGENTS)
+    assert [target.name for target in targets] == [
+        f"{agent_name}.toml" for agent_name in EXPECTED_AGENTS
+    ]
     assert not (tmp_path / ".codex" / "agents").exists()
 
 
@@ -59,7 +82,10 @@ def test_install_copies_all_agents(tmp_path: Path) -> None:
 
     targets = module.install_agents(tmp_path, dry_run=False)
 
-    assert len(targets) == 8
+    assert len(targets) == len(EXPECTED_AGENTS)
+    assert [target.name for target in targets] == [
+        f"{agent_name}.toml" for agent_name in EXPECTED_AGENTS
+    ]
     for target in targets:
         assert target.exists()
         text = target.read_text(encoding="utf-8")
@@ -96,6 +122,30 @@ def test_backup_preserves_existing_agent_before_install(tmp_path: Path) -> None:
     assert backup.read_text(encoding="utf-8") == "custom local agent\n"
     assert existing.read_text(encoding="utf-8") != "custom local agent\n"
     assert targets[0] == existing
+
+
+def test_legacy_shared_subagents_are_not_generated() -> None:
+    for agent_name in LEGACY_AGENTS:
+        assert not (PLUGIN_ROOT / "agents" / f"{agent_name}.toml").exists()
+
+    combined = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in sorted(PLUGIN_ROOT.rglob("*"))
+        if path.is_file() and path.suffix in {".md", ".toml", ".json"}
+    )
+
+    for agent_name in LEGACY_AGENTS:
+        assert f"`{agent_name}`" not in combined
+
+
+def test_test_adequacy_reviewer_owns_downstream_test_quality() -> None:
+    instructions = agent_instructions("test-adequacy-reviewer")
+
+    assert "downstream project" in instructions
+    assert "Acceptance Criteria ID" in instructions
+    assert "User Scenario ID" in instructions
+    assert "Fixture/Mock Justification" in instructions
+    assert "Do not approve tests that assert only mock calls" in instructions
 
 
 def test_plugin_manifest_exposes_scaffold_skill() -> None:

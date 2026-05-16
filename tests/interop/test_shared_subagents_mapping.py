@@ -33,6 +33,22 @@ def test_claude_agent_markdown_maps_codex_read_only_agent_fields() -> None:
     assert "Stay in exploration mode." in text
 
 
+def test_claude_agent_markdown_preserves_test_adequacy_role_contract() -> None:
+    source = (
+        ROOT
+        / "plugin-sources"
+        / "shared-subagents"
+        / "agents"
+        / "test-adequacy-reviewer.toml"
+    )
+
+    text = render_claude_agent_markdown(source)
+
+    assert 'name: "test-adequacy-reviewer"' in text
+    assert "Fixture/Mock Justification" in text
+    assert "downstream project" in text
+
+
 def test_codex_agent_tree_adds_generated_header_and_preserves_original_body() -> None:
     files = render_codex_agent_tree(ROOT / "plugin-sources" / "shared-subagents")
     source = ROOT / "plugin-sources" / "shared-subagents" / "agents" / "code-mapper.toml"
