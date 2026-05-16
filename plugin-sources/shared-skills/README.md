@@ -10,7 +10,9 @@ Shared Codex and Claude Code skills for traceable requirements, evidence-backed 
 
 ## Breaking redesign
 
-The legacy routes `requirements-clarifier`, `research-crosscheck`, `task-planner`, `review-checklist`, and `verification-evidence` are intentionally removed from active source and generated artifacts. Migration mapping belongs in repository docs later, not in generated skill descriptions.
+Earlier advisory routes are intentionally removed from active source and
+generated artifacts. Migration mapping belongs in public migration docs, not in
+generated skill descriptions.
 
 ## Plugin-only distribution
 
