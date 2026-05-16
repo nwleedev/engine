@@ -149,13 +149,13 @@ def _package_artifacts() -> tuple[PackageArtifact, ...]:
             "quality_guard",
         ),
         (
-            ROOT / "packages" / "research-prompt" / "research_prompt",
-            ROOT / "plugins" / "codex" / "research-prompt" / "_packages" / "research_prompt",
+            ROOT / "packages" / "deep-research-prompt-export" / "research_prompt",
+            ROOT / "plugins" / "codex" / "deep-research-prompt-export" / "_packages" / "research_prompt",
             "research_prompt",
         ),
         (
-            ROOT / "packages" / "research-prompt" / "research_prompt",
-            ROOT / "plugins" / "claude" / "research-prompt" / "_packages" / "research_prompt",
+            ROOT / "packages" / "deep-research-prompt-export" / "research_prompt",
+            ROOT / "plugins" / "claude" / "deep-research-prompt-export" / "_packages" / "research_prompt",
             "research_prompt",
         ),
         (
@@ -170,12 +170,12 @@ def _package_artifacts() -> tuple[PackageArtifact, ...]:
         ),
         (
             ROOT / "packages" / "vendor" / "tomli" / "tomli",
-            ROOT / "plugins" / "codex" / "research-prompt" / "_packages" / "tomli",
+            ROOT / "plugins" / "codex" / "deep-research-prompt-export" / "_packages" / "tomli",
             "tomli",
         ),
         (
             ROOT / "packages" / "vendor" / "tomli" / "tomli",
-            ROOT / "plugins" / "claude" / "research-prompt" / "_packages" / "tomli",
+            ROOT / "plugins" / "claude" / "deep-research-prompt-export" / "_packages" / "tomli",
             "tomli",
         ),
     )
@@ -221,19 +221,21 @@ def main() -> int:
             ROOT / "plugins" / "claude" / "quality-guard",
         ),
     )
-    research_prompt_artifacts = (
+    deep_research_prompt_export_artifacts = (
         (
-            ROOT / "plugin-sources" / "research-prompt" / "adapters" / "codex",
-            ROOT / "plugins" / "codex" / "research-prompt",
+            ROOT / "plugin-sources" / "deep-research-prompt-export" / "adapters" / "codex",
+            ROOT / "plugins" / "codex" / "deep-research-prompt-export",
         ),
         (
-            ROOT / "plugin-sources" / "research-prompt" / "adapters" / "claude",
-            ROOT / "plugins" / "claude" / "research-prompt",
+            ROOT / "plugin-sources" / "deep-research-prompt-export" / "adapters" / "claude",
+            ROOT / "plugins" / "claude" / "deep-research-prompt-export",
         ),
     )
     package_artifacts = _package_artifacts()
     copied_tree_artifacts = (
-        session_memory_artifacts + quality_guard_artifacts + research_prompt_artifacts
+        session_memory_artifacts
+        + quality_guard_artifacts
+        + deep_research_prompt_export_artifacts
     )
     write_json(ROOT / ".agents/plugins/marketplace.json", render_codex_marketplace(metadata))
     write_json(ROOT / ".claude-plugin/marketplace.json", render_claude_marketplace(metadata))

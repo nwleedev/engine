@@ -32,9 +32,9 @@
       "source": "./plugins/claude/harness-foundry"
     },
     {
-      "name": "research-prompt",
-      "description": "Generate ChatGPT Deep Research prompt artifacts from live project context without external API calls",
-      "source": "./plugins/claude/research-prompt"
+      "name": "deep-research-prompt-export",
+      "description": "ChatGPT Deep Research prompt export bridge that generates source-backed handoff prompts from live project context without calling external APIs",
+      "source": "./plugins/claude/deep-research-prompt-export"
     }
   ]
 }

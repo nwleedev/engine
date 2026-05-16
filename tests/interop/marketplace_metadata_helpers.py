@@ -41,10 +41,10 @@ CODEX_MANIFESTS_BY_PUBLIC_NAME = {
     / "harness-foundry"
     / ".codex-plugin"
     / "plugin.json",
-    "research-prompt": ROOT
+    "deep-research-prompt-export": ROOT
     / "plugins"
     / "codex"
-    / "research-prompt"
+    / "deep-research-prompt-export"
     / ".codex-plugin"
     / "plugin.json",
 }
@@ -69,9 +69,9 @@ PLANNED_HARNESS_PATHS = {
         "claude": "./plugins/claude/harness-foundry",
         "codex": "./plugins/codex/harness-foundry",
     },
-    "research-prompt": {
-        "claude": "./plugins/claude/research-prompt",
-        "codex": "./plugins/codex/research-prompt",
+    "deep-research-prompt-export": {
+        "claude": "./plugins/claude/deep-research-prompt-export",
+        "codex": "./plugins/codex/deep-research-prompt-export",
     },
 }
 EXPECTED_HARNESS_PUBLIC_NAMES = {
@@ -80,7 +80,10 @@ EXPECTED_HARNESS_PUBLIC_NAMES = {
     "shared-subagents": {"claude": "shared-subagents", "codex": "shared-subagents"},
     "shared-skills": {"claude": "shared-skills", "codex": "shared-skills"},
     "harness-foundry": {"claude": "harness-foundry", "codex": "harness-foundry"},
-    "research-prompt": {"claude": "research-prompt", "codex": "research-prompt"},
+    "deep-research-prompt-export": {
+        "claude": "deep-research-prompt-export",
+        "codex": "deep-research-prompt-export",
+    },
 }
 
 

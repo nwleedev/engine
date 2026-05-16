@@ -1,0 +1,7 @@
+{
+  "name": "deep-research-prompt-export",
+  "version": "0.2.0",
+  "description": "ChatGPT Deep Research prompt export bridge that generates source-backed handoff prompts from live project context without calling external APIs",
+  "license": "MIT",
+  "skills": "./skills/"
+}

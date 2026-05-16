@@ -65,10 +65,10 @@
       "category": "Productivity"
     },
     {
-      "name": "research-prompt",
+      "name": "deep-research-prompt-export",
       "source": {
         "source": "local",
-        "path": "./plugins/codex/research-prompt"
+        "path": "./plugins/codex/deep-research-prompt-export"
       },
       "policy": {
         "installation": "AVAILABLE",

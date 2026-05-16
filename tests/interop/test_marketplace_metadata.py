@@ -73,8 +73,21 @@ def test_marketplace_metadata_contains_all_target_plugin_families() -> None:
         "shared-subagents",
         "shared-skills",
         "harness-foundry",
-        "research-prompt",
+        "deep-research-prompt-export",
     }
+
+
+def test_marketplace_renames_research_prompt_plugin() -> None:
+    metadata = load_marketplace(METADATA)
+    plugin = next(
+        item
+        for item in metadata["plugins"]
+        if item["id"] == "deep-research-prompt-export"
+    )
+
+    assert plugin["harnesses"]["codex"]["name"] == "deep-research-prompt-export"
+    assert plugin["harnesses"]["claude"]["name"] == "deep-research-prompt-export"
+    assert "ChatGPT Deep Research prompt export" in plugin["description"]
 
 
 def test_load_marketplace_with_yaml_rejects_extra_keys_from_base_loader(

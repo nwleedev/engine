@@ -69,16 +69,16 @@ plugins:
         name: harness-foundry
         skills: ./skills/
         path: ./plugins/codex/harness-foundry
-  - id: research-prompt
-    version: 0.1.2
-    description: Generate ChatGPT Deep Research prompt artifacts from live project context without external API calls
+  - id: deep-research-prompt-export
+    version: 0.2.0
+    description: ChatGPT Deep Research prompt export bridge that generates source-backed handoff prompts from live project context without calling external APIs
     license: MIT
     category: Productivity
     harnesses:
       claude:
-        name: research-prompt
-        path: ./plugins/claude/research-prompt
+        name: deep-research-prompt-export
+        path: ./plugins/claude/deep-research-prompt-export
       codex:
-        name: research-prompt
+        name: deep-research-prompt-export
         skills: ./skills/
-        path: ./plugins/codex/research-prompt
+        path: ./plugins/codex/deep-research-prompt-export

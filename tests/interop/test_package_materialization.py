@@ -49,16 +49,16 @@ def test_quality_guard_package_is_materialized_into_generated_artifacts() -> Non
 
 def test_research_prompt_package_is_materialized_into_generated_artifacts() -> None:
     assert (
-        ROOT / "plugins/codex/research-prompt/_packages/research_prompt/__init__.py"
+        ROOT / "plugins/codex/deep-research-prompt-export/_packages/research_prompt/__init__.py"
     ).exists()
     assert (
-        ROOT / "plugins/claude/research-prompt/_packages/research_prompt/__init__.py"
+        ROOT / "plugins/claude/deep-research-prompt-export/_packages/research_prompt/__init__.py"
     ).exists()
     assert (
-        ROOT / "plugins/codex/research-prompt/_packages/research_prompt/cli.py"
+        ROOT / "plugins/codex/deep-research-prompt-export/_packages/research_prompt/cli.py"
     ).exists()
     assert (
-        ROOT / "plugins/claude/research-prompt/_packages/research_prompt/redaction.py"
+        ROOT / "plugins/claude/deep-research-prompt-export/_packages/research_prompt/redaction.py"
     ).exists()
 
 
@@ -68,8 +68,8 @@ def test_tomli_package_is_configured_for_python39_plugin_artifacts() -> None:
     expected_targets = {
         ROOT / "plugins/codex/session-memory/_packages/tomli",
         ROOT / "plugins/claude/session-memory/_packages/tomli",
-        ROOT / "plugins/codex/research-prompt/_packages/tomli",
-        ROOT / "plugins/claude/research-prompt/_packages/tomli",
+        ROOT / "plugins/codex/deep-research-prompt-export/_packages/tomli",
+        ROOT / "plugins/claude/deep-research-prompt-export/_packages/tomli",
     }
 
     assert (tomli_source / "__init__.py").is_file()
@@ -101,8 +101,8 @@ def test_tomli_license_is_materialized_by_generated_build(
     expected_license_targets = {
         tmp_root / "plugins/codex/session-memory/_packages/tomli/LICENSE",
         tmp_root / "plugins/claude/session-memory/_packages/tomli/LICENSE",
-        tmp_root / "plugins/codex/research-prompt/_packages/tomli/LICENSE",
-        tmp_root / "plugins/claude/research-prompt/_packages/tomli/LICENSE",
+        tmp_root / "plugins/codex/deep-research-prompt-export/_packages/tomli/LICENSE",
+        tmp_root / "plugins/claude/deep-research-prompt-export/_packages/tomli/LICENSE",
     }
     for license_target in expected_license_targets:
         plugin_root = license_target.parents[2]
@@ -132,9 +132,9 @@ def test_package_artifacts_are_grouped_by_generated_plugin_root() -> None:
         (ROOT / "packages/vendor/tomli/tomli", "_packages/tomli/"),
     ]
     assert artifacts_by_target_root[
-        ROOT / "plugins/claude/research-prompt"
+        ROOT / "plugins/claude/deep-research-prompt-export"
     ] == [
-        (ROOT / "packages/research-prompt/research_prompt", "_packages/research_prompt/"),
+        (ROOT / "packages/deep-research-prompt-export/research_prompt", "_packages/research_prompt/"),
         (ROOT / "packages/vendor/tomli/tomli", "_packages/tomli/"),
     ]
 
@@ -149,7 +149,7 @@ def test_research_prompt_generated_wrappers_run_with_defaults(tmp_path: Path) ->
             sys.executable,
             str(
                 ROOT
-                / "plugins/codex/research-prompt/skills/research-prompt/scripts/research_prompt.py"
+                / "plugins/codex/deep-research-prompt-export/skills/deep-research-prompt-export/scripts/research_prompt.py"
             ),
             "--harness",
             "codex",
@@ -165,7 +165,7 @@ def test_research_prompt_generated_wrappers_run_with_defaults(tmp_path: Path) ->
     subprocess.run(
         [
             sys.executable,
-            str(ROOT / "plugins/claude/research-prompt/scripts/research_prompt.py"),
+            str(ROOT / "plugins/claude/deep-research-prompt-export/scripts/research_prompt.py"),
             "--harness",
             "claude",
             "--problem",
