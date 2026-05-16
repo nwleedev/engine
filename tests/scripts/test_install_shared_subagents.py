@@ -187,15 +187,23 @@ def test_readme_uses_skill_relative_scaffold_command() -> None:
     assert "~/.codex/agents" not in readme
 
 
-def test_spec_reviewer_is_bounded_for_small_reviews() -> None:
-    data = tomllib.loads(
-        (PLUGIN_ROOT / "agents" / "spec-reviewer.toml").read_text(encoding="utf-8")
-    )
-    instructions = agent_instructions("spec-reviewer")
+def test_requirements_reviewer_owns_user_requirement_fidelity() -> None:
+    instructions = agent_instructions("requirements-reviewer")
 
-    assert data["model_reasoning_effort"] == "medium"
-    assert "For small scoped reviews:" in instructions
-    assert "Return at most 5 findings." in instructions
+    assert "user requirements" in instructions
+    assert "acceptance criteria" in instructions
+    assert "non-goals" in instructions
+    assert "inferred assumptions" in instructions
+    assert "Do not inspect unrelated repository files." in instructions
+
+
+def test_plan_reviewer_owns_plan_executability_and_fallbacks() -> None:
+    instructions = agent_instructions("plan-reviewer")
+
+    assert "implementation plan" in instructions
+    assert "acceptance criteria" in instructions
+    assert "failure handling" in instructions
+    assert "fallback" in instructions
     assert "Do not inspect unrelated repository files." in instructions
 
 
