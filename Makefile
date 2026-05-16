@@ -24,7 +24,7 @@ test-codex-quality-guard:
 test-shared-subagents:
 	$(PYTEST) tests/scripts/test_install_shared_subagents.py tests/scripts/test_print_agents_md_block.py tests/scripts/test_shared_subagents_marketplace.py
 
-test-shared-skills:
+test-shared-skills: build-plugins validate-generated
 	$(PYTEST) tests/scripts/test_shared_skills_plugin.py
 
 test-research-prompt: build-plugins validate-generated
