@@ -1,6 +1,6 @@
 # Workflow Artifacts
 
-Use these schemas to keep requirements, specs, plans, evidence, and closure reports traceable across development and non-development work.
+Use these schemas to keep requirements, specs, plans, implementation evidence, and verification gates traceable across development and non-development work.
 
 ## Requirement Packet
 
@@ -26,13 +26,21 @@ Use these schemas to keep requirements, specs, plans, evidence, and closure repo
 | --- | --- | --- | --- | --- | --- |
 | REQ-001 | SPEC-001 | TASK-001 | EVID-001 | pending |  |
 
-## Verification Evidence Packet
+## Implementation Evidence
+
+This schema replaces the legacy `Verification Evidence Packet` route while preserving the tested term for compatibility with existing contract tests.
+
+### Verification Evidence Packet
 
 | evidence_id | linked_requirement_ids | linked_task_ids | files_changed | behavior_changed | commands_run | result |
 | --- | --- | --- | --- | --- | --- | --- |
 | EVID-001 | REQ-001 | TASK-001 |  |  |  |  |
 
-## Closure Report
+## Verification Gate
+
+This schema replaces the legacy `Closure Report` route while preserving the tested term for compatibility with existing contract tests.
+
+### Closure Report
 
 | completion_claim | required_evidence_ids | failed_items | not_run_items | residual_risks | final_status |
 | --- | --- | --- | --- | --- | --- |
