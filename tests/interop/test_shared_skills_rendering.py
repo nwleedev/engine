@@ -14,13 +14,13 @@ from tools.build.headers import markdown_header
 
 def test_codex_skill_rendering_adds_generated_header_with_source_path() -> None:
     files = render_codex_skill_tree(ROOT / "plugin-sources" / "shared-skills")
-    source_path = "plugin-sources/shared-skills/skills/requirements-clarifier/SKILL.md"
+    source_path = "plugin-sources/shared-skills/skills/requirements-packet/SKILL.md"
 
-    text = files["skills/requirements-clarifier/SKILL.md"]
+    text = files["skills/requirements-packet/SKILL.md"]
 
     assert text.startswith("---\n")
     assert f"\n---\n{markdown_header(source_path)}" in text
-    assert "name: requirements-clarifier" in text
+    assert "name: requirements-packet" in text
 
 
 def test_codex_skill_rendering_includes_reference_documents() -> None:

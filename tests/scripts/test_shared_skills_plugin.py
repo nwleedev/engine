@@ -6,15 +6,27 @@ from pathlib import Path
 
 PLUGIN_ROOT = Path("plugins/codex/shared-skills")
 SKILLS = (
+    "requirements-packet",
+    "spec-contract",
+    "plan-contract",
+    "implementation-evidence",
+    "verification-gate",
+    "research-plan",
+    "source-ledger",
+    "claim-evidence-map",
+    "scenario-test-designer",
+    "test-plan-contract",
+    "tdd-test-writing",
+    "comment-writing",
+    "implementation-discipline",
+    "debugging-discipline",
+)
+LEGACY_SKILLS = (
     "requirements-clarifier",
     "research-crosscheck",
     "task-planner",
-    "implementation-discipline",
-    "debugging-discipline",
     "review-checklist",
     "verification-evidence",
-    "tdd-test-writing",
-    "comment-spec-writing",
 )
 
 
@@ -77,6 +89,50 @@ def test_skills_cover_development_and_non_development_work() -> None:
         assert "Do not" in text
 
 
+def test_legacy_shared_skills_are_not_generated() -> None:
+    for skill_name in LEGACY_SKILLS:
+        assert not (PLUGIN_ROOT / "skills" / skill_name).exists()
+
+    combined = "\n".join(
+        read(path)
+        for path in sorted(PLUGIN_ROOT.rglob("*"))
+        if path.is_file() and path.suffix in {".md", ".json"}
+    )
+
+    for skill_name in LEGACY_SKILLS:
+        assert f"$shared-skills:{skill_name}" not in combined
+
+
+def test_workflow_artifact_reference_defines_required_ids() -> None:
+    text = read(PLUGIN_ROOT / "references" / "workflow-artifacts.md")
+
+    required_terms = (
+        "Requirement Packet",
+        "requirement_id",
+        "Spec Contract",
+        "spec_id",
+        "Plan Contract",
+        "task_id",
+        "Traceability Matrix",
+        "Verification Evidence Packet",
+        "Closure Report",
+    )
+    for term in required_terms:
+        assert term in text
+
+
+def test_downstream_test_contract_limits_fixture_and_mock_use() -> None:
+    text = read(PLUGIN_ROOT / "references" / "downstream-test-contracts.md")
+
+    assert "downstream project" in text
+    assert "Acceptance Criteria ID" in text
+    assert "User Scenario ID" in text
+    assert "Fixture/Mock Justification" in text
+    assert "Do not assert only mock calls" in text
+    assert "Do not create broad fixture factories" in text
+    assert "observable behavior" in text
+
+
 def test_requirements_clarifier_handles_many_ambiguities() -> None:
     text = read(PLUGIN_ROOT / "skills" / "requirements-clarifier" / "SKILL.md")
 
@@ -125,8 +181,8 @@ def test_tdd_test_writing_skill_defines_tdd_workflow() -> None:
     assert "reviewer handoff" in text
 
 
-def test_comment_spec_writing_skill_defines_comment_workflow() -> None:
-    text = read(PLUGIN_ROOT / "skills" / "comment-spec-writing" / "SKILL.md")
+def test_comment_writing_skill_defines_comment_workflow() -> None:
+    text = read(PLUGIN_ROOT / "skills" / "comment-writing" / "SKILL.md")
 
     assert "Purpose" in text
     assert "When to use" in text
