@@ -1,10 +1,10 @@
 PYTEST = uv run --isolated --python /usr/local/bin/python3.12 --with pytest pytest -q
 
-.PHONY: test test-session-memory test-scripts test-quality-guard test-quality-guard-source test-codex-quality-guard test-shared-subagents test-shared-skills test-research-prompt build-plugins validate-generated test-interop test-harness-foundry-lab
+.PHONY: test test-session-memory test-scripts test-quality-guard test-quality-guard-source test-codex-quality-guard test-shared-subagents test-shared-skills test-deep-research-prompt-export build-plugins validate-generated test-interop test-harness-foundry-lab
 
 # Run each plugin test suite in its own process to prevent sys.modules collision
 # between plugins that share script filenames.
-test: test-research-prompt test-session-memory test-scripts test-quality-guard test-quality-guard-source test-codex-quality-guard test-shared-skills test-interop test-harness-foundry-lab
+test: test-deep-research-prompt-export test-session-memory test-scripts test-quality-guard test-quality-guard-source test-codex-quality-guard test-shared-skills test-interop test-harness-foundry-lab
 
 test-session-memory:
 	$(PYTEST) tests/session-memory/
@@ -27,8 +27,8 @@ test-shared-subagents:
 test-shared-skills: build-plugins validate-generated
 	$(PYTEST) tests/scripts/test_shared_skills_plugin.py
 
-test-research-prompt: build-plugins validate-generated
-	$(PYTEST) tests/research-prompt/
+test-deep-research-prompt-export: build-plugins validate-generated
+	$(PYTEST) tests/deep-research-prompt-export/
 
 build-plugins:
 	python tools/build_plugins.py
