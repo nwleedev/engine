@@ -17,10 +17,22 @@ and Claude Code.
 | `local-docs/` | Ignored planning and task notes for local work, not public documentation. |
 
 `plugin-sources/marketplace.yaml` is the canonical marketplace source. The full tree materialization is implemented for `session-memory`, `quality-guard`, `shared-skills`, `shared-subagents`, and `harness-foundry`.
+`deep-research-prompt-export` is also rendered as a generated Codex and Claude
+Code plugin, with the stable internal Python import package copied into
+`_packages/`.
 Runtime-agnostic
 package code from `packages/` is copied into generated artifacts under
 `_packages/`. For example, `plugin-sources/shared-skills/` renders to both
 `plugins/codex/shared-skills/` and `plugins/claude/shared-skills/`.
+
+The workflow plugins enforce traceability across Codex and Claude Code instead
+of publishing loose advice. `shared-skills` starts with `requirements-packet`
+and carries requirement IDs through spec contracts, plan contracts,
+implementation evidence, verification gates, research source ledgers, and
+scenario test contracts. `shared-subagents` keeps routing explicit by sending
+requirement fidelity, plan fidelity, citation checks, test adequacy,
+completion closure, and residual risk to separate roles such as
+`test-adequacy-reviewer`.
 
 ## Source And Generated Boundary
 

@@ -39,3 +39,24 @@ Code marketplace name `session-memory`.
 
 When changing a public identifier, document the break, migration path, and the
 affected marketplace entry in the same change.
+
+## Breaking Workflow Route Redesign
+
+The shared workflow plugins intentionally remove legacy active routes. Use the
+new routes below when updating prompts, AGENTS guidance, or local project
+instructions.
+
+Shorthand mappings: requirements-clarifier -> requirements-packet,
+spec-reviewer -> requirements-reviewer + plan-reviewer,
+research-prompt -> deep-research-prompt-export.
+
+| Legacy name | New route | Notes |
+| --- | --- | --- |
+| requirements-clarifier | requirements-packet | Requirements are now ID-based artifacts. |
+| research-crosscheck | research-plan + source-ledger + claim-evidence-map | Research is split into planning, source inventory, and claim mapping. |
+| task-planner | plan-contract | Plan tasks must link to requirement IDs and validation methods. |
+| review-checklist | specialist reviewers | Review routing is split by requirement, plan, citation, test, closure, and risk. |
+| verification-evidence | implementation-evidence + verification-gate | Evidence collection and completion gate are separate. |
+| spec-reviewer | requirements-reviewer + plan-reviewer | Requirement fidelity and plan fidelity are distinct. |
+| online-researcher | source-researcher | Source collection no longer owns decision synthesis. |
+| research-prompt | deep-research-prompt-export | The plugin exports prompts for external ChatGPT Deep Research handoff. |

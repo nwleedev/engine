@@ -27,11 +27,22 @@ The core plugin families include `session-memory` and `quality-guard`.
 
 The generated multi-harness families include `session-memory`,
 `quality-guard`, `shared-skills`, `shared-subagents`, and `harness-foundry`.
+`deep-research-prompt-export` is the prompt handoff plugin for exporting
+source-backed ChatGPT Deep Research prompts from live project context without
+calling external APIs.
 `tools/build_plugins.py` loads marketplace metadata from
 `plugin-sources/marketplace.yaml`, renders Codex and Claude Code manifests from
 that metadata, renders full plugin trees from `plugin-sources/`, and
 materializes shared package code from `packages/` into each runtime artifact's
 `_packages/` directory.
+
+`shared-skills` is organized around workflow artifacts rather than general
+advice. `requirements-packet` normalizes requests into traceable requirement
+IDs, and related skills carry those IDs through specs, plans, implementation
+evidence, verification gates, research ledgers, and scenario-based downstream
+test plans. `shared-subagents` routes review work to focused gates such as
+`test-adequacy-reviewer`, so tests written through the plugins must justify
+fixtures and mocks against observable user scenarios.
 
 ## Why `plugin-sources/`
 

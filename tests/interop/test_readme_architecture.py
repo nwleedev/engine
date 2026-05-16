@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+LEGACY_PROMPT_ID = "research" "-prompt"
 
 
 def test_readme_documents_generated_plugin_architecture() -> None:
@@ -15,8 +16,13 @@ def test_readme_documents_generated_plugin_architecture() -> None:
         "python tools/build_plugins.py",
         "python tools/validate_generated.py",
         "git diff --exit-code",
+        "deep-research-prompt-export",
+        "requirements-packet",
+        "test-adequacy-reviewer",
     ):
         assert expected in readme
+
+    assert f"`{LEGACY_PROMPT_ID}`" not in readme
 
 
 def test_readme_separates_current_state_from_migration_goal() -> None:
@@ -28,6 +34,9 @@ def test_readme_separates_current_state_from_migration_goal() -> None:
         "renders full plugin trees from `plugin-sources/`",
         "`session-memory`,\n`quality-guard`, `shared-skills`, `shared-subagents`, and `harness-foundry`",
         "`_packages/` directory",
+        "`deep-research-prompt-export`",
+        "`requirements-packet`",
+        "`test-adequacy-reviewer`",
     ):
         assert expected in readme
 
@@ -36,8 +45,13 @@ def test_readme_separates_current_state_from_migration_goal() -> None:
         "`plugin-sources/`",
         "`session-memory`, `quality-guard`,\n`shared-skills`, `shared-subagents`, `harness-foundry`",
         "`_packages/`",
+        "`deep-research-prompt-export`",
+        "`requirements-packet`",
+        "`test-adequacy-reviewer`",
     ):
         assert expected in korean_readme
+
+    assert f"`{LEGACY_PROMPT_ID}`" not in korean_readme
 
 
 def test_makefile_exposes_plugin_build_targets() -> None:

@@ -27,11 +27,22 @@ engine은 Codex와 Claude Code를 위한 멀티 하네스 플러그인 모노레
 
 현재 생성되는 멀티 하네스 패밀리에는 `session-memory`, `quality-guard`,
 `shared-skills`, `shared-subagents`, `harness-foundry`가 있습니다.
+`deep-research-prompt-export`는 외부 API를 호출하지 않고 현재 프로젝트
+컨텍스트에서 출처 기반 ChatGPT Deep Research handoff prompt를 내보내는
+prompt export 플러그인입니다.
 `tools/build_plugins.py`는 `plugin-sources/marketplace.yaml`에서
 마켓플레이스 메타데이터를 읽고, 그 메타데이터로 Codex와 Claude Code
 manifest를 렌더링하며, `plugin-sources/`의 전체 플러그인 트리를 렌더링하고,
 `packages/`의 공유 package 코드를 각 runtime artifact의 `_packages/`
 디렉터리로 materialize합니다.
+
+`shared-skills`는 좋은 조언 모음이 아니라 workflow artifact를 생성하는
+구조입니다. `requirements-packet`은 사용자 요청을 추적 가능한 requirement
+ID로 정규화하고, 관련 skill은 그 ID를 spec, plan, implementation evidence,
+verification gate, research ledger, scenario 기반 downstream test plan까지
+이어갑니다. `shared-subagents`는 `test-adequacy-reviewer` 같은 집중 리뷰
+gate로 작업을 라우팅하므로, 이 플러그인으로 테스트를 작성할 때 fixture와
+mock은 관찰 가능한 사용자 시나리오에 근거해 정당화되어야 합니다.
 
 ## `plugin-sources/`를 사용하는 이유
 

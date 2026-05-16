@@ -4,6 +4,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
+LEGACY_PROMPT_ID = "research" "-prompt"
 
 
 def test_plugin_architecture_doc_describes_public_repo_layout() -> None:
@@ -22,8 +23,13 @@ def test_plugin_architecture_doc_describes_public_repo_layout() -> None:
         "full tree materialization is implemented",
         "`session-memory`, `quality-guard`, `shared-skills`, `shared-subagents`, and `harness-foundry`",
         "_packages/",
+        "deep-research-prompt-export",
+        "requirements-packet",
+        "test-adequacy-reviewer",
     ):
         assert expected in doc
+
+    assert f"`{LEGACY_PROMPT_ID}`" not in doc
 
 
 def test_migration_guide_documents_harness_specific_paths() -> None:
@@ -43,3 +49,11 @@ def test_migration_guide_documents_harness_specific_paths() -> None:
         assert expected in doc
 
     assert "No compatibility directories are created" not in doc
+
+
+def test_migration_guide_contains_legacy_mapping() -> None:
+    text = (ROOT / "docs" / "migration-guide.md").read_text(encoding="utf-8")
+
+    assert "research-prompt -> deep-research-prompt-export" in text
+    assert "requirements-clarifier -> requirements-packet" in text
+    assert "spec-reviewer -> requirements-reviewer + plan-reviewer" in text
