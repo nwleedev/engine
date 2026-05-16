@@ -9,6 +9,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from tools.build.validators import validate_generated_headers, validate_marketplaces
+from tools.validate_workflow_plugins import validate_workflow_plugins
 
 
 def main() -> int:
@@ -17,6 +18,7 @@ def main() -> int:
     errors = []
     errors.extend(validate_marketplaces(ROOT))
     errors.extend(validate_generated_headers(ROOT))
+    errors.extend(validate_workflow_plugins(ROOT))
     if errors:
         for error in errors:
             print(error)
