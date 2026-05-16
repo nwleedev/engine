@@ -141,7 +141,7 @@ def test_renamed_research_prompt_roots_are_pruned_before_materialization(
                     "generated": [
                         {
                             "target": "stale.txt",
-                            "source": "plugin-sources/marketplace.yaml",
+                            "source": "plugin-sources/research-prompt/adapters/codex/stale.txt",
                             "notice": GENERATED_NOTICE,
                         }
                     ]
@@ -189,7 +189,47 @@ def test_renamed_research_prompt_prune_preserves_untracked_manual_roots(
             {
                 "generated": [
                     {
-                        "target": "generated.txt",
+                            "target": "generated.txt",
+                            "source": "plugin-sources/research-prompt/adapters/codex/generated.txt",
+                            "notice": GENERATED_NOTICE,
+                        }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(build_plugins, "ROOT", tmp_root)
+    monkeypatch.setattr(codex_skills, "ROOT", tmp_root)
+    monkeypatch.setattr(codex_subagents, "ROOT", tmp_root)
+    monkeypatch.setattr(claude_subagents, "ROOT", tmp_root)
+    monkeypatch.setattr(plugin_tree, "ROOT", tmp_root)
+    monkeypatch.setattr(shared_subagents, "ROOT", tmp_root)
+
+    assert build_plugins.main() == 0
+
+    assert manual_file.read_text(encoding="utf-8") == "manual"
+    assert generated_file.read_text(encoding="utf-8") == "generated"
+
+
+def test_renamed_research_prompt_prune_preserves_unknown_provenance_roots(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    tmp_root = tmp_path / "root"
+    tmp_root.mkdir()
+    shutil.copytree(ROOT / "plugin-sources", tmp_root / "plugin-sources")
+    shutil.copytree(ROOT / "packages", tmp_root / "packages")
+    manual_root = tmp_root / "plugins/codex/research-prompt"
+    manual_root.mkdir(parents=True)
+    manual_file = manual_root / "manual-note.md"
+    manual_file.write_text("manual", encoding="utf-8")
+    (manual_root / ".generated.json").write_text(
+        json.dumps(
+            {
+                "generated": [
+                    {
+                        "target": "manual-note.md",
                         "source": "plugin-sources/marketplace.yaml",
                         "notice": GENERATED_NOTICE,
                     }
@@ -209,7 +249,6 @@ def test_renamed_research_prompt_prune_preserves_untracked_manual_roots(
     assert build_plugins.main() == 0
 
     assert manual_file.read_text(encoding="utf-8") == "manual"
-    assert generated_file.read_text(encoding="utf-8") == "generated"
 
 
 def test_package_artifacts_are_grouped_by_generated_plugin_root() -> None:

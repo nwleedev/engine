@@ -39,6 +39,10 @@ STALE_GENERATED_PLUGIN_ROOTS = (
     Path("plugins/codex/research-prompt"),
     Path("plugins/claude/research-prompt"),
 )
+STALE_GENERATED_SOURCE_PREFIXES = (
+    "plugin-sources/research-prompt/",
+    "packages/research-prompt/",
+)
 
 
 def _registry_entries_for_copied_tree(
@@ -225,11 +229,17 @@ def _is_fully_registered_generated_root(target: Path) -> bool:
     if not isinstance(entries, list):
         return False
 
-    registered_targets = {
-        entry["target"]
-        for entry in entries
-        if isinstance(entry, dict) and isinstance(entry.get("target"), str)
-    }
+    registered_targets: set[str] = set()
+    for entry in entries:
+        if not isinstance(entry, dict):
+            return False
+        target_value = entry.get("target")
+        source_value = entry.get("source")
+        if not isinstance(target_value, str) or not isinstance(source_value, str):
+            return False
+        if not source_value.startswith(STALE_GENERATED_SOURCE_PREFIXES):
+            return False
+        registered_targets.add(target_value)
     actual_targets = {
         path.relative_to(target).as_posix()
         for path in target.rglob("*")
