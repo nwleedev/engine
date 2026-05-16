@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import shutil
 import sys
 from pathlib import Path
@@ -204,8 +205,38 @@ def _prune_stale_generated_plugin_roots(root: Path = ROOT) -> None:
 
     for stale_root in STALE_GENERATED_PLUGIN_ROOTS:
         target = root / stale_root
-        if target.is_dir() and (target / ".generated.json").is_file():
+        if _is_fully_registered_generated_root(target):
             shutil.rmtree(target)
+
+
+def _is_fully_registered_generated_root(target: Path) -> bool:
+    """Return whether a stale root only contains files traced in its registry."""
+
+    registry_path = target / ".generated.json"
+    if not target.is_dir() or not registry_path.is_file():
+        return False
+
+    try:
+        data = json.loads(registry_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return False
+
+    entries = data.get("generated") if isinstance(data, dict) else None
+    if not isinstance(entries, list):
+        return False
+
+    registered_targets = {
+        entry["target"]
+        for entry in entries
+        if isinstance(entry, dict) and isinstance(entry.get("target"), str)
+    }
+    actual_targets = {
+        path.relative_to(target).as_posix()
+        for path in target.rglob("*")
+        if path.is_file() and path.name != ".generated.json"
+    }
+
+    return bool(actual_targets) and actual_targets <= registered_targets
 
 
 def main() -> int:
