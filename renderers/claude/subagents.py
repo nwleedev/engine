@@ -13,6 +13,52 @@ from tools.build.source_files import ensure_source_file
 
 READ_ONLY_TOOLS = ("Read", "Grep", "Glob")
 EDIT_TOOLS = ("Read", "Grep", "Glob", "Edit")
+CLAUDE_EXCLUDED_SUPPORT_PATHS = frozenset(
+    {
+        "scripts/install_shared_subagents.py",
+        "scripts/print_agents_md_block.py",
+        "skills/scaffold/SKILL.md",
+        "skills/scaffold/scaffold.py",
+    }
+)
+
+
+def _render_claude_readme(source_root: Path) -> str:
+    """Return Claude-specific shared-subagents README text."""
+
+    readme_source = source_root / "README.md"
+    ensure_source_file(ROOT, readme_source)
+    relative_source = readme_source.relative_to(ROOT).as_posix()
+    return (
+        markdown_header(relative_source)
+        + "# Shared Subagents\n\n"
+        + "Shared Claude Code agent templates rendered from the canonical "
+        + "shared-subagents role definitions.\n\n"
+        + "## Agent Roles\n\n"
+        + "- `context-manager`, `code-mapper`, and `docs-researcher` gather project "
+        + "context, code structure, and official documentation evidence.\n"
+        + "- `source-researcher`, `requirements-reviewer`, `plan-reviewer`, and "
+        + "`citation-verifier` keep source, requirements, plan, traceability, and "
+        + "citation checks separate.\n"
+        + "- `test-adequacy-reviewer`, `closure-reviewer`, and `risk-reviewer` review "
+        + "test quality, closure evidence, residual risk, rollback, fallback, and "
+        + "unverifiable items.\n"
+        + "- `reviewer`, `code-reviewer`, and `security-auditor` remain separate "
+        + "gates for correctness/security/behavior regression, "
+        + "maintainability/design/readability, and security-audit review.\n\n"
+        + "## Claude Bundle Notes\n\n"
+        + "- This bundle contains generated Claude agent Markdown files under "
+        + "`agents/`.\n"
+        + "- Codex-only installer and scaffold helpers are intentionally omitted from "
+        + "this Claude bundle.\n"
+        + "- Use the plugin through Claude Code's normal plugin loading and agent "
+        + "discovery flow.\n"
+        + "- Keep runtime-specific MCP configuration in the user or project tool "
+        + "configuration that owns those servers.\n\n"
+        + "## Superpowers Integration\n\n"
+        + "Use `references/superpowers-routing.md` for stage routing and fallback "
+        + "role guidance when custom agent names are unavailable.\n"
+    )
 
 
 def _tools_for_sandbox(sandbox_mode: str) -> tuple[str, ...]:
@@ -63,6 +109,9 @@ def render_claude_agent_tree(source_root: Path) -> dict[str, str]:
     """Render the complete canonical shared-subagents tree for Claude."""
 
     files = render_shared_subagents_support_tree(source_root)
+    for path in CLAUDE_EXCLUDED_SUPPORT_PATHS:
+        files.pop(path, None)
+    files["README.md"] = _render_claude_readme(source_root)
     agents_root = source_root / "agents"
 
     for agent_file in sorted(agents_root.glob("*.toml")):

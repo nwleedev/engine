@@ -8,9 +8,29 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 
 import renderers.claude.subagents as claude_subagents
-from renderers.claude.subagents import render_claude_agent_markdown
+from renderers.claude.subagents import (
+    render_claude_agent_markdown,
+    render_claude_agent_tree,
+)
 from renderers.codex.subagents import render_codex_agent_tree
 from tools.build.headers import markdown_header, python_header
+
+
+EXPECTED_AGENTS = (
+    "context-manager",
+    "code-mapper",
+    "docs-researcher",
+    "source-researcher",
+    "requirements-reviewer",
+    "plan-reviewer",
+    "citation-verifier",
+    "test-adequacy-reviewer",
+    "closure-reviewer",
+    "risk-reviewer",
+    "reviewer",
+    "code-reviewer",
+    "security-auditor",
+)
 
 
 def test_claude_agent_markdown_maps_codex_read_only_agent_fields() -> None:
@@ -78,6 +98,43 @@ def test_codex_agent_tree_includes_complete_plugin_support_files() -> None:
     assert files["scripts/install_shared_subagents.py"].startswith(
         python_header("plugin-sources/shared-subagents/scripts/install_shared_subagents.py")
     )
+
+
+def test_claude_agent_tree_excludes_codex_scaffold_support() -> None:
+    files = render_claude_agent_tree(ROOT / "plugin-sources" / "shared-subagents")
+
+    assert "scripts/install_shared_subagents.py" not in files
+    assert "skills/scaffold/SKILL.md" not in files
+    assert "skills/scaffold/scaffold.py" not in files
+
+
+def test_claude_generated_bundle_does_not_advertise_codex_install_surface() -> None:
+    readme = (
+        ROOT / "plugins" / "claude" / "shared-subagents" / "README.md"
+    ).read_text(encoding="utf-8")
+
+    assert ".codex/agents" not in readme
+    assert ".toml" not in readme
+    assert "restart Codex" not in readme
+    assert "install_shared_subagents.py" not in readme
+    assert "skills/scaffold/scaffold.py" not in readme
+
+
+def test_claude_generated_bundle_contains_expected_agents_only() -> None:
+    agents_root = ROOT / "plugins" / "claude" / "shared-subagents" / "agents"
+    generated_agents = sorted(path.name for path in agents_root.glob("*.md"))
+
+    assert generated_agents == sorted(f"{agent_name}.md" for agent_name in EXPECTED_AGENTS)
+    assert "online-researcher.md" not in generated_agents
+    assert "spec-reviewer.md" not in generated_agents
+
+
+def test_claude_generated_bundle_excludes_codex_scaffold_files() -> None:
+    plugin_root = ROOT / "plugins" / "claude" / "shared-subagents"
+
+    assert not (plugin_root / "scripts" / "install_shared_subagents.py").exists()
+    assert not (plugin_root / "skills" / "scaffold" / "SKILL.md").exists()
+    assert not (plugin_root / "skills" / "scaffold" / "scaffold.py").exists()
 
 
 def test_claude_agent_frontmatter_quotes_string_scalars(
