@@ -17,11 +17,11 @@ The legacy routes `requirements-clarifier`, `research-crosscheck`, `task-planner
 
 ## Plugin-only distribution
 
-This plugin exposes skills through `.codex-plugin/plugin.json`.
+This plugin exposes skills through generated Codex and Claude plugin manifests and harness-specific plugin paths.
 
 It does not copy skills into a user home directory, does not edit AGENTS.md, does not install MCP servers, and does not create a scaffold command.
 
-After installing the plugin, restart Codex if the new skills do not appear. Invoke skills explicitly with `$shared-skills:<skill-name>` or describe the task naturally and let Codex match the skill description.
+After installing the plugin, restart the host coding agent or tool if the new skills do not appear. Invoke skills explicitly with `$shared-skills:<skill-name>` or describe the task naturally and let the host tool match the skill description.
 
 ## Included skills
 

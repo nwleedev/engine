@@ -5,6 +5,7 @@ from pathlib import Path
 
 
 PLUGIN_ROOT = Path("plugins/codex/shared-skills")
+CLAUDE_PLUGIN_ROOT = Path("plugins/claude/shared-skills")
 SKILLS = (
     "requirements-packet",
     "spec-contract",
@@ -119,6 +120,24 @@ def test_workflow_artifact_reference_defines_required_ids() -> None:
     )
     for term in required_terms:
         assert term in text
+
+
+def test_workflow_skill_outputs_use_canonical_schema_headers() -> None:
+    requirements_text = read(
+        PLUGIN_ROOT / "skills" / "requirements-packet" / "SKILL.md"
+    )
+    implementation_text = read(
+        PLUGIN_ROOT / "skills" / "implementation-evidence" / "SKILL.md"
+    )
+
+    assert (
+        "| requirement_id | status | requirement | source_text | acceptance_criteria | non_goal | assumption_or_question |"
+        in requirements_text
+    )
+    assert (
+        "| evidence_id | linked_requirement_ids | linked_task_ids | files_changed | behavior_changed | commands_run | result |"
+        in implementation_text
+    )
 
 
 def test_downstream_test_contract_limits_fixture_and_mock_use() -> None:
@@ -293,6 +312,15 @@ def test_readme_documents_plugin_only_installation() -> None:
     assert "- `comment-writing`:" in readme
     assert "does not copy skills into" in readme
     assert "does not edit AGENTS.md" in readme
+
+
+def test_claude_readme_uses_harness_neutral_plugin_guidance() -> None:
+    readme = read(CLAUDE_PLUGIN_ROOT / "README.md")
+
+    assert ".codex-plugin/plugin.json" not in readme
+    assert "restart Codex" not in readme
+    assert "generated Codex and Claude plugin manifests" in readme
+    assert "restart the host coding agent or tool" in readme
 
 
 def test_implementation_discipline_prefers_clear_code_before_comments() -> None:

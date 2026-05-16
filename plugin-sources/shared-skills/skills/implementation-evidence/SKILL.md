@@ -38,9 +38,9 @@ Create an `Implementation Evidence` packet that links requirements and tasks to 
 ```markdown
 ## Implementation Evidence
 
-| evidence_id | linked_requirement_ids | linked_task_ids | files_changed | behavior_changed | commands_run |
-| --- | --- | --- | --- | --- | --- |
-| EVID-001 | REQ-001 | TASK-001 |  |  |  |
+| evidence_id | linked_requirement_ids | linked_task_ids | files_changed | behavior_changed | commands_run | result |
+| --- | --- | --- | --- | --- | --- | --- |
+| EVID-001 | REQ-001 | TASK-001 |  |  |  |  |
 ```
 
 ## Do not

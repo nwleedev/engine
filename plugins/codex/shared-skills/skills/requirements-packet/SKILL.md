@@ -41,7 +41,7 @@ Create a `Requirement Packet` before planning, implementation, review, research,
 ```markdown
 ## Requirement Packet
 
-| ID | Status | Requirement | Source Text | Acceptance Criteria | Non-goal | Assumption or Question |
+| requirement_id | status | requirement | source_text | acceptance_criteria | non_goal | assumption_or_question |
 | --- | --- | --- | --- | --- | --- | --- |
 | REQ-001 | confirmed |  |  |  |  |  |
 ```
