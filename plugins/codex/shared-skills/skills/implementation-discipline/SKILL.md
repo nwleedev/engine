@@ -18,7 +18,7 @@ Keep main-session changes scoped, traceable, and verifiable.
 2. Read the relevant local rules, files, dependencies, and existing patterns before editing.
 3. Keep the edit scope tied to the user's approved goal.
 4. Record touched areas, validation needs, and review handoff points.
-5. Use review-checklist or verification-evidence before completion claims.
+5. Use `implementation-evidence` and `verification-gate` before completion claims.
 
 ## Development work
 

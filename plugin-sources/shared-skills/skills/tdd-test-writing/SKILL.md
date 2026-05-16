@@ -75,6 +75,10 @@ Use this as a quick selector, not as a required classification ceremony. Start w
 - Start the first failing test with inline minimal arrange. Use fixtures only when repeated arrange is clearer with a name, and keep each fixture narrow enough that unused setup does not hide intent.
 - Prefer real domain objects and local collaborators when they are fast, deterministic, and inside the behavior boundary.
 - Use a fake for a lightweight working substitute, a stub for fixed external answers or errors, and a mock only when the outbound interaction contract itself is the requirement.
+- Do not assert only that a mock was called when the user-visible behavior can be asserted.
+- Do not create broad fixture factories before proving repeated setup is clearer with a named fixture.
+- Do not count tests without an Acceptance Criteria ID as core scenario coverage.
+- Do not report completion without the exact failing and passing test commands.
 - Mock external boundary only: time, random, network, filesystem, process, database outside the chosen boundary, browser, cloud API, queue, payment, identity provider, or concurrency coordination.
 - Make time, randomness, network, filesystem, process environment, locale, ordering, generated IDs, ports, and concurrency deterministic.
 - Do not use sleep, real external services, production credentials, shared mutable state, order dependence, broad hidden fixtures, or ambient production data in routine tests.
@@ -110,7 +114,7 @@ Use this as a quick selector, not as a required classification ceremony. Start w
 
 This skill is not the default workflow for documentation, strategy, research, planning, or review-only tasks.
 
-Route unclear requirements to `requirements-clarifier`, source-backed investigation to `research-crosscheck`, artifact review to `review-checklist`, and completion claims to `verification-evidence`.
+Route unclear requirements to `requirements-packet`, source-backed investigation to `research-plan`, artifact review to `claim-evidence-map`, and completion claims to `verification-gate`.
 
 Use this skill for non-development work only when the requested artifact is itself test-writing guidance, a test plan, or a TDD review checklist.
 
@@ -134,6 +138,16 @@ reviewer handoff
 ```
 
 ## Output
+
+## Scenario Test Contract
+
+| Scenario ID | Acceptance Criteria ID | Test Layer | Test File | Command | Fixture/Mock Policy | Evidence ID |
+| --- | --- | --- | --- | --- | --- | --- |
+
+## Fixture/Mock Justification
+
+| Name | Type | Needed Because | Real Alternative Considered | Behavior Hidden | Decision |
+| --- | --- | --- | --- | --- | --- |
 
 - detected stack
 - selected test type

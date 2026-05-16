@@ -1,0 +1,51 @@
+---
+name: verification-gate
+description: Use when a completion, correctness, readiness, review, or decision-ready claim needs evidence-backed closure.
+metadata:
+  short-description: Gate completion claims with evidence
+---
+
+# Verification Gate
+
+## Purpose
+
+Create a `Verification Gate` before reporting completion, readiness, correctness, or decision-ready status so every claim is backed by required evidence and residual risk is explicit.
+
+## Workflow
+
+1. State the exact completion claim being considered.
+2. List the required evidence IDs from `implementation-evidence`, `source-ledger`, or `claim-evidence-map`.
+3. Compare every requirement, task, and acceptance criterion against the available evidence.
+4. List failed items with the command, artifact, or review step that failed.
+5. List not-run items separately from failed items.
+6. Record residual risks, unrelated known failures, and out-of-scope issues.
+7. Set final status to `done`, `done_with_concerns`, `blocked`, or `needs_context`.
+
+## Development work
+
+- Re-run or inspect the exact commands that prove the requested claim before closing.
+- Keep unrelated baseline failures separate and name them precisely.
+- Verify generated artifacts and source artifacts when both are acceptance criteria.
+
+## Non-development work
+
+- Verify source coverage, counterevidence handling, document completeness, and decision traceability.
+- Name unsupported assumptions and missing sources before reporting final status.
+- Use `done_with_concerns` when the requested deliverable is complete but material residual risk remains.
+
+## Output
+
+```markdown
+## Verification Gate
+
+| completion_claim | required_evidence_ids | failed_items | not_run_items | residual_risks | final_status |
+| --- | --- | --- | --- | --- | --- |
+|  | EVID-001 |  |  |  |  |
+```
+
+## Do not
+
+- Do not report completion without fresh evidence.
+- Do not mix unrelated baseline failures into task failure status.
+- Do not hide not-run checks under residual risks.
+- Do not use `done` when required evidence is missing.

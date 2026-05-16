@@ -3,13 +3,17 @@
 
 # Shared Skills
 
-Shared Codex skills for main-session quality gates across development and non-development work.
+Shared Codex and Claude Code skills for traceable requirements, evidence-backed planning, deep research artifacts, downstream scenario-based test writing, and completion gates.
 
 ## Purpose
 
-`shared-skills` improves the quality of ordinary Codex work without spawning subagents. It packages repeatable quality workflows as skills so Codex can load the right procedure only when it is relevant.
+`shared-skills` packages main-session workflow skills that produce explicit artifacts instead of loose advice. Use it to trace user requests from requirements through specs, plans, implementation evidence, research evidence, scenario tests, and final verification gates.
 
-`shared-subagents` remains the plugin for Superpowers workflows that explicitly spawn subagents. This plugin is the complementary no-subagent layer for the main Codex session.
+`shared-subagents` remains the plugin for delegated specialist review or research. This plugin keeps the main session responsible for artifact shape, traceability, and completion evidence.
+
+## Breaking redesign
+
+The legacy skills `requirements-clarifier`, `research-crosscheck`, `task-planner`, `review-checklist`, and `verification-evidence` are intentionally removed from generated artifacts. Migration guidance belongs in repository docs, not in generated skill descriptions.
 
 ## Plugin-only distribution
 
@@ -21,26 +25,31 @@ After installing the plugin, restart Codex if the new skills do not appear. Invo
 
 ## Included skills
 
-- `requirements-clarifier`: clarify requirements, scope, non-goals, acceptance criteria, and blocking questions.
-- `research-crosscheck`: verify claims and decisions with source-backed research and counterevidence.
-- `task-planner`: turn approved requirements or research into a small ordered execution plan.
+- `requirements-packet`: convert user requests into confirmed requirements, inferred assumptions, open questions, non-goals, and acceptance criteria.
+- `spec-contract`: turn confirmed requirements into behavior, interface, failure-mode, and compatibility contracts.
+- `plan-contract`: create implementation plans with linked requirements, target artifacts, validation methods, and fallbacks.
+- `implementation-evidence`: record files changed, behavior changed, commands run, and linked requirement/task evidence.
+- `verification-gate`: gate completion claims with required evidence, failed items, not-run items, residual risks, and final status.
+- `research-plan`: define research questions, source strategies, counterevidence strategies, and stop conditions.
+- `source-ledger`: track source authority, recency, supported claims, and limitations.
+- `claim-evidence-map`: map claims to source IDs, confidence, counterevidence, and decision impact.
+- `scenario-test-designer`: link acceptance criteria to user scenarios, happy paths, boundary scenarios, and failure scenarios.
+- `test-plan-contract`: map scenarios to test layers, files, commands, fixture/mock policy, and evidence IDs.
+- `tdd-test-writing`: write tests through a TDD workflow, choose test types by behavior boundary, and prepare reviewer handoff evidence.
+- `comment-writing`: write language/technology-stack-appropriate comments and documentation comments for new-teammate understanding, with `docs-researcher` and `code-reviewer` handoff points.
 - `implementation-discipline`: keep code, docs, config, and operational changes scoped and traceable.
 - `debugging-discipline`: investigate failures and conflicting evidence before proposing fixes.
-- `review-checklist`: review artifacts for correctness, risk, gaps, and actionability.
-- `verification-evidence`: gather evidence before completion, correctness, readiness, or decision-ready claims.
-- `tdd-test-writing`: write tests through a TDD workflow, choose test types by behavior boundary, and prepare reviewer handoff evidence.
-- `comment-spec-writing`: write language/technology-stack-appropriate comments and documentation comments for new-teammate understanding, with `docs-researcher` and `code-reviewer` handoff points.
 
 ## Boundaries
 
 - Use AGENTS.md for durable project rules that should apply to every turn.
-- Use shared-skills for repeatable quality workflows and domain-independent procedures.
+- Use shared-skills for repeatable workflow artifacts and domain-independent main-session procedures.
 - Use shared-subagents only when work should be delegated to a specialized subagent.
 - Keep stack-specific or organization-private skills in repo-local `.agents/skills`.
 
 ## Quality rules
 
-- Skills must stay narrow and procedure-focused.
+- Skills must stay narrow and artifact-focused.
 - Descriptions must start with the trigger condition.
 - Each skill must support both development work and non-development work.
 - Each skill must include output expectations and "Do not" guardrails.

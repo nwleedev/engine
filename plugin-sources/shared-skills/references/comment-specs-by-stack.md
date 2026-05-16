@@ -1,7 +1,7 @@
 # Comment Specs by Stack
 <!-- Compatibility title token: # Comment Specs By Stack -->
 
-Use this reference after `comment-spec-writing/SKILL.md` detects the target language, documentation generator, and project convention. Prefer the project's existing convention when it is explicit and compatible with the stack's tooling.
+Use this reference after `comment-writing/SKILL.md` detects the target language, documentation generator, and project convention. Prefer the project's existing convention when it is explicit and compatible with the stack's tooling.
 
 ## Code clarity before comments
 
