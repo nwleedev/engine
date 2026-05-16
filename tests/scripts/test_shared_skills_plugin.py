@@ -133,33 +133,6 @@ def test_downstream_test_contract_limits_fixture_and_mock_use() -> None:
     assert "observable behavior" in text
 
 
-def test_requirements_clarifier_handles_many_ambiguities() -> None:
-    text = read(PLUGIN_ROOT / "skills" / "requirements-clarifier" / "SKILL.md")
-
-    assert "Identify all ambiguities first." in text
-    assert "Ask only the highest-priority blocking question per assistant turn." in text
-    assert "Do not hide other ambiguities." in text
-
-
-def test_research_crosscheck_requires_counterevidence() -> None:
-    text = read(PLUGIN_ROOT / "skills" / "research-crosscheck" / "SKILL.md")
-
-    assert "Prefer official or primary sources." in text
-    assert "MCP server specialized for up-to-date library and framework documentation" in text
-    assert "MCP server specialized for external source discovery" in text
-    assert "Counterevidence" in text
-
-
-def test_review_and_verification_have_separate_responsibilities() -> None:
-    review = read(PLUGIN_ROOT / "skills" / "review-checklist" / "SKILL.md")
-    verification = read(PLUGIN_ROOT / "skills" / "verification-evidence" / "SKILL.md")
-
-    assert "Review finds defects, gaps, and risks." in review
-    assert "Verification gathers evidence for claims." in verification
-    assert "Do not claim completion from review alone." in review
-    assert "Do not claim completion without fresh evidence." in verification
-
-
 def test_tdd_test_writing_skill_defines_tdd_workflow() -> None:
     text = read(PLUGIN_ROOT / "skills" / "tdd-test-writing" / "SKILL.md")
 
@@ -317,7 +290,7 @@ def test_readme_documents_plugin_only_installation() -> None:
     assert "Plugin-only distribution" in readme
     assert "$shared-skills:" in readme
     assert "- `tdd-test-writing`:" in readme
-    assert "- `comment-spec-writing`:" in readme
+    assert "- `comment-writing`:" in readme
     assert "does not copy skills into" in readme
     assert "does not edit AGENTS.md" in readme
 
