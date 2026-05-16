@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import shutil
 import sys
 from pathlib import Path
 
@@ -33,6 +34,10 @@ GENERATED_MANIFEST_TARGETS = frozenset(
 )
 MARKETPLACE_SOURCE = "plugin-sources/marketplace.yaml"
 PackageArtifact = tuple[Path, Path, str]
+STALE_GENERATED_PLUGIN_ROOTS = (
+    Path("plugins/codex/research-prompt"),
+    Path("plugins/claude/research-prompt"),
+)
 
 
 def _registry_entries_for_copied_tree(
@@ -194,9 +199,19 @@ def _package_artifacts_by_target_root(
     return artifacts_by_target_root
 
 
+def _prune_stale_generated_plugin_roots(root: Path = ROOT) -> None:
+    """Remove renamed generated plugin roots before materializing current artifacts."""
+
+    for stale_root in STALE_GENERATED_PLUGIN_ROOTS:
+        target = root / stale_root
+        if target.exists():
+            shutil.rmtree(target)
+
+
 def main() -> int:
     """Build generated plugin marketplace artifacts."""
 
+    _prune_stale_generated_plugin_roots(ROOT)
     metadata = load_marketplace(ROOT / "plugin-sources/marketplace.yaml")
     shared_skills_source = ROOT / "plugin-sources" / "shared-skills"
     shared_subagents_source = ROOT / "plugin-sources" / "shared-subagents"

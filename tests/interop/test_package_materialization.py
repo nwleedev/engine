@@ -120,6 +120,22 @@ def test_tomli_license_is_materialized_by_generated_build(
         } in registry["generated"]
 
 
+def test_renamed_research_prompt_roots_are_pruned_before_materialization(
+    tmp_path: Path,
+) -> None:
+    stale_roots = [
+        tmp_path / "plugins/codex/research-prompt",
+        tmp_path / "plugins/claude/research-prompt",
+    ]
+    for stale_root in stale_roots:
+        stale_root.mkdir(parents=True)
+        (stale_root / "stale.txt").write_text("stale", encoding="utf-8")
+
+    build_plugins._prune_stale_generated_plugin_roots(tmp_path)
+
+    assert all(not stale_root.exists() for stale_root in stale_roots)
+
+
 def test_package_artifacts_are_grouped_by_generated_plugin_root() -> None:
     artifacts_by_target_root = build_plugins._package_artifacts_by_target_root(
         build_plugins._package_artifacts()
