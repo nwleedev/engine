@@ -31,7 +31,7 @@ find temps/2026-05-05/shared-subagents/project-root/.codex/agents -maxdepth 1 -t
 
 ## Behavior
 
-- Copies eight bundled custom agent TOML files into a project-local `.codex/agents/` directory.
+- Copies thirteen bundled custom agent TOML files into a project-local `.codex/agents/` directory.
 - Refuses to overwrite existing files unless `--backup` or `--force` is used.
 - Prints an AGENTS.md guidance block for copy-paste.
 - Does not modify AGENTS.md automatically.
@@ -51,6 +51,6 @@ After running commands, report:
 
 - dry-run target paths
 - whether the AGENTS.md block printed successfully
-- whether eight TOML files exist in the target `.codex/agents/` directory
+- whether thirteen TOML files exist in the target `.codex/agents/` directory
 - whether manual Codex restart and custom agent invocation verification remain
 - whether MCP startup tuning remains a separate user config task

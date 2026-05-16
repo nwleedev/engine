@@ -15,11 +15,16 @@ AGENT_NAMES = (
     "context-manager.toml",
     "code-mapper.toml",
     "docs-researcher.toml",
-    "spec-reviewer.toml",
+    "source-researcher.toml",
+    "requirements-reviewer.toml",
+    "plan-reviewer.toml",
+    "citation-verifier.toml",
+    "test-adequacy-reviewer.toml",
+    "closure-reviewer.toml",
+    "risk-reviewer.toml",
     "reviewer.toml",
     "code-reviewer.toml",
     "security-auditor.toml",
-    "online-researcher.toml",
 )
 
 

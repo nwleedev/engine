@@ -52,6 +52,12 @@ def agent_instructions(agent_name: str) -> str:
     return data["developer_instructions"]
 
 
+def agent_data(agent_name: str) -> dict[str, object]:
+    return tomllib.loads(
+        (PLUGIN_ROOT / "agents" / f"{agent_name}.toml").read_text(encoding="utf-8")
+    )
+
+
 def instruction_block(text: str, start: str, stop: str) -> str:
     """Return the bounded instruction block used to lock agent contracts."""
 
@@ -145,9 +151,10 @@ def test_legacy_shared_subagents_are_absent_from_active_route_docs() -> None:
 
 
 def test_test_adequacy_reviewer_owns_downstream_test_quality() -> None:
-    instructions = agent_instructions("test-adequacy-reviewer")
+    data = agent_data("test-adequacy-reviewer")
+    instructions = data["developer_instructions"]
 
-    assert "downstream project" in instructions
+    assert "downstream project" in data["description"]
     assert "Acceptance Criteria ID" in instructions
     assert "User Scenario ID" in instructions
     assert "Fixture/Mock Justification" in instructions
@@ -289,32 +296,14 @@ def test_agents_md_block_defines_subagent_use_boundaries() -> None:
     assert "comment quality" in code_reviewer_line
 
 
-def test_reviewer_includes_tdd_review_criteria() -> None:
+def test_reviewer_defers_test_adequacy_and_plan_fidelity() -> None:
     instructions = agent_instructions("reviewer")
 
-    assert "TDD review checks:" in instructions
-    assert "Return TDD review findings with:" in instructions
-    assert "TDD evidence" in instructions
-    assert "selected test type" in instructions
-    assert "observable behavior" in instructions
-    assert "unnecessary fixtures" in instructions
-    assert "broad fixtures" in instructions
-    assert "unused setup fields" in instructions
-    assert "fixtures that hide the failure cause" in instructions
-    assert "flaky" in instructions
-    assert "skipped tests" in instructions
-    assert "failing/passing test commands" in instructions
-    assert "failing test was written before or alongside" in instructions
-    assert "failure, edge, and regression cases" in instructions
-    assert "mocks and fakes" in instructions
-    assert "external boundaries" in instructions
-    assert "sleeps" in instructions
-    assert "real external services" in instructions
-    assert "unordered assumptions" in instructions
-    assert "environment-only success" in instructions
-    assert ".only" in instructions
-    assert "disabled assertions" in instructions
-    assert "snapshot updates without rationale" in instructions
+    assert "correctness risks and behavior regressions" in instructions
+    assert "Test adequacy belongs to test-adequacy-reviewer" in instructions
+    assert "Requirement and plan fidelity belong to requirements-reviewer and plan-reviewer" in instructions
+    assert "TDD review checks:" not in instructions
+    assert "Return TDD review findings with:" not in instructions
 
 
 def test_reviewer_limits_documentation_review_to_user_impacting_boundaries() -> None:
@@ -329,16 +318,15 @@ def test_reviewer_limits_documentation_review_to_user_impacting_boundaries() -> 
     assert "Do not dilute findings with style-only commentary" in instructions
 
 
-def test_agents_md_block_routes_tdd_review_to_reviewer() -> None:
+def test_agents_md_block_routes_test_adequacy_to_dedicated_reviewer() -> None:
     block = (PLUGIN_ROOT / "references" / "agents-md-block.md").read_text(
         encoding="utf-8"
     )
 
+    test_reviewer_lines = [
+        line for line in block.splitlines() if "`test-adequacy-reviewer`" in line
+    ]
     reviewer_lines = [line for line in block.splitlines() if "`reviewer`" in line]
-    assert any(
-        "TDD" in line
-        and "evidence" in line
-        and "test adequacy" in line
-        and "test-writing" in line
-        for line in reviewer_lines
-    )
+
+    assert any("test-writing work" in line for line in test_reviewer_lines)
+    assert not any("test adequacy" in line for line in reviewer_lines)

@@ -2,6 +2,13 @@
 
 Shared Codex subagent templates for reusable Superpowers workflows across projects.
 
+## Agent Roles
+
+- `context-manager`, `code-mapper`, and `docs-researcher` gather project context, code structure, and official documentation evidence.
+- `source-researcher`, `requirements-reviewer`, `plan-reviewer`, and `citation-verifier` keep Source Ledger, Requirement Packet, Plan Contract, Traceability Matrix, and Claim Evidence Map work separate.
+- `test-adequacy-reviewer`, `closure-reviewer`, and `risk-reviewer` review downstream test quality, Closure Report evidence, Risk Register items, residual risk, rollback, fallback, and unverifiable items.
+- `reviewer`, `code-reviewer`, and `security-auditor` remain separate gates for correctness/security/behavior regression, maintainability/design/readability, and security-audit review.
+
 ## Cross-Check Summary
 
 - Real `packages/awesome-codex-subagents` TOML files use `developer_instructions`.
@@ -53,9 +60,9 @@ rtk find temps/2026-05-05/shared-subagents/project-root/.codex/agents -maxdepth 
 
 Expected results:
 
-- Dry run prints eight target installation paths.
+- Dry run prints thirteen target installation paths.
 - The AGENTS.md block command prints copy-paste Markdown and does not edit files.
-- The temporary project `.codex/agents` directory contains eight TOML files.
+- The temporary project `.codex/agents` directory contains thirteen TOML files.
 - Each TOML file contains `developer_instructions`.
 - Each TOML file contains `# shared-subagents:provided-agent` so project-local copies can be identified as plugin-provided templates.
 

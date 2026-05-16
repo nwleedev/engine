@@ -14,11 +14,16 @@
 
 | Superpowers stage | Preferred agent | Fallback |
 |---|---|---|
-| brainstorming | `online-researcher`, `spec-reviewer` | `explorer` with online/spec review prompt |
-| writing-plans | `context-manager`, `spec-reviewer` | `explorer` with context/spec prompt |
+| brainstorming | `source-researcher`, `requirements-reviewer` | `explorer` with source/requirements prompt |
+| writing-plans | `context-manager`, `requirements-reviewer`, `plan-reviewer` | `explorer` with context/plan prompt |
 | subagent-driven-development start | `context-manager`, `code-mapper` | `explorer` with mapping prompt |
 | API or library verification | `docs-researcher` | `explorer` with docs verification prompt |
-| spec compliance review | `spec-reviewer` | `default` with spec-only review prompt |
+| source evidence review | `source-researcher`, `citation-verifier` | `explorer` with source/citation verification prompt |
+| requirements fidelity review | `requirements-reviewer` | `default` with Requirement Packet review prompt |
+| plan fidelity review | `plan-reviewer` | `default` with Plan Contract review prompt |
+| test adequacy review | `test-adequacy-reviewer` | `default` with test adequacy review prompt |
+| closure review | `closure-reviewer` | `default` with Closure Report review prompt |
+| risk review | `risk-reviewer` | `default` with Risk Register review prompt |
 | correctness review | `reviewer` | `default` with PR review prompt |
 | code quality review | `code-reviewer` | `default` with code-health review prompt |
 | security review | `security-auditor` | `default` with security review prompt |
@@ -35,8 +40,9 @@ Every fallback prompt must include these constraints.
 
 ## Do Not
 
-- Do not use `online-researcher` for API documentation verification.
+- Do not use `source-researcher` for implementation decisions.
 - Do not use `docs-researcher` for market or strategy judgment.
-- Do not use `spec-reviewer` for implementation code-quality review.
+- Do not use `requirements-reviewer` or `plan-reviewer` for implementation code-quality review.
+- Do not use `test-adequacy-reviewer` for broad correctness review.
 - Do not ask `reviewer` and `code-reviewer` the same question in parallel.
 - Do not modify the Superpowers plugin cache during installation.
