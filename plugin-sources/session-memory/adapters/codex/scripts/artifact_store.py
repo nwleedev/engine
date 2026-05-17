@@ -1,6 +1,7 @@
 """Manage flat Codex session-memory artifacts by thread id."""
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Any
 
@@ -12,7 +13,7 @@ RESUME_HINT = "Resume this session: `$session-memory:resume {session_prefix}`"
 
 
 class ArtifactStore:
-    """Path and INDEX.md helper for graph-first session-memory artifacts."""
+    """Path and INDEX.md helper for CODEX_SESSION_ID flat artifacts."""
 
     def __init__(self, project_root: str | Path) -> None:
         self.project_root = Path(project_root)
@@ -31,6 +32,12 @@ class ArtifactStore:
 
     def contexts_dir(self, thread_id: str) -> Path:
         return self.thread_dir(thread_id) / "contexts"
+
+    def context_filename(self, *, timestamp: str, task_id: str, nonce: str) -> str:
+        slug = re.sub(r"[^a-z0-9]+", "-", task_id.lower()).strip("-")
+        if not slug:
+            slug = "checkpoint"
+        return f"CONTEXT-{timestamp}-{slug}-{nonce}.md"
 
     def context_path(self, thread_id: str, filename: str) -> Path:
         return self.contexts_dir(thread_id) / filename

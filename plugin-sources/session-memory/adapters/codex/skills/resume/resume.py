@@ -27,10 +27,11 @@ def load_script_module(filename: str, module_name: str):
 dotenv_loader = load_script_module("dotenv_loader.py", "codex_session_memory_resume_dotenv_loader")
 pr = load_script_module("project_root.py", "codex_session_memory_resume_project_root")
 io = load_script_module("index_io.py", "codex_session_memory_resume_index_io")
+sl = load_script_module("session_locator.py", "codex_session_memory_resume_session_locator")
 
 
 def list_sessions(root: str, limit: int | None = 10):
-    rows_by_session_id = {}
+    rows = []
     session_roots = [
         Path(root) / ".codex" / "session-memory" / "threads",
         Path(root) / ".codex" / "sessions",
@@ -47,15 +48,13 @@ def list_sessions(root: str, limit: int | None = 10):
                 continue
             fm = io.read_frontmatter(idx) or {}
             session_id = fm.get("thread_id") or fm.get("session_id", d.name)
-            rows_by_session_id.setdefault(
-                session_id,
+            rows.append(
                 {
                     "session_id": session_id,
                     "last_updated": fm.get("last_updated", ""),
                     "path": idx,
                 },
             )
-    rows = list(rows_by_session_id.values())
     rows.sort(key=lambda r: str(r["last_updated"]), reverse=True)
     return rows[:limit] if limit is not None else rows
 
@@ -72,38 +71,35 @@ def render_table(rows):
     return "\n".join(out)
 
 
-def related_flat_session_dirs(root: str, session_id: str) -> list[Path]:
-    try:
-        graph_store = load_script_module("graph_store.py", "codex_session_memory_resume_graph_store")
-        artifact_store = load_script_module(
-            "artifact_store.py",
-            "codex_session_memory_resume_artifact_store",
-        )
-        graph = graph_store.GraphStore(codex_home=Path(root) / ".codex")
-        artifacts = artifact_store.ArtifactStore(root)
-        related_ids = graph.children_of(session_id)
-    except Exception:
-        return []
-
-    related_dirs = []
-    seen = set()
-    for related_id in related_ids:
-        if related_id in seen:
-            continue
-        seen.add(related_id)
-        index_path = artifacts.index_path(related_id)
-        if index_path.is_file():
-            related_dirs.append(index_path.parent)
-    return related_dirs
-
-
 def main(argv):
     cwd = os.getcwd()
     dotenv_loader.load_project_dotenv(cwd)
     root = pr.find_project_root(cwd)
 
     if len(argv) <= 1:
-        print(render_table(list_sessions(root)))
+        session_id = sl.current_session_id()
+        if not session_id:
+            print(
+                "error: CODEX_SESSION_ID is required as the session-memory artifact target",
+                file=sys.stderr,
+            )
+            return 2
+        target_session_dir = Path(root) / ".codex" / "session-memory" / "threads" / session_id
+        index_path = target_session_dir / "INDEX.md"
+        if not index_path.is_file():
+            print(
+                "error: session-memory artifact not found: "
+                f".codex/session-memory/threads/{session_id}/INDEX.md",
+                file=sys.stderr,
+            )
+            return 2
+        resume_prompt = load_script_module("resume_prompt.py", "codex_session_memory_resume_prompt")
+        sys.stdout.write(
+            resume_prompt.build_resume_prompt(
+                target_session_dir,
+                budget_chars=MAX_INJECT_CHARS,
+            )
+        )
         return 0
 
     prefix = argv[1]
@@ -118,15 +114,12 @@ def main(argv):
     if len(matches) > 1:
         print(f"error: multiple sessions match prefix '{prefix}'", file=sys.stderr)
         return 2
-    target_session_id = str(matches[0]["session_id"])
     target_session_dir = matches[0]["path"].parent
-    related_session_dirs = related_flat_session_dirs(root, target_session_id)
     resume_prompt = load_script_module("resume_prompt.py", "codex_session_memory_resume_prompt")
     sys.stdout.write(
         resume_prompt.build_resume_prompt(
             target_session_dir,
             budget_chars=MAX_INJECT_CHARS,
-            related_session_dirs=related_session_dirs,
         )
     )
     return 0

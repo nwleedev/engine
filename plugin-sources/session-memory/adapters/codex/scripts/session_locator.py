@@ -12,6 +12,12 @@ def current_thread_id():
     return v or None
 
 
+def current_session_id():
+    """Return the explicit session-memory artifact target from CODEX_SESSION_ID."""
+    v = os.environ.get("CODEX_SESSION_ID", "").strip()
+    return v or None
+
+
 def find_jsonl_by_thread(thread_id: str, codex_sessions_root=None):
     root = Path(codex_sessions_root) if codex_sessions_root else CODEX_SESSIONS_ROOT
     if not root.is_dir():

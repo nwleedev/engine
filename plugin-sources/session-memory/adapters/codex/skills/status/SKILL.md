@@ -1,23 +1,20 @@
 ---
 name: status
-description: Show session-memory status for the current Codex session — pending turns since last save, context files written, last save time, JSONL path, and AGENTS.md rule status. Use when the user wants to inspect or check the state of session memory before deciding whether to checkpoint.
+description: Show artifact-only session-memory status for CODEX_SESSION_ID: artifact path, context count, last save metadata, pending offset, and AGENTS.md rule status.
 ---
 
 # Session Memory Status
 
 Read-only status report. It also reports whether the project AGENTS.md has the session-memory rules installed, partially present, missing, or not found.
 
-Status reports the current flat artifact path under
-`<root>/.codex/session-memory/threads/<CODEX_THREAD_ID>/` when it exists.
-Legacy `.codex/sessions/*` and `.codex/sessions/_children/*` paths are only
-fallback read locations; `_children` is deprecated and new checkpoints do not
-create it.
+Status reports only the current flat artifact path under
+`<root>/.codex/session-memory/threads/<CODEX_SESSION_ID>/`. If
+`CODEX_SESSION_ID` is missing, status prints a diagnostic and does not inspect
+Codex graph state, sqlite state DBs, JSONL files, parent locators, child
+session folders, or legacy `.codex/sessions/*` fallbacks.
 
-Flat `INDEX.md` frontmatter does not make `role` or `parent_session_id`
-authoritative. Status reads parent-child relationships from the Codex graph
-when available. If graph lookup is degraded, it can print `Graph: unavailable`
-and fall back to `parent_locator` / `graph_store` diagnostics or legacy
-frontmatter only for compatibility reporting.
+If the `CODEX_SESSION_ID` artifact has not been checkpointed, status reports
+the missing artifact path and stops after artifact-only diagnostics.
 
 ## Run
 

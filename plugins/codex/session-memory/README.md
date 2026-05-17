@@ -72,52 +72,54 @@ Confirm `.env` is in `.gitignore` before committing other changes.
 ## Data layout
 
 ```
-<root>/.codex/session-memory/threads/<CODEX_THREAD_ID>/
+<root>/.codex/session-memory/threads/<CODEX_SESSION_ID>/
 ├── INDEX.md
-└── contexts/CONTEXT-YYYYMMDD-HH00-checkpoint.md
+└── contexts/CONTEXT-<timestamp>-<task-id>-<nonce>.md
 ```
 
-The same JSONL transcript at `~/.codex/sessions/YYYY/MM/DD/rollout-*-<thread>.jsonl` is read incrementally on each checkpoint.
-
-New checkpoints use the flat artifact store under `.codex/session-memory/threads`.
-Legacy `.codex/sessions/<thread>/contexts` and
-`.codex/sessions/_children/<thread>/contexts` files remain readable for
-compatibility. `_children` is deprecated: new checkpoints do not create it, and
-the only supported uses are legacy reads and migration input.
-
-Subagent and review sessions are still detected as child sessions through the
-Codex graph. In normal child-session use, run:
+The same JSONL transcript at `~/.codex/sessions/YYYY/MM/DD/rollout-*-<thread>.jsonl`
+is read incrementally on each checkpoint. `CODEX_THREAD_ID` is only used for
+that transcript lookup. New checkpoint artifacts are written only under:
 
 ```
-python3 /path/to/session-memory/skills/checkpoint/checkpoint.py prepare --role child
+.codex/session-memory/threads/<CODEX_SESSION_ID>/
 ```
 
-Use `--parent` only when automatic resolution cannot find the parent, or when
-you need to override it explicitly:
+Set `CODEX_SESSION_ID` to the main session id before starting or resuming
+Codex. Inline env is preferred over a checked-in `.env` file:
 
 ```
-python3 /path/to/session-memory/skills/checkpoint/checkpoint.py prepare --role child --parent <parent-session-id>
+CODEX_SESSION_ID=<main-thread-id> codex resume <main-thread-id>
 ```
 
 Flat `INDEX.md` frontmatter records checkpoint metadata such as `session_id`,
-`last_processed_offset`, and `last_updated`; it does not store `role` or
-`parent_session_id` as relationship source-of-truth fields. Parent-child
-relationships come from the Codex graph when available, or from
-`parent_locator` / `graph_store` diagnostics when the graph is degraded. New
-checkpoints therefore do not create `_children` paths or parent `Child Sessions`
-links.
+`source_thread_id`, `last_processed_offset`, and `last_updated`; it does not
+store `role` or `parent_session_id` as relationship source-of-truth fields. If
+`CODEX_THREAD_ID` differs from `CODEX_SESSION_ID`, checkpoint prints a
+non-blocking warning and still writes to the `CODEX_SESSION_ID` artifact. A
+wrong `CODEX_SESSION_ID` can contaminate another session artifact, so treat it
+as an explicit storage target.
 
-## Graph degraded mode
+Legacy `.codex/sessions/<thread>/contexts` and
+`.codex/sessions/_children/<thread>/contexts` files remain readable for
+compatibility. `_children` is deprecated: new checkpoints do not create it, and
+the only supported use is legacy read compatibility.
 
-The flat artifact is the durable recovery unit even when graph data is
-unavailable. In degraded mode:
+## Artifact-only mode
 
-- `$session-memory:status` can print `Graph: unavailable`.
-- `$session-memory:resume <prefix>` resumes from the selected flat
+The flat artifact is the durable recovery unit. Session-memory does not read
+Codex sqlite state DBs, `thread_spawn_edges`, `threads.source`, rollout
+`session_meta`, or parent/child graph helpers in checkpoint, resume, or status.
+In artifact-only mode:
+
+- `$session-memory:status` reports only the current `CODEX_SESSION_ID` artifact.
+- `$session-memory:resume <prefix>` resumes from the selected
   `.codex/session-memory/threads/<id>/INDEX.md` and recent `contexts/`.
-- Checkpoint CONTEXT files still preserve graph diagnostics in `graph_context`,
-  including `unavailable`, `source`, `confidence`, `reason`, and `warnings`
-  fields when the helper can determine them.
+- Checkpoint CONTEXT files keep `graph_context` as a compatibility section, but
+  it records that graph and parent discovery were not used.
+- If `INDEX.md` update fails after writing a context file, the context is kept
+  and the helper prints the context path, backup path when available, and manual
+  repair guidance.
 
 Checkpoint context is not reduced to a smaller summary in this model. The
 required 9-section CONTEXT template preserves `executive_summary`,
@@ -125,34 +127,21 @@ required 9-section CONTEXT template preserves `executive_summary`,
 sections so compaction recovery has both the concise state and the detailed
 working context.
 
-## Child session checkpoints
+## Concurrent checkpoints
 
-Overall parent decision order is:
-
-1. `--parent <thread-id>`
-2. `CODEX_SESSION_PARENT_ID`
-3. automatic detector
-
-Within automatic detection, the helper reads rollout `session_meta` before state
-DB. If rollout metadata identifies a child but lacks parent id, the helper still
-checks state DB for a matching parent edge before failing closed. State DB
-fallback checks `thread_spawn_edges` first, then `threads.source`.
-
-State DB fallback is a read-only internal fallback. Candidate homes are checked
-in this order: explicit `sqlite_home` argument, `CODEX_SQLITE_HOME`, Codex
-`config.toml` `sqlite_home`, project `.codex`, then user `~/.codex`.
-
-If child evidence is detected but no parent id can be resolved, the helper exits
-with code 2 instead of emitting a top-level main session target.
-
-`INDEX.md` is append-only. If multiple checkpoints update the same HH00 context
-file, append a new INDEX entry instead of replacing the previous line. Resume
-keeps INDEX event order but deduplicates context file injection by filename to
-avoid spending context budget on the same file more than once.
+Context files are created as
+`contexts/CONTEXT-<timestamp>-<task-id>-<nonce>.md`. `source_thread_id` is stored
+inside the context metadata rather than the filename. `INDEX.md` updates take an
+`INDEX.md.lock`, reread the latest file under the lock, create writer-scoped
+backup/temp files in the same directory, fsync the temp file, and use
+`os.replace` for the final update.
 
 ## How session continuity works
 
-`CODEX_THREAD_ID` stays stable across resumed Codex CLI sessions — verified empirically. Multi-day work on the same Codex session accumulates into the same `<root>/.codex/session-memory/threads/<id>/INDEX.md`.
+`CODEX_SESSION_ID` is the explicit session-memory artifact id. Multi-day work
+on the same Codex session accumulates into the same
+`<root>/.codex/session-memory/threads/<id>/INDEX.md` only when you keep passing
+the same `CODEX_SESSION_ID`.
 
 ## Legacy child session migration
 

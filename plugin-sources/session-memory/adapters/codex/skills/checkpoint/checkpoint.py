@@ -5,8 +5,9 @@ from __future__ import annotations
 import importlib.util
 import os
 import re
+import secrets
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -31,10 +32,12 @@ ee = _load_script_module(
 )
 io = _load_script_module("index_io.py", "codex_session_memory_checkpoint_index_io")
 jp = _load_script_module("jsonl_parser.py", "codex_session_memory_checkpoint_jsonl_parser")
-pl = _load_script_module("parent_locator.py", "codex_session_memory_parent_locator")
 pr = _load_script_module("project_root.py", "codex_session_memory_checkpoint_project_root")
 sl = _load_script_module(
     "session_locator.py", "codex_session_memory_checkpoint_session_locator"
+)
+artifact_store = _load_script_module(
+    "artifact_store.py", "codex_session_memory_checkpoint_artifact_store"
 )
 
 
@@ -64,16 +67,13 @@ CONTEXT_TEMPLATE_GUIDANCE = (
     ("## next_actions", "Record ordered steps the next person can run immediately."),
     (
         "## graph_context",
-        "Record thread id, graph role, parent id, and graph lookup status.",
+        "Record that Codex graph and parent discovery are not used; preserve source provenance.",
     ),
 )
 
 
 def _usage() -> str:
-    return (
-        "usage: checkpoint.py prepare [--role main|child] [--parent <session-id>] | "
-        "checkpoint.py verify <context-path>"
-    )
+    return "usage: checkpoint.py prepare | checkpoint.py verify <context-path>"
 
 
 def _print_usage() -> None:
@@ -90,21 +90,6 @@ def _resolve_project_root(cwd: str) -> str | None:
     return root
 
 
-def _data_session_dir(root: str, thread_id: str, role: str) -> Path:
-    try:
-        return sl.data_session_dir(root, thread_id, role=role)
-    except TypeError:
-        if role == "main":
-            return sl.data_session_dir(root, thread_id)
-        raise
-
-
-def _artifact_session_dir(root: str, thread_id: str) -> Path:
-    if hasattr(sl, "artifact_session_dir"):
-        return sl.artifact_session_dir(root, thread_id)
-    return Path(root) / ".codex" / "session-memory" / "threads" / thread_id
-
-
 def _coerce_offset(value) -> int:
     try:
         return int(value)
@@ -112,9 +97,14 @@ def _coerce_offset(value) -> int:
         return 0
 
 
-def _suggest_context_path(contexts_dir: Path) -> Path:
-    stamp = datetime.now().strftime("%Y%m%d-%H00")
-    return contexts_dir / f"CONTEXT-{stamp}-checkpoint.md"
+def _suggest_context_path(store, session_id: str, task_id: str, now_utc: datetime) -> Path:
+    stamp = now_utc.strftime("%Y%m%d-%H%M%S")
+    filename = store.context_filename(
+        timestamp=stamp,
+        task_id=task_id,
+        nonce=secrets.token_hex(3),
+    )
+    return store.context_path(session_id, filename)
 
 
 def _render_list(items: list[str]) -> str:
@@ -143,25 +133,33 @@ def _render_evidence(evidence: dict) -> str:
 
 def _render_required_context_template(
     *,
-    thread_id: str,
-    role: str,
-    parent_session_id: str | None,
-    parent_resolution,
+    session_id: str,
+    source_thread_id: str,
+    task_id: str,
+    checkpoint_id: str,
+    created_at: str,
 ) -> str:
-    lines = ["# <title>", ""]
+    lines = [
+        "---",
+        f"session_id: {session_id}",
+        f"source_thread_id: {source_thread_id}",
+        f"task_id: {task_id}",
+        f"checkpoint_id: {checkpoint_id}",
+        f"created_at: {created_at}",
+        "---",
+        "",
+        "# <title>",
+        "",
+    ]
     for heading, guidance in CONTEXT_TEMPLATE_GUIDANCE:
         lines.extend([heading, f"- guidance: {guidance}", ""])
         if heading == "## graph_context":
             lines.extend(
                 [
-                    f"thread_id: {thread_id}",
-                    f"graph_role: {role}",
-                    f"parent_session_id: {parent_session_id or ''}",
-                    f"graph_status: {_graph_status(parent_resolution)}",
-                    f"graph_source: {parent_resolution.source}",
-                    f"graph_confidence: {parent_resolution.confidence}",
-                    f"graph_reason: {parent_resolution.reason}",
-                    f"graph_warnings: {_render_graph_warnings(parent_resolution.warnings)}",
+                    f"session_id: {session_id}",
+                    f"source_thread_id: {source_thread_id}",
+                    "graph_status: not_used",
+                    "graph_source: none",
                     "",
                 ]
             )
@@ -208,243 +206,147 @@ def _index_has_context_entry(index_text: str, filename: str) -> bool:
     return any(entry_re.match(line) for line in index_text.splitlines())
 
 
-def _parse_prepare_args(args: list[str]) -> tuple[str | None, str | None] | None:
-    role = None
-    parent = None
-    i = 1
-    while i < len(args):
-        arg = args[i]
-        if arg == "--role":
-            if i + 1 >= len(args):
-                print("error: --role requires main or child", file=sys.stderr)
-                return None
-            role = args[i + 1]
-            i += 2
-            continue
-        if arg == "--parent":
-            if i + 1 >= len(args):
-                print("error: --parent requires <session-id>", file=sys.stderr)
-                return None
-            parent = args[i + 1]
-            i += 2
-            continue
-        print(f"error: unknown prepare argument: {arg}", file=sys.stderr)
-        return None
-    if role is not None and role not in {"main", "child"}:
-        print("error: --role must be main or child", file=sys.stderr)
-        return None
-    return role, parent
+def _parse_prepare_args(args: list[str]) -> bool:
+    if len(args) == 1:
+        return True
+    print(f"error: unknown prepare argument: {args[1]}", file=sys.stderr)
+    return False
 
 
-def _prepare_retry_guidance() -> str:
-    return "retry with --parent <session-id> or set CODEX_SESSION_PARENT_ID"
-
-
-def _parent_resolution(
-    *,
-    role: str,
-    parent_thread_id: str | None = None,
-    source: str = "none",
-    confidence: str = "none",
-    reason: str = "",
-    warnings: tuple[str, ...] = (),
-):
-    return pl.ParentResolution(
-        role=role,
-        parent_thread_id=parent_thread_id,
-        source=source,
-        confidence=confidence,
-        reason=reason,
-        warnings=warnings,
-    )
-
-
-def _graph_status(resolution) -> str:
-    if resolution.source in {"argument", "environment"}:
-        return "provided"
-    if resolution.source == "none" and resolution.confidence == "none":
-        return "unavailable"
-    return "available"
-
-
-def _render_graph_warnings(warnings: tuple[str, ...]) -> str:
-    if not warnings:
-        return "(none)"
-    return "; ".join(warnings)
-
-
-def _resolve_prepare_target(
-    *,
-    requested_role: str | None,
-    requested_parent: str | None,
-    thread_id: str,
-    jsonl_path: Path | None,
-    project_root: str | Path,
-) -> tuple[str, str | None, object] | None:
-    if requested_parent:
-        if requested_role == "main":
-            print("error: --parent conflicts with --role main", file=sys.stderr)
-            return None
-        return (
-            "child",
-            requested_parent,
-            _parent_resolution(
-                role="child",
-                parent_thread_id=requested_parent,
-                source="argument",
-                confidence="high",
-                reason="parent id provided by --parent",
-            ),
-        )
-
-    env_parent = os.environ.get("CODEX_SESSION_PARENT_ID")
-    if env_parent:
-        if requested_role == "main":
-            print("error: CODEX_SESSION_PARENT_ID conflicts with --role main", file=sys.stderr)
-            return None
-        return (
-            "child",
-            env_parent,
-            _parent_resolution(
-                role="child",
-                parent_thread_id=env_parent,
-                source="environment",
-                confidence="high",
-                reason="parent id provided by CODEX_SESSION_PARENT_ID",
-            ),
-        )
-
-    resolution = pl.resolve_parent_thread_id(
-        thread_id=thread_id,
-        rollout_path=jsonl_path,
-        codex_home=Path(project_root) / ".codex",
-    )
-    if resolution.role == "child":
-        if requested_role == "main":
-            print(
-                "error: --role main conflicts with detected child checkpoint metadata",
-                file=sys.stderr,
-            )
-            return None
-        if resolution.parent_thread_id:
-            return "child", resolution.parent_thread_id, resolution
-        print(
-            f"error: child checkpoint detected without parent session id; {_prepare_retry_guidance()}",
-            file=sys.stderr,
-        )
-        return None
-
-    if requested_role == "child":
-        print(
-            f"error: child checkpoint requested but no parent session id was found; {_prepare_retry_guidance()}",
-            file=sys.stderr,
-        )
-        return None
-
-    return "main", None, resolution
-
-
-def _prepare(requested_role: str | None = None, requested_parent: str | None = None) -> int:
+def _prepare() -> int:
     cwd = os.getcwd()
     dotenv_loader.load_project_dotenv(cwd)
 
-    thread_id = sl.current_thread_id()
-    if not thread_id:
+    session_id = sl.current_session_id()
+    if not session_id:
+        print(
+            "error: CODEX_SESSION_ID is required as the session-memory artifact target",
+            file=sys.stderr,
+        )
+        return 2
+
+    source_thread_id = sl.current_thread_id()
+    if not source_thread_id:
         print("error: CODEX_THREAD_ID is required for checkpoint prepare", file=sys.stderr)
         return 2
+    if source_thread_id != session_id:
+        print(
+            "warning: CODEX_THREAD_ID differs from CODEX_SESSION_ID; "
+            "using CODEX_THREAD_ID only to read the rollout JSONL",
+            file=sys.stderr,
+        )
 
     root = _resolve_project_root(cwd)
     if root is None:
         return 2
 
-    jsonl_path = sl.find_jsonl_by_thread(thread_id)
-
-    resolved = _resolve_prepare_target(
-        requested_role=requested_role,
-        requested_parent=requested_parent,
-        thread_id=thread_id,
-        jsonl_path=jsonl_path,
-        project_root=root,
-    )
-    if resolved is None:
-        return 2
-    role, parent_session_id, parent_resolution = resolved
-
+    jsonl_path = sl.find_jsonl_by_thread(source_thread_id)
     if not jsonl_path:
-        print(f"error: no rollout JSONL found for thread {thread_id}", file=sys.stderr)
+        print(f"error: no rollout JSONL found for thread {source_thread_id}", file=sys.stderr)
         return 2
 
-    session_dir = _artifact_session_dir(root, thread_id)
-    index_path = session_dir / "INDEX.md"
-    contexts_dir = session_dir / "contexts"
-    contexts_dir.mkdir(parents=True, exist_ok=True)
-    parent_index_path = None
+    store = artifact_store.ArtifactStore(root)
+    index_path = store.index_path(session_id)
 
     frontmatter = io.read_frontmatter(index_path) or {}
     last_processed_offset = _coerce_offset(frontmatter.get("last_processed_offset", 0))
     delta, new_offset = jp.extract_delta(str(jsonl_path), last_processed_offset)
-    context_path = _suggest_context_path(contexts_dir)
+    now_utc = datetime.now(timezone.utc)
+    task_id = "checkpoint"
+    context_path = _suggest_context_path(store, session_id, task_id, now_utc)
+    checkpoint_id = context_path.stem.removeprefix("CONTEXT-")
+    created_at = now_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
     evidence = ee.extract_evidence(delta)
+    context_text = _render_required_context_template(
+        session_id=session_id,
+        source_thread_id=source_thread_id,
+        task_id=task_id,
+        checkpoint_id=checkpoint_id,
+        created_at=created_at,
+    )
 
     print(
         "\n".join(
             [
                 "# checkpoint prepare",
                 "",
-                "The active Codex must write the context file and update INDEX.md.",
+                "Preparing to write the context file and update INDEX.md.",
                 "",
                 "## target",
-                f"thread_id: {thread_id}",
-                f"role: {role}",
-                f"parent_session_id: {parent_session_id or ''}",
+                f"session_id: {session_id}",
+                f"source_thread_id: {source_thread_id}",
                 f"project_root: {root}",
                 f"jsonl_path: {jsonl_path}",
                 f"index_path: {index_path}",
                 f"context_path: {context_path}",
-                f"parent_index_path: {parent_index_path or ''}",
                 f"previous_processed_offset: {last_processed_offset}",
                 f"new_offset: {new_offset}",
                 "",
                 "## index update",
                 f"index_entry: - [{context_path.name}] — <summary>",
-                "parent_child_entry:",
                 "frontmatter_update:",
                 f"  last_processed_offset: {new_offset}",
-                "  last_updated: <ISO-8601 timestamp>",
-                "  session_id: <thread_id>",
-                "",
-                "relationship_diagnostics:",
-                f"  relationship_source: {parent_resolution.source}",
-                f"  detected_role: {role}",
-                f"  detected_parent_session_id: {parent_session_id or ''}",
-                f"  graph_status: {_graph_status(parent_resolution)}",
-                f"  graph_source: {parent_resolution.source}",
-                f"  graph_confidence: {parent_resolution.confidence}",
-                f"  graph_reason: {parent_resolution.reason}",
-                f"  graph_warnings: {_render_graph_warnings(parent_resolution.warnings)}",
+                f"  last_updated: {created_at}",
+                f"  session_id: {session_id}",
+                f"  source_thread_id: {source_thread_id}",
                 "",
                 "## evidence",
                 _render_evidence(evidence),
                 "",
                 "## required context template",
-                _render_required_context_template(
-                    thread_id=thread_id,
-                    role=role,
-                    parent_session_id=parent_session_id,
-                    parent_resolution=parent_resolution,
-                ),
+                context_text,
                 "",
-                "After writing the context, update INDEX.md to reference the context filename.",
-                "Set INDEX.md frontmatter last_processed_offset to the printed new offset.",
             ]
         )
     )
+
+    context_path.parent.mkdir(parents=True, exist_ok=True)
+    context_path.write_text(context_text + "\n", encoding="utf-8")
+    try:
+        backup_path = io.append_context_entry_with_frontmatter(
+            index_path,
+            context_path.name,
+            "<summary>",
+            writer_id=checkpoint_id,
+            session_id=session_id,
+            source_thread_id=source_thread_id,
+            artifact_schema_version=2,
+            last_processed_offset=new_offset,
+            last_updated=created_at,
+        )
+    except OSError as exc:
+        backup_path = getattr(exc, "backup_path", None)
+        backup_note = (
+            f"; backup path: {backup_path}"
+            if backup_path
+            else "; no backup path was created before failure"
+        )
+        print(
+            "error: INDEX.md update failed after context write; "
+            f"context preserved at {context_path}{backup_note}; "
+            "run session-memory status to find orphan contexts, then repair by "
+            f"adding this entry under ## Contexts: - [{context_path.name}] — <summary>; "
+            "also set frontmatter "
+            f"last_processed_offset: {new_offset}, last_updated: {created_at}, "
+            f"session_id: {session_id}, source_thread_id: {source_thread_id}; {exc}",
+            file=sys.stderr,
+        )
+        return 1
+    print("The active Codex wrote the context file and updated INDEX.md.")
     return 0
 
 
 def _verify(context_arg: str) -> int:
     cwd = os.getcwd()
     dotenv_loader.load_project_dotenv(cwd)
+    session_id = sl.current_session_id()
+    if not session_id:
+        print(
+            "error: CODEX_SESSION_ID is required as the session-memory artifact target",
+            file=sys.stderr,
+        )
+        return 2
+
     root = _resolve_project_root(cwd)
     if root is None:
         return 2
@@ -496,12 +398,10 @@ def main(argv=None) -> int:
 
     command = args[0]
     if command == "prepare":
-        parsed = _parse_prepare_args(args)
-        if parsed is None:
+        if not _parse_prepare_args(args):
             _print_usage()
             return 2
-        requested_role, requested_parent = parsed
-        return _prepare(requested_role=requested_role, requested_parent=requested_parent)
+        return _prepare()
     if command == "verify" and len(args) == 2:
         return _verify(args[1])
 

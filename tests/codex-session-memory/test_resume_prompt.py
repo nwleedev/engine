@@ -1,13 +1,19 @@
 import importlib.util
 import os
-import sqlite3
 import sys
 import types
 from pathlib import Path
 
 
-SCRIPTS = Path(__file__).resolve().parents[2] / "plugins" / "codex" / "session-memory" / "scripts"
-RESUME = Path(__file__).resolve().parents[2] / "plugins" / "codex" / "session-memory" / "skills" / "resume" / "resume.py"
+PLUGIN_SOURCE = (
+    Path(__file__).resolve().parents[2]
+    / "plugin-sources"
+    / "session-memory"
+    / "adapters"
+    / "codex"
+)
+SCRIPTS = PLUGIN_SOURCE / "scripts"
+RESUME = PLUGIN_SOURCE / "skills" / "resume" / "resume.py"
 
 
 def load_resume_prompt():
@@ -353,22 +359,50 @@ def test_resume_skill_output_stays_within_prompt_budget(tmp_path, monkeypatch, c
     assert output.endswith("</session-memory>")
 
 
-def test_resume_skill_lists_flat_artifact_and_legacy_sessions(tmp_path, monkeypatch, capsys):
+def test_resume_skill_without_session_id_fails_closed(tmp_path, monkeypatch, capsys):
+    project = tmp_path / "project"
+    project.mkdir()
+    monkeypatch.delenv("CODEX_SESSION_ID", raising=False)
+    monkeypatch.setenv("CODEX_PROJECT_DIR", str(project))
+    monkeypatch.chdir(project)
+
+    resume_skill = load_resume_skill()
+
+    assert resume_skill.main(["resume.py"]) == 2
+    captured = capsys.readouterr()
+    assert "CODEX_SESSION_ID" in captured.err
+    assert "session-memory artifact target" in captured.err
+
+
+def test_resume_skill_without_prefix_uses_codex_session_id_artifact_only(
+    tmp_path, monkeypatch, capsys
+):
     project = tmp_path / "project"
     flat_session = project / ".codex" / "session-memory" / "threads" / "flat1234-session"
-    flat_session.mkdir(parents=True)
+    flat_contexts = flat_session / "contexts"
+    flat_contexts.mkdir(parents=True)
     (flat_session / "INDEX.md").write_text(
         "---\nthread_id: flat1234-session\nlast_updated: 2026-05-04T00:00:00Z\n---\n\n"
-        "# Flat\n",
+        "# Flat\n\n## Contexts\n\n- [CONTEXT-flat.md] — default resume\n",
+        encoding="utf-8",
+    )
+    (flat_contexts / "CONTEXT-flat.md").write_text(
+        "# Flat\n\n## Next\nresume the CODEX_SESSION_ID artifact.\n",
         encoding="utf-8",
     )
     legacy_session = project / ".codex" / "sessions" / "legacy99-session"
-    legacy_session.mkdir(parents=True)
+    legacy_contexts = legacy_session / "contexts"
+    legacy_contexts.mkdir(parents=True)
     (legacy_session / "INDEX.md").write_text(
         "---\nsession_id: legacy99-session\nlast_updated: 2026-05-05T00:00:00Z\n---\n\n"
-        "# Legacy\n",
+        "# Legacy\n\n## Contexts\n\n- [CONTEXT-legacy.md] — stale\n",
         encoding="utf-8",
     )
+    (legacy_contexts / "CONTEXT-legacy.md").write_text(
+        "# Legacy\n\n## Next\nlegacy context must not be included by default.\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("CODEX_SESSION_ID", "flat1234-session")
     monkeypatch.setenv("CODEX_PROJECT_DIR", str(project))
     monkeypatch.chdir(project)
 
@@ -376,32 +410,29 @@ def test_resume_skill_lists_flat_artifact_and_legacy_sessions(tmp_path, monkeypa
 
     assert resume_skill.main(["resume.py"]) == 0
     output = capsys.readouterr().out
-    assert "flat1234" in output
-    assert "legacy99" in output
+    assert "resume the CODEX_SESSION_ID artifact" in output
+    assert "legacy context must not be included by default" not in output
 
 
-def test_resume_skill_lists_legacy_children_artifacts(tmp_path, monkeypatch, capsys):
+def test_resume_skill_without_prefix_errors_when_codex_session_id_artifact_missing(
+    tmp_path, monkeypatch, capsys
+):
     project = tmp_path / "project"
-    legacy_child = project / ".codex" / "sessions" / "_children" / "child1234-session"
-    legacy_child.mkdir(parents=True)
-    (legacy_child / "INDEX.md").write_text(
-        "---\nsession_id: child1234-session\nlast_updated: 2026-05-05T00:00:00Z\n---\n\n"
-        "# Legacy Child\n",
-        encoding="utf-8",
-    )
+    project.mkdir()
+    monkeypatch.setenv("CODEX_SESSION_ID", "missing-session")
     monkeypatch.setenv("CODEX_PROJECT_DIR", str(project))
     monkeypatch.chdir(project)
 
     resume_skill = load_resume_skill()
 
-    assert resume_skill.main(["resume.py"]) == 0
-    output = capsys.readouterr().out
-    assert "child123" in output
-    assert "_children" not in output
+    assert resume_skill.main(["resume.py"]) == 2
+    captured = capsys.readouterr()
+    assert "missing-session" in captured.err
+    assert ".codex/session-memory/threads/missing-session/INDEX.md" in captured.err
 
 
-def test_resume_skill_prefers_flat_artifact_over_duplicate_legacy_session(
-    tmp_path, monkeypatch
+def test_resume_skill_keeps_duplicate_flat_and_legacy_session_candidates_ambiguous(
+    tmp_path, monkeypatch, capsys
 ):
     project = tmp_path / "project"
     flat_session = project / ".codex" / "session-memory" / "threads" / "same1234-session"
@@ -425,12 +456,17 @@ def test_resume_skill_prefers_flat_artifact_over_duplicate_legacy_session(
 
     rows = resume_skill.list_sessions(str(project), limit=None)
 
-    assert len(rows) == 1
-    assert rows[0]["path"] == flat_session / "INDEX.md"
+    assert len(rows) == 2
+    assert {row["path"] for row in rows} == {
+        flat_session / "INDEX.md",
+        legacy_session / "INDEX.md",
+    }
+    assert resume_skill.main(["resume.py", "same1234"]) == 2
+    assert "multiple sessions match prefix 'same1234'" in capsys.readouterr().err
 
 
-def test_resume_skill_prefers_flat_artifact_over_duplicate_legacy_child_session(
-    tmp_path, monkeypatch
+def test_resume_skill_keeps_duplicate_flat_and_legacy_child_candidates_ambiguous(
+    tmp_path, monkeypatch, capsys
 ):
     project = tmp_path / "project"
     flat_session = project / ".codex" / "session-memory" / "threads" / "same1234-session"
@@ -454,8 +490,13 @@ def test_resume_skill_prefers_flat_artifact_over_duplicate_legacy_child_session(
 
     rows = resume_skill.list_sessions(str(project), limit=None)
 
-    assert len(rows) == 1
-    assert rows[0]["path"] == flat_session / "INDEX.md"
+    assert len(rows) == 2
+    assert {row["path"] for row in rows} == {
+        flat_session / "INDEX.md",
+        legacy_child / "INDEX.md",
+    }
+    assert resume_skill.main(["resume.py", "same1234"]) == 2
+    assert "multiple sessions match prefix 'same1234'" in capsys.readouterr().err
 
 
 def test_resume_skill_resumes_legacy_child_artifact_by_prefix(tmp_path, monkeypatch, capsys):
@@ -481,7 +522,61 @@ def test_resume_skill_resumes_legacy_child_artifact_by_prefix(tmp_path, monkeypa
     assert "resume the legacy child artifact by prefix" in capsys.readouterr().out
 
 
-def test_resume_skill_includes_graph_child_flat_artifact_context(
+def test_resume_skill_prefix_ambiguity_does_not_auto_select_with_graph_or_db(
+    tmp_path, monkeypatch, capsys
+):
+    project = tmp_path / "project"
+    for suffix in ("one", "two"):
+        session = project / ".codex" / "session-memory" / "threads" / f"same1234-{suffix}"
+        session.mkdir(parents=True)
+        (session / "INDEX.md").write_text(
+            f"---\nthread_id: same1234-{suffix}\nlast_updated: 2026-05-04T00:00:00Z\n---\n\n"
+            f"# {suffix}\n",
+            encoding="utf-8",
+        )
+    state_db = project / ".codex" / "state_5.sqlite"
+    state_db.write_text("not consulted by resume", encoding="utf-8")
+    monkeypatch.setenv("CODEX_PROJECT_DIR", str(project))
+    monkeypatch.chdir(project)
+
+    resume_skill = load_resume_skill()
+    real_loader = resume_skill.load_script_module
+
+    def fail_on_graph_or_db_loader(filename, module_name):
+        assert filename not in {"graph_store.py", "parent_locator.py"}
+        return real_loader(filename, module_name)
+
+    monkeypatch.setattr(resume_skill, "load_script_module", fail_on_graph_or_db_loader)
+
+    assert resume_skill.main(["resume.py", "same1234"]) == 2
+    captured = capsys.readouterr()
+    assert "multiple sessions match prefix 'same1234'" in captured.err
+
+
+def test_resume_skill_prefix_ambiguity_keeps_flat_and_legacy_candidates(
+    tmp_path, monkeypatch, capsys
+):
+    project = tmp_path / "project"
+    flat = project / ".codex" / "session-memory" / "threads" / "same1234-session"
+    legacy = project / ".codex" / "sessions" / "same1234-session"
+    for session_dir, title in ((flat, "Flat"), (legacy, "Legacy")):
+        contexts = session_dir / "contexts"
+        contexts.mkdir(parents=True)
+        (session_dir / "INDEX.md").write_text(
+            "---\nsession_id: same1234-session\nlast_updated: 2026-05-04T00:00:00Z\n---\n\n"
+            f"# {title}\n",
+            encoding="utf-8",
+        )
+    monkeypatch.setenv("CODEX_PROJECT_DIR", str(project))
+    monkeypatch.chdir(project)
+
+    resume_skill = load_resume_skill()
+
+    assert resume_skill.main(["resume.py", "same1234"]) == 2
+    assert "multiple sessions match prefix 'same1234'" in capsys.readouterr().err
+
+
+def test_resume_skill_prefix_does_not_include_related_graph_context(
     tmp_path, monkeypatch, capsys
 ):
     project = tmp_path / "project"
@@ -494,7 +589,7 @@ def test_resume_skill_includes_graph_child_flat_artifact_context(
         encoding="utf-8",
     )
     (parent_contexts / "CONTEXT-parent.md").write_text(
-        "# Parent\n\n## Next\ncontinue the parent CLI resume.\n",
+        "# Parent\n\n## Next\ncontinue only the selected parent artifact.\n",
         encoding="utf-8",
     )
     child = project / ".codex" / "session-memory" / "threads" / "child123-session"
@@ -506,111 +601,9 @@ def test_resume_skill_includes_graph_child_flat_artifact_context(
         encoding="utf-8",
     )
     (child_contexts / "CONTEXT-child.md").write_text(
-        "# Child\n\n## Next\ninclude graph child context in the CLI resume.\n",
+        "# Child\n\n## Next\nchild context must not be pulled by graph.\n",
         encoding="utf-8",
     )
-    grandchild = project / ".codex" / "session-memory" / "threads" / "grand123-session"
-    grandchild_contexts = grandchild / "contexts"
-    grandchild_contexts.mkdir(parents=True)
-    (grandchild / "INDEX.md").write_text(
-        "---\nthread_id: grand123-session\nlast_updated: 2026-05-04T00:06:00Z\n---\n\n"
-        "# Grandchild\n\n## Contexts\n\n- [CONTEXT-grandchild.md] — grandchild\n",
-        encoding="utf-8",
-    )
-    (grandchild_contexts / "CONTEXT-grandchild.md").write_text(
-        "# Grandchild\n\n## Next\ngrandchild context is not a direct child.\n",
-        encoding="utf-8",
-    )
-    legacy_child = project / ".codex" / "sessions" / "legacy99-child"
-    legacy_child.mkdir(parents=True)
-    (legacy_child / "INDEX.md").write_text(
-        "---\nsession_id: legacy99-child\nlast_updated: 2026-05-04T00:10:00Z\n---\n\n"
-        "# Legacy Child\n",
-        encoding="utf-8",
-    )
-    monkeypatch.setenv("CODEX_PROJECT_DIR", str(project))
-    monkeypatch.chdir(project)
-
-    resume_skill = load_resume_skill()
-    real_loader = resume_skill.load_script_module
-
-    class FakeGraphStore:
-        def __init__(self, *args, **kwargs):
-            pass
-
-        def children_of(self, thread_id):
-            assert thread_id == "parent12-session"
-            return ["child123-session", "legacy99-child", "missing99-child"]
-
-        def descendants_of(self, thread_id):
-            raise AssertionError("resume must only read direct children")
-
-    fake_graph_store = types.SimpleNamespace(GraphStore=FakeGraphStore)
-
-    def fake_loader(filename, module_name):
-        if filename == "graph_store.py":
-            return fake_graph_store
-        return real_loader(filename, module_name)
-
-    monkeypatch.setattr(resume_skill, "load_script_module", fake_loader)
-
-    assert resume_skill.main(["resume.py", "parent12"]) == 0
-    output = capsys.readouterr().out
-    assert "continue the parent CLI resume" in output
-    assert "include graph child context in the CLI resume" in output
-    assert "grandchild context is not a direct child" not in output
-    assert "Legacy Child" not in output
-
-
-def test_resume_skill_reads_project_local_state_db_for_child_context(
-    tmp_path, monkeypatch, capsys
-):
-    project = tmp_path / "project"
-    codex_home = project / ".codex"
-    state_db = codex_home / "state_5.sqlite"
-    state_db.parent.mkdir(parents=True)
-    conn = sqlite3.connect(state_db)
-    try:
-        conn.execute(
-            "CREATE TABLE thread_spawn_edges ("
-            "parent_thread_id TEXT, "
-            "child_thread_id TEXT, "
-            "status TEXT)"
-        )
-        conn.execute(
-            "INSERT INTO thread_spawn_edges VALUES (?, ?, ?)",
-            ("parent12-session", "child123-session", "completed"),
-        )
-        conn.commit()
-    finally:
-        conn.close()
-
-    parent = codex_home / "session-memory" / "threads" / "parent12-session"
-    parent_contexts = parent / "contexts"
-    parent_contexts.mkdir(parents=True)
-    (parent / "INDEX.md").write_text(
-        "---\nthread_id: parent12-session\nlast_updated: 2026-05-04T00:00:00Z\n---\n\n"
-        "# Parent\n\n## Contexts\n\n- [CONTEXT-parent.md] — parent\n",
-        encoding="utf-8",
-    )
-    (parent_contexts / "CONTEXT-parent.md").write_text(
-        "# Parent\n\n## Next\ncontinue the parent sqlite resume.\n",
-        encoding="utf-8",
-    )
-
-    child = codex_home / "session-memory" / "threads" / "child123-session"
-    child_contexts = child / "contexts"
-    child_contexts.mkdir(parents=True)
-    (child / "INDEX.md").write_text(
-        "---\nthread_id: child123-session\nlast_updated: 2026-05-04T00:05:00Z\n---\n\n"
-        "# Child\n\n## Contexts\n\n- [CONTEXT-child.md] — child\n",
-        encoding="utf-8",
-    )
-    (child_contexts / "CONTEXT-child.md").write_text(
-        "# Child\n\n## Next\ninclude project-local sqlite child context.\n",
-        encoding="utf-8",
-    )
-
     monkeypatch.setenv("CODEX_PROJECT_DIR", str(project))
     monkeypatch.chdir(project)
 
@@ -618,8 +611,8 @@ def test_resume_skill_reads_project_local_state_db_for_child_context(
 
     assert resume_skill.main(["resume.py", "parent12"]) == 0
     output = capsys.readouterr().out
-    assert "continue the parent sqlite resume" in output
-    assert "include project-local sqlite child context" in output
+    assert "continue only the selected parent artifact" in output
+    assert "child context must not be pulled by graph" not in output
 
 
 def test_resume_skill_uses_current_artifact_when_graph_unavailable(
@@ -657,25 +650,31 @@ def test_resume_skill_uses_current_artifact_when_graph_unavailable(
     assert "related:" not in output
 
 
-def test_resume_skill_falls_back_to_legacy_sessions_without_flat_root(
+def test_resume_skill_reads_legacy_session_by_explicit_prefix_without_flat_root(
     tmp_path, monkeypatch, capsys
 ):
     project = tmp_path / "project"
     legacy_session = project / ".codex" / "sessions" / "legacy99-session"
-    legacy_session.mkdir(parents=True)
+    contexts = legacy_session / "contexts"
+    contexts.mkdir(parents=True)
     (legacy_session / "INDEX.md").write_text(
         "---\nsession_id: legacy99-session\nlast_updated: 2026-05-05T00:00:00Z\n---\n\n"
-        "# Legacy\n",
+        "# Legacy\n\n## Contexts\n\n- [CONTEXT-legacy.md] — legacy\n",
         encoding="utf-8",
     )
+    (contexts / "CONTEXT-legacy.md").write_text(
+        "# Legacy\n\n## Next\nresume legacy only by explicit prefix.\n",
+        encoding="utf-8",
+    )
+    monkeypatch.delenv("CODEX_SESSION_ID", raising=False)
     monkeypatch.setenv("CODEX_PROJECT_DIR", str(project))
     monkeypatch.chdir(project)
 
     resume_skill = load_resume_skill()
 
-    assert resume_skill.main(["resume.py"]) == 0
+    assert resume_skill.main(["resume.py", "legacy99"]) == 0
     output = capsys.readouterr().out
-    assert "legacy99" in output
+    assert "resume legacy only by explicit prefix" in output
 
 
 def test_resume_skill_rejects_non_8_character_prefix(tmp_path, monkeypatch, capsys):

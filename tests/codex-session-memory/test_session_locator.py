@@ -3,7 +3,14 @@ import os
 from pathlib import Path
 
 
-SCRIPTS = Path(__file__).resolve().parents[2] / "plugins" / "codex" / "session-memory" / "scripts"
+SCRIPTS = (
+    Path(__file__).resolve().parents[2]
+    / "plugin-sources"
+    / "session-memory"
+    / "adapters"
+    / "codex"
+    / "scripts"
+)
 
 
 def load_session_locator():
@@ -29,6 +36,20 @@ def test_find_jsonl_by_thread_returns_newest_match(tmp_path):
     os.utime(new_file, (200, 200))
 
     assert locator.find_jsonl_by_thread("thread-123", codex_sessions_root=tmp_path) == new_file.resolve()
+
+
+def test_current_session_id_reads_session_memory_target(monkeypatch):
+    locator = load_session_locator()
+    monkeypatch.setenv("CODEX_SESSION_ID", "session-123")
+
+    assert locator.current_session_id() == "session-123"
+
+
+def test_current_session_id_returns_none_when_missing(monkeypatch):
+    locator = load_session_locator()
+    monkeypatch.delenv("CODEX_SESSION_ID", raising=False)
+
+    assert locator.current_session_id() is None
 
 
 def test_data_session_dir_supports_hidden_child_sessions(tmp_path):

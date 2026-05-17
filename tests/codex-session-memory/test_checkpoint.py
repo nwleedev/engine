@@ -1,11 +1,17 @@
+import ast
 import importlib.util
 import json
-import sqlite3
 from pathlib import Path
 from typing import Optional
 
 
-PLUGIN = Path(__file__).resolve().parents[2] / "plugins" / "codex" / "session-memory"
+PLUGIN = (
+    Path(__file__).resolve().parents[2]
+    / "plugin-sources"
+    / "session-memory"
+    / "adapters"
+    / "codex"
+)
 CHECKPOINT = PLUGIN / "skills" / "checkpoint" / "checkpoint.py"
 
 
@@ -21,6 +27,8 @@ def load_checkpoint():
 def patch_project(monkeypatch, checkpoint, tmp_path):
     monkeypatch.setattr(checkpoint.os, "getcwd", lambda: str(tmp_path))
     monkeypatch.delenv("CODEX_SESSION_PARENT_ID", raising=False)
+    monkeypatch.delenv("CODEX_SESSION_ID", raising=False)
+    monkeypatch.delenv("CODEX_THREAD_ID", raising=False)
     monkeypatch.setattr(checkpoint.dotenv_loader, "load_project_dotenv", lambda cwd: None)
     monkeypatch.setattr(checkpoint.pr, "find_project_root", lambda cwd: str(tmp_path))
     monkeypatch.setattr(checkpoint.pr, "assert_root_is_canonical", lambda root, cwd: None)
@@ -52,7 +60,7 @@ SECTION_GUIDANCE = {
     "## verification": "commands, results, failure causes, and unverified items",
     "## risks": "remaining risks and uncertain assumptions",
     "## next_actions": "ordered steps the next person can run immediately",
-    "## graph_context": "thread id, graph role, parent id, and graph lookup status",
+    "## graph_context": "graph and parent discovery are not used",
 }
 
 
@@ -84,24 +92,17 @@ def test_prepare_outputs_context_target_and_evidence(monkeypatch, tmp_path, caps
     jsonl.write_text('{"type":"turn","payload":"ok"}\n', encoding="utf-8")
 
     patch_project(monkeypatch, checkpoint, tmp_path)
-    monkeypatch.setattr(checkpoint.sl, "current_thread_id", lambda: "test-thread")
+    monkeypatch.setenv("CODEX_SESSION_ID", "test-session")
+    monkeypatch.setenv("CODEX_THREAD_ID", "test-thread")
     monkeypatch.setattr(checkpoint.sl, "find_jsonl_by_thread", lambda thread_id: jsonl)
-    monkeypatch.setattr(
-        checkpoint.sl,
-        "artifact_session_dir",
-        lambda root, thread_id: tmp_path
-        / ".codex"
-        / "session-memory"
-        / "threads"
-        / thread_id,
-    )
     monkeypatch.setattr(checkpoint.io, "read_frontmatter", lambda path: {"last_processed_offset": 0})
     monkeypatch.setattr(checkpoint.jp, "extract_delta", lambda path, offset: ([{"role": "assistant", "text": "Run `git status --short`"}], 10))
 
     assert checkpoint.main(["prepare"]) == 0
 
     output = capsys.readouterr().out
-    assert "thread_id: test-thread" in output
+    assert "session_id: test-session" in output
+    assert "source_thread_id: test-thread" in output
     assert "context_path:" in output
     assert "INDEX.md" in output
     assert "git status --short" in output
@@ -116,362 +117,250 @@ def test_prepare_outputs_flat_artifact_target(monkeypatch, tmp_path, capsys):
     jsonl.write_text('{"type":"turn","payload":"ok"}\n', encoding="utf-8")
 
     patch_project(monkeypatch, checkpoint, tmp_path)
-    monkeypatch.setattr(checkpoint.sl, "current_thread_id", lambda: "test-thread")
+    monkeypatch.setenv("CODEX_SESSION_ID", "test-session")
+    monkeypatch.setenv("CODEX_THREAD_ID", "test-thread")
     monkeypatch.setattr(checkpoint.sl, "find_jsonl_by_thread", lambda thread_id: jsonl)
-    monkeypatch.setattr(
-        checkpoint.sl,
-        "artifact_session_dir",
-        lambda root, thread_id: tmp_path
-        / ".codex"
-        / "session-memory"
-        / "threads"
-        / thread_id,
-    )
     monkeypatch.setattr(checkpoint.io, "read_frontmatter", lambda path: {"last_processed_offset": 0})
     monkeypatch.setattr(checkpoint.jp, "extract_delta", lambda path, offset: ([], 10))
 
     assert checkpoint.main(["prepare"]) == 0
 
     output = capsys.readouterr().out
-    assert ".codex/session-memory/threads/test-thread/INDEX.md" in output
+    assert ".codex/session-memory/threads/test-session/INDEX.md" in output
     assert "_children" not in output
     for heading, guidance in SECTION_GUIDANCE.items():
         assert heading in output
         assert guidance in output
 
 
-def test_prepare_frontmatter_update_excludes_relationship_source_fields(
+def test_prepare_context_path_uses_timestamp_task_id_nonce_and_writes_metadata(
     monkeypatch, tmp_path, capsys
 ):
     checkpoint = load_checkpoint()
-    jsonl = tmp_path / "rollout-child-thread.jsonl"
+    jsonl = tmp_path / "rollout-source-thread.jsonl"
     jsonl.write_text('{"type":"turn","payload":"ok"}\n', encoding="utf-8")
-
-    patch_project(monkeypatch, checkpoint, tmp_path)
-    monkeypatch.setattr(checkpoint.sl, "current_thread_id", lambda: "child-thread")
-    monkeypatch.setattr(checkpoint.sl, "find_jsonl_by_thread", lambda thread_id: jsonl)
-    monkeypatch.setattr(
-        checkpoint.sl,
-        "artifact_session_dir",
-        lambda root, thread_id: tmp_path
-        / ".codex"
-        / "session-memory"
-        / "threads"
-        / thread_id,
-    )
-    monkeypatch.setattr(checkpoint.io, "read_frontmatter", lambda path: {"last_processed_offset": 0})
-    monkeypatch.setattr(checkpoint.jp, "extract_delta", lambda path, offset: ([], 10))
-
-    assert checkpoint.main(["prepare", "--role", "child", "--parent", "parent-thread"]) == 0
-
-    output = capsys.readouterr().out
-    frontmatter_update = output.split("frontmatter_update:", 1)[1].split("\n\n", 1)[0]
-    assert "last_processed_offset: 10" in frontmatter_update
-    assert "last_updated: <ISO-8601 timestamp>" in frontmatter_update
-    assert "session_id: <thread_id>" in frontmatter_update
-    assert "role:" not in frontmatter_update
-    assert "parent_session_id:" not in frontmatter_update
-    assert "relationship_diagnostics:" in output
-    assert "relationship_source: argument" in output
-
-
-def test_prepare_marks_graph_unavailable_when_parent_resolution_has_no_source(
-    monkeypatch,
-    tmp_path,
-    capsys,
-):
-    checkpoint = load_checkpoint()
-    jsonl = tmp_path / "rollout-test-thread.jsonl"
-    jsonl.write_text('{"type":"turn","payload":"ok"}\n', encoding="utf-8")
-
-    patch_project(monkeypatch, checkpoint, tmp_path)
-    monkeypatch.setattr(checkpoint.sl, "current_thread_id", lambda: "test-thread")
-    monkeypatch.setattr(checkpoint.sl, "find_jsonl_by_thread", lambda thread_id: jsonl)
-    monkeypatch.setattr(
-        checkpoint.sl,
-        "artifact_session_dir",
-        lambda root, thread_id: tmp_path
-        / ".codex"
-        / "session-memory"
-        / "threads"
-        / thread_id,
-    )
-    monkeypatch.setattr(checkpoint.io, "read_frontmatter", lambda path: {"last_processed_offset": 0})
-    monkeypatch.setattr(checkpoint.jp, "extract_delta", lambda path, offset: ([], 10))
-    monkeypatch.setattr(
-        checkpoint.pl,
-        "resolve_parent_thread_id",
-        lambda **kwargs: checkpoint.pl.ParentResolution(
-            role="main",
-            source="none",
-            confidence="none",
-            reason="graph unavailable",
-            warnings=("state db unavailable",),
-        ),
-    )
-
-    assert checkpoint.main(["prepare"]) == 0
-
-    output = capsys.readouterr().out
-    assert "## graph_context" in output
-    graph_context = output.split("## graph_context", 1)[1]
-    assert "thread_id: test-thread" in graph_context
-    assert "graph_role: main" in graph_context
-    assert "parent_session_id: " in graph_context
-    assert "graph_status: unavailable" in graph_context
-    assert "graph_reason: graph unavailable" in output
-    assert "graph_warnings: state db unavailable" in output
-
-
-def test_prepare_uses_hh00_context_path_and_reuses_existing_file(monkeypatch, tmp_path, capsys):
-    checkpoint = load_checkpoint()
-    jsonl = tmp_path / "rollout-test-thread.jsonl"
-    jsonl.write_text('{"type":"turn","payload":"ok"}\n', encoding="utf-8")
-    session_dir = tmp_path / ".codex" / "session-memory" / "threads" / "test-thread"
-    contexts_dir = session_dir / "contexts"
-    contexts_dir.mkdir(parents=True)
-    existing = contexts_dir / "CONTEXT-20260503-1500-checkpoint.md"
-    existing.write_text("# Existing\n", encoding="utf-8")
 
     class FakeDatetime:
         @classmethod
-        def now(cls):
+        def now(cls, tz=None):
             return cls()
 
         def strftime(self, fmt):
-            assert fmt == "%Y%m%d-%H00"
-            return "20260503-1500"
+            if fmt == "%Y%m%d-%H%M%S":
+                return "20260517-101112"
+            if fmt == "%Y-%m-%dT%H:%M:%SZ":
+                return "2026-05-17T10:11:12Z"
+            raise AssertionError(fmt)
 
     patch_project(monkeypatch, checkpoint, tmp_path)
+    monkeypatch.setenv("CODEX_SESSION_ID", "target-session")
+    monkeypatch.setenv("CODEX_THREAD_ID", "source-thread")
     monkeypatch.setattr(checkpoint, "datetime", FakeDatetime)
-    monkeypatch.setattr(checkpoint.sl, "current_thread_id", lambda: "test-thread")
+    monkeypatch.setattr(checkpoint.secrets, "token_hex", lambda n: "abc123")
     monkeypatch.setattr(checkpoint.sl, "find_jsonl_by_thread", lambda thread_id: jsonl)
-    monkeypatch.setattr(checkpoint.sl, "artifact_session_dir", lambda root, thread_id: session_dir)
     monkeypatch.setattr(checkpoint.io, "read_frontmatter", lambda path: {"last_processed_offset": 0})
     monkeypatch.setattr(checkpoint.jp, "extract_delta", lambda path, offset: ([], 10))
 
     assert checkpoint.main(["prepare"]) == 0
 
     output = capsys.readouterr().out
-    assert f"context_path: {existing}" in output
-    assert existing.read_text(encoding="utf-8") == "# Existing\n"
+    expected = (
+        tmp_path
+        / ".codex"
+        / "session-memory"
+        / "threads"
+        / "target-session"
+        / "contexts"
+        / "CONTEXT-20260517-101112-checkpoint-abc123.md"
+    )
+    assert f"context_path: {expected}" in output
+    assert expected.is_file()
+    context = expected.read_text(encoding="utf-8")
+    assert "session_id: target-session" in context
+    assert "source_thread_id: source-thread" in context
+    assert "CONTEXT-source-thread" not in expected.name
 
 
-def test_prepare_child_without_parent_uses_auto_resolution(monkeypatch, tmp_path, capsys):
+def test_prepare_mismatch_warns_and_writes_only_to_session_id_path(monkeypatch, tmp_path, capsys):
     checkpoint = load_checkpoint()
-    jsonl = tmp_path / "rollout-child-thread.jsonl"
-    write_child_session_meta(jsonl, parent_thread_id="parent-thread")
-    child_dir = tmp_path / ".codex" / "session-memory" / "threads" / "child-thread"
-
-    patch_project(monkeypatch, checkpoint, tmp_path)
-    monkeypatch.setattr(checkpoint.sl, "current_thread_id", lambda: "child-thread")
-    monkeypatch.setattr(checkpoint.sl, "find_jsonl_by_thread", lambda thread_id: jsonl)
-    monkeypatch.setattr(checkpoint.sl, "artifact_session_dir", lambda root, thread_id: child_dir)
-    monkeypatch.setattr(checkpoint.io, "read_frontmatter", lambda path: {"last_processed_offset": 0})
-    monkeypatch.setattr(checkpoint.jp, "extract_delta", lambda path, offset: ([], 10))
-
-    assert checkpoint.main(["prepare", "--role", "child"]) == 0
-
-    output = capsys.readouterr().out
-    assert "role: child" in output
-    assert "parent_session_id: parent-thread" in output
-    assert f"index_path: {child_dir / 'INDEX.md'}" in output
-    assert "relationship_source: rollout_session_meta" in output
-
-
-def test_prepare_parent_without_role_is_child_intent(monkeypatch, tmp_path, capsys):
-    checkpoint = load_checkpoint()
-    jsonl = tmp_path / "rollout-child-thread.jsonl"
+    jsonl = tmp_path / "rollout-source-thread.jsonl"
     jsonl.write_text('{"type":"turn","payload":"ok"}\n', encoding="utf-8")
-    child_dir = tmp_path / ".codex" / "session-memory" / "threads" / "child-thread"
 
     patch_project(monkeypatch, checkpoint, tmp_path)
-    monkeypatch.setattr(checkpoint.sl, "current_thread_id", lambda: "child-thread")
+    monkeypatch.setenv("CODEX_SESSION_ID", "target-session")
+    monkeypatch.setenv("CODEX_THREAD_ID", "source-thread")
     monkeypatch.setattr(checkpoint.sl, "find_jsonl_by_thread", lambda thread_id: jsonl)
-    monkeypatch.setattr(checkpoint.sl, "artifact_session_dir", lambda root, thread_id: child_dir)
-    monkeypatch.setattr(checkpoint.io, "read_frontmatter", lambda path: {"last_processed_offset": 0})
-    monkeypatch.setattr(checkpoint.jp, "extract_delta", lambda path, offset: ([], 10))
-
-    assert checkpoint.main(["prepare", "--parent", "parent-thread"]) == 0
-
-    output = capsys.readouterr().out
-    assert "role: child" in output
-    assert "parent_session_id: parent-thread" in output
-    assert f"index_path: {child_dir / 'INDEX.md'}" in output
-
-
-def test_prepare_uses_env_parent_as_child_intent(monkeypatch, tmp_path, capsys):
-    checkpoint = load_checkpoint()
-    jsonl = tmp_path / "rollout-child-thread.jsonl"
-    jsonl.write_text('{"type":"turn","payload":"ok"}\n', encoding="utf-8")
-    child_dir = tmp_path / ".codex" / "session-memory" / "threads" / "child-thread"
-
-    patch_project(monkeypatch, checkpoint, tmp_path)
-    monkeypatch.setenv("CODEX_SESSION_PARENT_ID", "env-parent-thread")
-    monkeypatch.setattr(checkpoint.sl, "current_thread_id", lambda: "child-thread")
-    monkeypatch.setattr(checkpoint.sl, "find_jsonl_by_thread", lambda thread_id: jsonl)
-    monkeypatch.setattr(checkpoint.sl, "artifact_session_dir", lambda root, thread_id: child_dir)
     monkeypatch.setattr(checkpoint.io, "read_frontmatter", lambda path: {"last_processed_offset": 0})
     monkeypatch.setattr(checkpoint.jp, "extract_delta", lambda path, offset: ([], 10))
 
     assert checkpoint.main(["prepare"]) == 0
 
-    output = capsys.readouterr().out
-    assert "role: child" in output
-    assert "parent_session_id: env-parent-thread" in output
-    assert f"index_path: {child_dir / 'INDEX.md'}" in output
-    assert "relationship_source: environment" in output
+    captured = capsys.readouterr()
+    assert "warning" in captured.err
+    assert "CODEX_THREAD_ID" in captured.err
+    assert "CODEX_SESSION_ID" in captured.err
+    assert ".codex/session-memory/threads/target-session/INDEX.md" in captured.out
+    assert ".codex/session-memory/threads/source-thread/INDEX.md" not in captured.out
+    assert (tmp_path / ".codex" / "session-memory" / "threads" / "target-session" / "INDEX.md").is_file()
+    assert not (tmp_path / ".codex" / "session-memory" / "threads" / "source-thread").exists()
 
 
-def test_prepare_fails_when_main_role_conflicts_with_env_parent(monkeypatch, tmp_path, capsys):
+def test_prepare_does_not_import_parent_locator_or_graph_store():
     checkpoint = load_checkpoint()
-    jsonl = tmp_path / "rollout-child-thread.jsonl"
+
+    assert not hasattr(checkpoint, "pl")
+    assert "parent_locator.py" not in checkpoint_path_text()
+    assert "graph_store.py" not in checkpoint_path_text()
+
+
+def test_checkpoint_artifact_and_index_sources_do_not_depend_on_internal_graph_state():
+    source_files = [
+        CHECKPOINT,
+        PLUGIN / "scripts" / "artifact_store.py",
+        PLUGIN / "scripts" / "index_io.py",
+    ]
+    forbidden = [
+        "parent_locator",
+        "graph_store",
+        "thread_spawn_edges",
+        "threads.source",
+        "session_meta",
+        "sqlite3",
+    ]
+
+    for source_file in source_files:
+        used_tokens = python_imports_names_attrs_and_runtime_strings(source_file)
+        for token in forbidden:
+            assert token not in used_tokens, f"{source_file.name} must not use {token}"
+
+
+def python_imports_names_attrs_and_runtime_strings(source_file: Path) -> set[str]:
+    tree = ast.parse(source_file.read_text(encoding="utf-8"))
+    docstring_nodes = {
+        node.body[0]
+        for node in ast.walk(tree)
+        if isinstance(node, (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef))
+        and node.body
+        and isinstance(node.body[0], ast.Expr)
+        and isinstance(node.body[0].value, ast.Constant)
+        and isinstance(node.body[0].value.value, str)
+    }
+    tokens = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            tokens.update(alias.name for alias in node.names)
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            tokens.add(node.module)
+        elif isinstance(node, ast.Name):
+            tokens.add(node.id)
+        elif isinstance(node, ast.Attribute):
+            tokens.add(node.attr)
+        elif (
+            isinstance(node, ast.Constant)
+            and isinstance(node.value, str)
+            and not any(node is doc.value for doc in docstring_nodes)
+        ):
+            tokens.add(node.value)
+    return tokens
+
+
+def checkpoint_path_text():
+    return CHECKPOINT.read_text(encoding="utf-8")
+
+
+def test_prepare_partial_success_when_index_update_fails(monkeypatch, tmp_path, capsys):
+    checkpoint = load_checkpoint()
+    jsonl = tmp_path / "rollout-source-thread.jsonl"
     jsonl.write_text('{"type":"turn","payload":"ok"}\n', encoding="utf-8")
 
     patch_project(monkeypatch, checkpoint, tmp_path)
-    monkeypatch.setenv("CODEX_SESSION_PARENT_ID", "env-parent-thread")
-    monkeypatch.setattr(checkpoint.sl, "current_thread_id", lambda: "child-thread")
+    monkeypatch.setenv("CODEX_SESSION_ID", "target-session")
+    monkeypatch.setenv("CODEX_THREAD_ID", "source-thread")
     monkeypatch.setattr(checkpoint.sl, "find_jsonl_by_thread", lambda thread_id: jsonl)
-
-    assert checkpoint.main(["prepare", "--role", "main"]) == 2
-
-    captured = capsys.readouterr()
-    assert "conflicts" in captured.err
-    assert "role: main" not in captured.out
-
-
-def test_prepare_fails_when_main_role_conflicts_with_child_metadata(monkeypatch, tmp_path, capsys):
-    checkpoint = load_checkpoint()
-    jsonl = tmp_path / "rollout-child-thread.jsonl"
-    write_child_session_meta(jsonl, parent_thread_id="parent-thread")
-
-    patch_project(monkeypatch, checkpoint, tmp_path)
-    monkeypatch.setattr(checkpoint.sl, "current_thread_id", lambda: "child-thread")
-    monkeypatch.setattr(checkpoint.sl, "find_jsonl_by_thread", lambda thread_id: jsonl)
-
-    assert checkpoint.main(["prepare", "--role", "main"]) == 2
-
-    captured = capsys.readouterr()
-    assert "conflicts" in captured.err
-    assert "role: main" not in captured.out
-
-
-def test_prepare_fails_when_child_detected_without_parent(monkeypatch, tmp_path, capsys):
-    checkpoint = load_checkpoint()
-    jsonl = tmp_path / "rollout-child-thread.jsonl"
-    write_child_session_meta(jsonl, parent_thread_id=None)
-
-    patch_project(monkeypatch, checkpoint, tmp_path)
-    monkeypatch.setattr(checkpoint.sl, "current_thread_id", lambda: "child-thread")
-    monkeypatch.setattr(checkpoint.sl, "find_jsonl_by_thread", lambda thread_id: jsonl)
-
-    assert checkpoint.main(["prepare", "--role", "child"]) == 2
-
-    captured = capsys.readouterr()
-    assert "parent" in captured.err
-    assert "retry" in captured.err
-    assert "role: main" not in captured.out
-
-
-def test_prepare_uses_state_db_when_rollout_child_parent_missing(
-    monkeypatch,
-    tmp_path,
-    capsys,
-):
-    checkpoint = load_checkpoint()
-    jsonl = tmp_path / "rollout-child-thread.jsonl"
-    write_child_session_meta(jsonl, parent_thread_id=None)
-    sqlite_home = tmp_path / "sqlite-home"
-    db = sqlite_home / "state_5.sqlite"
-    db.parent.mkdir(parents=True)
-    conn = sqlite3.connect(db)
-    conn.execute(
-        "CREATE TABLE thread_spawn_edges ("
-        "parent_thread_id TEXT NOT NULL, "
-        "child_thread_id TEXT NOT NULL PRIMARY KEY, "
-        "status TEXT NOT NULL)"
-    )
-    conn.execute(
-        "INSERT INTO thread_spawn_edges VALUES (?, ?, ?)",
-        ("parent-from-db", "child-thread", "open"),
-    )
-    conn.commit()
-    conn.close()
-    child_dir = tmp_path / ".codex" / "session-memory" / "threads" / "child-thread"
-
-    patch_project(monkeypatch, checkpoint, tmp_path)
-    monkeypatch.setenv("CODEX_SQLITE_HOME", str(sqlite_home))
-    monkeypatch.setattr(checkpoint.sl, "current_thread_id", lambda: "child-thread")
-    monkeypatch.setattr(checkpoint.sl, "find_jsonl_by_thread", lambda thread_id: jsonl)
-    monkeypatch.setattr(checkpoint.sl, "artifact_session_dir", lambda root, thread_id: child_dir)
     monkeypatch.setattr(checkpoint.io, "read_frontmatter", lambda path: {"last_processed_offset": 0})
     monkeypatch.setattr(checkpoint.jp, "extract_delta", lambda path, offset: ([], 10))
 
-    assert checkpoint.main(["prepare", "--role", "child"]) == 0
+    def fail_append(*_args, **_kwargs):
+        raise OSError("disk full")
 
-    output = capsys.readouterr().out
-    assert "role: child" in output
-    assert "parent_session_id: parent-from-db" in output
-    assert f"index_path: {child_dir / 'INDEX.md'}" in output
+    monkeypatch.setattr(checkpoint.io, "append_context_entry_with_frontmatter", fail_append)
+
+    assert checkpoint.main(["prepare"]) == 1
+
+    captured = capsys.readouterr()
+    context_line = next(line for line in captured.out.splitlines() if line.startswith("context_path: "))
+    context_path = Path(context_line.removeprefix("context_path: "))
+    assert context_path.is_file()
+    assert "INDEX.md update failed" in captured.err
+    assert "repair" in captured.err
 
 
-def test_prepare_passes_project_codex_home_to_parent_locator(
-    monkeypatch,
-    tmp_path,
-):
+def test_prepare_uses_single_index_update_helper(monkeypatch, tmp_path, capsys):
     checkpoint = load_checkpoint()
-    jsonl = tmp_path / "rollout-child-thread.jsonl"
+    jsonl = tmp_path / "rollout-source-thread.jsonl"
     jsonl.write_text('{"type":"turn","payload":"ok"}\n', encoding="utf-8")
-    calls = []
 
-    def resolve_parent_thread_id(*, thread_id, rollout_path, codex_home=None):
-        calls.append((thread_id, rollout_path, codex_home))
-        return checkpoint.pl.ParentResolution(role="main")
+    class FakeDatetime:
+        @classmethod
+        def now(cls, tz=None):
+            return cls()
+
+        def strftime(self, fmt):
+            if fmt == "%Y%m%d-%H%M%S":
+                return "20260517-101112"
+            if fmt == "%Y-%m-%dT%H:%M:%SZ":
+                return "2026-05-17T10:11:12Z"
+            raise AssertionError(fmt)
 
     patch_project(monkeypatch, checkpoint, tmp_path)
-    monkeypatch.setattr(checkpoint.sl, "current_thread_id", lambda: "child-thread")
+    monkeypatch.setenv("CODEX_SESSION_ID", "target-session")
+    monkeypatch.setenv("CODEX_THREAD_ID", "source-thread")
+    monkeypatch.setattr(checkpoint, "datetime", FakeDatetime)
+    monkeypatch.setattr(checkpoint.secrets, "token_hex", lambda n: "abc123")
     monkeypatch.setattr(checkpoint.sl, "find_jsonl_by_thread", lambda thread_id: jsonl)
-    monkeypatch.setattr(checkpoint.pl, "resolve_parent_thread_id", resolve_parent_thread_id)
+    monkeypatch.setattr(checkpoint.io, "read_frontmatter", lambda path: {"last_processed_offset": 0})
+    monkeypatch.setattr(checkpoint.jp, "extract_delta", lambda path, offset: ([], 10))
 
-    assert checkpoint.main(["prepare", "--role", "child"]) == 2
+    helper_calls = []
 
-    assert calls == [("child-thread", jsonl, tmp_path / ".codex")]
+    def fake_update(path, filename, summary, **kwargs):
+        helper_calls.append((path, filename, summary, kwargs))
+        return path.with_name(f"{path.name}.{kwargs['writer_id']}.bak")
 
+    def fail_legacy_helper(*_args, **_kwargs):
+        raise AssertionError("checkpoint must use the combined index update helper")
 
-def test_prepare_checks_parent_resolution_before_jsonl_missing_failure(
-    monkeypatch, tmp_path, capsys
-):
-    checkpoint = load_checkpoint()
-    calls = []
+    monkeypatch.setattr(checkpoint.io, "append_context_entry_with_frontmatter", fake_update)
+    monkeypatch.setattr(checkpoint.io, "write_index", fail_legacy_helper)
+    monkeypatch.setattr(checkpoint.io, "append_context_entry", fail_legacy_helper)
+    monkeypatch.setattr(checkpoint.io, "update_frontmatter", fail_legacy_helper)
 
-    def resolve_parent_thread_id(*, thread_id, rollout_path, codex_home=None):
-        calls.append((thread_id, rollout_path, codex_home))
-        return checkpoint.pl.ParentResolution(
-            role="child",
-            parent_thread_id="parent-thread",
-            source="state_db_thread_spawn_edges",
-            confidence="high",
+    assert checkpoint.main(["prepare"]) == 0
+
+    capsys.readouterr()
+    expected_index = (
+        tmp_path
+        / ".codex"
+        / "session-memory"
+        / "threads"
+        / "target-session"
+        / "INDEX.md"
+    )
+    assert helper_calls == [
+        (
+            expected_index,
+            "CONTEXT-20260517-101112-checkpoint-abc123.md",
+            "<summary>",
+            {
+                "writer_id": "20260517-101112-checkpoint-abc123",
+                "session_id": "target-session",
+                "source_thread_id": "source-thread",
+                "artifact_schema_version": 2,
+                "last_processed_offset": 10,
+                "last_updated": "2026-05-17T10:11:12Z",
+            },
         )
-
-    patch_project(monkeypatch, checkpoint, tmp_path)
-    monkeypatch.setattr(checkpoint.sl, "current_thread_id", lambda: "child-thread")
-    monkeypatch.setattr(checkpoint.sl, "find_jsonl_by_thread", lambda thread_id: None)
-    monkeypatch.setattr(checkpoint.pl, "resolve_parent_thread_id", resolve_parent_thread_id)
-
-    assert checkpoint.main(["prepare"]) == 2
-
-    captured = capsys.readouterr()
-    assert calls == [("child-thread", None, tmp_path / ".codex")]
-    assert "no rollout JSONL" in captured.err
-    assert "role: main" not in captured.out
-
-
-def test_prepare_invalid_role_prints_specific_error(capsys):
-    checkpoint = load_checkpoint()
-
-    assert checkpoint.main(["prepare", "--role", "nope"]) == 2
-
-    assert "--role must be main or child" in capsys.readouterr().err
+    ]
 
 
 def test_prepare_unknown_argument_prints_specific_error(capsys):
@@ -482,30 +371,6 @@ def test_prepare_unknown_argument_prints_specific_error(capsys):
     assert "unknown prepare argument" in capsys.readouterr().err
 
 
-def test_prepare_child_outputs_hidden_child_target_and_parent_link(monkeypatch, tmp_path, capsys):
-    checkpoint = load_checkpoint()
-    jsonl = tmp_path / "rollout-child-thread.jsonl"
-    jsonl.write_text('{"type":"turn","payload":"ok"}\n', encoding="utf-8")
-    child_dir = tmp_path / ".codex" / "session-memory" / "threads" / "child-thread"
-
-    patch_project(monkeypatch, checkpoint, tmp_path)
-    monkeypatch.setattr(checkpoint.sl, "current_thread_id", lambda: "child-thread")
-    monkeypatch.setattr(checkpoint.sl, "find_jsonl_by_thread", lambda thread_id: jsonl)
-    monkeypatch.setattr(checkpoint.sl, "artifact_session_dir", lambda root, thread_id: child_dir)
-    monkeypatch.setattr(checkpoint.io, "read_frontmatter", lambda path: {"last_processed_offset": 0})
-    monkeypatch.setattr(checkpoint.jp, "extract_delta", lambda path, offset: ([], 10))
-
-    assert checkpoint.main(["prepare", "--role", "child", "--parent", "parent-thread"]) == 0
-
-    output = capsys.readouterr().out
-    assert "role: child" in output
-    assert "parent_session_id: parent-thread" in output
-    assert f"index_path: {child_dir / 'INDEX.md'}" in output
-    assert "parent_index_path: " in output
-    assert "_children" not in output
-    assert "parent_child_entry:" in output
-
-
 def test_verify_requires_sections_and_index_entry(tmp_path, monkeypatch, capsys):
     checkpoint = load_checkpoint()
     context = tmp_path / ".codex" / "sessions" / "test-thread" / "contexts" / "CONTEXT-20260503-1200-test.md"
@@ -514,6 +379,7 @@ def test_verify_requires_sections_and_index_entry(tmp_path, monkeypatch, capsys)
     index.write_text(f"## Contexts\n\n- [{context.name}] - test\n", encoding="utf-8")
 
     patch_project(monkeypatch, checkpoint, tmp_path)
+    monkeypatch.setenv("CODEX_SESSION_ID", "test-thread")
 
     assert checkpoint.main(["verify", str(context)]) == 0
     assert "verify: ok" in capsys.readouterr().out
@@ -535,6 +401,7 @@ def test_verify_accepts_flat_store_context(tmp_path, monkeypatch, capsys):
     index.write_text(f"## contexts\n\n- [{context.name}] - test\n", encoding="utf-8")
 
     patch_project(monkeypatch, checkpoint, tmp_path)
+    monkeypatch.setenv("CODEX_SESSION_ID", "test-thread")
 
     assert checkpoint.main(["verify", str(context)]) == 0
     assert "verify: ok" in capsys.readouterr().out
@@ -560,9 +427,32 @@ def test_verify_accepts_hidden_child_session_context(tmp_path, monkeypatch, caps
     )
 
     patch_project(monkeypatch, checkpoint, tmp_path)
+    monkeypatch.setenv("CODEX_SESSION_ID", "child-thread")
 
     assert checkpoint.main(["verify", str(context)]) == 0
     assert "verify: ok" in capsys.readouterr().out
+
+
+def test_verify_missing_session_id_exits_2(monkeypatch, tmp_path, capsys):
+    checkpoint = load_checkpoint()
+    context = (
+        tmp_path
+        / ".codex"
+        / "session-memory"
+        / "threads"
+        / "test-thread"
+        / "contexts"
+        / "CONTEXT-20260503-1200-test.md"
+    )
+    write_valid_context(context)
+    (context.parent.parent / "INDEX.md").write_text(
+        f"## Contexts\n\n- [{context.name}] - test\n",
+        encoding="utf-8",
+    )
+    patch_project(monkeypatch, checkpoint, tmp_path)
+
+    assert checkpoint.main(["verify", str(context)]) == 2
+    assert "CODEX_SESSION_ID" in capsys.readouterr().err
 
 
 def test_verify_fails_when_required_section_missing(tmp_path, monkeypatch, capsys):
@@ -572,6 +462,7 @@ def test_verify_fails_when_required_section_missing(tmp_path, monkeypatch, capsy
     context.write_text("# test\n", encoding="utf-8")
     (context.parent.parent / "INDEX.md").write_text("", encoding="utf-8")
     patch_project(monkeypatch, checkpoint, tmp_path)
+    monkeypatch.setenv("CODEX_SESSION_ID", "test-thread")
 
     assert checkpoint.main(["verify", str(context)]) == 1
     assert "missing section" in capsys.readouterr().err
@@ -603,6 +494,7 @@ def test_verify_rejects_partial_graph_first_flat_context(tmp_path, monkeypatch, 
         encoding="utf-8",
     )
     patch_project(monkeypatch, checkpoint, tmp_path)
+    monkeypatch.setenv("CODEX_SESSION_ID", "test-thread")
 
     assert checkpoint.main(["verify", str(context)]) == 1
 
@@ -611,10 +503,20 @@ def test_verify_rejects_partial_graph_first_flat_context(tmp_path, monkeypatch, 
     assert "## detailed_state" in captured.err
 
 
+def test_prepare_missing_session_id_exits_2_and_writes_nothing(monkeypatch, tmp_path, capsys):
+    checkpoint = load_checkpoint()
+    patch_project(monkeypatch, checkpoint, tmp_path)
+    monkeypatch.setenv("CODEX_THREAD_ID", "source-thread")
+
+    assert checkpoint.main(["prepare"]) == 2
+    assert "CODEX_SESSION_ID" in capsys.readouterr().err
+    assert not (tmp_path / ".codex" / "session-memory").exists()
+
+
 def test_prepare_fails_when_thread_id_missing(monkeypatch, tmp_path, capsys):
     checkpoint = load_checkpoint()
     patch_project(monkeypatch, checkpoint, tmp_path)
-    monkeypatch.setattr(checkpoint.sl, "current_thread_id", lambda: None)
+    monkeypatch.setenv("CODEX_SESSION_ID", "target-session")
 
     assert checkpoint.main(["prepare"]) == 2
     assert "CODEX_THREAD_ID" in capsys.readouterr().err
@@ -623,7 +525,8 @@ def test_prepare_fails_when_thread_id_missing(monkeypatch, tmp_path, capsys):
 def test_prepare_fails_when_jsonl_missing(monkeypatch, tmp_path, capsys):
     checkpoint = load_checkpoint()
     patch_project(monkeypatch, checkpoint, tmp_path)
-    monkeypatch.setattr(checkpoint.sl, "current_thread_id", lambda: "test-thread")
+    monkeypatch.setenv("CODEX_SESSION_ID", "target-session")
+    monkeypatch.setenv("CODEX_THREAD_ID", "source-thread")
     monkeypatch.setattr(checkpoint.sl, "find_jsonl_by_thread", lambda thread_id: None)
 
     assert checkpoint.main(["prepare"]) == 2
@@ -642,6 +545,7 @@ def test_verify_fails_when_index_missing(tmp_path, monkeypatch, capsys):
     context = tmp_path / ".codex" / "sessions" / "test-thread" / "contexts" / "CONTEXT-20260503-1200-test.md"
     write_valid_context(context)
     patch_project(monkeypatch, checkpoint, tmp_path)
+    monkeypatch.setenv("CODEX_SESSION_ID", "test-thread")
 
     assert checkpoint.main(["verify", str(context)]) == 1
     assert "INDEX.md does not exist" in capsys.readouterr().err
@@ -653,6 +557,7 @@ def test_verify_fails_when_index_reference_missing(tmp_path, monkeypatch, capsys
     write_valid_context(context)
     (context.parent.parent / "INDEX.md").write_text("## Contexts\n", encoding="utf-8")
     patch_project(monkeypatch, checkpoint, tmp_path)
+    monkeypatch.setenv("CODEX_SESSION_ID", "test-thread")
 
     assert checkpoint.main(["verify", str(context)]) == 1
     assert "INDEX.md does not include context entry" in capsys.readouterr().err
@@ -663,6 +568,7 @@ def test_verify_rejects_context_path_outside_project_session_tree(tmp_path, monk
     context = tmp_path.parent / "outside-contexts" / "CONTEXT-20260503-1200-test.md"
     write_valid_context(context)
     patch_project(monkeypatch, checkpoint, tmp_path)
+    monkeypatch.setenv("CODEX_SESSION_ID", "test-thread")
 
     assert checkpoint.main(["verify", str(context)]) == 1
     assert "outside project session contexts" in capsys.readouterr().err
@@ -687,6 +593,7 @@ def test_verify_rejects_section_substring_false_positive(tmp_path, monkeypatch, 
     )
     (context.parent.parent / "INDEX.md").write_text(f"- [{context.name}] - test\n", encoding="utf-8")
     patch_project(monkeypatch, checkpoint, tmp_path)
+    monkeypatch.setenv("CODEX_SESSION_ID", "test-thread")
 
     assert checkpoint.main(["verify", str(context)]) == 1
     assert "missing section" in capsys.readouterr().err
@@ -701,21 +608,23 @@ def test_verify_rejects_index_substring_false_positive(tmp_path, monkeypatch, ca
         encoding="utf-8",
     )
     patch_project(monkeypatch, checkpoint, tmp_path)
+    monkeypatch.setenv("CODEX_SESSION_ID", "test-thread")
 
     assert checkpoint.main(["verify", str(context)]) == 1
     assert "INDEX.md does not include context entry" in capsys.readouterr().err
 
 
-def test_prepare_does_not_write_context_or_index(monkeypatch, tmp_path, capsys):
+def test_prepare_writes_context_and_index(monkeypatch, tmp_path, capsys):
     checkpoint = load_checkpoint()
     jsonl = tmp_path / "rollout-test-thread.jsonl"
     jsonl.write_text('{"type":"turn","payload":"ok"}\n', encoding="utf-8")
-    session_dir = tmp_path / ".codex" / "session-memory" / "threads" / "test-thread"
+    session_dir = tmp_path / ".codex" / "session-memory" / "threads" / "target-session"
 
     patch_project(monkeypatch, checkpoint, tmp_path)
-    monkeypatch.setattr(checkpoint.sl, "current_thread_id", lambda: "test-thread")
+    monkeypatch.setenv("CODEX_SESSION_ID", "target-session")
+    monkeypatch.setenv("CODEX_THREAD_ID", "test-thread")
     monkeypatch.setattr(checkpoint.sl, "find_jsonl_by_thread", lambda thread_id: jsonl)
-    monkeypatch.setattr(checkpoint.sl, "artifact_session_dir", lambda root, thread_id: session_dir)
+    monkeypatch.setattr(checkpoint.io, "read_frontmatter", lambda path: {"last_processed_offset": 0})
     monkeypatch.setattr(checkpoint.jp, "extract_delta", lambda path, offset: ([], 12))
 
     assert checkpoint.main(["prepare"]) == 0
@@ -723,15 +632,17 @@ def test_prepare_does_not_write_context_or_index(monkeypatch, tmp_path, capsys):
     output = capsys.readouterr().out
     context_line = next(line for line in output.splitlines() if line.startswith("context_path: "))
     context_path = Path(context_line.removeprefix("context_path: "))
-    assert not context_path.exists()
-    assert not (session_dir / "INDEX.md").exists()
+    assert context_path.exists()
+    assert (session_dir / "INDEX.md").exists()
+    assert f"- [{context_path.name}]" in (session_dir / "INDEX.md").read_text(encoding="utf-8")
 
 
 def test_root_errors_return_clear_stderr(monkeypatch, tmp_path, capsys):
     checkpoint = load_checkpoint()
     monkeypatch.setattr(checkpoint.os, "getcwd", lambda: str(tmp_path))
     monkeypatch.setattr(checkpoint.dotenv_loader, "load_project_dotenv", lambda cwd: None)
-    monkeypatch.setattr(checkpoint.sl, "current_thread_id", lambda: "test-thread")
+    monkeypatch.setenv("CODEX_SESSION_ID", "target-session")
+    monkeypatch.setenv("CODEX_THREAD_ID", "test-thread")
     monkeypatch.setattr(checkpoint.pr, "find_project_root", lambda cwd: str(tmp_path))
 
     def fail_root(root, cwd):

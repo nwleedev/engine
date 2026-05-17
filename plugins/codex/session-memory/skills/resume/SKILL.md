@@ -7,18 +7,16 @@ description: Resume a prior Codex session by loading its INDEX.md context summar
 
 List or load saved sessions for the current project.
 
-Saved sessions are graph-first flat artifacts under
-`<root>/.codex/session-memory/threads/<CODEX_THREAD_ID>/INDEX.md` with context
-files in `contexts/`. Legacy `.codex/sessions/*` and
-`.codex/sessions/_children/*` artifacts can still be read for compatibility,
-but `_children` is deprecated and new checkpoints do not create it.
+Saved sessions are flat artifacts under
+`<root>/.codex/session-memory/threads/<CODEX_SESSION_ID>/INDEX.md` with context
+files in `contexts/`. Default resume is fail-closed: it requires
+`CODEX_SESSION_ID` and reads only that artifact's `INDEX.md` plus recent context
+files. Legacy `.codex/sessions/*` and `.codex/sessions/_children/*` artifacts
+can still be read only through an explicit 8-character prefix, with normal
+missing and ambiguity checks.
 
-Flat `INDEX.md` frontmatter does not use `role` or `parent_session_id` as the
-relationship source of truth. Parent-child relationships come from the Codex
-graph, or from `parent_locator` / `graph_store` diagnostics when graph data is
-unavailable. If graph lookup is unavailable, resume still loads the selected
-flat artifact and recent context files so the work can continue from the
-durable handoff.
+Resume does not use Codex graph state, sqlite state DBs, `parent_locator`, or
+child discovery to augment or auto-select a session.
 
 ## Same-session compaction recovery
 
@@ -30,10 +28,10 @@ Do not auto-resume old sessions. When starting a new session, call this skill on
 
 ## Run
 
-No argument — list sessions:
+No argument — print the current `CODEX_SESSION_ID` artifact handoff:
 
 ```bash
-python3 /path/to/session-memory/skills/resume/resume.py
+CODEX_SESSION_ID=<id> python3 /path/to/session-memory/skills/resume/resume.py
 ```
 
 With 8-character session id prefix — print a compact handoff:
@@ -42,6 +40,5 @@ With 8-character session id prefix — print a compact handoff:
 python3 /path/to/session-memory/skills/resume/resume.py <prefix>
 ```
 
-The compact handoff includes the flat `INDEX.md`, recent 9-section CONTEXT
-files, and any related graph context that can be resolved without treating
-relationship frontmatter as authoritative.
+The compact handoff includes the selected `INDEX.md` and recent 9-section
+CONTEXT files only.
