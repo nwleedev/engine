@@ -22,14 +22,11 @@ Shared Codex and Claude Code subagent templates for reusable Superpowers workflo
 
 ### Using In Codex
 
-```bash
-rtk python3 /path/to/shared-subagents/skills/scaffold/scaffold.py --dry-run
-rtk python3 /path/to/shared-subagents/skills/scaffold/scaffold.py --install --backup --project-root .
-```
+This bundle ships generated Codex TOML agents under `agents/`.
 
-The scaffold installs Codex TOML agents into project-local `.codex/agents/` and prints an AGENTS.md block for durable routing guidance.
+Use the bundled agents through the runtime plugin loader when available. If your Codex environment requires project-local agents, copy the needed TOML files into the repository root `.codex/agents/` directory and restart Codex.
 
-The printed AGENTS.md block is not only an agent list. It also sets shared-skills workflow routing: requirements go through `requirements-packet`, implementation plans through `spec-contract` and `plan-contract`, behavior-changing work through the scenario/test/TDD skills, changed work through `implementation-evidence`, and completion claims through `verification-gate`.
+Use `AGENTS.block.md` as the committed copy-paste block for durable routing guidance in project `AGENTS.md` files. The block is not only an agent list. It also sets shared-skills workflow routing: requirements go through `requirements-packet`, implementation plans through `spec-contract` and `plan-contract`, behavior-changing work through the scenario/test/TDD skills, changed work through `implementation-evidence`, and completion claims through `verification-gate`.
 
 ### Using In Claude Code
 
@@ -39,11 +36,11 @@ Example: `Use the test-adequacy-reviewer subagent to review tests for AC-001 / S
 
 ## Principles
 
-- Install shared agents into each Codex project's `.codex/agents/` directory.
-- Keep stack-specific agents in each project's `.codex/agents/` directory.
-- Do not modify the Superpowers plugin cache during installation.
-- Print AGENTS.md guidance for copy-paste instead of editing repository files.
-- Keep the printed AGENTS.md block as the durable project policy for when shared-skills and shared-subagents must be used.
+- Keep shared agents bundled with the plugin whenever the runtime can discover plugin-bundled agents.
+- If local copies are required, keep them at the repository root runtime directory, not inside nested monorepo packages.
+- Keep stack-specific or organization-private agents in project-local runtime directories.
+- Keep `AGENTS.block.md` as the durable project policy source for when shared-skills and shared-subagents must be used.
+- Do not add scaffold skills, copy-install commands, or AGENTS.md editing behavior to this plugin.
 - Keep MCP server configuration outside this plugin.
 
 ## MCP inheritance
@@ -58,25 +55,13 @@ Do not add one-off MCP server blocks to these shared agent templates unless the 
 
 Use `references/superpowers-routing.md` for Superpowers stage routing and custom-agent fallback rules.
 
-## Skill Integration
-
-Use `$shared-subagents:scaffold` to ask Codex to run the install, AGENTS.md block, and verification workflow.
-
 ## Verification
 
-```bash
-rtk python3 /path/to/shared-subagents/skills/scaffold/scaffold.py --dry-run
-rtk python3 /path/to/shared-subagents/skills/scaffold/scaffold.py --print-agents-md-block
-rtk python3 /path/to/shared-subagents/skills/scaffold/scaffold.py --install --project-root temps/2026-05-05/shared-subagents/project-root
-rtk find temps/2026-05-05/shared-subagents/project-root/.codex/agents -maxdepth 1 -type f
-```
+Expected generated bundle results:
 
-Expected results:
-
-- Dry run prints thirteen target installation paths.
-- The AGENTS.md block command prints copy-paste Markdown and does not edit files.
-- The temporary project `.codex/agents` directory contains thirteen TOML files.
+- `AGENTS.block.md` exists at the plugin root and contains `SHARED-SUBAGENTS` markers.
+- The Codex bundle contains thirteen TOML files under `agents/`.
+- The Claude Code bundle contains thirteen Markdown files under `agents/`.
 - Each TOML file contains `developer_instructions`.
-- Each TOML file contains `# shared-subagents:provided-agent` so project-local copies can be identified as plugin-provided templates.
-
-After installing into a project `.codex/agents/` directory, restart Codex in that project and manually verify whether custom agent names can be invoked.
+- Each TOML file contains `# shared-subagents:provided-agent` so optional project-local copies can be identified as plugin-provided templates.
+- The Codex manifest does not advertise `skills`, because this plugin is agent-only.

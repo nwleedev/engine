@@ -1,21 +1,13 @@
 from __future__ import annotations
 
-import importlib.util
 import json
 import tomllib
 from pathlib import Path
 
 
-SCRIPT_PATH = (
-    Path(__file__).resolve().parents[2]
-    / "plugins"
-    / "codex"
-    / "shared-subagents"
-    / "scripts"
-    / "install_shared_subagents.py"
+PLUGIN_ROOT = (
+    Path(__file__).resolve().parents[2] / "plugins" / "codex" / "shared-subagents"
 )
-
-PLUGIN_ROOT = SCRIPT_PATH.parents[1]
 
 EXPECTED_AGENTS = (
     "context-manager",
@@ -39,7 +31,7 @@ LEGACY_AGENTS = (
 )
 
 ACTIVE_ROUTE_DOCS = (
-    PLUGIN_ROOT / "references" / "agents-md-block.md",
+    PLUGIN_ROOT / "AGENTS.block.md",
     PLUGIN_ROOT / "references" / "superpowers-routing.md",
     PLUGIN_ROOT / "README.md",
 )
@@ -66,74 +58,16 @@ def instruction_block(text: str, start: str, stop: str) -> str:
     return text.split(start, 1)[1].split(stop, 1)[0]
 
 
-def load_module():
-    """Load the install script as a test module."""
+def test_generated_bundle_contains_expected_agents() -> None:
+    generated_agents = sorted(path.name for path in (PLUGIN_ROOT / "agents").glob("*.toml"))
 
-    spec = importlib.util.spec_from_file_location("install_shared_subagents", SCRIPT_PATH)
-    assert spec is not None
-    assert spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
-
-
-def test_dry_run_returns_expected_targets(tmp_path: Path) -> None:
-    module = load_module()
-
-    targets = module.install_agents(tmp_path, dry_run=True)
-
-    assert len(targets) == len(EXPECTED_AGENTS)
-    assert [target.name for target in targets] == [
-        f"{agent_name}.toml" for agent_name in EXPECTED_AGENTS
-    ]
-    assert not (tmp_path / ".codex" / "agents").exists()
-
-
-def test_install_copies_all_agents(tmp_path: Path) -> None:
-    module = load_module()
-
-    targets = module.install_agents(tmp_path, dry_run=False)
-
-    assert len(targets) == len(EXPECTED_AGENTS)
-    assert [target.name for target in targets] == [
-        f"{agent_name}.toml" for agent_name in EXPECTED_AGENTS
-    ]
-    for target in targets:
-        assert target.exists()
-        text = target.read_text(encoding="utf-8")
+    assert generated_agents == sorted(f"{agent_name}.toml" for agent_name in EXPECTED_AGENTS)
+    for agent_name in EXPECTED_AGENTS:
+        text = (PLUGIN_ROOT / "agents" / f"{agent_name}.toml").read_text(
+            encoding="utf-8"
+        )
         assert "# shared-subagents:provided-agent" in text
         assert "developer_instructions" in text
-
-
-def test_install_refuses_to_overwrite_existing_agent(tmp_path: Path) -> None:
-    module = load_module()
-    existing = tmp_path / ".codex" / "agents" / "context-manager.toml"
-    existing.parent.mkdir(parents=True)
-    existing.write_text("custom local agent\n", encoding="utf-8")
-
-    try:
-        module.install_agents(tmp_path, dry_run=False)
-    except FileExistsError as error:
-        assert "context-manager.toml" in str(error)
-    else:
-        raise AssertionError("install_agents should reject existing files by default")
-
-    assert existing.read_text(encoding="utf-8") == "custom local agent\n"
-
-
-def test_backup_preserves_existing_agent_before_install(tmp_path: Path) -> None:
-    module = load_module()
-    existing = tmp_path / ".codex" / "agents" / "context-manager.toml"
-    existing.parent.mkdir(parents=True)
-    existing.write_text("custom local agent\n", encoding="utf-8")
-
-    targets = module.install_agents(tmp_path, dry_run=False, backup=True)
-
-    backup = tmp_path / ".codex" / "agents" / "context-manager.toml.bak"
-    assert backup.exists()
-    assert backup.read_text(encoding="utf-8") == "custom local agent\n"
-    assert existing.read_text(encoding="utf-8") != "custom local agent\n"
-    assert targets[0] == existing
 
 
 def test_legacy_shared_subagents_are_not_generated() -> None:
@@ -142,9 +76,7 @@ def test_legacy_shared_subagents_are_not_generated() -> None:
 
 
 def test_legacy_shared_subagents_are_absent_from_active_route_docs() -> None:
-    combined = "\n".join(
-        path.read_text(encoding="utf-8") for path in ACTIVE_ROUTE_DOCS
-    )
+    combined = "\n".join(path.read_text(encoding="utf-8") for path in ACTIVE_ROUTE_DOCS)
 
     for agent_name in LEGACY_AGENTS:
         assert f"`{agent_name}`" not in combined
@@ -161,43 +93,28 @@ def test_test_adequacy_reviewer_owns_downstream_test_quality() -> None:
     assert "Do not approve tests that assert only mock calls" in instructions
 
 
-def test_plugin_manifest_exposes_scaffold_skill() -> None:
+def test_plugin_manifest_is_agent_only() -> None:
     manifest = json.loads(
         (PLUGIN_ROOT / ".codex-plugin" / "plugin.json").read_text(encoding="utf-8")
     )
-    skill = PLUGIN_ROOT / "skills" / "scaffold" / "SKILL.md"
 
     assert manifest["name"] == "shared-subagents"
     assert manifest["version"] == "0.2.7"
-    assert manifest["skills"] == "./skills/"
-    assert skill.exists()
-    assert "name: scaffold" in skill.read_text(encoding="utf-8")
+    assert "skills" not in manifest
+    assert not (PLUGIN_ROOT / "skills" / "scaffold" / "SKILL.md").exists()
+    assert not (PLUGIN_ROOT / "skills" / "scaffold" / "scaffold.py").exists()
+    assert not (PLUGIN_ROOT / "scripts" / "install_shared_subagents.py").exists()
+    assert not (PLUGIN_ROOT / "scripts" / "print_agents_md_block.py").exists()
 
 
-def test_scaffold_skill_references_shared_scripts() -> None:
-    text = (
-        PLUGIN_ROOT / "skills" / "scaffold" / "SKILL.md"
-    ).read_text(encoding="utf-8")
-
-    assert "skills/scaffold/scaffold.py --dry-run" in text
-    assert "skills/scaffold/scaffold.py --print-agents-md-block" in text
-    assert "--project-root" in text
-    assert ".codex/agents" in text
-    assert "Does not modify AGENTS.md automatically." in text
-    assert "real Codex home" not in text
-
-
-def test_scaffold_wrapper_exists() -> None:
-    assert (PLUGIN_ROOT / "skills" / "scaffold" / "scaffold.py").exists()
-
-
-def test_readme_uses_skill_relative_scaffold_command() -> None:
+def test_readme_documents_agents_block_without_scaffold_flow() -> None:
     readme = (PLUGIN_ROOT / "README.md").read_text(encoding="utf-8")
 
-    assert "python3 /path/to/shared-subagents/skills/scaffold/scaffold.py" in readme
-    assert "plugins/shared-subagents/scripts/install_shared_subagents.py" not in readme
-    assert ".codex/agents" in readme
-    assert "~/.codex/agents" not in readme
+    assert "AGENTS.block.md" in readme
+    assert "plugin-bundled agents" in readme
+    assert "skills/scaffold/scaffold.py" not in readme
+    assert "install_shared_subagents.py" not in readme
+    assert "Use `$shared-subagents:scaffold`" not in readme
 
 
 def test_requirements_reviewer_owns_user_requirement_fidelity() -> None:
@@ -266,20 +183,16 @@ def test_readme_documents_mcp_inheritance_without_owning_mcp_config() -> None:
     assert "required = false" in readme
 
 
-def test_agents_md_block_warns_about_global_mcp_startup_cost() -> None:
-    block = (PLUGIN_ROOT / "references" / "agents-md-block.md").read_text(
-        encoding="utf-8"
-    )
+def test_agents_block_warns_about_global_mcp_startup_cost() -> None:
+    block = (PLUGIN_ROOT / "AGENTS.block.md").read_text(encoding="utf-8")
 
     assert "Global MCP servers may be inherited by spawned subagents" in block
-    assert "project-local `.codex/agents`" in block
+    assert "plugin-bundled agents" in block
     assert "project `.codex/config.toml`" in block
 
 
-def test_agents_md_block_defines_subagent_use_boundaries() -> None:
-    block = (PLUGIN_ROOT / "references" / "agents-md-block.md").read_text(
-        encoding="utf-8"
-    )
+def test_agents_block_defines_subagent_use_boundaries() -> None:
+    block = (PLUGIN_ROOT / "AGENTS.block.md").read_text(encoding="utf-8")
     docs_researcher_line = next(
         line for line in block.splitlines() if "`docs-researcher`" in line
     )
@@ -287,6 +200,9 @@ def test_agents_md_block_defines_subagent_use_boundaries() -> None:
         line for line in block.splitlines() if "`code-reviewer`" in line
     )
 
+    assert "<!-- SHARED-SUBAGENTS-START -->" in block
+    assert "<!-- SHARED-SUBAGENTS-END -->" in block
+    assert "scaffold skill" in block
     assert "Spawn subagents only when the user explicitly asks" in block
     assert "Use `shared-skills` workflow skills" in block
     assert "behavior-changing implementation" in block
@@ -325,10 +241,8 @@ def test_reviewer_limits_documentation_review_to_user_impacting_boundaries() -> 
     assert "Do not dilute findings with style-only commentary" in instructions
 
 
-def test_agents_md_block_routes_test_adequacy_to_dedicated_reviewer() -> None:
-    block = (PLUGIN_ROOT / "references" / "agents-md-block.md").read_text(
-        encoding="utf-8"
-    )
+def test_agents_block_routes_test_adequacy_to_dedicated_reviewer() -> None:
+    block = (PLUGIN_ROOT / "AGENTS.block.md").read_text(encoding="utf-8")
 
     test_reviewer_lines = [
         line for line in block.splitlines() if "`test-adequacy-reviewer`" in line

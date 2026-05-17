@@ -82,27 +82,23 @@ def test_codex_agent_tree_includes_complete_plugin_support_files() -> None:
     files = render_codex_agent_tree(ROOT / "plugin-sources" / "shared-subagents")
 
     assert "README.md" in files
-    assert "references/agents-md-block.md" in files
-    assert "skills/scaffold/SKILL.md" in files
-    assert "skills/scaffold/scaffold.py" in files
-    assert "scripts/install_shared_subagents.py" in files
-    assert files["skills/scaffold/SKILL.md"].startswith("---\n")
-    assert (
-        "\n---\n"
-        + markdown_header("plugin-sources/shared-subagents/skills/scaffold/SKILL.md")
-        in files["skills/scaffold/SKILL.md"]
-    )
+    assert "AGENTS.block.md" in files
+    assert "skills/scaffold/SKILL.md" not in files
+    assert "skills/scaffold/scaffold.py" not in files
+    assert "scripts/install_shared_subagents.py" not in files
+    assert "scripts/print_agents_md_block.py" not in files
     assert files["README.md"].startswith(
         markdown_header("plugin-sources/shared-subagents/README.md")
     )
-    assert files["scripts/install_shared_subagents.py"].startswith(
-        python_header("plugin-sources/shared-subagents/scripts/install_shared_subagents.py")
+    assert files["AGENTS.block.md"].startswith(
+        markdown_header("plugin-sources/shared-subagents/AGENTS.block.md")
     )
 
 
-def test_claude_agent_tree_excludes_codex_scaffold_support() -> None:
+def test_claude_agent_tree_includes_agents_block_without_scaffold_support() -> None:
     files = render_claude_agent_tree(ROOT / "plugin-sources" / "shared-subagents")
 
+    assert "AGENTS.block.md" in files
     assert "scripts/install_shared_subagents.py" not in files
     assert "scripts/print_agents_md_block.py" not in files
     assert "skills/scaffold/SKILL.md" not in files
@@ -121,6 +117,7 @@ def test_claude_generated_bundle_does_not_advertise_codex_install_surface() -> N
     assert "print_agents_md_block.py" not in readme
     assert "skills/scaffold/scaffold.py" not in readme
     assert "plugin-bundled agents" in readme
+    assert "AGENTS.block.md" in readme
     assert ".claude/agents/" in readme
     assert "Use the test-adequacy-reviewer subagent" in readme
 

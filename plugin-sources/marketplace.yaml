@@ -41,7 +41,6 @@ plugins:
         path: ./plugins/claude/shared-subagents
       codex:
         name: shared-subagents
-        skills: ./skills/
         path: ./plugins/codex/shared-subagents
   - id: shared-skills
     version: 0.2.7

@@ -2,6 +2,5 @@
   "name": "shared-subagents",
   "version": "0.2.7",
   "description": "Reusable Codex and Claude Code subagent templates for workflow routing, requirement review, test adequacy, closure, risk, code review, and security audit",
-  "license": "MIT",
-  "skills": "./skills/"
+  "license": "MIT"
 }
