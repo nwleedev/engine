@@ -121,11 +121,11 @@ In artifact-only mode:
   and the helper prints the context path, backup path when available, and manual
   repair guidance.
 
-Checkpoint context is not reduced to a smaller summary in this model. The
-required 9-section CONTEXT template preserves `executive_summary`,
-`detailed_state`, `next_actions`, `graph_context`, and the other handoff
-sections so compaction recovery has both the concise state and the detailed
-working context.
+Checkpoint context is not reduced to an empty form in this model. The helper
+extracts the latest transcript delta and durable evidence into the required
+9-section CONTEXT document, including `executive_summary`, `detailed_state`,
+`files`, `verification`, `next_actions`, and `graph_context`, so compaction
+recovery has both concise state and concrete working context.
 
 ## Concurrent checkpoints
 

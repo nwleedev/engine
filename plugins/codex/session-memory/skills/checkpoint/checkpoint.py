@@ -53,25 +53,6 @@ REQUIRED_SECTIONS = (
     "## graph_context",
 )
 
-CONTEXT_TEMPLATE_GUIDANCE = (
-    ("## current_goal", "Capture the approved current goal and scope."),
-    ("## executive_summary", "Write 3-7 lines that make the state resumable."),
-    ("## detailed_state", "Record workflow, judgments, and confirmed facts."),
-    ("## decisions", "List decisions, rationale, alternatives, and fallback."),
-    ("## files", "Record per-file change reason and next check point."),
-    (
-        "## verification",
-        "Record commands, results, failure causes, and unverified items.",
-    ),
-    ("## risks", "List remaining risks and uncertain assumptions."),
-    ("## next_actions", "Record ordered steps the next person can run immediately."),
-    (
-        "## graph_context",
-        "Record that Codex graph and parent discovery are not used; preserve source provenance.",
-    ),
-)
-
-
 def _usage() -> str:
     return "usage: checkpoint.py prepare | checkpoint.py verify <context-path>"
 
@@ -131,14 +112,85 @@ def _render_evidence(evidence: dict) -> str:
     )
 
 
-def _render_required_context_template(
+def _coerce_delta_text(item: dict) -> str:
+    text = item.get("text", "")
+    if isinstance(text, str):
+        return text.strip()
+    return str(text).strip()
+
+
+def _clip_line(text: str, limit: int = 240) -> str:
+    normalized = " ".join(text.split())
+    if len(normalized) <= limit:
+        return normalized
+    return normalized[: limit - 3].rstrip() + "..."
+
+
+def _render_delta(delta: list[dict], *, limit: int = 12) -> str:
+    if not delta:
+        return "- (no new transcript delta since the previous checkpoint)"
+    lines = []
+    for item in delta[:limit]:
+        role = str(item.get("role", "unknown")).strip() or "unknown"
+        text = _clip_line(_coerce_delta_text(item))
+        lines.append(f"- {role}: {text or '(empty)'}")
+    if len(delta) > limit:
+        lines.append(f"- ... {len(delta) - limit} more delta messages omitted")
+    return "\n".join(lines)
+
+
+def _pick_summary_text(delta: list[dict]) -> str:
+    for item in reversed(delta):
+        text = _clip_line(_coerce_delta_text(item), 120)
+        if text:
+            return text
+    return "No new transcript delta was captured for this checkpoint."
+
+
+def _index_summary(delta: list[dict], evidence: dict) -> str:
+    summary = f"checkpoint captured {len(delta)} delta messages"
+    commands = evidence.get("commands", [])
+    files = evidence.get("files", [])
+    if commands:
+        return _clip_line(f"{summary}; latest command: {commands[0]}", 140)
+    if files:
+        return _clip_line(f"{summary}; touched file: {files[0]}", 140)
+    return summary
+
+
+def _render_files_section(evidence: dict) -> str:
+    files = evidence.get("files", [])
+    if not files:
+        return "- No file paths were detected in the latest delta."
+    return "\n".join(f"- {path}" for path in files)
+
+
+def _render_verification_section(evidence: dict) -> str:
+    lines = ["### commands", _render_list(evidence.get("commands", [])), ""]
+    lines.extend(["### failures", _render_list(evidence.get("failures", [])), ""])
+    lines.extend(["### sources", _render_list(evidence.get("sources", []))])
+    return "\n".join(lines)
+
+
+def _render_risks_section(evidence: dict) -> str:
+    failures = evidence.get("failures", [])
+    if failures:
+        return "\n".join(f"- Follow up on detected failure: {failure}" for failure in failures)
+    return "- No failures were detected in the latest delta."
+
+
+def _render_populated_context(
     *,
     session_id: str,
     source_thread_id: str,
     task_id: str,
     checkpoint_id: str,
     created_at: str,
+    delta: list[dict],
+    evidence: dict,
 ) -> str:
+    index_summary = _index_summary(delta, evidence)
+    delta_summary = _pick_summary_text(delta)
     lines = [
         "---",
         f"session_id: {session_id}",
@@ -148,21 +200,45 @@ def _render_required_context_template(
         f"created_at: {created_at}",
         "---",
         "",
-        "# <title>",
+        f"# {index_summary}",
+        "",
+        "## current_goal",
+        f"- Preserve the current Codex session-memory state for session `{session_id}`.",
+        f"- Source transcript thread used for delta reading: `{source_thread_id}`.",
+        "",
+        "## executive_summary",
+        f"- {index_summary}.",
+        f"- Latest captured message: {delta_summary}",
+        f"- Evidence counts: {len(evidence.get('files', []))} files, "
+        f"{len(evidence.get('commands', []))} commands, "
+        f"{len(evidence.get('failures', []))} failures, "
+        f"{len(evidence.get('sources', []))} sources.",
+        "",
+        "## detailed_state",
+        _render_delta(delta),
+        "",
+        "## decisions",
+        "- No explicit decision markers were detected automatically; use the transcript delta above as the source of truth.",
+        "",
+        "## files",
+        _render_files_section(evidence),
+        "",
+        "## verification",
+        _render_verification_section(evidence),
+        "",
+        "## risks",
+        _render_risks_section(evidence),
+        "",
+        "## next_actions",
+        "- Continue from the latest captured delta and rerun any verification commands listed above when relevant.",
+        "",
+        "## graph_context",
+        f"session_id: {session_id}",
+        f"source_thread_id: {source_thread_id}",
+        "graph_status: not_used",
+        "graph_source: none",
         "",
     ]
-    for heading, guidance in CONTEXT_TEMPLATE_GUIDANCE:
-        lines.extend([heading, f"- guidance: {guidance}", ""])
-        if heading == "## graph_context":
-            lines.extend(
-                [
-                    f"session_id: {session_id}",
-                    f"source_thread_id: {source_thread_id}",
-                    "graph_status: not_used",
-                    "graph_source: none",
-                    "",
-                ]
-            )
     return "\n".join(lines).rstrip()
 
 
@@ -257,12 +333,15 @@ def _prepare() -> int:
     checkpoint_id = context_path.stem.removeprefix("CONTEXT-")
     created_at = now_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
     evidence = ee.extract_evidence(delta)
-    context_text = _render_required_context_template(
+    index_summary = _index_summary(delta, evidence)
+    context_text = _render_populated_context(
         session_id=session_id,
         source_thread_id=source_thread_id,
         task_id=task_id,
         checkpoint_id=checkpoint_id,
         created_at=created_at,
+        delta=delta,
+        evidence=evidence,
     )
 
     print(
@@ -283,7 +362,7 @@ def _prepare() -> int:
                 f"new_offset: {new_offset}",
                 "",
                 "## index update",
-                f"index_entry: - [{context_path.name}] — <summary>",
+                f"index_entry: - [{context_path.name}] - {index_summary}",
                 "frontmatter_update:",
                 f"  last_processed_offset: {new_offset}",
                 f"  last_updated: {created_at}",
@@ -293,7 +372,7 @@ def _prepare() -> int:
                 "## evidence",
                 _render_evidence(evidence),
                 "",
-                "## required context template",
+                "## context document",
                 context_text,
                 "",
             ]
@@ -306,7 +385,7 @@ def _prepare() -> int:
         backup_path = io.append_context_entry_with_frontmatter(
             index_path,
             context_path.name,
-            "<summary>",
+            index_summary,
             writer_id=checkpoint_id,
             session_id=session_id,
             source_thread_id=source_thread_id,
@@ -325,7 +404,7 @@ def _prepare() -> int:
             "error: INDEX.md update failed after context write; "
             f"context preserved at {context_path}{backup_note}; "
             "run session-memory status to find orphan contexts, then repair by "
-            f"adding this entry under ## Contexts: - [{context_path.name}] — <summary>; "
+            f"adding this entry under ## Contexts: - [{context_path.name}] - {index_summary}; "
             "also set frontmatter "
             f"last_processed_offset: {new_offset}, last_updated: {created_at}, "
             f"session_id: {session_id}, source_thread_id: {source_thread_id}; {exc}",

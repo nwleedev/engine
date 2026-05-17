@@ -122,10 +122,11 @@ mode에서는 다음처럼 동작합니다.
 - context 파일을 쓴 뒤 `INDEX.md` update가 실패하면 context는 보존하고, helper는
   context path, 가능한 경우 backup path, 수동 repair 지침을 출력합니다.
 
-이 모델은 작업 맥락 보존량을 줄이는 변경이 아닙니다. 필수 9-section CONTEXT
-template는 `executive_summary`, `detailed_state`, `next_actions`,
-`graph_context`와 나머지 인계 섹션을 함께 보존해, 압축 복구 시 간결한 상태와
-구체적인 작업 맥락을 모두 다시 읽을 수 있게 합니다.
+이 모델은 빈 양식만 저장하는 방식이 아닙니다. helper는 최신 transcript
+delta와 durable evidence를 추출해 필수 9-section CONTEXT 문서의
+`executive_summary`, `detailed_state`, `files`, `verification`,
+`next_actions`, `graph_context`와 나머지 인계 섹션을 실제 내용으로 채워,
+압축 복구 시 간결한 상태와 구체적인 작업 맥락을 모두 다시 읽을 수 있게 합니다.
 
 ## 병렬 체크포인트
 

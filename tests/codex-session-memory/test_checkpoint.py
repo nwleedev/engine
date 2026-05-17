@@ -51,17 +51,17 @@ def write_valid_context(context: Path):
     )
 
 
-SECTION_GUIDANCE = {
-    "## current_goal": "approved current goal and scope",
-    "## executive_summary": "3-7 lines",
-    "## detailed_state": "workflow, judgments, and confirmed facts",
-    "## decisions": "decisions, rationale, alternatives, and fallback",
-    "## files": "per-file change reason and next check point",
-    "## verification": "commands, results, failure causes, and unverified items",
-    "## risks": "remaining risks and uncertain assumptions",
-    "## next_actions": "ordered steps the next person can run immediately",
-    "## graph_context": "graph and parent discovery are not used",
-}
+REQUIRED_CONTEXT_HEADINGS = (
+    "## current_goal",
+    "## executive_summary",
+    "## detailed_state",
+    "## decisions",
+    "## files",
+    "## verification",
+    "## risks",
+    "## next_actions",
+    "## graph_context",
+)
 
 
 def write_child_session_meta(jsonl: Path, *, parent_thread_id: Optional[str]):
@@ -111,6 +111,62 @@ def test_prepare_outputs_context_target_and_evidence(monkeypatch, tmp_path, caps
     assert "last_processed_offset: 10" in output
 
 
+def test_prepare_writes_populated_context_and_index_summary(monkeypatch, tmp_path, capsys):
+    checkpoint = load_checkpoint()
+    jsonl = tmp_path / "rollout-test-thread.jsonl"
+    jsonl.write_text('{"type":"turn","payload":"ok"}\n', encoding="utf-8")
+
+    patch_project(monkeypatch, checkpoint, tmp_path)
+    monkeypatch.setenv("CODEX_SESSION_ID", "target-session")
+    monkeypatch.setenv("CODEX_THREAD_ID", "source-thread")
+    monkeypatch.setattr(checkpoint.sl, "find_jsonl_by_thread", lambda thread_id: jsonl)
+    monkeypatch.setattr(checkpoint.io, "read_frontmatter", lambda path: {"last_processed_offset": 0})
+    monkeypatch.setattr(
+        checkpoint.jp,
+        "extract_delta",
+        lambda path, offset: (
+            [
+                {
+                    "role": "user",
+                    "text": (
+                        "Fix session-memory so "
+                        "plugin-sources/session-memory/adapters/codex/skills/checkpoint/checkpoint.py "
+                        "stores actual summaries."
+                    ),
+                },
+                {
+                    "role": "assistant",
+                    "text": (
+                        "Updated tests/codex-session-memory/test_checkpoint.py and ran "
+                        "`uv run --isolated --python /usr/local/bin/python3.12 --with pytest pytest "
+                        "tests/codex-session-memory/test_checkpoint.py -q`."
+                    ),
+                },
+            ],
+            64,
+        ),
+    )
+
+    assert checkpoint.main(["prepare"]) == 0
+
+    output = capsys.readouterr().out
+    context_line = next(line for line in output.splitlines() if line.startswith("context_path: "))
+    context_path = Path(context_line.removeprefix("context_path: "))
+    context = context_path.read_text(encoding="utf-8")
+    index = (context_path.parent.parent / "INDEX.md").read_text(encoding="utf-8")
+
+    assert "# <title>" not in context
+    assert "guidance:" not in context
+    assert "<summary>" not in context
+    assert "plugin-sources/session-memory/adapters/codex/skills/checkpoint/checkpoint.py" in context
+    assert "tests/codex-session-memory/test_checkpoint.py" in context
+    assert "uv run --isolated --python /usr/local/bin/python3.12 --with pytest pytest" in context
+    assert "Fix session-memory" in context
+    assert f"- [{context_path.name}]" in index
+    assert "<summary>" not in index
+    assert "checkpoint captured 2 delta messages" in index
+
+
 def test_prepare_outputs_flat_artifact_target(monkeypatch, tmp_path, capsys):
     checkpoint = load_checkpoint()
     jsonl = tmp_path / "rollout-test-thread.jsonl"
@@ -128,9 +184,10 @@ def test_prepare_outputs_flat_artifact_target(monkeypatch, tmp_path, capsys):
     output = capsys.readouterr().out
     assert ".codex/session-memory/threads/test-session/INDEX.md" in output
     assert "_children" not in output
-    for heading, guidance in SECTION_GUIDANCE.items():
+    assert "# <title>" not in output
+    assert "guidance:" not in output
+    for heading in REQUIRED_CONTEXT_HEADINGS:
         assert heading in output
-        assert guidance in output
 
 
 def test_prepare_context_path_uses_timestamp_task_id_nonce_and_writes_metadata(
@@ -350,7 +407,7 @@ def test_prepare_uses_single_index_update_helper(monkeypatch, tmp_path, capsys):
         (
             expected_index,
             "CONTEXT-20260517-101112-checkpoint-abc123.md",
-            "<summary>",
+            "checkpoint captured 0 delta messages",
             {
                 "writer_id": "20260517-101112-checkpoint-abc123",
                 "session_id": "target-session",

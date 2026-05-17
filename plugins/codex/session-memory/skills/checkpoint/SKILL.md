@@ -21,10 +21,10 @@ python3 /path/to/session-memory/skills/checkpoint/checkpoint.py prepare
 it prints a warning and still writes only under
 `<root>/.codex/session-memory/threads/<CODEX_SESSION_ID>/`.
 
-The helper writes the context file and updates `INDEX.md` directly. It preserves
-the full 9-section CONTEXT handoff: `current_goal`, `executive_summary`,
-`detailed_state`, `decisions`, `files`, `verification`, `risks`,
-`next_actions`, and `graph_context`.
+The helper writes the context file and updates `INDEX.md` directly. It extracts
+the latest transcript delta and durable evidence into the full 9-section CONTEXT
+handoff: `current_goal`, `executive_summary`, `detailed_state`, `decisions`,
+`files`, `verification`, `risks`, `next_actions`, and `graph_context`.
 
 The context metadata records `session_id`, `source_thread_id`, `task_id`,
 `checkpoint_id`, and `created_at`. `graph_context` records that Codex graph and
@@ -56,5 +56,5 @@ list entry like `- [CONTEXT-...md]`. For read compatibility, legacy
 
 - The helper does not spawn another Codex process.
 - The helper does not read Codex sqlite DBs, `thread_spawn_edges`, `threads.source`, rollout `session_meta`, `parent_locator`, or `graph_store`.
-- Required context headings are `current_goal`, `executive_summary`, `detailed_state`, `decisions`, `files`, `verification`, `risks`, `next_actions`, and `graph_context`; this template preserves more useful handoff detail rather than reducing saved context.
+- Required context headings are `current_goal`, `executive_summary`, `detailed_state`, `decisions`, `files`, `verification`, `risks`, `next_actions`, and `graph_context`; the helper fills them from the latest transcript delta and extracted evidence.
 - Project root resolution honors `CODEX_PROJECT_DIR` env or `.env` declaration, then falls back to git toplevel / AGENTS.md / `.codex` / cwd.
