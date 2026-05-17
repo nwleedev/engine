@@ -217,7 +217,7 @@ def test_plugin_manifest_exposes_install_skill() -> None:
     )
 
     assert manifest["name"] == "shared-subagents"
-    assert manifest["version"] == "0.3.0"
+    assert manifest["version"] == "0.3.1"
     assert manifest["skills"] == "./skills/"
     assert (PLUGIN_ROOT / "skills" / "install" / "SKILL.md").exists()
     assert (PLUGIN_ROOT / "skills" / "install" / "install.py").exists()
