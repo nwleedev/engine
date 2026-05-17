@@ -11,6 +11,8 @@ metadata:
 
 Create a `Plan Contract` that turns confirmed requirements or spec contracts into small executable tasks with ordered steps, validation methods, done criteria, fallback paths, and risk levels. When a Spec Ledger exists, every task must carry `linked_spec_clause_ids` so `spec-plan-coverage` can detect omissions before implementation.
 
+Use `../../references/workflow-artifacts.md` when table schemas, row-level rules, or coverage status values are needed.
+
 ## Workflow
 
 1. Start from confirmed requirements, spec IDs, and available `spec_clause_id` values; do not plan from unresolved questions.

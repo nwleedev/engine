@@ -86,10 +86,14 @@ def test_agents_policy_blocks_are_split_and_compact() -> None:
     assert "$session-memory:checkpoint" not in subagents_text
     assert "Spawn subagents" not in skills_text
     assert "<!-- SHARED-SUBAGENTS-START -->" not in skills_text
+    assert "routing shim" in skills_text
+    assert "invoke the matching shared-skills skill and follow its `SKILL.md`" in skills_text
     assert (
         "requirements, research, specs, plans, tests, implementation evidence, or completion claims"
         in skills_text
     )
+    assert "implementation-evidence" in skills_text
+    assert "verification-gate" in skills_text
     assert "installed shared-skills `SKILL.md` and `references/*`" in skills_text
     assert "install/status diagnostic" in skills_text
     assert skills_text.count("\n- ") <= 6

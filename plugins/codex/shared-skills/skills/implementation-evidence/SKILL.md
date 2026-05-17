@@ -14,6 +14,8 @@ metadata:
 
 Create an `Implementation Evidence` packet that links requirements, spec clauses, and tasks to changed files, behavior changes, commands run, and remaining evidence gaps.
 
+Use `../../references/workflow-artifacts.md` when table schemas, row-level rules, or coverage status values are needed.
+
 ## Workflow
 
 1. Assign stable evidence IDs using `EVID-001`, `EVID-002`, and increasing numbers.

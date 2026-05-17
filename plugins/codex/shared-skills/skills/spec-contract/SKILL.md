@@ -14,6 +14,8 @@ metadata:
 
 Create a `Spec Contract` that defines intended behavior, interfaces or artifacts, failure modes, and compatibility constraints before planning implementation or downstream tests. When the spec has multiple clauses or confidential source text, also prepare a `Spec Ledger` so later plans can cite stable `spec_clause_id` values without exposing sensitive text.
 
+Use `../../references/workflow-artifacts.md` when table schemas, row-level rules, or coverage status values are needed.
+
 ## Workflow
 
 1. Start from a `Requirement Packet` and copy only confirmed requirement IDs.

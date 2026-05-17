@@ -13,6 +13,8 @@ Create a `Test Plan Contract` that maps each scenario to the test layer, test fi
 
 For implementation work that changes observable behavior, this contract is required before claiming completion. It may state that automated tests are not feasible, but it must then name the repeatable manual or inspection evidence and residual risk.
 
+Use `../../references/downstream-test-contracts.md` when fixture governance, scenario mapping, or test contract details are needed.
+
 ## Workflow
 
 1. Start from scenario IDs and acceptance criteria IDs produced by `scenario-test-designer`.

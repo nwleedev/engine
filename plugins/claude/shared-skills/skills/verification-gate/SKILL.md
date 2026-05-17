@@ -14,6 +14,8 @@ metadata:
 
 Create a `Verification Gate` before reporting completion, readiness, correctness, or decision-ready status so every claim is backed by required evidence, spec-plan coverage, and explicit residual risk.
 
+Use `../../references/workflow-artifacts.md` when table schemas, row-level rules, or coverage status values are needed.
+
 ## Workflow
 
 1. State the exact completion claim being considered.

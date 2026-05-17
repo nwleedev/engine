@@ -13,6 +13,8 @@ Create a scenario test design that links acceptance criteria to user-visible hap
 
 Use this as a required gate for implementation work that changes observable behavior or acceptance criteria. If the work is test-inapplicable, record the reason and route the residual risk to `verification-gate`.
 
+Use `../../references/downstream-test-contracts.md` when fixture governance, scenario mapping, or test contract details are needed.
+
 ## Workflow
 
 1. Start from acceptance criteria in a `Requirement Packet` or `Spec Contract`.

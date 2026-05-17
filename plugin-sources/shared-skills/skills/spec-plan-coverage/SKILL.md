@@ -18,6 +18,8 @@ risk before implementation or closure.
 This skill is for evidence-backed workflow control. It is not a general advice
 checklist.
 
+Use `../../references/workflow-artifacts.md` when table schemas, row-level rules, or coverage status values are needed.
+
 ## Workflow
 
 1. Extract every behavior, artifact, failure mode, compatibility constraint,

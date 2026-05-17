@@ -11,6 +11,8 @@ metadata:
 
 Create a `Requirement Packet` before planning, implementation, review, research, or test writing when the user's request has more than one requirement, any ambiguity, or any completion claim risk.
 
+Use `../../references/workflow-artifacts.md` when table schemas, row-level rules, or coverage status values are needed.
+
 ## Workflow
 
 1. Quote or paraphrase the relevant user source text for each requirement.

@@ -16,6 +16,8 @@ Use this skill to write test code through a TDD workflow: define the observable 
 
 Do not force a new test framework. Prefer the project's existing test framework, package manager, directory layout, naming convention, fixture style, assertion helpers, and CI commands.
 
+Use `../../references/downstream-test-contracts.md` when fixture governance, scenario mapping, or test contract details are needed.
+
 ## When to use
 
 - Before completing implementation work that changes behavior or acceptance criteria unless the user explicitly scoped the task as review-only, docs-only, or test-inapplicable and `verification-gate` records that reason.

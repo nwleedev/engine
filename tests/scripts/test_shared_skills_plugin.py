@@ -236,17 +236,48 @@ def test_shared_skills_agents_block_is_compact_routing_layer() -> None:
 
     assert "<!-- SHARED-SKILLS-START -->" in text
     assert "<!-- SHARED-SKILLS-END -->" in text
+    assert "routing shim" in text
+    assert "invoke the matching shared-skills skill and follow its `SKILL.md`" in text
     assert "requirements, research, specs, plans, tests, implementation evidence, or completion claims" in text
     assert "spec-plan-coverage" in text
     assert "scenario-test-designer" in text
     assert "test-plan-contract" in text
     assert "tdd-test-writing" in text
+    assert "implementation-evidence" in text
+    assert "verification-gate" in text
     assert "installed shared-skills `SKILL.md` and `references/*`" in text
     assert "install/status diagnostic" in text
     assert text.count("\n- ") <= 6
     assert len(text.encode("utf-8")) <= 1200
     for term in detailed_terms:
         assert term not in text
+
+
+def test_shared_skills_workflow_skills_point_to_workflow_artifact_reference() -> None:
+    for skill_name in (
+        "requirements-packet",
+        "spec-contract",
+        "plan-contract",
+        "spec-plan-coverage",
+        "implementation-evidence",
+        "verification-gate",
+    ):
+        text = read(PLUGIN_ROOT / "skills" / skill_name / "SKILL.md")
+
+        assert "../../references/workflow-artifacts.md" in text
+        assert "when table schemas, row-level rules, or coverage status values are needed" in text
+
+
+def test_shared_skills_test_skills_point_to_downstream_test_reference() -> None:
+    for skill_name in (
+        "scenario-test-designer",
+        "test-plan-contract",
+        "tdd-test-writing",
+    ):
+        text = read(PLUGIN_ROOT / "skills" / skill_name / "SKILL.md")
+
+        assert "../../references/downstream-test-contracts.md" in text
+        assert "when fixture governance, scenario mapping, or test contract details are needed" in text
 
 
 def test_spec_plan_coverage_skill_defines_failure_codes_and_reports() -> None:
