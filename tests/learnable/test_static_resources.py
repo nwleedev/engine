@@ -85,6 +85,15 @@ def test_material_schema_allows_null_parent_node_id_for_root_material() -> None:
     }
 
 
+def test_material_schema_documents_backward_compatible_source_refs() -> None:
+    schema = json.loads(load_schema_resource("material.schema.json"))
+
+    assert schema["properties"]["source_refs"] == {
+        "type": "array",
+        "items": {"anyOf": [{"type": "string"}, {"type": "object"}]},
+    }
+
+
 def test_graph_schema_material_path_description_matches_validator_scope() -> None:
     schema = json.loads(load_schema_resource("graph.schema.json"))
     material_path = schema["properties"]["nodes"]["additionalProperties"]["properties"][
@@ -94,3 +103,16 @@ def test_graph_schema_material_path_description_matches_validator_scope() -> Non
     assert material_path["description"] == (
         "Path parts must not use runtime provenance ids."
     )
+
+
+def test_graph_schema_requires_persisted_node_metadata_fields() -> None:
+    schema = json.loads(load_schema_resource("graph.schema.json"))
+    node_schema = schema["properties"]["nodes"]["additionalProperties"]
+
+    assert node_schema["required"] == [
+        "node_id",
+        "parent_node_id",
+        "depth",
+        "material_path",
+    ]
+    assert node_schema["properties"]["depth"] == {"type": "integer"}

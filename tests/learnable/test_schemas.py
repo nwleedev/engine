@@ -44,7 +44,7 @@ def _material_record(**overrides: object) -> dict[str, object]:
         "title": "Topic note",
         "depth": 1,
         "status": "draft",
-        "source_refs": ["source-001"],
+        "source_refs": [{"source_id": "source-001"}],
         "created_from_prompt": "Explain the topic.",
         "created_at": "2026-05-18T09:00:00Z",
         "updated_at": "2026-05-18T09:30:00Z",
@@ -59,8 +59,22 @@ def _graph_record(**overrides: object) -> dict[str, object]:
         "learnable_session_id": "learnable-session-001",
         "root_node_id": "node-root",
         "nodes": {
-            "node-root": {"node_id": "node-root", "parent_node_id": None},
-            "node-child": {"node_id": "node-child", "parent_node_id": "node-root"},
+            "node-root": {
+                "node_id": "node-root",
+                "parent_node_id": None,
+                "depth": 0,
+                "material_path": (
+                    "sessions/learnable-session-001/nodes/node-root/material.json"
+                ),
+            },
+            "node-child": {
+                "node_id": "node-child",
+                "parent_node_id": "node-root",
+                "depth": 1,
+                "material_path": (
+                    "sessions/learnable-session-001/nodes/node-child/material.json"
+                ),
+            },
         },
         "edges": [{"parent_node_id": "node-root", "node_id": "node-child"}],
         "created_at": "2026-05-18T09:00:00Z",
@@ -177,12 +191,35 @@ def test_material_record_rejects_tuple_source_refs() -> None:
         validate_material_record(record)
 
 
+def test_material_record_accepts_legacy_string_source_refs() -> None:
+    record = _material_record(source_refs=["source-001"])
+
+    validate_material_record(record)
+
+
+def test_material_record_accepts_structured_source_refs() -> None:
+    record = _material_record(source_refs=[{"source_id": "source-001"}])
+
+    validate_material_record(record)
+
+
+def test_material_record_rejects_unsupported_source_ref_items() -> None:
+    record = _material_record(source_refs=[123])
+
+    with pytest.raises(SchemaValidationError, match="source_refs"):
+        validate_material_record(record)
+
+
 def test_graph_record_uses_node_ids_for_node_lookup_keys() -> None:
     record = _graph_record(
         nodes={
             "runtime-session-a": {
                 "node_id": "node-root",
                 "parent_node_id": None,
+                "depth": 0,
+                "material_path": (
+                    "sessions/learnable-session-001/nodes/node-root/material.json"
+                ),
             }
         },
         provenance=_provenance(codex_session_id="runtime-session-a"),
@@ -213,6 +250,10 @@ def test_graph_record_rejects_runtime_id_as_learnable_session_id() -> None:
                     "node-root": {
                         "node_id": "runtime-session-a",
                         "parent_node_id": None,
+                        "depth": 0,
+                        "material_path": (
+                            "sessions/learnable-session-001/nodes/node-root/material.json"
+                        ),
                     }
                 }
             },
@@ -221,10 +262,21 @@ def test_graph_record_rejects_runtime_id_as_learnable_session_id() -> None:
             "node.parent_node_id",
             {
                 "nodes": {
-                    "node-root": {"node_id": "node-root", "parent_node_id": None},
+                    "node-root": {
+                        "node_id": "node-root",
+                        "parent_node_id": None,
+                        "depth": 0,
+                        "material_path": (
+                            "sessions/learnable-session-001/nodes/node-root/material.json"
+                        ),
+                    },
                     "node-child": {
                         "node_id": "node-child",
                         "parent_node_id": "runtime-session-a",
+                        "depth": 1,
+                        "material_path": (
+                            "sessions/learnable-session-001/nodes/node-child/material.json"
+                        ),
                     },
                 }
             },
@@ -256,6 +308,23 @@ def test_graph_record_rejects_tuple_edges() -> None:
     record = _graph_record(edges=({"parent_node_id": "node-root", "node_id": "node-child"},))
 
     with pytest.raises(SchemaValidationError, match="edges"):
+        validate_graph_record(record)
+
+
+@pytest.mark.parametrize("field_name", ["depth", "material_path"])
+def test_graph_record_requires_persisted_node_metadata_fields(field_name: str) -> None:
+    record = _graph_record()
+    del record["nodes"]["node-child"][field_name]
+
+    with pytest.raises(SchemaValidationError, match=field_name):
+        validate_graph_record(record)
+
+
+def test_graph_record_rejects_invalid_node_depth_type() -> None:
+    record = _graph_record()
+    record["nodes"]["node-child"]["depth"] = True
+
+    with pytest.raises(SchemaValidationError, match="depth"):
         validate_graph_record(record)
 
 

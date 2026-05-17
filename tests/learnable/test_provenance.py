@@ -45,11 +45,13 @@ def test_mismatched_runtime_ids_are_valid_metadata_not_graph_identity() -> None:
                 "node-root": {
                     "node_id": "node-root",
                     "parent_node_id": None,
+                    "depth": 0,
                     "material_path": "learnable-session-001/node-root/material.json",
                 },
                 "node-child": {
                     "node_id": "node-child",
                     "parent_node_id": "node-root",
+                    "depth": 1,
                     "material_path": "learnable-session-001/node-child/material.json",
                 },
             },

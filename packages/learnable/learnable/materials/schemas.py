@@ -127,7 +127,7 @@ def validate_material_record(data: Mapping[str, object]) -> None:
     _require_optional_string(record["parent_node_id"], "parent_node_id")
     if not isinstance(record["depth"], int) or isinstance(record["depth"], bool):
         raise SchemaValidationError("depth must be an integer")
-    _require_string_sequence(record["source_refs"], "source_refs")
+    _require_source_refs_sequence(record["source_refs"], "source_refs")
     if "provenance" in record:
         provenance = _require_mapping(record["provenance"], "provenance")
         validate_provenance(provenance)
@@ -179,13 +179,14 @@ def validate_graph_record(data: Mapping[str, object]) -> None:
             raise SchemaValidationError("node lookup key must be a string")
         _reject_runtime_identity_value(lookup_key, runtime_ids, "node lookup key")
         node = _require_mapping(node_value, f"node {lookup_key}")
-        node_id = node.get("node_id")
+        _require_fields(node, ("node_id", "parent_node_id", "depth", "material_path"))
+        node_id = node["node_id"]
         if not isinstance(node_id, str):
             raise SchemaValidationError("node.node_id must be a string")
         _reject_runtime_identity_value(node_id, runtime_ids, "node.node_id")
         if node_id != lookup_key:
             raise SchemaValidationError("node lookup key must match node_id")
-        parent_node_id = node.get("parent_node_id")
+        parent_node_id = node["parent_node_id"]
         if parent_node_id is not None and not isinstance(parent_node_id, str):
             raise SchemaValidationError("parent_node_id must be a string or null")
         if isinstance(parent_node_id, str):
@@ -194,11 +195,13 @@ def validate_graph_record(data: Mapping[str, object]) -> None:
                 runtime_ids,
                 "node.parent_node_id",
             )
-        material_path = node.get("material_path")
-        if material_path is not None:
-            if not isinstance(material_path, str):
-                raise SchemaValidationError("material_path must be a string")
-            _reject_runtime_path_part(material_path, runtime_ids)
+        depth = node["depth"]
+        if not isinstance(depth, int) or isinstance(depth, bool):
+            raise SchemaValidationError("node.depth must be an integer")
+        material_path = node["material_path"]
+        if not isinstance(material_path, str):
+            raise SchemaValidationError("material_path must be a string")
+        _reject_runtime_path_part(material_path, runtime_ids)
     _require_edges(record["edges"], runtime_ids)
 
 
@@ -245,11 +248,18 @@ def _require_optional_string(value: object, field_name: str) -> None:
         raise SchemaValidationError(f"{field_name} must be a string or null")
 
 
-def _require_string_sequence(value: object, field_name: str) -> None:
+def _require_mapping_sequence(value: object, field_name: str) -> None:
     if not isinstance(value, list):
-        raise SchemaValidationError(f"{field_name} must be a list of strings")
-    if any(not isinstance(item, str) for item in value):
-        raise SchemaValidationError(f"{field_name} must be a list of strings")
+        raise SchemaValidationError(f"{field_name} must be a list of objects")
+    if any(not isinstance(item, Mapping) for item in value):
+        raise SchemaValidationError(f"{field_name} must be a list of objects")
+
+
+def _require_source_refs_sequence(value: object, field_name: str) -> None:
+    if not isinstance(value, list):
+        raise SchemaValidationError(f"{field_name} must be a list")
+    if any(not isinstance(item, str | Mapping) for item in value):
+        raise SchemaValidationError(f"{field_name} must contain strings or objects")
 
 
 def _require_edges(value: object, runtime_ids: set[str]) -> None:

@@ -25,12 +25,13 @@
       "description": "Keys are stable learnable node_id values, never runtime provenance ids.",
       "additionalProperties": {
         "type": "object",
-        "required": ["node_id", "parent_node_id"],
+        "required": ["node_id", "parent_node_id", "depth", "material_path"],
         "properties": {
           "node_id": { "type": "string" },
           "parent_node_id": {
             "anyOf": [{ "type": "string" }, { "type": "null" }]
           },
+          "depth": { "type": "integer" },
           "material_path": {
             "type": "string",
             "description": "Path parts must not use runtime provenance ids."

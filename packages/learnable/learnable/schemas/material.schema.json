@@ -31,7 +31,9 @@
     "status": { "type": "string" },
     "source_refs": {
       "type": "array",
-      "items": { "type": "string" }
+      "items": {
+        "anyOf": [{ "type": "string" }, { "type": "object" }]
+      }
     },
     "created_from_prompt": { "type": "string" },
     "created_at": { "type": "string" },
