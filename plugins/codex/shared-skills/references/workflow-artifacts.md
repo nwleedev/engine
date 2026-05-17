@@ -42,6 +42,11 @@ completion claim. `coverage_status` must be one of `covered`,
 `stale_evidence`, `unresolved_risk`, `deferred_with_owner`, or
 `not_applicable_with_reason`.
 
+Use `orphan_task` when a plan task has no requirement link, `needs_spec_mapping`
+when it has no spec clause link, `missing_fallback` when expected failure paths
+are not named, and `not_run_hidden` when not-run checks are omitted from the
+Verification Gate.
+
 | spec_clause_id | linked_requirement_ids | plan_task_ids | scenario_ids | test_or_check_ids | evidence_ids | coverage_status | gap_or_risk | owner |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | SPEC-001.CLAUSE-001 | REQ-001 | TASK-001 | SCN-001 | TEST-001 | EVID-001 | missing_evidence |  |  |

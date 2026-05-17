@@ -5,7 +5,7 @@
       "spec_clause_id": "SC-001",
       "linked_requirement_ids": ["REQ-001"],
       "source_location": "redacted-spec.md#sc-001",
-      "validation_intent": "generated artifact validation",
+      "validation_intent": "automated test",
       "status": "accepted"
     }
   ],
@@ -14,16 +14,7 @@
       "task_id": "TASK-001",
       "linked_requirement_ids": ["REQ-001"],
       "linked_spec_clause_ids": ["SC-001"],
-      "validation_method": "python validate_spec_plan_coverage.py complete.json",
-      "fallback": "manual boundary evidence"
-    }
-  ],
-  "test_plan_contract": [
-    {
-      "scenario_id": "SCN-001",
-      "linked_spec_clause_ids": ["SC-001"],
-      "test_or_check_id": "CHECK-001",
-      "boundary_evidence": true
+      "validation_method": "pytest focused"
     }
   ],
   "implementation_evidence": [
@@ -34,13 +25,6 @@
       "result": "passed"
     }
   ],
-  "fixture_budget": {
-    "new_fixture_count": 0,
-    "new_mock_count": 0,
-    "approved_new_fixture_count": 0,
-    "approved_new_mock_count": 0,
-    "test_only_behavior": false
-  },
   "verification_gate": {
     "requires_coverage_report": true,
     "coverage_report_ids": ["COVERAGE-001"]

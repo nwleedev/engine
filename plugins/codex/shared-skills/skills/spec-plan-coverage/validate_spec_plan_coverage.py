@@ -16,12 +16,15 @@ BLOCKING_ORDER = (
     "missing_source",
     "missing_acceptance_link",
     "multi_claim_clause",
+    "orphan_task",
     "needs_spec_mapping",
     "missing_plan",
     "missing_validation",
+    "missing_fallback",
     "missing_evidence",
     "stale_evidence",
     "unresolved_risk",
+    "not_run_hidden",
     "missing_coverage_report",
     "unjustified_fixture",
     "fixture_overgrowth",
@@ -74,8 +77,12 @@ def validate_document(document: dict[str, Any]) -> dict[str, Any]:
     }
 
     for task in plan_contract:
+        if not _as_list(task.get("linked_requirement_ids")):
+            _add_code(blocking_codes, "orphan_task")
         if not _as_list(task.get("linked_spec_clause_ids")):
             _add_code(blocking_codes, "needs_spec_mapping")
+        if not task.get("fallback"):
+            _add_code(blocking_codes, "missing_fallback")
 
     for clause in spec_ledger:
         clause_id = str(clause.get("spec_clause_id") or "")
@@ -135,6 +142,11 @@ def validate_document(document: dict[str, Any]) -> dict[str, Any]:
         verification_gate.get("coverage_report_ids")
     ):
         _add_code(blocking_codes, "missing_coverage_report")
+    if verification_gate.get("not_run_items_hidden") or (
+        _as_list(verification_gate.get("not_run_items"))
+        and not _as_list(verification_gate.get("disclosed_not_run_items"))
+    ):
+        _add_code(blocking_codes, "not_run_hidden")
 
     fixture_ids = {
         item

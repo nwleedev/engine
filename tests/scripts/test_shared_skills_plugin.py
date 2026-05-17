@@ -132,11 +132,15 @@ def test_workflow_artifact_reference_defines_required_ids() -> None:
         "risk_level",
         "Spec-to-Plan Coverage Matrix",
         "coverage_status",
+        "orphan_task",
+        "needs_spec_mapping",
         "missing_plan",
         "missing_validation",
+        "missing_fallback",
         "missing_evidence",
         "stale_evidence",
         "unresolved_risk",
+        "not_run_hidden",
         "Coverage Report",
         "coverage_report_id",
         "validator_command",
@@ -223,9 +227,11 @@ def test_spec_plan_coverage_skill_defines_failure_codes_and_reports() -> None:
     assert "redacted Markdown" in text
     assert "missing_plan" in text
     assert "missing_validation" in text
+    assert "missing_fallback" in text
     assert "missing_evidence" in text
     assert "stale_evidence" in text
     assert "unresolved_risk" in text
+    assert "not_run_hidden" in text
     assert "unjustified_fixture" in text
     assert "fixture_overgrowth" in text
     assert "unapproved_mock" in text

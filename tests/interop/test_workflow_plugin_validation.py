@@ -62,11 +62,15 @@ def test_workflow_validation_constants_cover_retired_routes_and_contracts() -> N
     assert "changed_files" in REQUIRED_WORKFLOW_ARTIFACT_TERMS
     assert "Spec Ledger" in REQUIRED_WORKFLOW_ARTIFACT_TERMS
     assert "Spec-to-Plan Coverage Matrix" in REQUIRED_WORKFLOW_ARTIFACT_TERMS
+    assert "orphan_task" in REQUIRED_WORKFLOW_ARTIFACT_TERMS
+    assert "needs_spec_mapping" in REQUIRED_WORKFLOW_ARTIFACT_TERMS
     assert "missing_plan" in REQUIRED_WORKFLOW_ARTIFACT_TERMS
     assert "missing_validation" in REQUIRED_WORKFLOW_ARTIFACT_TERMS
+    assert "missing_fallback" in REQUIRED_WORKFLOW_ARTIFACT_TERMS
     assert "missing_evidence" in REQUIRED_WORKFLOW_ARTIFACT_TERMS
     assert "stale_evidence" in REQUIRED_WORKFLOW_ARTIFACT_TERMS
     assert "unresolved_risk" in REQUIRED_WORKFLOW_ARTIFACT_TERMS
+    assert "not_run_hidden" in REQUIRED_WORKFLOW_ARTIFACT_TERMS
     assert "Coverage Report" in REQUIRED_WORKFLOW_ARTIFACT_TERMS
     assert "coverage_report_id" in REQUIRED_WORKFLOW_ARTIFACT_TERMS
     assert "validator_command" in REQUIRED_WORKFLOW_ARTIFACT_TERMS
@@ -185,9 +189,13 @@ def test_workflow_validation_reports_missing_schema_terms(tmp_path: Path) -> Non
     [
         ("workflow-artifacts.md", "missing_plan"),
         ("workflow-artifacts.md", "missing_validation"),
+        ("workflow-artifacts.md", "missing_fallback"),
         ("workflow-artifacts.md", "missing_evidence"),
         ("workflow-artifacts.md", "stale_evidence"),
         ("workflow-artifacts.md", "unresolved_risk"),
+        ("workflow-artifacts.md", "not_run_hidden"),
+        ("workflow-artifacts.md", "orphan_task"),
+        ("workflow-artifacts.md", "needs_spec_mapping"),
         ("workflow-artifacts.md", "Coverage Report"),
         ("workflow-artifacts.md", "coverage_report_id"),
         ("workflow-artifacts.md", "validator_exit_code"),
