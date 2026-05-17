@@ -251,6 +251,48 @@ def test_renamed_research_prompt_prune_preserves_unknown_provenance_roots(
     assert manual_file.read_text(encoding="utf-8") == "manual"
 
 
+def test_renamed_research_prompt_prune_preserves_untracked_directories(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    tmp_root = tmp_path / "root"
+    tmp_root.mkdir()
+    shutil.copytree(ROOT / "plugin-sources", tmp_root / "plugin-sources")
+    shutil.copytree(ROOT / "packages", tmp_root / "packages")
+    manual_root = tmp_root / "plugins/codex/research-prompt"
+    manual_root.mkdir(parents=True)
+    generated_file = manual_root / "generated.txt"
+    generated_file.write_text("generated", encoding="utf-8")
+    extra_dir = manual_root / "extra-dir"
+    extra_dir.mkdir()
+    (manual_root / ".generated.json").write_text(
+        json.dumps(
+            {
+                "generated": [
+                    {
+                        "target": "generated.txt",
+                        "source": "plugin-sources/research-prompt/adapters/codex/generated.txt",
+                        "notice": GENERATED_NOTICE,
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(build_plugins, "ROOT", tmp_root)
+    monkeypatch.setattr(codex_skills, "ROOT", tmp_root)
+    monkeypatch.setattr(codex_subagents, "ROOT", tmp_root)
+    monkeypatch.setattr(claude_subagents, "ROOT", tmp_root)
+    monkeypatch.setattr(plugin_tree, "ROOT", tmp_root)
+    monkeypatch.setattr(shared_subagents, "ROOT", tmp_root)
+
+    assert build_plugins.main() == 0
+
+    assert generated_file.read_text(encoding="utf-8") == "generated"
+    assert extra_dir.is_dir()
+
+
 def test_package_artifacts_are_grouped_by_generated_plugin_root() -> None:
     artifacts_by_target_root = build_plugins._package_artifacts_by_target_root(
         build_plugins._package_artifacts()

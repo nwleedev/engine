@@ -243,7 +243,7 @@ def _is_fully_registered_generated_root(target: Path) -> bool:
     actual_targets = {
         path.relative_to(target).as_posix()
         for path in target.rglob("*")
-        if path.is_file() and path.name != ".generated.json"
+        if path.name != ".generated.json"
     }
 
     return bool(actual_targets) and actual_targets <= registered_targets
