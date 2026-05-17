@@ -1,13 +1,13 @@
 PYTEST = uv run --isolated --python /usr/local/bin/python3.12 --with pytest pytest -q
 
-.PHONY: test test-session-memory test-scripts test-quality-guard test-quality-guard-source test-codex-quality-guard test-shared-subagents test-shared-skills test-deep-research-prompt-export build-plugins validate-generated test-interop test-harness-foundry-lab
+.PHONY: test test-claude-session-memory test-scripts test-quality-guard test-quality-guard-source test-codex-quality-guard test-shared-subagents test-shared-skills test-deep-research-prompt-export build-plugins validate-generated test-interop test-harness-foundry-lab
 
 # Run each plugin test suite in its own process to prevent sys.modules collision
 # between plugins that share script filenames.
-test: test-deep-research-prompt-export test-session-memory test-scripts test-quality-guard test-quality-guard-source test-codex-quality-guard test-shared-skills test-interop test-harness-foundry-lab
+test: test-deep-research-prompt-export test-claude-session-memory test-scripts test-quality-guard test-quality-guard-source test-codex-quality-guard test-shared-skills test-interop test-harness-foundry-lab
 
-test-session-memory:
-	$(PYTEST) tests/session-memory/
+test-claude-session-memory:
+	$(PYTEST) tests/claude-session-memory/
 
 test-scripts:
 	$(PYTEST) tests/scripts/

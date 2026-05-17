@@ -184,5 +184,5 @@ rtk python tools/validate_generated.py
 ## Tests
 
 ```
-python -m pytest tests/session-memory -q
+python -m pytest tests/claude-session-memory -q
 ```

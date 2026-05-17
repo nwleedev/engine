@@ -181,5 +181,5 @@ rtk python tools/validate_generated.py
 ## 테스트
 
 ```
-python -m pytest tests/session-memory -q
+python -m pytest tests/claude-session-memory -q
 ```
