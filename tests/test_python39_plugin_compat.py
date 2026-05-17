@@ -1,6 +1,10 @@
 from __future__ import annotations
 
 import ast
+import os
+import shutil
+import subprocess
+import sys
 from pathlib import Path
 
 
@@ -134,3 +138,38 @@ def test_plugin_python_sources_do_not_use_runtime_pep604_annotations() -> None:
             failures.append(_relative(path))
 
     assert failures == []
+
+
+def test_learnable_runtime_imports_on_python39_when_available() -> None:
+    python39 = _python39_executable()
+    if python39 is None:
+        return
+
+    package_root = ROOT / "packages" / "learnable"
+    script = "import learnable.cli; import learnable.materials.events"
+
+    result = subprocess.run(
+        [python39, "-c", script],
+        cwd=ROOT,
+        env={**os.environ, "PYTHONPATH": str(package_root)},
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+
+    assert result.returncode == 0, result.stderr
+
+
+def _python39_executable() -> str | None:
+    configured = os.environ.get("PYTHON39")
+    if configured:
+        return configured
+    if sys.version_info[:2] == (3, 9):
+        return sys.executable
+    discovered = shutil.which("python3.9")
+    if discovered is not None:
+        return discovered
+    homebrew = Path("/opt/homebrew/bin/python3.9")
+    if homebrew.exists():
+        return str(homebrew)
+    return None

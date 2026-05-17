@@ -5,7 +5,7 @@ import os
 import tempfile
 from collections.abc import Mapping
 from contextlib import contextmanager
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from learnable.core.redaction import redact_text
@@ -120,7 +120,7 @@ def _require_fields(
 
 
 def utc_now() -> str:
-    return datetime.now(UTC).isoformat(timespec="seconds").replace("+00:00", "Z")
+    return datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
 
 
 def _append_jsonl(path: Path, record: Mapping[str, object]) -> None:

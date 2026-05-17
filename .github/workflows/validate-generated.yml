@@ -18,3 +18,13 @@ jobs:
       - run: make test PYTEST="uv run --isolated --python 3.12 --with pytest pytest -q"
       - run: git diff --exit-code
       - run: test -z "$(git status --porcelain --untracked-files=all)"
+
+  python39-plugin-compat:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+      - uses: astral-sh/setup-uv@v7
+      - run: uv run --isolated --python 3.9 --with "pytest<9" pytest tests/test_python39_plugin_compat.py -q

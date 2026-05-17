@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import urllib.request
 from collections.abc import Mapping
 from pathlib import Path
 
@@ -17,6 +18,7 @@ from learnable.materials.schemas import (
     validate_material_record,
     validate_session_record,
 )
+from learnable.server import run_server, select_backend
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -38,6 +40,10 @@ def main(argv: list[str] | None = None) -> int:
             return _status(project_root)
         if args.command == "validate":
             return _validate(project_root)
+        if args.command == "serve":
+            return _serve(project_root, args)
+        if args.command == "stop":
+            return _stop(project_root, args)
     except Exception as exc:
         _print_error(str(exc))
         return 1
@@ -66,6 +72,16 @@ def _build_parser() -> argparse.ArgumentParser:
 
     subparsers.add_parser("status")
     subparsers.add_parser("validate")
+
+    serve = subparsers.add_parser("serve")
+    serve.add_argument("--host", default="127.0.0.1")
+    serve.add_argument("--port", default=8765, type=int)
+    serve.add_argument("--backend", choices=("auto", "stdlib", "asgi"), default="stdlib")
+
+    stop = subparsers.add_parser("stop")
+    stop.add_argument("--host", default="127.0.0.1")
+    stop.add_argument("--port", default=8765, type=int)
+    stop.add_argument("--token-file", required=True)
     return parser
 
 
@@ -163,6 +179,44 @@ def _validate(project_root: Path) -> int:
 
     print("valid")
     return 0
+
+
+def _serve(project_root: Path, args: argparse.Namespace) -> int:
+    selection = select_backend(args.backend)
+    print(f"requested_backend={selection.requested}")
+    print(f"selected_backend={selection.selected}")
+    preflight = selection.preflight.get("asgi")
+    if isinstance(preflight, Mapping) and preflight.get("reason"):
+        print(f"backend_preflight={preflight['reason']}")
+    run_server(
+        project_root=project_root,
+        host=args.host,
+        port=args.port,
+        requested_backend=selection.requested,
+        selected_backend=selection.selected,
+        backend_preflight=selection.preflight,
+    )
+    return 0
+
+
+def _stop(project_root: Path, args: argparse.Namespace) -> int:
+    token_path = Path(args.token_file)
+    if not token_path.is_absolute():
+        token_path = project_root / token_path
+    token = token_path.read_text(encoding="utf-8").strip()
+    request_shutdown(f"http://{args.host}:{args.port}/api/server/shutdown", token)
+    print("shutdown requested")
+    return 0
+
+
+def request_shutdown(url: str, token: str) -> None:
+    request = urllib.request.Request(
+        url,
+        headers={"Authorization": f"Bearer {token}"},
+        method="POST",
+    )
+    with urllib.request.urlopen(request, timeout=5) as response:
+        response.read()
 
 
 def _validate_session(root: Path, session_id: str) -> None:
