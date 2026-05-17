@@ -240,9 +240,15 @@ def test_shared_skills_agents_block_is_compact_routing_layer() -> None:
     assert "invoke the matching shared-skills skill and follow its `SKILL.md`" in text
     assert "requirements, research, specs, plans, tests, implementation evidence, or completion claims" in text
     assert "spec-plan-coverage" in text
+    assert "research-plan" in text
+    assert "source-ledger" in text
+    assert "claim-evidence-map" in text
     assert "scenario-test-designer" in text
     assert "test-plan-contract" in text
     assert "tdd-test-writing" in text
+    assert "implementation-discipline" in text
+    assert "debugging-discipline" in text
+    assert "comment-writing" in text
     assert "implementation-evidence" in text
     assert "verification-gate" in text
     assert "installed shared-skills `SKILL.md` and `references/*`" in text

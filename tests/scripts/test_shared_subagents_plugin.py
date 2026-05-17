@@ -371,14 +371,18 @@ def test_shared_subagents_agents_block_defines_subagent_use_boundaries() -> None
 
     assert "<!-- SHARED-SUBAGENTS-START -->" in block
     assert "<!-- SHARED-SUBAGENTS-END -->" in block
+    assert "routing shim" in block
+    assert "references/superpowers-routing.md" in block
     assert "Spawn subagents only when the user explicitly asks" in block
+    for agent_name in EXPECTED_AGENTS:
+        assert f"`{agent_name}`" in block
     assert "Use `spec-coverage-reviewer`" in block
     assert "`completion-claim-reviewer`" in block
     assert "Use subagents for broad, parallelizable work" in block
     assert "Keep simple or single-file work in the main session" in block
     assert "reviewer/code-reviewer/security-auditor gates separate" in block
     assert block.count("\n- ") <= 6
-    assert len(block.encode("utf-8")) <= 1000
+    assert len(block.encode("utf-8")) <= 1500
     for term in detailed_terms:
         assert term not in block
 

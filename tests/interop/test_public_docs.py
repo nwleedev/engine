@@ -92,6 +92,12 @@ def test_agents_policy_blocks_are_split_and_compact() -> None:
         "requirements, research, specs, plans, tests, implementation evidence, or completion claims"
         in skills_text
     )
+    assert "research-plan" in skills_text
+    assert "source-ledger" in skills_text
+    assert "claim-evidence-map" in skills_text
+    assert "implementation-discipline" in skills_text
+    assert "debugging-discipline" in skills_text
+    assert "comment-writing" in skills_text
     assert "implementation-evidence" in skills_text
     assert "verification-gate" in skills_text
     assert "installed shared-skills `SKILL.md` and `references/*`" in skills_text
@@ -100,10 +106,30 @@ def test_agents_policy_blocks_are_split_and_compact() -> None:
     assert len(skills_text.encode("utf-8")) <= 1200
     assert "Fixture Governance Contract" not in skills_text
     assert "shared-skills workflow artifacts" not in subagents_text
+    assert "routing shim" in subagents_text
+    assert "references/superpowers-routing.md" in subagents_text
     assert "Spawn subagents only when the user explicitly asks" in subagents_text
+    for agent_name in (
+        "context-manager",
+        "code-mapper",
+        "docs-researcher",
+        "source-researcher",
+        "requirements-reviewer",
+        "plan-reviewer",
+        "spec-coverage-reviewer",
+        "citation-verifier",
+        "test-adequacy-reviewer",
+        "closure-reviewer",
+        "completion-claim-reviewer",
+        "risk-reviewer",
+        "reviewer",
+        "code-reviewer",
+        "security-auditor",
+    ):
+        assert f"`{agent_name}`" in subagents_text
     assert "reviewer/code-reviewer/security-auditor" in subagents_text
     assert "main-session fallback prompts" in subagents_text
     assert "agents.max_depth = 1" in subagents_text
     assert subagents_text.count("\n- ") <= 6
-    assert len(subagents_text.encode("utf-8")) <= 1000
+    assert len(subagents_text.encode("utf-8")) <= 1500
     assert "Fixture Governance Contract" not in subagents_text
