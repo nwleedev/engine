@@ -101,7 +101,7 @@ def test_plugin_manifest_is_agent_only() -> None:
     )
 
     assert manifest["name"] == "shared-subagents"
-    assert manifest["version"] == "0.2.7"
+    assert manifest["version"] == "0.2.8"
     assert "skills" not in manifest
     assert not (PLUGIN_ROOT / "skills" / "scaffold" / "SKILL.md").exists()
     assert not (PLUGIN_ROOT / "skills" / "scaffold" / "scaffold.py").exists()
