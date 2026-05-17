@@ -5,6 +5,7 @@ import pytest
 
 
 PLUGIN = Path(__file__).resolve().parents[2] / "plugins" / "codex" / "session-memory"
+ROOT = Path(__file__).resolve().parents[2]
 SCRIPTS = PLUGIN / "scripts"
 
 
@@ -54,6 +55,15 @@ def test_default_required_block_is_english_and_ko_block_is_opt_in():
     assert rules.required_block("en") == rules.REQUIRED_BLOCK_EN
     assert rules.required_block("ko") == rules.REQUIRED_BLOCK_KO
     assert rules.required_block(None) == rules.REQUIRED_BLOCK_EN
+
+
+def test_public_session_memory_agents_block_matches_install_guidance():
+    rules = load_agents_rules()
+    block = (ROOT / "docs" / "session-memory" / "AGENTS.block.md").read_text(
+        encoding="utf-8"
+    )
+
+    assert block.strip() == rules.REQUIRED_BLOCK_EN.strip()
 
 
 def test_detects_partial_rules(tmp_path):

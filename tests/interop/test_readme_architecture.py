@@ -24,6 +24,7 @@ def test_readme_documents_generated_plugin_architecture() -> None:
         "deep-research-prompt-export",
         "requirements-packet",
         "test-adequacy-reviewer",
+        "docs/session-memory/AGENTS.block.md",
         "docs/shared-skills/AGENTS.block.md",
         "docs/shared-subagents/AGENTS.block.md",
     ):
@@ -47,6 +48,9 @@ def test_readme_separates_current_state_from_migration_goal() -> None:
         "`deep-research-prompt-export`",
         "`requirements-packet`",
         "`test-adequacy-reviewer`",
+        "docs/session-memory/AGENTS.block.md",
+        "docs/shared-skills/AGENTS.block.md",
+        "docs/shared-subagents/AGENTS.block.md",
     ):
         assert expected in compact_readme
 
@@ -58,6 +62,9 @@ def test_readme_separates_current_state_from_migration_goal() -> None:
         "`deep-research-prompt-export`",
         "`requirements-packet`",
         "`test-adequacy-reviewer`",
+        "docs/session-memory/AGENTS.block.md",
+        "docs/shared-skills/AGENTS.block.md",
+        "docs/shared-subagents/AGENTS.block.md",
     ):
         assert expected in compact_korean_readme
 

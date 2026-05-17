@@ -44,6 +44,14 @@ verification gate, research ledger, scenario 기반 downstream test plan까지
 gate로 작업을 라우팅하므로, 이 플러그인으로 테스트를 작성할 때 fixture와
 mock은 관찰 가능한 사용자 시나리오에 근거해 정당화되어야 합니다.
 
+Codex 프로젝트 수준 설정에는 `docs/session-memory/AGENTS.block.md`를
+`AGENTS.md`에 복사할 수 있는 session 정책 블록으로 사용합니다. 공유
+workflow 설정에는 `docs/shared-skills/AGENTS.block.md`,
+`docs/shared-subagents/AGENTS.block.md`를 `AGENTS.md` 또는 `CLAUDE.md`에
+복사할 수 있는 정책 블록으로 사용합니다. 이 분리는 `session-memory`의
+checkpoint/resume 정책, `shared-skills` workflow artifact trigger,
+`shared-subagents` 위임 리뷰 정책이 서로 섞이지 않도록 합니다.
+
 ## `plugin-sources/`를 사용하는 이유
 
 이 저장소는 최상위 `src/` 대신 `plugin-sources/`를 사용합니다. 표준 입력이

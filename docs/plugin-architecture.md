@@ -34,12 +34,13 @@ requirement fidelity, plan fidelity, citation checks, test adequacy,
 completion closure, and residual risk to separate roles such as
 `test-adequacy-reviewer`.
 
-Use `docs/shared-skills/AGENTS.block.md` and
-`docs/shared-subagents/AGENTS.block.md` as the repository-owned copy-paste
-policy blocks for project `AGENTS.md` or `CLAUDE.md` setup. The split keeps
-shared-skills workflow artifact triggers separate from shared-subagents
-delegated review policy. `docs/shared-workflow/AGENTS.block.md` remains only as
-a migration pointer.
+Use `docs/session-memory/AGENTS.block.md` as the repository-owned Codex
+session-memory copy-paste policy block for project `AGENTS.md` setup. Use
+`docs/shared-skills/AGENTS.block.md` and
+`docs/shared-subagents/AGENTS.block.md` as shared workflow policy blocks for
+project `AGENTS.md` or `CLAUDE.md` setup. The split keeps session-memory
+checkpoint/resume policy, shared-skills workflow artifact triggers, and
+shared-subagents delegated review policy in separate blocks.
 
 ## Source And Generated Boundary
 

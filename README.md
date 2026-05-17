@@ -44,10 +44,13 @@ test plans. `shared-subagents` routes review work to focused gates such as
 `test-adequacy-reviewer`, so tests written through the plugins must justify
 fixtures and mocks against observable user scenarios.
 
-For project-level setup, use `docs/shared-skills/AGENTS.block.md` and
-`docs/shared-subagents/AGENTS.block.md` as the copy-paste policy blocks for
-`AGENTS.md` or `CLAUDE.md`. The split keeps `shared-skills` workflow artifact
-triggers separate from `shared-subagents` delegated review policy.
+For project-level Codex setup, use `docs/session-memory/AGENTS.block.md` as the
+copy-paste session policy block for `AGENTS.md`. For shared workflow setup, use
+`docs/shared-skills/AGENTS.block.md` and
+`docs/shared-subagents/AGENTS.block.md` as copy-paste policy blocks for
+`AGENTS.md` or `CLAUDE.md`. The split keeps `session-memory` checkpoint/resume
+policy, `shared-skills` workflow artifact triggers, and `shared-subagents`
+delegated review policy separate.
 
 ## Why `plugin-sources/`
 

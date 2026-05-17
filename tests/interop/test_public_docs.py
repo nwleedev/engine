@@ -26,6 +26,7 @@ def test_plugin_architecture_doc_describes_public_repo_layout() -> None:
         "deep-research-prompt-export",
         "requirements-packet",
         "test-adequacy-reviewer",
+        "docs/session-memory/AGENTS.block.md",
         "docs/shared-skills/AGENTS.block.md",
         "docs/shared-subagents/AGENTS.block.md",
     ):
@@ -61,17 +62,28 @@ def test_migration_guide_contains_legacy_mapping() -> None:
     assert "spec-reviewer -> requirements-reviewer + plan-reviewer" in text
 
 
-def test_shared_workflow_agents_blocks_are_split_and_compact() -> None:
+def test_agents_policy_blocks_are_split_and_compact() -> None:
+    session_memory = ROOT / "docs" / "session-memory" / "AGENTS.block.md"
     shared_skills = ROOT / "docs" / "shared-skills" / "AGENTS.block.md"
     shared_subagents = ROOT / "docs" / "shared-subagents" / "AGENTS.block.md"
     legacy = ROOT / "docs" / "shared-workflow" / "AGENTS.block.md"
 
+    session_text = session_memory.read_text(encoding="utf-8")
     skills_text = shared_skills.read_text(encoding="utf-8")
     subagents_text = shared_subagents.read_text(encoding="utf-8")
-    legacy_text = legacy.read_text(encoding="utf-8")
 
+    assert not legacy.exists()
+    assert "## Codex Session Memory" in session_text
+    assert "$session-memory:checkpoint" in session_text
+    assert "$session-memory:resume" in session_text
+    assert "$session-memory:status" in session_text
+    assert "CODEX_SESSION_ID" in session_text
+    assert "CODEX_THREAD_ID" in session_text
+    assert "not as the session-memory artifact destination" in session_text
     assert "<!-- SHARED-SKILLS-START -->" in skills_text
     assert "<!-- SHARED-SUBAGENTS-START -->" in subagents_text
+    assert "$session-memory:checkpoint" not in skills_text
+    assert "$session-memory:checkpoint" not in subagents_text
     assert "Spawn subagents" not in skills_text
     assert "<!-- SHARED-SUBAGENTS-START -->" not in skills_text
     assert (
@@ -85,6 +97,3 @@ def test_shared_workflow_agents_blocks_are_split_and_compact() -> None:
     assert "reviewer/code-reviewer/security-auditor" in subagents_text
     assert "main-session fallback prompts" in subagents_text
     assert "agents.max_depth = 1" in subagents_text
-    assert "migration pointer" in legacy_text.lower()
-    assert "docs/shared-skills/AGENTS.block.md" in legacy_text
-    assert "docs/shared-subagents/AGENTS.block.md" in legacy_text
