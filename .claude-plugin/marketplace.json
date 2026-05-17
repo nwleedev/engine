@@ -18,12 +18,12 @@
     },
     {
       "name": "shared-subagents",
-      "description": "Reusable Codex subagent templates for mapping, reviewing, security auditing, and spec checks",
+      "description": "Reusable Codex and Claude Code subagent templates for workflow routing, requirement review, test adequacy, closure, risk, code review, and security audit",
       "source": "./plugins/claude/shared-subagents"
     },
     {
       "name": "shared-skills",
-      "description": "Reusable main-session quality gates for comments, TDD, planning, reviews, verification, and disciplined implementation",
+      "description": "Reusable Codex and Claude Code workflow skills for requirements traceability, research evidence, scenario-based tests, implementation evidence, and verification gates",
       "source": "./plugins/claude/shared-skills"
     },
     {

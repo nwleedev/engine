@@ -16,16 +16,18 @@ Create a `Verification Gate` before reporting completion, readiness, correctness
 1. State the exact completion claim being considered.
 2. List the required evidence IDs from `implementation-evidence`, `source-ledger`, or `claim-evidence-map`.
 3. Compare every requirement, task, and acceptance criterion against the available evidence.
-4. List failed items with the command, artifact, or review step that failed.
-5. List not-run items separately from failed items.
-6. Record residual risks, unrelated known failures, and out-of-scope issues.
-7. Set final status to `done`, `done_with_concerns`, `blocked`, or `needs_context`.
+4. For development work that changes observable behavior, require Scenario Test Contract or Test Plan Contract evidence, or record why tests are not feasible.
+5. List failed items with the command, artifact, or review step that failed.
+6. List not-run items separately from failed items.
+7. Record residual risks, unrelated known failures, and out-of-scope issues.
+8. Set final status to `done`, `done_with_concerns`, `blocked`, or `needs_context`.
 
 ## Development work
 
 - Re-run or inspect the exact commands that prove the requested claim before closing.
 - Keep unrelated baseline failures separate and name them precisely.
 - Verify generated artifacts and source artifacts when both are acceptance criteria.
+- Treat missing required test plan, test execution, or test-inapplicable rationale as a failed item, not a residual risk.
 
 ## Non-development work
 

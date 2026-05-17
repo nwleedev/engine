@@ -14,6 +14,8 @@ metadata:
 
 Create a scenario test design that links acceptance criteria to user-visible happy paths, boundary scenarios, and failure scenarios before selecting test files or writing tests.
 
+Use this as a required gate for implementation work that changes observable behavior or acceptance criteria. If the work is test-inapplicable, record the reason and route the residual risk to `verification-gate`.
+
 ## Workflow
 
 1. Start from acceptance criteria in a `Requirement Packet` or `Spec Contract`.

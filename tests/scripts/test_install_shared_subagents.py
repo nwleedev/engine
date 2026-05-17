@@ -288,10 +288,15 @@ def test_agents_md_block_defines_subagent_use_boundaries() -> None:
     )
 
     assert "Spawn subagents only when the user explicitly asks" in block
+    assert "Use `shared-skills` workflow skills" in block
+    assert "behavior-changing implementation" in block
+    assert "scenario-test-designer" in block
+    assert "verification-gate" in block
     assert "Use subagents for broad, parallelizable work" in block
     assert "Keep simple or single-file work in the main session" in block
     assert "Do not delegate urgent blocking work" in block
     assert "Do not ask `reviewer` and `code-reviewer` the same question" in block
+    assert "security audit" in block
     assert "official comment/documentation format" in docs_researcher_line
     assert "comment quality" in code_reviewer_line
 
@@ -300,6 +305,8 @@ def test_reviewer_defers_test_adequacy_and_plan_fidelity() -> None:
     instructions = agent_instructions("reviewer")
 
     assert "correctness risks and behavior regressions" in instructions
+    assert "Security audit belongs to security-auditor" in instructions
+    assert "security implications across input handling" not in instructions
     assert "Test adequacy belongs to test-adequacy-reviewer" in instructions
     assert "Requirement and plan fidelity belong to requirements-reviewer and plan-reviewer" in instructions
     assert "TDD review checks:" not in instructions

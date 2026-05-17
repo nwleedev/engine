@@ -1,6 +1,6 @@
 ---
 name: scaffold
-description: Use when installing or verifying project-local shared Codex subagent templates, printing the AGENTS.md guidance block, or setting up shared subagents across projects.
+description: Use when installing or verifying project-local shared Codex subagent templates, printing the AGENTS.md guidance block, or setting up shared skill/subagent workflow guidance across projects.
 ---
 <!-- GENERATED FILE - DO NOT EDIT -->
 <!-- source: plugin-sources/shared-subagents/skills/scaffold/SKILL.md -->
@@ -8,7 +8,7 @@ description: Use when installing or verifying project-local shared Codex subagen
 
 # Shared Subagents Scaffold
 
-Install and verify shared Codex subagent templates in a project's `.codex/agents` directory without editing AGENTS.md automatically.
+Install and verify shared Codex subagent templates in a project's `.codex/agents` directory and print AGENTS.md guidance for shared-skills and shared-subagents without editing AGENTS.md automatically.
 
 ## Run
 
@@ -36,7 +36,7 @@ find temps/2026-05-05/shared-subagents/project-root/.codex/agents -maxdepth 1 -t
 
 - Copies thirteen bundled custom agent TOML files into a project-local `.codex/agents/` directory.
 - Refuses to overwrite existing files unless `--backup` or `--force` is used.
-- Prints an AGENTS.md guidance block for copy-paste.
+- Prints an AGENTS.md guidance block for copy-paste, including shared-skills workflow routing and shared-subagents delegation routing.
 - Does not modify AGENTS.md automatically.
 - Does not modify the Superpowers plugin cache.
 - Does not install, remove, or edit MCP server configuration.
@@ -54,6 +54,7 @@ After running commands, report:
 
 - dry-run target paths
 - whether the AGENTS.md block printed successfully
+- whether the AGENTS.md block includes shared-skills workflow routing and shared-subagents delegation routing
 - whether thirteen TOML files exist in the target `.codex/agents/` directory
 - whether manual Codex restart and custom agent invocation verification remain
 - whether MCP startup tuning remains a separate user config task

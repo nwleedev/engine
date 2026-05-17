@@ -62,7 +62,8 @@ def test_manifest_exposes_shared_skills_plugin() -> None:
     assert manifest["version"] == "0.2.6"
     assert manifest["license"] == "MIT"
     assert manifest["skills"] == "./skills/"
-    assert "main-session quality gates" in manifest["description"]
+    assert "requirements traceability" in manifest["description"]
+    assert "scenario-based tests" in manifest["description"]
 
 
 def test_all_lean_core_skills_exist_with_frontmatter() -> None:
@@ -114,9 +115,14 @@ def test_workflow_artifact_reference_defines_required_ids() -> None:
         "spec_id",
         "Plan Contract",
         "task_id",
+        "steps",
+        "done_criteria",
+        "risk_level",
         "Traceability Matrix",
-        "Verification Evidence Packet",
-        "Closure Report",
+        "changed_files",
+        "test_or_check_ids",
+        "Implementation Evidence",
+        "Verification Gate",
     )
     for term in required_terms:
         assert term in text
@@ -166,6 +172,8 @@ def test_tdd_test_writing_skill_defines_tdd_workflow() -> None:
     assert "Output" in text
     assert "Do not" in text
     assert "TDD" in text
+    assert "behavior or acceptance criteria" in text
+    assert "not optional follow-up" in text
     assert "failing test" in text
     assert "detected stack" in text
     assert "flaky" in text

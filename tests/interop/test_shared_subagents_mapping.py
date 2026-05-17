@@ -120,6 +120,9 @@ def test_claude_generated_bundle_does_not_advertise_codex_install_surface() -> N
     assert "install_shared_subagents.py" not in readme
     assert "print_agents_md_block.py" not in readme
     assert "skills/scaffold/scaffold.py" not in readme
+    assert "plugin-bundled agents" in readme
+    assert ".claude/agents/" in readme
+    assert "Use the test-adequacy-reviewer subagent" in readme
 
 
 def test_claude_generated_bundle_contains_expected_agents_only() -> None:

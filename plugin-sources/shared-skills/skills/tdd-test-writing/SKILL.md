@@ -15,6 +15,7 @@ Do not force a new test framework. Prefer the project's existing test framework,
 
 ## When to use
 
+- Before completing implementation work that changes behavior or acceptance criteria unless the user explicitly scoped the task as review-only, docs-only, or test-inapplicable and `verification-gate` records that reason.
 - Before implementing a new feature when a failing test can express the expected behavior.
 - Before fixing a bug when a reproduction test can prove the current failure.
 - When adding regression coverage to code with weak or missing tests.
@@ -104,6 +105,8 @@ Use this as a quick selector, not as a required classification ceremony. Start w
 
 ## Development work
 
+- Treat needed tests as part of the implementation, not optional follow-up, when a Requirement Packet, Spec Contract, or Plan Contract changes observable behavior.
+- If no automated test is feasible, record the scenario, reason, manual/inspection evidence, and residual risk in `test-plan-contract` and `verification-gate`.
 - Read nearby production and test code before writing tests so the new test follows existing framework, naming, helpers, and command conventions.
 - Add the test in the nearest existing layer that can fail for the required behavior, not in a broader or narrower layer for convenience.
 - Keep the first failing test small and diagnostic; broaden coverage only after the intended failure and pass are proven.

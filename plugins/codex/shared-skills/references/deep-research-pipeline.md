@@ -13,9 +13,9 @@ Use this pipeline when a recommendation, technology choice, review conclusion, o
 
 ## Source Ledger
 
-| source_id | source_type | authority | recency | claims_supported | limitations |
-| --- | --- | --- | --- | --- | --- |
-| SRC-001 |  |  |  |  |  |
+| source_id | source_type | title | url_or_path | publisher | authority | published_or_accessed_date | recency | used_for_claim_ids | limitations |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| SRC-001 |  |  |  |  |  |  |  | CLM-001 |  |
 
 ## Claim Evidence Map
 

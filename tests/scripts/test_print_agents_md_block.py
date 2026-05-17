@@ -32,6 +32,14 @@ def test_read_block_contains_markers() -> None:
 
     assert "<!-- SHARED-SUBAGENTS-START -->" in block
     assert "<!-- SHARED-SUBAGENTS-END -->" in block
+    assert "requirements-packet" in block
+    assert "spec-contract" in block
+    assert "plan-contract" in block
+    assert "scenario-test-designer" in block
+    assert "test-plan-contract" in block
+    assert "tdd-test-writing" in block
+    assert "implementation-evidence" in block
+    assert "verification-gate" in block
     assert "context-manager" in block
     assert "source-researcher" in block
     assert "requirements-reviewer" in block

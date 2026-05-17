@@ -14,6 +14,8 @@ metadata:
 
 Create a `Test Plan Contract` that maps each scenario to the test layer, test file, test command, fixture or mock policy, and evidence ID required for completion.
 
+For implementation work that changes observable behavior, this contract is required before claiming completion. It may state that automated tests are not feasible, but it must then name the repeatable manual or inspection evidence and residual risk.
+
 ## Workflow
 
 1. Start from scenario IDs and acceptance criteria IDs produced by `scenario-test-designer`.
@@ -41,9 +43,9 @@ Create a `Test Plan Contract` that maps each scenario to the test layer, test fi
 ```markdown
 ## Test Plan Contract
 
-| scenario_id | test_layer | test_file | test_command | fixture_mock_policy | evidence_id |
-| --- | --- | --- | --- | --- | --- |
-| SCN-001 |  |  |  |  | EVID-001 |
+| scenario_id | acceptance_criteria_id | test_layer | test_file | test_command | fixture_mock_policy | evidence_id |
+| --- | --- | --- | --- | --- | --- | --- |
+| SCN-001 | AC-001 |  |  |  |  | EVID-001 |
 ```
 
 ## Do not

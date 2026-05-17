@@ -77,6 +77,15 @@ def test_marketplace_metadata_contains_all_target_plugin_families() -> None:
     }
 
 
+def test_shared_workflow_plugin_descriptions_are_runtime_neutral() -> None:
+    metadata = load_marketplace(METADATA)
+    descriptions = {plugin["id"]: plugin["description"] for plugin in metadata["plugins"]}
+
+    assert "Codex and Claude Code" in descriptions["shared-subagents"]
+    assert "Codex and Claude Code" in descriptions["shared-skills"]
+    assert "Reusable Codex subagent templates" not in descriptions["shared-subagents"]
+
+
 def test_marketplace_renames_research_prompt_plugin() -> None:
     metadata = load_marketplace(METADATA)
     plugin = next(

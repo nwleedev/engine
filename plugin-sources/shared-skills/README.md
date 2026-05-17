@@ -22,6 +22,19 @@ It does not copy skills into a user home directory, does not edit AGENTS.md, doe
 
 After installing the plugin, restart the host coding agent or tool if the new skills do not appear. Invoke skills explicitly with `$shared-skills:<skill-name>` or describe the task naturally and let the host tool match the skill description.
 
+## Artifact Map
+
+- `requirements-packet`, `spec-contract`, `plan-contract`, `implementation-evidence`, and `verification-gate` use `references/workflow-artifacts.md`.
+- `research-plan`, `source-ledger`, and `claim-evidence-map` use `references/deep-research-pipeline.md`.
+- `scenario-test-designer`, `test-plan-contract`, and `tdd-test-writing` use `references/downstream-test-contracts.md`.
+- `comment-writing`, `implementation-discipline`, and `debugging-discipline` keep execution scoped and feed evidence into the same workflow artifacts.
+
+## Downstream Test Gate
+
+When implementation work changes observable behavior, public contracts, data shape, or acceptance criteria, route the work through `scenario-test-designer`, `test-plan-contract`, and `tdd-test-writing` before completion. Tests may be marked inapplicable only when `test-plan-contract` names the reason and `verification-gate` records the residual risk.
+
+Core scenario coverage must link to an Acceptance Criteria ID or User Scenario ID, use the nearest executable project test layer, and justify each fixture, fake, stub, or mock against observable behavior. `test-adequacy-reviewer` should review downstream test-writing work before closure when subagents are available.
+
 ## Included skills
 
 - `requirements-packet`: convert user requests into confirmed requirements, inferred assumptions, open questions, non-goals, and acceptance criteria.

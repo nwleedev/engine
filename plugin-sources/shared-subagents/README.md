@@ -1,13 +1,13 @@
 # Shared Subagents
 
-Shared Codex subagent templates for reusable Superpowers workflows across projects.
+Shared Codex and Claude Code subagent templates for reusable Superpowers workflows across projects.
 
 ## Agent Roles
 
 - `context-manager`, `code-mapper`, and `docs-researcher` gather project context, code structure, and official documentation evidence.
 - `source-researcher`, `requirements-reviewer`, `plan-reviewer`, and `citation-verifier` keep Source Ledger, Requirement Packet, Plan Contract, Traceability Matrix, and Claim Evidence Map work separate.
-- `test-adequacy-reviewer`, `closure-reviewer`, and `risk-reviewer` review downstream test quality, Closure Report evidence, Risk Register items, residual risk, rollback, fallback, and unverifiable items.
-- `reviewer`, `code-reviewer`, and `security-auditor` remain separate gates for correctness/security/behavior regression, maintainability/design/readability, and security-audit review.
+- `test-adequacy-reviewer`, `closure-reviewer`, and `risk-reviewer` review downstream test quality, verification-gate evidence, risk register items, residual risk, rollback, fallback, and unverifiable items.
+- `reviewer`, `code-reviewer`, and `security-auditor` remain separate gates for correctness/behavior regression/contract review, maintainability/design/readability, and security-audit review.
 
 ## Cross-Check Summary
 
@@ -20,17 +20,30 @@ Shared Codex subagent templates for reusable Superpowers workflows across projec
 
 ## Installation
 
+### Using In Codex
+
 ```bash
 rtk python3 /path/to/shared-subagents/skills/scaffold/scaffold.py --dry-run
 rtk python3 /path/to/shared-subagents/skills/scaffold/scaffold.py --install --backup --project-root .
 ```
 
+The scaffold installs Codex TOML agents into project-local `.codex/agents/` and prints an AGENTS.md block for durable routing guidance.
+
+The printed AGENTS.md block is not only an agent list. It also sets shared-skills workflow routing: requirements go through `requirements-packet`, implementation plans through `spec-contract` and `plan-contract`, behavior-changing work through the scenario/test/TDD skills, changed work through `implementation-evidence`, and completion claims through `verification-gate`.
+
+### Using In Claude Code
+
+This bundle ships generated Markdown subagents under `agents/`. Claude Code plugin-bundled agents are Markdown files with YAML frontmatter and can be discovered from the plugin `agents/` directory at startup. If your Claude Code environment discovers plugin-bundled agents directly, invoke them by name. If your environment requires project-local agents, copy the needed files into `.claude/agents/` and restart Claude Code.
+
+Example: `Use the test-adequacy-reviewer subagent to review tests for AC-001 / SCN-001.`
+
 ## Principles
 
-- Install shared agents into each project's `.codex/agents/` directory.
+- Install shared agents into each Codex project's `.codex/agents/` directory.
 - Keep stack-specific agents in each project's `.codex/agents/` directory.
 - Do not modify the Superpowers plugin cache during installation.
 - Print AGENTS.md guidance for copy-paste instead of editing repository files.
+- Keep the printed AGENTS.md block as the durable project policy for when shared-skills and shared-subagents must be used.
 - Keep MCP server configuration outside this plugin.
 
 ## MCP inheritance

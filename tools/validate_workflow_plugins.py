@@ -20,8 +20,50 @@ REQUIRED_SHARED_SKILL_REFERENCES = (
 )
 
 REQUIRED_SHARED_SUBAGENTS = (
+    "requirements-reviewer",
+    "plan-reviewer",
+    "citation-verifier",
     "test-adequacy-reviewer",
     "closure-reviewer",
+    "risk-reviewer",
+)
+
+REQUIRED_WORKFLOW_ARTIFACT_TERMS = (
+    "Requirement Packet",
+    "requirement_id",
+    "Spec Contract",
+    "spec_id",
+    "Plan Contract",
+    "steps",
+    "done_criteria",
+    "fallback",
+    "risk_level",
+    "Traceability Matrix",
+    "changed_files",
+    "test_or_check_ids",
+    "review_finding_ids",
+    "closure_status",
+    "Implementation Evidence",
+    "Verification Gate",
+)
+
+REQUIRED_DEEP_RESEARCH_TERMS = (
+    "Source Ledger",
+    "title",
+    "url_or_path",
+    "publisher",
+    "published_or_accessed_date",
+    "used_for_claim_ids",
+    "Claim Evidence Map",
+    "Counterevidence Review",
+)
+
+REQUIRED_DOWNSTREAM_TEST_TERMS = (
+    "Scenario Test Contract",
+    "Acceptance Criteria ID",
+    "User Scenario ID",
+    "Fixture/Mock Justification",
+    "Do not assert only mock calls",
 )
 
 SHARED_SKILL_ROOTS = (
@@ -41,6 +83,7 @@ def validate_workflow_plugins(root: Path) -> list[str]:
     errors: list[str] = []
     errors.extend(_validate_no_legacy_artifacts(root))
     errors.extend(_validate_required_shared_skill_references(root))
+    errors.extend(_validate_shared_skill_schema_terms(root))
     errors.extend(_validate_required_shared_subagents(root))
     return errors
 
@@ -81,6 +124,32 @@ def _validate_required_shared_skill_references(root: Path) -> list[str]:
                     "missing required shared-skills reference "
                     f"for {harness}: {path.relative_to(root).as_posix()}"
                 )
+
+    return errors
+
+
+def _validate_shared_skill_schema_terms(root: Path) -> list[str]:
+    errors: list[str] = []
+    required_terms_by_reference = {
+        "workflow-artifacts.md": REQUIRED_WORKFLOW_ARTIFACT_TERMS,
+        "deep-research-pipeline.md": REQUIRED_DEEP_RESEARCH_TERMS,
+        "downstream-test-contracts.md": REQUIRED_DOWNSTREAM_TEST_TERMS,
+    }
+
+    for harness, relative_root in SHARED_SKILL_ROOTS:
+        references_root = root / relative_root / "references"
+        for reference, required_terms in required_terms_by_reference.items():
+            path = references_root / reference
+            if not path.is_file():
+                continue
+            text = path.read_text(encoding="utf-8")
+            for term in required_terms:
+                if term not in text:
+                    errors.append(
+                        "missing shared-skills schema term "
+                        f"for {harness}: {path.relative_to(root).as_posix()} "
+                        f"must include {term}"
+                    )
 
     return errors
 
