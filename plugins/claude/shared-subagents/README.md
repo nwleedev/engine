@@ -15,7 +15,6 @@ Shared Claude Code agent templates rendered from the canonical shared-subagents 
 ## Claude Bundle Notes
 
 - This bundle contains generated Claude agent Markdown files under `agents/`.
-- `AGENTS.block.md` is the committed copy-paste policy block for `AGENTS.md` or `CLAUDE.md`.
 - Use the plugin through Claude Code's normal plugin loading and agent discovery flow.
 - If your Claude Code environment discovers plugin-bundled agents directly, invoke them by name. If it requires project-local agents, copy the needed Markdown files into `.claude/agents/` and restart Claude Code.
 - Example: `Use the test-adequacy-reviewer subagent to review tests for AC-001 / SCN-001.`

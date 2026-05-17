@@ -1,7 +1,4 @@
-<!-- GENERATED FILE - DO NOT EDIT -->
-<!-- source: plugin-sources/shared-subagents/AGENTS.block.md -->
-
-<!-- SHARED-SUBAGENTS-START -->
+<!-- SHARED-WORKFLOW-START -->
 ## Shared Skills And Subagents
 
 - Treat this block as durable project policy; do not invoke a scaffold skill just to recover these instructions.
@@ -34,4 +31,4 @@
 - Keep `agents.max_depth = 1` unless explicitly approved.
 - Global MCP servers may be inherited by spawned subagents and can increase startup time.
 - Keep MCP server configuration in project `.codex/config.toml`, project `.claude/settings.json`, or user-level runtime config; shared-subagents does not manage MCP setup.
-<!-- SHARED-SUBAGENTS-END -->
+<!-- SHARED-WORKFLOW-END -->

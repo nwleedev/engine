@@ -26,8 +26,6 @@ This bundle ships generated Codex TOML agents under `agents/`.
 
 Use the bundled agents through the runtime plugin loader when available. If your Codex environment requires project-local agents, copy the needed TOML files into the repository root `.codex/agents/` directory and restart Codex.
 
-Use `AGENTS.block.md` as the committed copy-paste block for durable routing guidance in project `AGENTS.md` files. The block is not only an agent list. It also sets shared-skills workflow routing: requirements go through `requirements-packet`, implementation plans through `spec-contract` and `plan-contract`, behavior-changing work through the scenario/test/TDD skills, changed work through `implementation-evidence`, and completion claims through `verification-gate`.
-
 ### Using In Claude Code
 
 This bundle ships generated Markdown subagents under `agents/`. Claude Code plugin-bundled agents are Markdown files with YAML frontmatter and can be discovered from the plugin `agents/` directory at startup. If your Claude Code environment discovers plugin-bundled agents directly, invoke them by name. If your environment requires project-local agents, copy the needed files into `.claude/agents/` and restart Claude Code.
@@ -39,7 +37,6 @@ Example: `Use the test-adequacy-reviewer subagent to review tests for AC-001 / S
 - Keep shared agents bundled with the plugin whenever the runtime can discover plugin-bundled agents.
 - If local copies are required, keep them at the repository root runtime directory, not inside nested monorepo packages.
 - Keep stack-specific or organization-private agents in project-local runtime directories.
-- Keep `AGENTS.block.md` as the durable project policy source for when shared-skills and shared-subagents must be used.
 - Do not add scaffold skills, copy-install commands, or AGENTS.md editing behavior to this plugin.
 - Keep MCP server configuration outside this plugin.
 
@@ -59,7 +56,6 @@ Use `references/superpowers-routing.md` for Superpowers stage routing and custom
 
 Expected generated bundle results:
 
-- `AGENTS.block.md` exists at the plugin root and contains `SHARED-SUBAGENTS` markers.
 - The Codex bundle contains thirteen TOML files under `agents/`.
 - The Claude Code bundle contains thirteen Markdown files under `agents/`.
 - Each TOML file contains `developer_instructions`.

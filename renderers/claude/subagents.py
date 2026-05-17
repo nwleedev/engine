@@ -39,8 +39,6 @@ def _render_claude_readme(source_root: Path) -> str:
         + "## Claude Bundle Notes\n\n"
         + "- This bundle contains generated Claude agent Markdown files under "
         + "`agents/`.\n"
-        + "- `AGENTS.block.md` is the committed copy-paste policy block for "
-        + "`AGENTS.md` or `CLAUDE.md`.\n"
         + "- Use the plugin through Claude Code's normal plugin loading and agent "
         + "discovery flow.\n"
         + "- If your Claude Code environment discovers plugin-bundled agents directly, "

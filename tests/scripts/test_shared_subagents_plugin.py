@@ -8,6 +8,8 @@ from pathlib import Path
 PLUGIN_ROOT = (
     Path(__file__).resolve().parents[2] / "plugins" / "codex" / "shared-subagents"
 )
+ROOT = Path(__file__).resolve().parents[2]
+AGENTS_BLOCK = ROOT / "docs" / "shared-workflow" / "AGENTS.block.md"
 
 EXPECTED_AGENTS = (
     "context-manager",
@@ -31,7 +33,7 @@ LEGACY_AGENTS = (
 )
 
 ACTIVE_ROUTE_DOCS = (
-    PLUGIN_ROOT / "AGENTS.block.md",
+    AGENTS_BLOCK,
     PLUGIN_ROOT / "references" / "superpowers-routing.md",
     PLUGIN_ROOT / "README.md",
 )
@@ -107,11 +109,11 @@ def test_plugin_manifest_is_agent_only() -> None:
     assert not (PLUGIN_ROOT / "scripts" / "print_agents_md_block.py").exists()
 
 
-def test_readme_documents_agents_block_without_scaffold_flow() -> None:
+def test_readme_documents_agent_bundle_without_scaffold_flow() -> None:
     readme = (PLUGIN_ROOT / "README.md").read_text(encoding="utf-8")
 
-    assert "AGENTS.block.md" in readme
     assert "plugin-bundled agents" in readme
+    assert "AGENTS.block.md" not in readme
     assert "skills/scaffold/scaffold.py" not in readme
     assert "install_shared_subagents.py" not in readme
     assert "Use `$shared-subagents:scaffold`" not in readme
@@ -183,16 +185,16 @@ def test_readme_documents_mcp_inheritance_without_owning_mcp_config() -> None:
     assert "required = false" in readme
 
 
-def test_agents_block_warns_about_global_mcp_startup_cost() -> None:
-    block = (PLUGIN_ROOT / "AGENTS.block.md").read_text(encoding="utf-8")
+def test_shared_workflow_agents_block_warns_about_global_mcp_startup_cost() -> None:
+    block = AGENTS_BLOCK.read_text(encoding="utf-8")
 
     assert "Global MCP servers may be inherited by spawned subagents" in block
     assert "plugin-bundled agents" in block
     assert "project `.codex/config.toml`" in block
 
 
-def test_agents_block_defines_subagent_use_boundaries() -> None:
-    block = (PLUGIN_ROOT / "AGENTS.block.md").read_text(encoding="utf-8")
+def test_shared_workflow_agents_block_defines_subagent_use_boundaries() -> None:
+    block = AGENTS_BLOCK.read_text(encoding="utf-8")
     docs_researcher_line = next(
         line for line in block.splitlines() if "`docs-researcher`" in line
     )
@@ -200,8 +202,8 @@ def test_agents_block_defines_subagent_use_boundaries() -> None:
         line for line in block.splitlines() if "`code-reviewer`" in line
     )
 
-    assert "<!-- SHARED-SUBAGENTS-START -->" in block
-    assert "<!-- SHARED-SUBAGENTS-END -->" in block
+    assert "<!-- SHARED-WORKFLOW-START -->" in block
+    assert "<!-- SHARED-WORKFLOW-END -->" in block
     assert "scaffold skill" in block
     assert "Spawn subagents only when the user explicitly asks" in block
     assert "Use `shared-skills` workflow skills" in block
@@ -241,8 +243,8 @@ def test_reviewer_limits_documentation_review_to_user_impacting_boundaries() -> 
     assert "Do not dilute findings with style-only commentary" in instructions
 
 
-def test_agents_block_routes_test_adequacy_to_dedicated_reviewer() -> None:
-    block = (PLUGIN_ROOT / "AGENTS.block.md").read_text(encoding="utf-8")
+def test_shared_workflow_agents_block_routes_test_adequacy_to_dedicated_reviewer() -> None:
+    block = AGENTS_BLOCK.read_text(encoding="utf-8")
 
     test_reviewer_lines = [
         line for line in block.splitlines() if "`test-adequacy-reviewer`" in line

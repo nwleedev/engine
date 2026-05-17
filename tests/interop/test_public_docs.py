@@ -26,6 +26,7 @@ def test_plugin_architecture_doc_describes_public_repo_layout() -> None:
         "deep-research-prompt-export",
         "requirements-packet",
         "test-adequacy-reviewer",
+        "docs/shared-workflow/AGENTS.block.md",
     ):
         assert expected in doc
 

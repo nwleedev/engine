@@ -19,6 +19,7 @@ def test_readme_documents_generated_plugin_architecture() -> None:
         "deep-research-prompt-export",
         "requirements-packet",
         "test-adequacy-reviewer",
+        "docs/shared-workflow/AGENTS.block.md",
     ):
         assert expected in readme
 
