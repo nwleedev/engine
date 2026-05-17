@@ -6,6 +6,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 LEARNABLE = ROOT / "plugin-sources" / "learnable"
+ADAPTER_README = LEARNABLE / "adapters" / "codex" / "README.md"
 SKILLS = LEARNABLE / "adapters" / "codex" / "skills"
 REFERENCES = LEARNABLE / "references"
 README = LEARNABLE / "README.md"
@@ -74,10 +75,11 @@ def test_learnable_skills_have_required_frontmatter_and_valid_links() -> None:
 
 def test_learnable_reference_files_exist() -> None:
     assert REQUIRED_REFERENCES <= {path.name for path in REFERENCES.glob("*.md")}
+    assert ADAPTER_README.is_file()
 
 
 def test_learnable_readmes_use_valid_relative_links() -> None:
-    for path in [README]:
+    for path in [README, ADAPTER_README]:
         for link in _markdown_links(_text(path)):
             if link.startswith(("http://", "https://", "#")):
                 continue
