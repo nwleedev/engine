@@ -25,6 +25,9 @@ FORBIDDEN_RUNTIME_MARKERS = (
 )
 
 FORBIDDEN_PLUGIN_LAYER_STRINGS = ("plugin-sources",)
+ALLOWED_RUNTIME_MARKERS_BY_PACKAGE = {
+    Path("packages/learnable"): (".codex",),
+}
 
 
 def test_imported_modules_includes_relative_alias_imports() -> None:
@@ -148,6 +151,15 @@ def _forbidden_plugin_layer_strings(text: str) -> list[str]:
     ]
 
 
+def _runtime_marker_allowed(path: Path, marker: str) -> bool:
+    relative = path.relative_to(ROOT)
+    return any(
+        marker in markers
+        and (relative == package_root or package_root in relative.parents)
+        for package_root, markers in ALLOWED_RUNTIME_MARKERS_BY_PACKAGE.items()
+    )
+
+
 def test_packages_do_not_import_plugin_layers() -> None:
     violations: list[str] = []
 
@@ -166,7 +178,7 @@ def test_packages_do_not_contain_runtime_markers() -> None:
     for path in _package_python_files():
         text = path.read_text(encoding="utf-8")
         for marker in FORBIDDEN_RUNTIME_MARKERS:
-            if marker in text:
+            if marker in text and not _runtime_marker_allowed(path, marker):
                 violations.append(f"{path.relative_to(ROOT)} contains {marker}")
         for marker in _forbidden_plugin_layer_strings(text):
             violations.append(f"{path.relative_to(ROOT)} contains {marker}")

@@ -78,6 +78,7 @@ def test_render_codex_marketplace_includes_all_codex_plugins() -> None:
         "shared-skills",
         "harness-foundry",
         "deep-research-prompt-export",
+        "learnable",
     ]
 
 

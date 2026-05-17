@@ -47,6 +47,12 @@ CODEX_MANIFESTS_BY_PUBLIC_NAME = {
     / "deep-research-prompt-export"
     / ".codex-plugin"
     / "plugin.json",
+    "learnable": ROOT
+    / "plugins"
+    / "codex"
+    / "learnable"
+    / ".codex-plugin"
+    / "plugin.json",
 }
 PLANNED_HARNESS_PATHS = {
     "session-memory": {
@@ -73,6 +79,9 @@ PLANNED_HARNESS_PATHS = {
         "claude": "./plugins/claude/deep-research-prompt-export",
         "codex": "./plugins/codex/deep-research-prompt-export",
     },
+    "learnable": {
+        "codex": "./plugins/codex/learnable",
+    },
 }
 EXPECTED_HARNESS_PUBLIC_NAMES = {
     "session-memory": {"claude": "session-memory", "codex": "session-memory"},
@@ -84,6 +93,7 @@ EXPECTED_HARNESS_PUBLIC_NAMES = {
         "claude": "deep-research-prompt-export",
         "codex": "deep-research-prompt-export",
     },
+    "learnable": {"codex": "learnable"},
 }
 
 

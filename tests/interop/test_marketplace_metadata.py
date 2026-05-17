@@ -74,6 +74,7 @@ def test_marketplace_metadata_contains_all_target_plugin_families() -> None:
         "shared-skills",
         "harness-foundry",
         "deep-research-prompt-export",
+        "learnable",
     }
 
 
