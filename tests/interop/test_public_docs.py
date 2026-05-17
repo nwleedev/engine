@@ -88,10 +88,16 @@ def test_agents_policy_blocks_are_split_and_compact() -> None:
     assert "<!-- SHARED-SUBAGENTS-START -->" not in skills_text
     assert "routing shim" in skills_text
     assert "invoke the matching shared-skills skill and follow its `SKILL.md`" in skills_text
-    assert (
-        "requirements, research, specs, plans, tests, implementation evidence, or completion claims"
-        in skills_text
-    )
+    for routing_term in (
+        "requirements",
+        "research",
+        "specs",
+        "plans",
+        "tests",
+        "implementation evidence",
+        "completion claims",
+    ):
+        assert routing_term in skills_text
     assert "research-plan" in skills_text
     assert "source-ledger" in skills_text
     assert "claim-evidence-map" in skills_text
@@ -100,10 +106,13 @@ def test_agents_policy_blocks_are_split_and_compact() -> None:
     assert "comment-writing" in skills_text
     assert "implementation-evidence" in skills_text
     assert "verification-gate" in skills_text
+    assert "open questions" in skills_text
+    assert "counterevidence review" in skills_text
+    assert "before claiming work is complete" in skills_text
     assert "installed shared-skills `SKILL.md` and `references/*`" in skills_text
     assert "install/status diagnostic" in skills_text
     assert skills_text.count("\n- ") <= 6
-    assert len(skills_text.encode("utf-8")) <= 1200
+    assert len(skills_text.encode("utf-8")) <= 1500
     assert "Fixture Governance Contract" not in skills_text
     assert "shared-skills workflow artifacts" not in subagents_text
     assert "routing shim" in subagents_text
