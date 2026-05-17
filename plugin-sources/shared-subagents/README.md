@@ -5,8 +5,8 @@ Shared Codex and Claude Code subagent templates for reusable Superpowers workflo
 ## Agent Roles
 
 - `context-manager`, `code-mapper`, and `docs-researcher` gather project context, code structure, and official documentation evidence.
-- `source-researcher`, `requirements-reviewer`, `plan-reviewer`, and `citation-verifier` keep Source Ledger, Requirement Packet, Plan Contract, Traceability Matrix, and Claim Evidence Map work separate.
-- `test-adequacy-reviewer`, `closure-reviewer`, and `risk-reviewer` review downstream test quality, verification-gate evidence, risk register items, residual risk, rollback, fallback, and unverifiable items.
+- `source-researcher`, `requirements-reviewer`, `plan-reviewer`, `spec-coverage-reviewer`, and `citation-verifier` keep Source Ledger, Requirement Packet, Plan Contract, Spec Ledger, Spec-to-Plan Coverage Matrix, Traceability Matrix, and Claim Evidence Map work separate.
+- `test-adequacy-reviewer`, `completion-claim-reviewer`, `closure-reviewer`, and `risk-reviewer` review downstream test quality, Fixture Governance Contract evidence, verification-gate evidence, risk register items, residual risk, rollback, fallback, and unverifiable items.
 - `reviewer`, `code-reviewer`, and `security-auditor` remain separate gates for correctness/behavior regression/contract review, maintainability/design/readability, and security-audit review.
 
 ## Cross-Check Summary
@@ -56,8 +56,8 @@ Use `references/superpowers-routing.md` for Superpowers stage routing and custom
 
 Expected generated bundle results:
 
-- The Codex bundle contains thirteen TOML files under `agents/`.
-- The Claude Code bundle contains thirteen Markdown files under `agents/`.
+- The Codex bundle contains fifteen TOML files under `agents/`.
+- The Claude Code bundle contains fifteen Markdown files under `agents/`.
 - Each TOML file contains `developer_instructions`.
 - Each TOML file contains `# shared-subagents:provided-agent` so optional project-local copies can be identified as plugin-provided templates.
 - The Codex manifest advertises `skills`, because the `install` skill provides the project-local Codex agent copy workflow.

@@ -9,12 +9,12 @@ metadata:
 
 ## Purpose
 
-Create an `Implementation Evidence` packet that links requirements and tasks to changed files, behavior changes, commands run, and remaining evidence gaps.
+Create an `Implementation Evidence` packet that links requirements, spec clauses, and tasks to changed files, behavior changes, commands run, and remaining evidence gaps.
 
 ## Workflow
 
 1. Assign stable evidence IDs using `EVID-001`, `EVID-002`, and increasing numbers.
-2. Link each evidence item to requirement IDs and task IDs.
+2. Link each evidence item to requirement IDs, `linked_spec_clause_ids`, and task IDs.
 3. List the files, generated artifacts, documents, or operational assets changed.
 4. Describe behavior changed in terms of observable outcomes.
 5. Record every command run, exit status, and the relevant observed result.
@@ -26,6 +26,7 @@ Create an `Implementation Evidence` packet that links requirements and tasks to 
 - Include test, lint, build, generation, validation, and focused reproduction commands.
 - Record generated artifact updates separately from canonical source edits.
 - Preserve the difference between a failing RED command and a passing GREEN command when TDD is used.
+- Record Fixture Governance Contract evidence when fixtures, mocks, fakes, stubs, snapshots, or generated inputs were added or expanded.
 
 ## Non-development work
 
@@ -38,9 +39,9 @@ Create an `Implementation Evidence` packet that links requirements and tasks to 
 ```markdown
 ## Implementation Evidence
 
-| evidence_id | linked_requirement_ids | linked_task_ids | files_changed | behavior_changed | commands_run | result |
-| --- | --- | --- | --- | --- | --- | --- |
-| EVID-001 | REQ-001 | TASK-001 |  |  |  |  |
+| evidence_id | linked_requirement_ids | linked_spec_clause_ids | linked_task_ids | files_changed | behavior_changed | commands_run | result |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| EVID-001 | REQ-001 | SPEC-001.CLAUSE-001 | TASK-001 |  |  |  |  |
 ```
 
 ## Do not
@@ -49,3 +50,4 @@ Create an `Implementation Evidence` packet that links requirements and tasks to 
 - Do not collapse failed, skipped, and passing commands into one summary.
 - Do not omit generated files when generation is part of the acceptance criteria.
 - Do not use evidence IDs for work that has not been performed.
+- Do not mark fixture-heavy tests as evidence without their fixture governance and real-boundary rationale.

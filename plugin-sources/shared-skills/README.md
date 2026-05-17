@@ -24,9 +24,9 @@ After installing the plugin, restart the host coding agent or tool if the new sk
 
 ## Artifact Map
 
-- `requirements-packet`, `spec-contract`, `plan-contract`, `implementation-evidence`, and `verification-gate` use `references/workflow-artifacts.md`.
+- `requirements-packet`, `spec-contract`, `plan-contract`, `spec-plan-coverage`, `implementation-evidence`, and `verification-gate` use `references/workflow-artifacts.md`.
 - `research-plan`, `source-ledger`, and `claim-evidence-map` use `references/deep-research-pipeline.md`.
-- `scenario-test-designer`, `test-plan-contract`, and `tdd-test-writing` use `references/downstream-test-contracts.md`.
+- `scenario-test-designer`, `test-plan-contract`, and `tdd-test-writing` use `references/downstream-test-contracts.md`, including the Fixture Governance Contract.
 - `comment-writing`, `implementation-discipline`, and `debugging-discipline` keep execution scoped and feed evidence into the same workflow artifacts.
 
 ## Downstream Test Gate
@@ -35,11 +35,14 @@ When implementation work changes observable behavior, public contracts, data sha
 
 Core scenario coverage must link to an Acceptance Criteria ID or User Scenario ID, use the nearest executable project test layer, and justify each fixture, fake, stub, or mock against observable behavior. `test-adequacy-reviewer` should review downstream test-writing work before closure when subagents are available.
 
+The default fixture budget is `0`. Any fixture, mock, fake, stub, snapshot, seed record, generated input, or test-only adapter requires a Fixture Governance Contract row with a linked scenario, linked spec clause, real-boundary alternative, drift check, owner, and expiry or update trigger.
+
 ## Included skills
 
 - `requirements-packet`: convert user requests into confirmed requirements, inferred assumptions, open questions, non-goals, and acceptance criteria.
 - `spec-contract`: turn confirmed requirements into behavior, interface, failure-mode, and compatibility contracts.
 - `plan-contract`: create implementation plans with linked requirements, target artifacts, validation methods, and fallbacks.
+- `spec-plan-coverage`: extract a Spec Ledger and validate the Spec-to-Plan Coverage Matrix before implementation or completion.
 - `implementation-evidence`: record files changed, behavior changed, commands run, and linked requirement/task evidence.
 - `verification-gate`: gate completion claims with required evidence, failed items, not-run items, residual risks, and final status.
 - `research-plan`: define research questions, source strategies, counterevidence strategies, and stop conditions.

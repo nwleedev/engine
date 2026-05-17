@@ -1,0 +1,58 @@
+{
+  "coverage_report_id": "COVERAGE-001",
+  "spec_ledger": [
+    {
+      "spec_clause_id": "SC-001",
+      "linked_requirement_ids": ["REQ-001"],
+      "source_location": "redacted-spec.md#sc-001",
+      "validation_intent": "automated test",
+      "status": "accepted"
+    }
+  ],
+  "plan_contract": [
+    {
+      "task_id": "TASK-001",
+      "linked_requirement_ids": ["REQ-001"],
+      "linked_spec_clause_ids": ["SC-001"],
+      "validation_method": "pytest focused",
+      "fallback": "manual inspection"
+    }
+  ],
+  "test_plan_contract": [
+    {
+      "scenario_id": "SCN-001",
+      "linked_spec_clause_ids": ["SC-001"],
+      "test_or_check_id": "CHECK-001",
+      "fixture_governance_ids": ["FIX-001"],
+      "boundary_evidence": true
+    }
+  ],
+  "implementation_evidence": [
+    {
+      "evidence_id": "EVID-001",
+      "linked_spec_clause_ids": ["SC-001"],
+      "fresh": true,
+      "result": "passed"
+    }
+  ],
+  "fixture_governance": [
+    {
+      "fixture_id": "FIX-001",
+      "linked_scenario_ids": ["SCN-001"],
+      "linked_spec_clause_ids": ["SC-001"],
+      "fixture_type": "fixture",
+      "real_boundary_preferred": true,
+      "justification": "negative fixture validates stale fixture detection",
+      "owner": "shared-workflow",
+      "drift_check": "fixture source must match current project boundary",
+      "expiry_or_update_trigger": "project boundary changes",
+      "source_location": "redacted-fixture-source.md#old",
+      "generation_date": "2026-01-01",
+      "drift_status": "stale"
+    }
+  ],
+  "verification_gate": {
+    "requires_coverage_report": true,
+    "coverage_report_ids": ["COVERAGE-001"]
+  }
+}

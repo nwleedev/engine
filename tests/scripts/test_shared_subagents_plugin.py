@@ -19,9 +19,11 @@ EXPECTED_AGENTS = (
     "source-researcher",
     "requirements-reviewer",
     "plan-reviewer",
+    "spec-coverage-reviewer",
     "citation-verifier",
     "test-adequacy-reviewer",
     "closure-reviewer",
+    "completion-claim-reviewer",
     "risk-reviewer",
     "reviewer",
     "code-reviewer",
@@ -100,12 +102,113 @@ def test_legacy_shared_subagents_are_absent_from_active_route_docs() -> None:
 def test_test_adequacy_reviewer_owns_downstream_test_quality() -> None:
     data = agent_data("test-adequacy-reviewer")
     instructions = data["developer_instructions"]
+    check_block = instruction_block(instructions, "Check:", "Return findings first")
+    do_not_block = instruction_block(
+        instructions,
+        "Do not approve",
+        "Do not make code changes.",
+    )
 
     assert "downstream project" in data["description"]
-    assert "Acceptance Criteria ID" in instructions
-    assert "User Scenario ID" in instructions
-    assert "Fixture/Mock Justification" in instructions
-    assert "Do not approve tests that assert only mock calls" in instructions
+    for term in (
+        "Acceptance Criteria ID",
+        "User Scenario ID",
+        "linked_spec_clause_ids",
+        "Fixture/Mock Justification",
+        "Fixture Governance Contract",
+        "fixture budget",
+        "high-fidelity boundary",
+        "fixture_overgrowth",
+        "stale_fixture",
+        "missing_real_boundary_check",
+        "unjustified_fixture",
+        "test_only_behavior",
+        "failed, skipped, or not-run test commands",
+    ):
+        assert term in check_block
+    assert "tests that assert only mock calls" in do_not_block
+    assert "fixture-heavy tests without Fixture Governance Contract evidence" in do_not_block
+
+
+def test_spec_coverage_reviewer_owns_spec_clause_coverage() -> None:
+    instructions = agent_instructions("spec-coverage-reviewer")
+    check_block = instruction_block(instructions, "Check:", "Return findings first")
+    do_not_block = instruction_block(
+        instructions,
+        "Do not inspect",
+        "Do not make code changes.",
+    )
+
+    for term in (
+        "Spec Ledger",
+        "Spec-to-Plan Coverage Matrix",
+        "spec_clause_id",
+        "source_location",
+        "linked_spec_clause_ids",
+        "validation_intent",
+        "coverage_status",
+        "missing_plan",
+        "missing_validation",
+        "missing_evidence",
+        "stale_evidence",
+        "unresolved_risk",
+        "Fixture Governance Contract",
+        "confidential source text is redacted",
+    ):
+        assert term in check_block
+    assert "raw full spec" not in check_block
+    assert "raw full spec" in do_not_block
+    assert "Do not approve coverage from broad SPEC IDs alone" in do_not_block
+
+
+def test_completion_claim_reviewer_requires_validator_and_boundary_evidence() -> None:
+    instructions = agent_instructions("completion-claim-reviewer")
+    check_block = instruction_block(instructions, "Check:", "Return findings first")
+    do_not_block = instruction_block(
+        instructions,
+        "Do not approve",
+        "Do not make code changes.",
+    )
+
+    for term in (
+        "Coverage Report",
+        "Verification Gate",
+        "Evidence Bundle",
+        "missing_plan",
+        "missing_validation",
+        "missing_evidence",
+        "stale_evidence",
+        "unresolved_risk",
+        "fixture_overgrowth",
+        "stale_fixture",
+        "missing_real_boundary_check",
+        "unjustified_fixture",
+        "test_only_behavior",
+        "machine-readable JSON",
+        "redacted Markdown",
+        "validator exit code",
+        "validator command",
+        "validator report path",
+        "not-run commands",
+        "skipped checks",
+    ):
+        assert term in check_block
+    assert "Do not approve done when required evidence is missing" in do_not_block
+
+
+def test_superpowers_routing_includes_spec_coverage_and_completion_reviewers() -> None:
+    routing = (
+        PLUGIN_ROOT / "references" / "superpowers-routing.md"
+    ).read_text(encoding="utf-8")
+
+    assert "| spec coverage review | `spec-coverage-reviewer` |" in routing
+    assert "| completion claim review | `completion-claim-reviewer` |" in routing
+    assert "Coverage Report, Verification Gate, and Evidence Bundle" in routing
+    assert "Do not use `plan-reviewer` as a substitute for `spec-coverage-reviewer`" in routing
+    assert (
+        "Do not use `closure-reviewer` as a substitute for `completion-claim-reviewer`"
+        in routing
+    )
 
 
 def test_plugin_manifest_exposes_install_skill() -> None:
@@ -114,7 +217,7 @@ def test_plugin_manifest_exposes_install_skill() -> None:
     )
 
     assert manifest["name"] == "shared-subagents"
-    assert manifest["version"] == "0.2.9"
+    assert manifest["version"] == "0.3.1"
     assert manifest["skills"] == "./skills/"
     assert (PLUGIN_ROOT / "skills" / "install" / "SKILL.md").exists()
     assert (PLUGIN_ROOT / "skills" / "install" / "install.py").exists()
@@ -262,6 +365,13 @@ def test_shared_subagents_agents_block_defines_subagent_use_boundaries() -> None
     assert "<!-- SHARED-SUBAGENTS-START -->" in block
     assert "<!-- SHARED-SUBAGENTS-END -->" in block
     assert "Spawn subagents only when the user explicitly asks" in block
+    assert "Spec Ledger" in block
+    assert "Fixture Governance Contract" in block
+    assert "validator evidence" in block
+    assert "not-run items" in block
+    assert "Use `spec-coverage-reviewer`" in block
+    assert "Use `completion-claim-reviewer`" in block
+    assert "Use subagents for broad, parallelizable work" in block
     assert "Keep simple or single-file work in the main session" in block
     assert "reviewer/code-reviewer/security-auditor gates separate" in block
 
