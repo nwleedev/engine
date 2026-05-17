@@ -1,6 +1,6 @@
 ---
 name: status
-description: Show artifact-only session-memory status for CODEX_SESSION_ID: artifact path, context count, last save metadata, pending offset, and AGENTS.md rule status.
+description: Show artifact-only session-memory status for CODEX_SESSION_ID. artifact path, context count, last save metadata, pending offset, and AGENTS.md rule status.
 ---
 
 # Session Memory Status
