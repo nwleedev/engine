@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import json
+import os
 import re
+import subprocess
+import sys
 from pathlib import Path
 
 
@@ -81,3 +84,33 @@ def test_learnable_mvp_has_no_external_web_runtime_dependency_requirement() -> N
         assert dependency not in artifact_text
     assert not (CODEX_LEARNABLE / "package.json").exists()
     assert not (CODEX_LEARNABLE / "node_modules").exists()
+
+
+def test_generated_package_resources_are_readable_from_materialized_artifact() -> None:
+    """SCN-LRN-011-008: generated package resources load from materialized artifact."""
+
+    targets = _registry_targets()
+    env = {
+        **os.environ,
+        "PYTHONPATH": str(CODEX_LEARNABLE / "_packages"),
+    }
+    script = """
+from learnable.web.static import read_static_resource
+from learnable.materials.schemas import load_schema_resource
+assert b"<main" in read_static_resource("index.html")[0]
+assert '"schema_version"' in load_schema_resource("session.schema.json")
+"""
+
+    assert targets["_packages/learnable/static/index.html"] == (
+        "packages/learnable/learnable/static/index.html"
+    )
+    assert targets["_packages/learnable/schemas/session.schema.json"] == (
+        "packages/learnable/learnable/schemas/session.schema.json"
+    )
+    subprocess.run(
+        [sys.executable, "-c", script],
+        check=True,
+        env=env,
+        capture_output=True,
+        text=True,
+    )
