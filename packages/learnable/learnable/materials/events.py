@@ -75,8 +75,48 @@ def _read_jsonl(path: Path, record_name: str) -> list[dict[str, object]]:
         record = json.loads(line)
         if not isinstance(record, dict):
             raise ValueError(f"{record_name} JSONL record must be an object")
+        if record_name == "event":
+            _validate_event_record(record)
+        if record_name == "audit":
+            _validate_audit_record(record)
         records.append(record)
     return records
+
+
+def _validate_event_record(record: Mapping[str, object]) -> None:
+    _require_fields(
+        record,
+        ("created_at", "type", "learnable_session_id", "message"),
+        "event",
+    )
+    for field in ("created_at", "type", "learnable_session_id", "message"):
+        if not isinstance(record[field], str):
+            raise ValueError(f"event JSONL {field} must be a string")
+    node_id = record.get("node_id")
+    if node_id is not None and not isinstance(node_id, str):
+        raise ValueError("event JSONL node_id must be a string")
+
+
+def _validate_audit_record(record: Mapping[str, object]) -> None:
+    _require_fields(record, ("created_at", "request", "action"), "audit")
+    if not isinstance(record["created_at"], str):
+        raise ValueError("audit JSONL created_at must be a string")
+    if not isinstance(record["request"], Mapping):
+        raise ValueError("audit JSONL request must be an object")
+    if not isinstance(record["action"], Mapping):
+        raise ValueError("audit JSONL action must be an object")
+
+
+def _require_fields(
+    record: Mapping[str, object],
+    required: tuple[str, ...],
+    record_name: str,
+) -> None:
+    missing = [field for field in required if field not in record]
+    if missing:
+        raise ValueError(
+            f"{record_name} JSONL missing required fields: {', '.join(missing)}"
+        )
 
 
 def utc_now() -> str:

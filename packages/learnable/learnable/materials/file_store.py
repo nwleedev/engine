@@ -8,6 +8,7 @@ import uuid
 from collections.abc import Mapping
 from contextlib import contextmanager, suppress
 from pathlib import Path
+from typing import Optional, Union
 
 from learnable.core.config import default_server_config, write_server_config
 from learnable.core.paths import ensure_within_root, materials_root
@@ -21,7 +22,7 @@ from learnable.materials.schemas import (
     validate_session_record,
 )
 
-type SourceRefs = list[str | dict[str, object]] | None
+SourceRefs = Optional[list[Union[str, dict[str, object]]]]
 
 
 class FileMaterialStore:

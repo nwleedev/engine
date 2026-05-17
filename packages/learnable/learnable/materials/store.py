@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from typing import Protocol, runtime_checkable
+from typing import Optional, Protocol, Union, runtime_checkable
 
 
-type SourceRefs = list[str | dict[str, object]] | None
+SourceRefs = Optional[list[Union[str, dict[str, object]]]]
 
 
 @runtime_checkable

@@ -5,6 +5,8 @@ from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import get_context
 from pathlib import Path
 
+import pytest
+
 from learnable.materials.events import append_audit, append_event, read_audits, read_events
 
 
@@ -82,6 +84,40 @@ def test_read_events_returns_empty_list_for_empty_or_missing_jsonl(
 
     assert read_events(empty_path) == []
     assert read_events(tmp_path / "missing.jsonl") == []
+
+
+@pytest.mark.parametrize(
+    "record",
+    [
+        {
+            "type": "node.created",
+            "learnable_session_id": "learnable-session-001",
+            "message": "created",
+        },
+        {
+            "created_at": 1,
+            "type": "node.created",
+            "learnable_session_id": "learnable-session-001",
+            "message": "created",
+        },
+        {
+            "created_at": "2026-05-18T00:00:00Z",
+            "type": "node.created",
+            "learnable_session_id": "learnable-session-001",
+            "message": "created",
+            "node_id": 1,
+        },
+    ],
+)
+def test_read_events_rejects_schema_invalid_records(
+    tmp_path: Path,
+    record: dict[str, object],
+) -> None:
+    events_path = tmp_path / "events.jsonl"
+    events_path.write_text(json.dumps(record) + "\n", encoding="utf-8")
+
+    with pytest.raises(ValueError):
+        read_events(events_path)
 
 
 def test_concurrent_event_appends_do_not_drop_records(tmp_path: Path) -> None:
@@ -165,6 +201,26 @@ def test_read_audits_returns_empty_list_for_empty_or_missing_jsonl(
 
     assert read_audits(empty_path) == []
     assert read_audits(tmp_path / "missing-audits.jsonl") == []
+
+
+@pytest.mark.parametrize(
+    "record",
+    [
+        {"created_at": "2026-05-18T00:00:00Z", "request": {}},
+        {"created_at": 1, "request": {}, "action": {}},
+        {"created_at": "2026-05-18T00:00:00Z", "request": "status", "action": {}},
+        {"created_at": "2026-05-18T00:00:00Z", "request": {}, "action": "status"},
+    ],
+)
+def test_read_audits_rejects_schema_invalid_records(
+    tmp_path: Path,
+    record: dict[str, object],
+) -> None:
+    audit_path = tmp_path / "audits.jsonl"
+    audit_path.write_text(json.dumps(record) + "\n", encoding="utf-8")
+
+    with pytest.raises(ValueError):
+        read_audits(audit_path)
 
 
 def test_concurrent_audit_appends_do_not_drop_records(tmp_path: Path) -> None:
