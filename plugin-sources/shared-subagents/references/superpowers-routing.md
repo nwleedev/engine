@@ -18,7 +18,9 @@
 | source evidence review | `source-researcher`, `citation-verifier` | `explorer` with source/citation verification prompt |
 | requirements fidelity review | `requirements-reviewer` | `default` with Requirement Packet review prompt |
 | plan fidelity review | `plan-reviewer` | `default` with Plan Contract review prompt |
+| spec coverage review | `spec-coverage-reviewer` | `default` with Spec Ledger and Spec-to-Plan Coverage Matrix review prompt |
 | test adequacy review | `test-adequacy-reviewer` | `default` with test adequacy review prompt |
+| completion claim review | `completion-claim-reviewer` | `default` with Coverage Report, Verification Gate, and Evidence Bundle review prompt |
 | closure review | `closure-reviewer` | `default` with Closure Report review prompt |
 | risk review | `risk-reviewer` | `default` with Risk Register review prompt |
 | correctness review | `reviewer` | `default` with PR review prompt |
@@ -40,6 +42,8 @@ Every fallback prompt must include these constraints.
 - Do not use `source-researcher` for implementation decisions.
 - Do not use `docs-researcher` for market or strategy judgment.
 - Do not use `requirements-reviewer` or `plan-reviewer` for implementation code-quality review.
+- Do not use `plan-reviewer` as a substitute for `spec-coverage-reviewer` when clause-level coverage is required.
 - Do not use `test-adequacy-reviewer` for broad correctness review.
+- Do not use `closure-reviewer` as a substitute for `completion-claim-reviewer` when a done claim depends on coverage reports, validator exit code, or fixture governance.
 - Do not ask `reviewer` and `code-reviewer` the same question in parallel.
 - Do not modify the Superpowers plugin cache during installation.

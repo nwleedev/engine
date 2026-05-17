@@ -1,6 +1,6 @@
 {
   "name": "shared-skills",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "description": "Reusable Codex and Claude Code workflow skills for requirements traceability, research evidence, scenario-based tests, implementation evidence, and verification gates",
   "license": "MIT"
 }

@@ -5,7 +5,13 @@
 - Use `shared-skills` workflow skills before and during implementation when requirements, plans, tests, evidence, or completion claims need traceability.
 - Use `requirements-packet` before planning if the request has confirmed, inferred, open, or rejected requirements.
 - Use `spec-contract` and `plan-contract` before implementation when behavior, interfaces, failure modes, target artifacts, validation methods, fallbacks, or risk levels need to be explicit.
+- Use `spec-plan-coverage` when a spec must be fully reflected by a plan, test plan, implementation evidence, or completion claim.
+- Keep a `Spec Ledger` with stable `spec_clause_id` values when broad spec IDs are not enough to prove coverage.
+- Require a `Spec-to-Plan Coverage Matrix` before implementation and completion when a Spec Ledger exists; unresolved `missing_plan`, `missing_validation`, `missing_evidence`, `stale_evidence`, or `unresolved_risk` blocks a done claim.
 - For behavior-changing implementation, route tests through `scenario-test-designer`, `test-plan-contract`, and `tdd-test-writing`; if automated tests are not feasible, record the reason and residual risk in `verification-gate`.
+- For tests written with shared skills or subagents, use a `Fixture Governance Contract` before adding or expanding fixtures, mocks, fakes, stubs, snapshots, seed records, generated inputs, or test-only adapters.
+- Treat the fixture budget as `0` by default; every exception needs linked scenarios, linked spec clauses, a real-boundary alternative, owner, drift check, and expiry or update trigger.
+- Treat `unjustified_fixture`, `fixture_overgrowth`, `missing_real_boundary_check`, and `test_only_behavior` as blocking test-quality findings.
 - Use `implementation-evidence` after changes to connect files, behavior, commands, and requirement/task IDs.
 - Use `verification-gate` before claiming work is complete, ready, correct, or decision-ready.
 - Use `research-plan`, `source-ledger`, and `claim-evidence-map` for source-backed research and counterevidence review.
@@ -19,8 +25,10 @@
 - Use `source-researcher` for neutral source collection and Source Ledger preparation without decisions.
 - Use `requirements-reviewer` for Requirement Packet fidelity.
 - Use `plan-reviewer` for Plan Contract and Traceability Matrix fidelity.
+- Use `spec-coverage-reviewer` for Spec Ledger and Spec-to-Plan Coverage Matrix fidelity.
 - Use `citation-verifier` for Claim Evidence Map and Source Ledger checks.
 - Use `test-adequacy-reviewer` after downstream project test-writing work.
+- Use `completion-claim-reviewer` before claiming implementation or review work is complete when spec coverage, fixture governance, validator evidence, or not-run items could affect the claim.
 - Use `closure-reviewer` before claiming review findings or completion claims are closed.
 - Use `risk-reviewer` for residual risk, rollback, fallback, and unverifiable items.
 - Use `reviewer` for correctness, behavior regression, and contract-change review.

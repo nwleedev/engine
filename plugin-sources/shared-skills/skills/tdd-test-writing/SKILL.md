@@ -36,7 +36,7 @@ Do not force a new test framework. Prefer the project's existing test framework,
 1. Restate the requirement as one observable behavior that a user, caller, client, operator, or system boundary can see.
 2. Detect the stack, existing test tools, nearest existing test layer, test file placement, naming conventions, and command style.
 3. Use the nearest existing test layer by default. Check `references/tdd-test-types.md` only when the behavior boundary is unclear, the existing layer is a poor fit, or the work needs contract, property, snapshot, performance, security, accessibility, migration, or infrastructure validation.
-4. Write the smallest failing test with inline minimal arrange first; extract a fixture only when repeated arrange becomes clearer with a precise name.
+4. Write the smallest failing test with inline minimal arrange first; extract a fixture only when repeated arrange becomes clearer with a precise name and the Fixture Governance Contract approves it.
 5. Run the narrowest command and confirm the intended failure message proves the missing behavior, not a syntax, import, environment, or setup error.
 6. Add the minimum implementation needed to pass the failing test.
 7. Run the same command and confirm the test passes for the intended behavior.
@@ -75,9 +75,13 @@ Use this as a quick selector, not as a required classification ceremony. Start w
 - Write concrete assertions for values, state, errors, rendered output, persisted data, emitted events, permissions, or generated artifacts; avoid assertions that only prove code executed.
 - Start the first failing test with inline minimal arrange. Use fixtures only when repeated arrange is clearer with a name, and keep each fixture narrow enough that unused setup does not hide intent.
 - Prefer real domain objects and local collaborators when they are fast, deterministic, and inside the behavior boundary.
+- Apply the Fixture Governance Contract before adding or expanding any fixture, mock, fake, stub, snapshot, seed record, generated input, or test-only adapter.
+- Treat the fixture budget as `0` by default and require an explicit approved exception when the test needs a double or shared setup.
+- Prefer a high-fidelity boundary such as a public API, CLI, parser, local persistence boundary, component render, or integration adapter before using doubles.
 - Use a fake for a lightweight working substitute, a stub for fixed external answers or errors, and a mock only when the outbound interaction contract itself is the requirement.
 - Do not assert only that a mock was called when the user-visible behavior can be asserted.
 - Do not create broad fixture factories before proving repeated setup is clearer with a named fixture.
+- Do not allow `unjustified_fixture`, `fixture_overgrowth`, `missing_real_boundary_check`, or `test_only_behavior` to pass as valid coverage.
 - Do not count tests without an Acceptance Criteria ID as core scenario coverage.
 - Do not report completion without the exact failing and passing test commands.
 - Mock external boundary only: time, random, network, filesystem, process, database outside the chosen boundary, browser, cloud API, queue, payment, identity provider, or concurrency coordination.
@@ -111,6 +115,7 @@ Use this as a quick selector, not as a required classification ceremony. Start w
 - Add the test in the nearest existing layer that can fail for the required behavior, not in a broader or narrower layer for convenience.
 - Keep the first failing test small and diagnostic; broaden coverage only after the intended failure and pass are proven.
 - Keep production changes minimal until the selected failing test passes, then refactor with the same tests still green.
+- Keep fixture growth below the approved fixture budget and record drift checks for any retained fixture.
 - Include the reviewer handoff only when review is needed, the parent task asks for it, or a claimed TDD cycle needs independent review.
 
 ## Non-development work
@@ -151,6 +156,11 @@ reviewer handoff
 
 | Name | Type | Needed Because | Real Alternative Considered | Behavior Hidden | Decision |
 | --- | --- | --- | --- | --- | --- |
+
+## Fixture Governance Contract
+
+| fixture_id | linked_scenario_ids | linked_spec_clause_ids | fixture_type | real_boundary_preferred | justification | owner | drift_check | expiry_or_update_trigger |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
 
 - detected stack
 - selected test type

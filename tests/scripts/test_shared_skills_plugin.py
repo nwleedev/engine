@@ -18,6 +18,7 @@ SKILLS = (
     "scenario-test-designer",
     "test-plan-contract",
     "tdd-test-writing",
+    "spec-plan-coverage",
     "comment-writing",
     "implementation-discipline",
     "debugging-discipline",
@@ -59,7 +60,7 @@ def test_manifest_exposes_shared_skills_plugin() -> None:
     manifest = json.loads(read(manifest_path))
 
     assert manifest["name"] == "shared-skills"
-    assert manifest["version"] == "0.2.7"
+    assert manifest["version"] == "0.2.8"
     assert manifest["license"] == "MIT"
     assert manifest["skills"] == "./skills/"
     assert "requirements traceability" in manifest["description"]
@@ -107,25 +108,64 @@ def test_legacy_shared_skills_are_not_generated() -> None:
 
 def test_workflow_artifact_reference_defines_required_ids() -> None:
     text = read(PLUGIN_ROOT / "references" / "workflow-artifacts.md")
+    expected_headers = (
+        "| spec_clause_id | linked_requirement_ids | source_location | clause_type | validation_intent | priority | confidentiality | status | notes |",
+        "| task_id | linked_requirement_ids | linked_spec_clause_ids | steps | target_files_or_artifacts | validation_method | done_criteria | fallback | risk_level |",
+        "| spec_clause_id | linked_requirement_ids | plan_task_ids | scenario_ids | test_or_check_ids | evidence_ids | coverage_status | gap_or_risk | owner |",
+        "| coverage_report_id | matrix_id | validator_command | validator_exit_code | report_path | redacted_markdown_path | blocking_codes | final_status |",
+    )
 
     required_terms = (
         "Requirement Packet",
         "requirement_id",
         "Spec Contract",
         "spec_id",
+        "Spec Ledger",
+        "spec_clause_id",
+        "source_location",
+        "validation_intent",
         "Plan Contract",
         "task_id",
+        "linked_spec_clause_ids",
         "steps",
         "done_criteria",
         "risk_level",
+        "Spec-to-Plan Coverage Matrix",
+        "coverage_status",
+        "missing_plan",
+        "missing_validation",
+        "missing_evidence",
+        "stale_evidence",
+        "unresolved_risk",
+        "Coverage Report",
+        "coverage_report_id",
+        "validator_command",
+        "validator_exit_code",
+        "report_path",
+        "redacted_markdown_path",
+        "blocking_codes",
         "Traceability Matrix",
         "changed_files",
         "test_or_check_ids",
         "Implementation Evidence",
         "Verification Gate",
     )
+    for header in expected_headers:
+        assert header in text
     for term in required_terms:
         assert term in text
+
+    for status in (
+        "covered",
+        "missing_plan",
+        "missing_validation",
+        "missing_evidence",
+        "stale_evidence",
+        "unresolved_risk",
+        "deferred_with_owner",
+        "not_applicable_with_reason",
+    ):
+        assert status in text
 
 
 def test_workflow_skill_outputs_use_canonical_schema_headers() -> None:
@@ -141,7 +181,7 @@ def test_workflow_skill_outputs_use_canonical_schema_headers() -> None:
         in requirements_text
     )
     assert (
-        "| evidence_id | linked_requirement_ids | linked_task_ids | files_changed | behavior_changed | commands_run | result |"
+        "| evidence_id | linked_requirement_ids | linked_spec_clause_ids | linked_task_ids | files_changed | behavior_changed | commands_run | result |"
         in implementation_text
     )
 
@@ -149,13 +189,46 @@ def test_workflow_skill_outputs_use_canonical_schema_headers() -> None:
 def test_downstream_test_contract_limits_fixture_and_mock_use() -> None:
     text = read(PLUGIN_ROOT / "references" / "downstream-test-contracts.md")
 
+    assert (
+        "| fixture_id | linked_scenario_ids | linked_spec_clause_ids | fixture_type | real_boundary_preferred | justification | owner | drift_check | expiry_or_update_trigger |"
+        in text
+    )
     assert "downstream project" in text
     assert "Acceptance Criteria ID" in text
     assert "User Scenario ID" in text
     assert "Fixture/Mock Justification" in text
+    assert "Fixture Governance Contract" in text
+    assert "fixture_id" in text
+    assert "real_boundary_preferred" in text
+    assert "drift_check" in text
+    assert "expiry_or_update_trigger" in text
+    assert "unjustified_fixture" in text
+    assert "fixture_overgrowth" in text
+    assert "missing_real_boundary_check" in text
+    assert "test_only_behavior" in text
     assert "Do not assert only mock calls" in text
     assert "Do not create broad fixture factories" in text
     assert "observable behavior" in text
+
+
+def test_spec_plan_coverage_skill_defines_failure_codes_and_reports() -> None:
+    text = read(PLUGIN_ROOT / "skills" / "spec-plan-coverage" / "SKILL.md")
+
+    assert "Spec Ledger" in text
+    assert "Spec-to-Plan Coverage Matrix" in text
+    assert "linked_spec_clause_ids" in text
+    assert "coverage_status" in text
+    assert "machine-readable JSON" in text
+    assert "redacted Markdown" in text
+    assert "missing_plan" in text
+    assert "missing_validation" in text
+    assert "missing_evidence" in text
+    assert "stale_evidence" in text
+    assert "unresolved_risk" in text
+    assert "unjustified_fixture" in text
+    assert "fixture_overgrowth" in text
+    assert "missing_real_boundary_check" in text
+    assert "test_only_behavior" in text
 
 
 def test_tdd_test_writing_skill_defines_tdd_workflow() -> None:
@@ -179,6 +252,9 @@ def test_tdd_test_writing_skill_defines_tdd_workflow() -> None:
     assert "flaky" in text
     assert "Arrange-Act-Assert" in text
     assert "reviewer handoff" in text
+    assert "Fixture Governance Contract" in text
+    assert "fixture budget" in text
+    assert "high-fidelity boundary" in text
 
 
 def test_comment_writing_skill_defines_comment_workflow() -> None:

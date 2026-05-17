@@ -9,7 +9,7 @@ metadata:
 
 ## Purpose
 
-Create a `Spec Contract` that defines intended behavior, interfaces or artifacts, failure modes, and compatibility constraints before planning implementation or downstream tests.
+Create a `Spec Contract` that defines intended behavior, interfaces or artifacts, failure modes, and compatibility constraints before planning implementation or downstream tests. When the spec has multiple clauses or confidential source text, also prepare a `Spec Ledger` so later plans can cite stable `spec_clause_id` values without exposing sensitive text.
 
 ## Workflow
 
@@ -18,14 +18,16 @@ Create a `Spec Contract` that defines intended behavior, interfaces or artifacts
 3. Describe externally observable behavior rather than implementation details.
 4. Name every interface, file artifact, command, schema, UI state, or operational artifact affected by the behavior.
 5. Include expected failure modes, degraded states, rollback expectations, and compatibility constraints.
-6. Mark unresolved or inferred behavior as a question instead of silently deciding it.
-7. Route executable work to `plan-contract` and test design to `scenario-test-designer`.
+6. Split behavior, artifact, failure-mode, compatibility, non-goal, and validation requirements into `Spec Ledger` rows when a plan must prove complete coverage.
+7. Mark unresolved or inferred behavior as a question instead of silently deciding it.
+8. Route executable work to `plan-contract`, test design to `scenario-test-designer`, and clause coverage checks to `spec-plan-coverage`.
 
 ## Development work
 
 - Tie public APIs, generated artifacts, configuration, data shapes, and commands to requirement IDs.
 - Record compatibility constraints for existing callers, generated plugin outputs, and test fixtures.
 - Keep failure modes concrete enough to drive negative or regression tests.
+- Use `source_location` and `validation_intent` in the Spec Ledger when the source spec cannot be committed.
 
 ## Non-development work
 
@@ -41,6 +43,12 @@ Create a `Spec Contract` that defines intended behavior, interfaces or artifacts
 | spec_id | linked_requirement_ids | behavior | interfaces_or_artifacts | failure_modes | compatibility_constraints |
 | --- | --- | --- | --- | --- | --- |
 | SPEC-001 | REQ-001 |  |  |  |  |
+
+## Spec Ledger
+
+| spec_clause_id | linked_requirement_ids | source_location | clause_type | validation_intent | priority | confidentiality | status | notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| SPEC-001.CLAUSE-001 | REQ-001 | spec.md#section | behavior | automated test | must | public | open |  |
 ```
 
 ## Do not
@@ -49,3 +57,4 @@ Create a `Spec Contract` that defines intended behavior, interfaces or artifacts
 - Do not hide unresolved behavior inside vague language.
 - Do not describe private implementation choices as user-facing behavior.
 - Do not omit compatibility constraints when existing artifacts or users are affected.
+- Do not rely only on broad spec IDs when later plan coverage needs clause-level proof.

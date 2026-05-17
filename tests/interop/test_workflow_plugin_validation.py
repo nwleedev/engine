@@ -3,6 +3,8 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
@@ -55,9 +57,28 @@ def test_workflow_validation_constants_cover_retired_routes_and_contracts() -> N
     assert "downstream-test-contracts.md" in REQUIRED_SHARED_SKILL_REFERENCES
     assert "requirements-reviewer" in REQUIRED_SHARED_SUBAGENTS
     assert "plan-reviewer" in REQUIRED_SHARED_SUBAGENTS
+    assert "spec-coverage-reviewer" in REQUIRED_SHARED_SUBAGENTS
+    assert "completion-claim-reviewer" in REQUIRED_SHARED_SUBAGENTS
     assert "changed_files" in REQUIRED_WORKFLOW_ARTIFACT_TERMS
+    assert "Spec Ledger" in REQUIRED_WORKFLOW_ARTIFACT_TERMS
+    assert "Spec-to-Plan Coverage Matrix" in REQUIRED_WORKFLOW_ARTIFACT_TERMS
+    assert "missing_plan" in REQUIRED_WORKFLOW_ARTIFACT_TERMS
+    assert "missing_validation" in REQUIRED_WORKFLOW_ARTIFACT_TERMS
+    assert "missing_evidence" in REQUIRED_WORKFLOW_ARTIFACT_TERMS
+    assert "stale_evidence" in REQUIRED_WORKFLOW_ARTIFACT_TERMS
+    assert "unresolved_risk" in REQUIRED_WORKFLOW_ARTIFACT_TERMS
+    assert "Coverage Report" in REQUIRED_WORKFLOW_ARTIFACT_TERMS
+    assert "coverage_report_id" in REQUIRED_WORKFLOW_ARTIFACT_TERMS
+    assert "validator_command" in REQUIRED_WORKFLOW_ARTIFACT_TERMS
+    assert "validator_exit_code" in REQUIRED_WORKFLOW_ARTIFACT_TERMS
+    assert "report_path" in REQUIRED_WORKFLOW_ARTIFACT_TERMS
     assert "used_for_claim_ids" in REQUIRED_DEEP_RESEARCH_TERMS
     assert "Fixture/Mock Justification" in REQUIRED_DOWNSTREAM_TEST_TERMS
+    assert "Fixture Governance Contract" in REQUIRED_DOWNSTREAM_TEST_TERMS
+    assert "unjustified_fixture" in REQUIRED_DOWNSTREAM_TEST_TERMS
+    assert "fixture_overgrowth" in REQUIRED_DOWNSTREAM_TEST_TERMS
+    assert "missing_real_boundary_check" in REQUIRED_DOWNSTREAM_TEST_TERMS
+    assert "test_only_behavior" in REQUIRED_DOWNSTREAM_TEST_TERMS
 
 
 def test_workflow_validation_reports_legacy_generated_artifact_path(
@@ -154,6 +175,52 @@ def test_workflow_validation_reports_missing_schema_terms(tmp_path: Path) -> Non
         "missing shared-skills schema term" in error
         and "plugins/codex/shared-skills/references/workflow-artifacts.md" in error
         and "changed_files" in error
+        for error in errors
+    )
+
+
+@pytest.mark.parametrize(
+    ("reference", "term"),
+    [
+        ("workflow-artifacts.md", "missing_plan"),
+        ("workflow-artifacts.md", "missing_validation"),
+        ("workflow-artifacts.md", "missing_evidence"),
+        ("workflow-artifacts.md", "stale_evidence"),
+        ("workflow-artifacts.md", "unresolved_risk"),
+        ("workflow-artifacts.md", "Coverage Report"),
+        ("workflow-artifacts.md", "coverage_report_id"),
+        ("workflow-artifacts.md", "validator_exit_code"),
+        ("downstream-test-contracts.md", "unjustified_fixture"),
+        ("downstream-test-contracts.md", "fixture_overgrowth"),
+        ("downstream-test-contracts.md", "missing_real_boundary_check"),
+        ("downstream-test-contracts.md", "test_only_behavior"),
+    ],
+)
+def test_workflow_validation_reports_each_missing_blocking_term(
+    tmp_path: Path,
+    reference: str,
+    term: str,
+) -> None:
+    write_minimal_workflow_plugin_shape(tmp_path)
+    target = (
+        tmp_path
+        / "plugins"
+        / "codex"
+        / "shared-skills"
+        / "references"
+        / reference
+    )
+    target.write_text(
+        target.read_text(encoding="utf-8").replace(term, ""),
+        encoding="utf-8",
+    )
+
+    errors = validate_workflow_plugins(tmp_path)
+
+    assert any(
+        "missing shared-skills schema term" in error
+        and f"plugins/codex/shared-skills/references/{reference}" in error
+        and term in error
         for error in errors
     )
 

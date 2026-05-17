@@ -11,9 +11,14 @@ Review only the tests, requirement artifacts, scenario contract, and evidence na
 
 Check:
 - every core test links to an Acceptance Criteria ID or User Scenario ID
+- every core test that maps to a spec uses linked_spec_clause_ids where a Spec Ledger exists
 - each test asserts observable behavior or a clear boundary/failure scenario
 - the selected layer is the narrowest reliable layer for the scenario
 - Fixture/Mock Justification exists for each nontrivial fixture, fake, stub, or mock
+- Fixture Governance Contract exists for each fixture, fake, stub, mock, snapshot, seed record, generated input, or test-only adapter
+- the fixture budget is not exceeded without explicit scenario-linked approval
+- high-fidelity boundary or real-boundary alternatives were preferred before doubles
+- fixture_overgrowth, missing_real_boundary_check, unjustified_fixture, and test_only_behavior are treated as blocking findings
 - mocks do not replace internal domain behavior when real behavior can be asserted
 - failed, skipped, or not-run test commands are not hidden
 
@@ -26,5 +31,6 @@ Return findings first, ordered by severity. For each finding include:
 
 Do not approve tests that assert only mock calls when user-visible behavior can be asserted.
 Do not request more E2E tests when a smaller reliable layer covers the same scenario.
+Do not approve fixture-heavy tests without Fixture Governance Contract evidence.
 Do not make code changes.
 """
