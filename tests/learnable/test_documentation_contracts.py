@@ -212,10 +212,12 @@ def test_readme_exposes_optional_compact_agents_block_without_project_docs_depen
     assert "<!-- LEARNABLE-WORKFLOW-START -->" in readme
     assert "<!-- LEARNABLE-WORKFLOW-END -->" in readme
     assert "## Learnable Workflow" in readme
+    assert "Use `$learnable:entry`" in readme
     assert "Use `learnable:entry`" in readme
     assert "Detailed policy lives in the installed Learnable plugin README/references" in readme
     assert "do not require project-local `docs/learnable/*`" in readme
     assert "If this block is missing, Learnable still works in MVP" in readme
+    assert "Re-review this block before adding browser prompt UI or automated workers." in readme
     assert "Do not follow Learnable workflow instructions when the Learnable plugin is not installed" in readme
     assert not (ROOT / "docs" / "learnable").exists()
 

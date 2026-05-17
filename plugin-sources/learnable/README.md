@@ -8,13 +8,13 @@ See [policy](references/policy.md) for project policy guidance and [session mode
 
 ## Optional AGENTS.md Block
 
-Copy this block into a project `AGENTS.md` only when the project wants durable Learnable reminders. If this block is missing, Learnable still works in MVP through its installed skills and references.
+Copy this block into a project `AGENTS.md` only when the project wants durable Learnable reminders. If this block is missing, Learnable still works in MVP through its installed skills and references. Re-review this block before adding browser prompt UI or automated workers.
 
 ```markdown
 <!-- LEARNABLE-WORKFLOW-START -->
 ## Learnable Workflow
 
-- Use `learnable:entry` when a user asks Learnable to explain project code, files, workflows, or saved materials.
+- Use `$learnable:entry` (`learnable:entry`) when a user asks Learnable to explain project code, files, workflows, or saved materials.
 - Learnable material graph identity is `learnable_session_id`, `node_id`, and `parent_node_id`; Codex/Claude session IDs are provenance only.
 - During `.codex/materials/`-only material generation, do not run `$session-memory:checkpoint` unless the user explicitly asks.
 - Learnable must not create, mutate, migrate, or clean `.codex/session-memory/`.
