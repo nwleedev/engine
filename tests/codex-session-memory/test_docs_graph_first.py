@@ -41,6 +41,12 @@ def test_skills_document_graph_first_degraded_mode():
     assert "CODEX_SESSION_ID" in checkpoint
     assert "`CODEX_THREAD_ID` is used only to locate the active rollout JSONL" in checkpoint
     assert "contexts/CONTEXT-<timestamp>-<task-id>-<nonce>.md" in checkpoint
+    assert "Mandatory Active Codex Actions" in checkpoint
+    assert "do not stop or report completion" in checkpoint
+    assert "guidance:" in checkpoint
+    assert "<title>" in checkpoint
+    assert "<summary>" in checkpoint
+    assert "checkpoint is not complete" in checkpoint
     assert "parent_locator" in checkpoint
     assert "graph_store" in checkpoint
 

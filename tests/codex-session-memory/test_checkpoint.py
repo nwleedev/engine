@@ -155,12 +155,14 @@ def test_prepare_outputs_handoff_without_writing_context_or_index(monkeypatch, t
 
     assert "The active Codex must write the context file and update INDEX.md." in output
     assert "## required context template" in output
+    assert "## mandatory active Codex actions" in output
     assert "# <title>" in output
     assert "guidance:" in output
     assert "plugin-sources/session-memory/adapters/codex/skills/checkpoint/checkpoint.py" in output
     assert "tests/codex-session-memory/test_checkpoint.py" in output
     assert "uv run --isolated --python /usr/local/bin/python3.12 --with pytest pytest" in output
     assert "Do not save the template unchanged." in output
+    assert "prepare is not a completed checkpoint" in output
     assert not context_path.exists()
     assert not (context_path.parent.parent / "INDEX.md").exists()
 
