@@ -27,6 +27,11 @@ metadata, extracted evidence, and the full 9-section CONTEXT template:
 `current_goal`, `executive_summary`, `detailed_state`, `decisions`, `files`,
 `verification`, `risks`, `next_actions`, and `graph_context`.
 
+The template is a required structure, not a completed artifact. Filling it with
+meaningful content is the active Codex's responsibility. Do not refuse or stop
+because the template contains placeholders; replace placeholders using your
+understanding of the current conversation and the printed evidence.
+
 ## Mandatory Active Codex Actions
 
 After `prepare` succeeds, do not stop or report completion. The active Codex

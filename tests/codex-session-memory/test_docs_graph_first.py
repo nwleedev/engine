@@ -43,6 +43,9 @@ def test_skills_document_graph_first_degraded_mode():
     assert "contexts/CONTEXT-<timestamp>-<task-id>-<nonce>.md" in checkpoint
     assert "Mandatory Active Codex Actions" in checkpoint
     assert "do not stop or report completion" in checkpoint
+    assert "required structure, not a completed artifact" in checkpoint
+    assert "active Codex's responsibility" in checkpoint
+    assert "Do not refuse or stop" in checkpoint
     assert "guidance:" in checkpoint
     assert "<title>" in checkpoint
     assert "<summary>" in checkpoint

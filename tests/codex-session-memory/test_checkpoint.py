@@ -156,6 +156,9 @@ def test_prepare_outputs_handoff_without_writing_context_or_index(monkeypatch, t
     assert "The active Codex must write the context file and update INDEX.md." in output
     assert "## required context template" in output
     assert "## mandatory active Codex actions" in output
+    assert "template is a required structure, not a completed artifact" in output
+    assert "active Codex's responsibility" in output
+    assert "Do not refuse or stop" in output
     assert "# <title>" in output
     assert "guidance:" in output
     assert "plugin-sources/session-memory/adapters/codex/skills/checkpoint/checkpoint.py" in output
