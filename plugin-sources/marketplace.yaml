@@ -31,7 +31,7 @@ plugins:
         skills: ./skills/
         path: ./plugins/codex/quality-guard
   - id: shared-subagents
-    version: 0.2.6
+    version: 0.2.7
     description: Reusable Codex and Claude Code subagent templates for workflow routing, requirement review, test adequacy, closure, risk, code review, and security audit
     license: MIT
     category: Productivity
@@ -44,7 +44,7 @@ plugins:
         skills: ./skills/
         path: ./plugins/codex/shared-subagents
   - id: shared-skills
-    version: 0.2.6
+    version: 0.2.7
     description: Reusable Codex and Claude Code workflow skills for requirements traceability, research evidence, scenario-based tests, implementation evidence, and verification gates
     license: MIT
     category: Productivity
