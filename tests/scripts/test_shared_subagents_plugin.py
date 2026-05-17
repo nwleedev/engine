@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import importlib.util
 import tomllib
 from pathlib import Path
 
@@ -60,6 +61,18 @@ def instruction_block(text: str, start: str, stop: str) -> str:
     return text.split(start, 1)[1].split(stop, 1)[0]
 
 
+def load_install_module():
+    """Load the generated install helper as a test module."""
+
+    script = PLUGIN_ROOT / "skills" / "install" / "install.py"
+    spec = importlib.util.spec_from_file_location("shared_subagents_install", script)
+    assert spec is not None
+    assert spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def test_generated_bundle_contains_expected_agents() -> None:
     generated_agents = sorted(path.name for path in (PLUGIN_ROOT / "agents").glob("*.toml"))
 
@@ -95,14 +108,16 @@ def test_test_adequacy_reviewer_owns_downstream_test_quality() -> None:
     assert "Do not approve tests that assert only mock calls" in instructions
 
 
-def test_plugin_manifest_is_agent_only() -> None:
+def test_plugin_manifest_exposes_install_skill() -> None:
     manifest = json.loads(
         (PLUGIN_ROOT / ".codex-plugin" / "plugin.json").read_text(encoding="utf-8")
     )
 
     assert manifest["name"] == "shared-subagents"
-    assert manifest["version"] == "0.2.8"
-    assert "skills" not in manifest
+    assert manifest["version"] == "0.2.9"
+    assert manifest["skills"] == "./skills/"
+    assert (PLUGIN_ROOT / "skills" / "install" / "SKILL.md").exists()
+    assert (PLUGIN_ROOT / "skills" / "install" / "install.py").exists()
     assert not (PLUGIN_ROOT / "skills" / "scaffold" / "SKILL.md").exists()
     assert not (PLUGIN_ROOT / "skills" / "scaffold" / "scaffold.py").exists()
     assert not (PLUGIN_ROOT / "scripts" / "install_shared_subagents.py").exists()
@@ -113,10 +128,59 @@ def test_readme_documents_agent_bundle_without_scaffold_flow() -> None:
     readme = (PLUGIN_ROOT / "README.md").read_text(encoding="utf-8")
 
     assert "plugin-bundled agents" in readme
+    assert "$shared-subagents:install" in readme
     assert "AGENTS.block.md" not in readme
     assert "skills/scaffold/scaffold.py" not in readme
     assert "install_shared_subagents.py" not in readme
     assert "Use `$shared-subagents:scaffold`" not in readme
+
+
+def test_install_skill_dry_run_targets_project_local_agents(tmp_path: Path) -> None:
+    module = load_install_module()
+
+    targets = module.install_agents(tmp_path, dry_run=True)
+
+    assert len(targets) == len(EXPECTED_AGENTS)
+    assert [target.name for target in targets] == [
+        f"{agent_name}.toml" for agent_name in EXPECTED_AGENTS
+    ]
+    assert targets[0].parent == tmp_path / ".codex" / "agents"
+    assert not (tmp_path / ".codex" / "agents").exists()
+
+
+def test_install_skill_copies_agents_and_refuses_overwrite(tmp_path: Path) -> None:
+    module = load_install_module()
+
+    targets = module.install_agents(tmp_path, dry_run=False)
+
+    assert len(targets) == len(EXPECTED_AGENTS)
+    for target in targets:
+        assert target.exists()
+        text = target.read_text(encoding="utf-8")
+        assert "# shared-subagents:provided-agent" in text
+        assert "developer_instructions" in text
+
+    try:
+        module.install_agents(tmp_path, dry_run=False)
+    except FileExistsError as error:
+        assert "context-manager.toml" in str(error)
+    else:
+        raise AssertionError("install_agents should reject existing files by default")
+
+
+def test_install_skill_backup_preserves_existing_agent(tmp_path: Path) -> None:
+    module = load_install_module()
+    existing = tmp_path / ".codex" / "agents" / "context-manager.toml"
+    existing.parent.mkdir(parents=True)
+    existing.write_text("custom local agent\n", encoding="utf-8")
+
+    targets = module.install_agents(tmp_path, dry_run=False, backup=True)
+
+    backup = tmp_path / ".codex" / "agents" / "context-manager.toml.bak"
+    assert backup.exists()
+    assert backup.read_text(encoding="utf-8") == "custom local agent\n"
+    assert existing.read_text(encoding="utf-8") != "custom local agent\n"
+    assert targets[0] == existing
 
 
 def test_requirements_reviewer_owns_user_requirement_fidelity() -> None:

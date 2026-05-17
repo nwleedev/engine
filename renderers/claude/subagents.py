@@ -13,6 +13,14 @@ from tools.build.source_files import ensure_source_file
 
 READ_ONLY_TOOLS = ("Read", "Grep", "Glob")
 EDIT_TOOLS = ("Read", "Grep", "Glob", "Edit")
+CLAUDE_EXCLUDED_SUPPORT_PATHS = frozenset(
+    {
+        "skills/install/SKILL.md",
+        "skills/install/install.py",
+    }
+)
+
+
 def _render_claude_readme(source_root: Path) -> str:
     """Return Claude-specific shared-subagents README text."""
 
@@ -102,6 +110,8 @@ def render_claude_agent_tree(source_root: Path) -> dict[str, str]:
     """Render the complete canonical shared-subagents tree for Claude."""
 
     files = render_shared_subagents_support_tree(source_root)
+    for path in CLAUDE_EXCLUDED_SUPPORT_PATHS:
+        files.pop(path, None)
     files["README.md"] = _render_claude_readme(source_root)
     agents_root = source_root / "agents"
 

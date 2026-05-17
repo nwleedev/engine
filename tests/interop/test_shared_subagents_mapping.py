@@ -83,6 +83,8 @@ def test_codex_agent_tree_includes_complete_plugin_support_files() -> None:
 
     assert "README.md" in files
     assert "AGENTS.block.md" not in files
+    assert "skills/install/SKILL.md" in files
+    assert "skills/install/install.py" in files
     assert "skills/scaffold/SKILL.md" not in files
     assert "skills/scaffold/scaffold.py" not in files
     assert "scripts/install_shared_subagents.py" not in files
@@ -96,6 +98,8 @@ def test_claude_agent_tree_excludes_agents_block_and_scaffold_support() -> None:
     files = render_claude_agent_tree(ROOT / "plugin-sources" / "shared-subagents")
 
     assert "AGENTS.block.md" not in files
+    assert "skills/install/SKILL.md" not in files
+    assert "skills/install/install.py" not in files
     assert "scripts/install_shared_subagents.py" not in files
     assert "scripts/print_agents_md_block.py" not in files
     assert "skills/scaffold/SKILL.md" not in files
@@ -113,6 +117,7 @@ def test_claude_generated_bundle_does_not_advertise_codex_install_surface() -> N
     assert "install_shared_subagents.py" not in readme
     assert "print_agents_md_block.py" not in readme
     assert "skills/scaffold/scaffold.py" not in readme
+    assert "$shared-subagents:install" not in readme
     assert "plugin-bundled agents" in readme
     assert "AGENTS.block.md" not in readme
     assert ".claude/agents/" in readme

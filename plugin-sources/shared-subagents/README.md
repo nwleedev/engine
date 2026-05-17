@@ -24,7 +24,7 @@ Shared Codex and Claude Code subagent templates for reusable Superpowers workflo
 
 This bundle ships generated Codex TOML agents under `agents/`.
 
-Use the bundled agents through the runtime plugin loader when available. If your Codex environment requires project-local agents, copy the needed TOML files into the repository root `.codex/agents/` directory and restart Codex.
+Use the bundled agents through the runtime plugin loader when available. If your Codex environment requires project-local agents, run `$shared-subagents:install` to copy the bundled TOML files into the repository root `.codex/agents/` directory, then restart Codex.
 
 ### Using In Claude Code
 
@@ -37,7 +37,7 @@ Example: `Use the test-adequacy-reviewer subagent to review tests for AC-001 / S
 - Keep shared agents bundled with the plugin whenever the runtime can discover plugin-bundled agents.
 - If local copies are required, keep them at the repository root runtime directory, not inside nested monorepo packages.
 - Keep stack-specific or organization-private agents in project-local runtime directories.
-- Do not add scaffold skills, copy-install commands, or AGENTS.md editing behavior to this plugin.
+- Do not add scaffold skills or AGENTS.md editing behavior to this plugin.
 - Keep MCP server configuration outside this plugin.
 
 ## MCP inheritance
@@ -60,4 +60,4 @@ Expected generated bundle results:
 - The Claude Code bundle contains thirteen Markdown files under `agents/`.
 - Each TOML file contains `developer_instructions`.
 - Each TOML file contains `# shared-subagents:provided-agent` so optional project-local copies can be identified as plugin-provided templates.
-- The Codex manifest does not advertise `skills`, because this plugin is agent-only.
+- The Codex manifest advertises `skills`, because the `install` skill provides the project-local Codex agent copy workflow.
