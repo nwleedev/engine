@@ -5,6 +5,7 @@ import json
 import pytest
 
 from learnable.materials.schemas import SchemaValidationError, load_schema_resource
+from learnable.web.static import read_static_resource
 
 
 def test_load_schema_resource_rejects_unknown_names() -> None:
@@ -116,3 +117,72 @@ def test_graph_schema_requires_persisted_node_metadata_fields() -> None:
         "material_path",
     ]
     assert node_schema["properties"]["depth"] == {"type": "integer"}
+
+
+def _static_text(name: str) -> str:
+    body, content_type = read_static_resource(name)
+    assert content_type.startswith(("text/html", "text/css", "application/javascript"))
+    return body.decode("utf-8")
+
+
+def test_spa_static_resources_load_from_package_resources() -> None:
+    assert "<main" in _static_text("index.html")
+    assert ".app-shell" in _static_text("app.css")
+    assert "loadSessions" in _static_text("app.js")
+
+
+def test_spa_uses_only_local_static_assets() -> None:
+    combined = "\n".join(
+        [_static_text("index.html"), _static_text("app.css"), _static_text("app.js")]
+    )
+
+    forbidden = [
+        "cdn.tailwindcss.com",
+        "tailwind play",
+        "http://",
+        "https://",
+        "npm ",
+        "node_modules",
+    ]
+    for value in forbidden:
+        assert value not in combined.lower()
+
+
+def test_spa_is_read_only_without_prompt_input_ui() -> None:
+    html = _static_text("index.html")
+    js = _static_text("app.js")
+
+    assert "<textarea" not in html
+    assert 'type="text"' not in html
+    assert "contenteditable" not in html
+    assert "/api/ask" not in js
+    assert "/api/explain" not in js
+
+
+def test_spa_contains_required_viewer_regions_and_states() -> None:
+    html = _static_text("index.html")
+    js = _static_text("app.js")
+
+    for marker in [
+        'data-region="material-explorer"',
+        'data-region="markdown-viewer"',
+        'data-region="metadata-strip"',
+        'data-region="hierarchy"',
+        'data-region="source-refs"',
+        'data-region="prerequisites"',
+        'data-region="local-status"',
+    ]:
+        assert marker in html
+    assert "No materials found" in js
+    assert "Unable to load local materials" in js
+
+
+def test_spa_css_supports_responsive_work_ui_without_landing_hero() -> None:
+    css = _static_text("app.css")
+    html = _static_text("index.html")
+
+    assert "grid-template-columns" in css
+    assert "@media (max-width: 760px)" in css
+    assert "position: sticky" in css
+    assert "hero" not in html.lower()
+    assert "glass" not in css.lower()
