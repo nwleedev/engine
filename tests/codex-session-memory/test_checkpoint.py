@@ -111,7 +111,7 @@ def test_prepare_outputs_context_target_and_evidence(monkeypatch, tmp_path, caps
     assert "last_processed_offset: 10" in output
 
 
-def test_prepare_writes_populated_context_and_index_summary(monkeypatch, tmp_path, capsys):
+def test_prepare_outputs_handoff_without_writing_context_or_index(monkeypatch, tmp_path, capsys):
     checkpoint = load_checkpoint()
     jsonl = tmp_path / "rollout-test-thread.jsonl"
     jsonl.write_text('{"type":"turn","payload":"ok"}\n', encoding="utf-8")
@@ -152,19 +152,17 @@ def test_prepare_writes_populated_context_and_index_summary(monkeypatch, tmp_pat
     output = capsys.readouterr().out
     context_line = next(line for line in output.splitlines() if line.startswith("context_path: "))
     context_path = Path(context_line.removeprefix("context_path: "))
-    context = context_path.read_text(encoding="utf-8")
-    index = (context_path.parent.parent / "INDEX.md").read_text(encoding="utf-8")
 
-    assert "# <title>" not in context
-    assert "guidance:" not in context
-    assert "<summary>" not in context
-    assert "plugin-sources/session-memory/adapters/codex/skills/checkpoint/checkpoint.py" in context
-    assert "tests/codex-session-memory/test_checkpoint.py" in context
-    assert "uv run --isolated --python /usr/local/bin/python3.12 --with pytest pytest" in context
-    assert "Fix session-memory" in context
-    assert f"- [{context_path.name}]" in index
-    assert "<summary>" not in index
-    assert "checkpoint captured 2 delta messages" in index
+    assert "The active Codex must write the context file and update INDEX.md." in output
+    assert "## required context template" in output
+    assert "# <title>" in output
+    assert "guidance:" in output
+    assert "plugin-sources/session-memory/adapters/codex/skills/checkpoint/checkpoint.py" in output
+    assert "tests/codex-session-memory/test_checkpoint.py" in output
+    assert "uv run --isolated --python /usr/local/bin/python3.12 --with pytest pytest" in output
+    assert "Do not save the template unchanged." in output
+    assert not context_path.exists()
+    assert not (context_path.parent.parent / "INDEX.md").exists()
 
 
 def test_prepare_outputs_flat_artifact_target(monkeypatch, tmp_path, capsys):
@@ -184,8 +182,8 @@ def test_prepare_outputs_flat_artifact_target(monkeypatch, tmp_path, capsys):
     output = capsys.readouterr().out
     assert ".codex/session-memory/threads/test-session/INDEX.md" in output
     assert "_children" not in output
-    assert "# <title>" not in output
-    assert "guidance:" not in output
+    assert "# <title>" in output
+    assert "guidance:" in output
     for heading in REQUIRED_CONTEXT_HEADINGS:
         assert heading in output
 
@@ -231,10 +229,9 @@ def test_prepare_context_path_uses_timestamp_task_id_nonce_and_writes_metadata(
         / "CONTEXT-20260517-101112-checkpoint-abc123.md"
     )
     assert f"context_path: {expected}" in output
-    assert expected.is_file()
-    context = expected.read_text(encoding="utf-8")
-    assert "session_id: target-session" in context
-    assert "source_thread_id: source-thread" in context
+    assert not expected.exists()
+    assert "session_id: target-session" in output
+    assert "source_thread_id: source-thread" in output
     assert "CONTEXT-source-thread" not in expected.name
 
 
@@ -258,7 +255,7 @@ def test_prepare_mismatch_warns_and_writes_only_to_session_id_path(monkeypatch, 
     assert "CODEX_SESSION_ID" in captured.err
     assert ".codex/session-memory/threads/target-session/INDEX.md" in captured.out
     assert ".codex/session-memory/threads/source-thread/INDEX.md" not in captured.out
-    assert (tmp_path / ".codex" / "session-memory" / "threads" / "target-session" / "INDEX.md").is_file()
+    assert not (tmp_path / ".codex" / "session-memory" / "threads" / "target-session" / "INDEX.md").exists()
     assert not (tmp_path / ".codex" / "session-memory" / "threads" / "source-thread").exists()
 
 
@@ -325,7 +322,7 @@ def checkpoint_path_text():
     return CHECKPOINT.read_text(encoding="utf-8")
 
 
-def test_prepare_partial_success_when_index_update_fails(monkeypatch, tmp_path, capsys):
+def test_prepare_does_not_call_index_update_helper(monkeypatch, tmp_path, capsys):
     checkpoint = load_checkpoint()
     jsonl = tmp_path / "rollout-source-thread.jsonl"
     jsonl.write_text('{"type":"turn","payload":"ok"}\n', encoding="utf-8")
@@ -337,22 +334,24 @@ def test_prepare_partial_success_when_index_update_fails(monkeypatch, tmp_path, 
     monkeypatch.setattr(checkpoint.io, "read_frontmatter", lambda path: {"last_processed_offset": 0})
     monkeypatch.setattr(checkpoint.jp, "extract_delta", lambda path, offset: ([], 10))
 
-    def fail_append(*_args, **_kwargs):
-        raise OSError("disk full")
+    def fail_write_helper(*_args, **_kwargs):
+        raise AssertionError("prepare must not write context or INDEX.md")
 
-    monkeypatch.setattr(checkpoint.io, "append_context_entry_with_frontmatter", fail_append)
+    monkeypatch.setattr(checkpoint.io, "append_context_entry_with_frontmatter", fail_write_helper)
+    monkeypatch.setattr(checkpoint.io, "write_index", fail_write_helper)
+    monkeypatch.setattr(checkpoint.io, "append_context_entry", fail_write_helper)
+    monkeypatch.setattr(checkpoint.io, "update_frontmatter", fail_write_helper)
 
-    assert checkpoint.main(["prepare"]) == 1
+    assert checkpoint.main(["prepare"]) == 0
 
     captured = capsys.readouterr()
     context_line = next(line for line in captured.out.splitlines() if line.startswith("context_path: "))
     context_path = Path(context_line.removeprefix("context_path: "))
-    assert context_path.is_file()
-    assert "INDEX.md update failed" in captured.err
-    assert "repair" in captured.err
+    assert not context_path.exists()
+    assert "The active Codex must write" in captured.out
 
 
-def test_prepare_uses_single_index_update_helper(monkeypatch, tmp_path, capsys):
+def test_prepare_outputs_deterministic_index_metadata(monkeypatch, tmp_path, capsys):
     checkpoint = load_checkpoint()
     jsonl = tmp_path / "rollout-source-thread.jsonl"
     jsonl.write_text('{"type":"turn","payload":"ok"}\n', encoding="utf-8")
@@ -378,23 +377,9 @@ def test_prepare_uses_single_index_update_helper(monkeypatch, tmp_path, capsys):
     monkeypatch.setattr(checkpoint.io, "read_frontmatter", lambda path: {"last_processed_offset": 0})
     monkeypatch.setattr(checkpoint.jp, "extract_delta", lambda path, offset: ([], 10))
 
-    helper_calls = []
-
-    def fake_update(path, filename, summary, **kwargs):
-        helper_calls.append((path, filename, summary, kwargs))
-        return path.with_name(f"{path.name}.{kwargs['writer_id']}.bak")
-
-    def fail_legacy_helper(*_args, **_kwargs):
-        raise AssertionError("checkpoint must use the combined index update helper")
-
-    monkeypatch.setattr(checkpoint.io, "append_context_entry_with_frontmatter", fake_update)
-    monkeypatch.setattr(checkpoint.io, "write_index", fail_legacy_helper)
-    monkeypatch.setattr(checkpoint.io, "append_context_entry", fail_legacy_helper)
-    monkeypatch.setattr(checkpoint.io, "update_frontmatter", fail_legacy_helper)
-
     assert checkpoint.main(["prepare"]) == 0
 
-    capsys.readouterr()
+    output = capsys.readouterr().out
     expected_index = (
         tmp_path
         / ".codex"
@@ -403,21 +388,13 @@ def test_prepare_uses_single_index_update_helper(monkeypatch, tmp_path, capsys):
         / "target-session"
         / "INDEX.md"
     )
-    assert helper_calls == [
-        (
-            expected_index,
-            "CONTEXT-20260517-101112-checkpoint-abc123.md",
-            "checkpoint captured 0 delta messages",
-            {
-                "writer_id": "20260517-101112-checkpoint-abc123",
-                "session_id": "target-session",
-                "source_thread_id": "source-thread",
-                "artifact_schema_version": 2,
-                "last_processed_offset": 10,
-                "last_updated": "2026-05-17T10:11:12Z",
-            },
-        )
-    ]
+    assert f"index_path: {expected_index}" in output
+    assert "index_entry: - [CONTEXT-20260517-101112-checkpoint-abc123.md] - <summary>" in output
+    assert "last_processed_offset: 10" in output
+    assert "last_updated: 2026-05-17T10:11:12Z" in output
+    assert "session_id: target-session" in output
+    assert "source_thread_id: source-thread" in output
+    assert not expected_index.exists()
 
 
 def test_prepare_unknown_argument_prints_specific_error(capsys):
@@ -671,7 +648,7 @@ def test_verify_rejects_index_substring_false_positive(tmp_path, monkeypatch, ca
     assert "INDEX.md does not include context entry" in capsys.readouterr().err
 
 
-def test_prepare_writes_context_and_index(monkeypatch, tmp_path, capsys):
+def test_prepare_outputs_context_and_index_targets_without_writing(monkeypatch, tmp_path, capsys):
     checkpoint = load_checkpoint()
     jsonl = tmp_path / "rollout-test-thread.jsonl"
     jsonl.write_text('{"type":"turn","payload":"ok"}\n', encoding="utf-8")
@@ -689,9 +666,9 @@ def test_prepare_writes_context_and_index(monkeypatch, tmp_path, capsys):
     output = capsys.readouterr().out
     context_line = next(line for line in output.splitlines() if line.startswith("context_path: "))
     context_path = Path(context_line.removeprefix("context_path: "))
-    assert context_path.exists()
-    assert (session_dir / "INDEX.md").exists()
-    assert f"- [{context_path.name}]" in (session_dir / "INDEX.md").read_text(encoding="utf-8")
+    assert not context_path.exists()
+    assert not (session_dir / "INDEX.md").exists()
+    assert f"index_entry: - [{context_path.name}] - <summary>" in output
 
 
 def test_root_errors_return_clear_stderr(monkeypatch, tmp_path, capsys):

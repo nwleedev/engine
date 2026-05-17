@@ -18,13 +18,19 @@ python3 /path/to/session-memory/skills/checkpoint/checkpoint.py prepare
 ```
 
 `prepare` requires both `CODEX_SESSION_ID` and `CODEX_THREAD_ID`. If they differ,
-it prints a warning and still writes only under
+it prints a warning and still targets only
 `<root>/.codex/session-memory/threads/<CODEX_SESSION_ID>/`.
 
-The helper writes the context file and updates `INDEX.md` directly. It extracts
-the latest transcript delta and durable evidence into the full 9-section CONTEXT
-handoff: `current_goal`, `executive_summary`, `detailed_state`, `decisions`,
-`files`, `verification`, `risks`, `next_actions`, and `graph_context`.
+`prepare` is intentionally output-only. It prints the artifact target, offset
+metadata, extracted evidence, and the full 9-section CONTEXT template:
+`current_goal`, `executive_summary`, `detailed_state`, `decisions`, `files`,
+`verification`, `risks`, `next_actions`, and `graph_context`.
+
+The active Codex must then write the context file at the printed `context_path`
+with meaningful handoff content derived from the printed evidence and current
+conversation, not with the template unchanged. After writing the context, update
+the printed `INDEX.md` target with a human-written summary entry and the printed
+frontmatter metadata, then run `verify`.
 
 The context metadata records `session_id`, `source_thread_id`, `task_id`,
 `checkpoint_id`, and `created_at`. `graph_context` records that Codex graph and
@@ -34,12 +40,7 @@ parent discovery are not used. The checkpoint path uses:
 contexts/CONTEXT-<timestamp>-<task-id>-<nonce>.md
 ```
 
-`INDEX.md` is updated with an `INDEX.md.lock`, writer-scoped backup/temp files,
-same-directory temp writes, file fsync, and `os.replace()`. If context writing
-succeeds but `INDEX.md` update fails, the context file is preserved and the
-helper exits with code `1` plus repair guidance.
-
-After writing the files, verify the result:
+After the active Codex writes the files, verify the result:
 
 ```bash
 python3 /path/to/session-memory/skills/checkpoint/checkpoint.py verify /path/to/context.md
@@ -56,5 +57,5 @@ list entry like `- [CONTEXT-...md]`. For read compatibility, legacy
 
 - The helper does not spawn another Codex process.
 - The helper does not read Codex sqlite DBs, `thread_spawn_edges`, `threads.source`, rollout `session_meta`, `parent_locator`, or `graph_store`.
-- Required context headings are `current_goal`, `executive_summary`, `detailed_state`, `decisions`, `files`, `verification`, `risks`, `next_actions`, and `graph_context`; the helper fills them from the latest transcript delta and extracted evidence.
+- Required context headings are `current_goal`, `executive_summary`, `detailed_state`, `decisions`, `files`, `verification`, `risks`, `next_actions`, and `graph_context`; the helper prints a template and evidence, and the active Codex fills the final handoff document.
 - Project root resolution honors `CODEX_PROJECT_DIR` env or `.env` declaration, then falls back to git toplevel / AGENTS.md / `.codex` / cwd.

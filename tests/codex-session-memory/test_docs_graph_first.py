@@ -21,7 +21,8 @@ def test_readmes_document_flat_migration_without_legacy_child_append():
             assert "does not add new parent `Child Sessions` links" in text
         assert "Artifact-only mode" in text
         assert "CODEX_SESSION_ID=<main-thread-id> codex resume <main-thread-id>" in text
-        assert "INDEX.md.lock" in text
+        assert "output-only" in text
+        assert "template must not be" in text or "Template를 그대로 저장하면" in text
         assert "executive_summary" in text
         assert "detailed_state" in text
         assert "graph_context" in text

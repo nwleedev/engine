@@ -119,22 +119,23 @@ mode에서는 다음처럼 동작합니다.
   작업을 재개합니다.
 - 체크포인트 CONTEXT는 호환성 섹션으로 `graph_context`를 유지하지만, graph와
   parent discovery를 사용하지 않았다고 기록합니다.
-- context 파일을 쓴 뒤 `INDEX.md` update가 실패하면 context는 보존하고, helper는
-  context path, 가능한 경우 backup path, 수동 repair 지침을 출력합니다.
+- `$session-memory:checkpoint` prepare는 output-only입니다. target
+  `context_path`, `INDEX.md` path, offset metadata, durable evidence, 필수
+  9-section CONTEXT template를 출력합니다.
 
-이 모델은 빈 양식만 저장하는 방식이 아닙니다. helper는 최신 transcript
-delta와 durable evidence를 추출해 필수 9-section CONTEXT 문서의
+Checkpoint context는 기계적인 helper가 아니라 활성 Codex가 작성합니다.
+`prepare` 이후 활성 Codex는 출력된 evidence와 현재 대화를 바탕으로
 `executive_summary`, `detailed_state`, `files`, `verification`,
-`next_actions`, `graph_context`와 나머지 인계 섹션을 실제 내용으로 채워,
-압축 복구 시 간결한 상태와 구체적인 작업 맥락을 모두 다시 읽을 수 있게 합니다.
+`next_actions`, `graph_context`와 나머지 인계 섹션을 유의미한 내용으로 채우고,
+출력된 `INDEX.md` target을 업데이트해야 합니다. Template를 그대로 저장하면
+안 됩니다.
 
 ## 병렬 체크포인트
 
 Context 파일은 `contexts/CONTEXT-<timestamp>-<task-id>-<nonce>.md` 형식으로
 생성합니다. `source_thread_id`는 파일명이 아니라 context metadata에 기록합니다.
-`INDEX.md` 업데이트는 `INDEX.md.lock`을 잡고, lock 안에서 최신 파일을 다시 읽고,
-같은 디렉터리에 writer별 backup/temp 파일을 만든 뒤 temp 파일 fsync와
-`os.replace`로 최종 교체합니다.
+`prepare`는 output-only이므로 병렬 writer는 출력된 target path를 사용하고,
+작성 후 최종 context/INDEX 쌍을 verify해야 합니다.
 
 ## 세션 연속성
 

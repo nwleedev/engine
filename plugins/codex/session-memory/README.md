@@ -117,24 +117,24 @@ In artifact-only mode:
   `.codex/session-memory/threads/<id>/INDEX.md` and recent `contexts/`.
 - Checkpoint CONTEXT files keep `graph_context` as a compatibility section, but
   it records that graph and parent discovery were not used.
-- If `INDEX.md` update fails after writing a context file, the context is kept
-  and the helper prints the context path, backup path when available, and manual
-  repair guidance.
+- `$session-memory:checkpoint` prepare is output-only: it prints the target
+  `context_path`, `INDEX.md` path, offset metadata, durable evidence, and the
+  required 9-section CONTEXT template.
 
-Checkpoint context is not reduced to an empty form in this model. The helper
-extracts the latest transcript delta and durable evidence into the required
-9-section CONTEXT document, including `executive_summary`, `detailed_state`,
-`files`, `verification`, `next_actions`, and `graph_context`, so compaction
-recovery has both concise state and concrete working context.
+Checkpoint context is written by the active Codex, not by a mechanical helper.
+After `prepare`, the active Codex must use the printed evidence and current
+conversation to write meaningful `executive_summary`, `detailed_state`,
+`files`, `verification`, `next_actions`, `graph_context`, and other handoff
+sections, then update the printed `INDEX.md` target. The template must not be
+saved unchanged.
 
 ## Concurrent checkpoints
 
-Context files are created as
+Context files should be created as
 `contexts/CONTEXT-<timestamp>-<task-id>-<nonce>.md`. `source_thread_id` is stored
-inside the context metadata rather than the filename. `INDEX.md` updates take an
-`INDEX.md.lock`, reread the latest file under the lock, create writer-scoped
-backup/temp files in the same directory, fsync the temp file, and use
-`os.replace` for the final update.
+inside the context metadata rather than the filename. Since `prepare` is
+output-only, concurrent writers must use the printed target path and verify the
+final context/INDEX pair after writing.
 
 ## How session continuity works
 
