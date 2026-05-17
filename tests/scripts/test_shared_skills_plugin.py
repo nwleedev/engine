@@ -141,6 +141,7 @@ def test_workflow_artifact_reference_defines_required_ids() -> None:
         "stale_evidence",
         "unresolved_risk",
         "not_run_hidden",
+        "missing_review_gate",
         "Coverage Report",
         "coverage_report_id",
         "validator_command",
@@ -232,7 +233,9 @@ def test_spec_plan_coverage_skill_defines_failure_codes_and_reports() -> None:
     assert "stale_evidence" in text
     assert "unresolved_risk" in text
     assert "not_run_hidden" in text
+    assert "missing_review_gate" in text
     assert "unjustified_fixture" in text
+    assert "stale_fixture" in text
     assert "fixture_overgrowth" in text
     assert "unapproved_mock" in text
     assert "missing_real_boundary_check" in text

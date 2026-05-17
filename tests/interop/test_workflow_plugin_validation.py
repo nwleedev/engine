@@ -71,6 +71,7 @@ def test_workflow_validation_constants_cover_retired_routes_and_contracts() -> N
     assert "stale_evidence" in REQUIRED_WORKFLOW_ARTIFACT_TERMS
     assert "unresolved_risk" in REQUIRED_WORKFLOW_ARTIFACT_TERMS
     assert "not_run_hidden" in REQUIRED_WORKFLOW_ARTIFACT_TERMS
+    assert "missing_review_gate" in REQUIRED_WORKFLOW_ARTIFACT_TERMS
     assert "Coverage Report" in REQUIRED_WORKFLOW_ARTIFACT_TERMS
     assert "coverage_report_id" in REQUIRED_WORKFLOW_ARTIFACT_TERMS
     assert "validator_command" in REQUIRED_WORKFLOW_ARTIFACT_TERMS
@@ -80,6 +81,7 @@ def test_workflow_validation_constants_cover_retired_routes_and_contracts() -> N
     assert "Fixture/Mock Justification" in REQUIRED_DOWNSTREAM_TEST_TERMS
     assert "Fixture Governance Contract" in REQUIRED_DOWNSTREAM_TEST_TERMS
     assert "unjustified_fixture" in REQUIRED_DOWNSTREAM_TEST_TERMS
+    assert "stale_fixture" in REQUIRED_DOWNSTREAM_TEST_TERMS
     assert "fixture_overgrowth" in REQUIRED_DOWNSTREAM_TEST_TERMS
     assert "unapproved_mock" in REQUIRED_DOWNSTREAM_TEST_TERMS
     assert "missing_real_boundary_check" in REQUIRED_DOWNSTREAM_TEST_TERMS
@@ -194,12 +196,14 @@ def test_workflow_validation_reports_missing_schema_terms(tmp_path: Path) -> Non
         ("workflow-artifacts.md", "stale_evidence"),
         ("workflow-artifacts.md", "unresolved_risk"),
         ("workflow-artifacts.md", "not_run_hidden"),
+        ("workflow-artifacts.md", "missing_review_gate"),
         ("workflow-artifacts.md", "orphan_task"),
         ("workflow-artifacts.md", "needs_spec_mapping"),
         ("workflow-artifacts.md", "Coverage Report"),
         ("workflow-artifacts.md", "coverage_report_id"),
         ("workflow-artifacts.md", "validator_exit_code"),
         ("downstream-test-contracts.md", "unjustified_fixture"),
+        ("downstream-test-contracts.md", "stale_fixture"),
         ("downstream-test-contracts.md", "fixture_overgrowth"),
         ("downstream-test-contracts.md", "unapproved_mock"),
         ("downstream-test-contracts.md", "missing_real_boundary_check"),

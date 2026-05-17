@@ -21,7 +21,7 @@ Check:
 - Fixture Governance Contract exists for each fixture, fake, stub, mock, snapshot, seed record, generated input, or test-only adapter
 - the fixture budget is not exceeded without explicit scenario-linked approval
 - high-fidelity boundary or real-boundary alternatives were preferred before doubles
-- fixture_overgrowth, missing_real_boundary_check, unjustified_fixture, and test_only_behavior are treated as blocking findings
+- fixture_overgrowth, stale_fixture, missing_real_boundary_check, unjustified_fixture, and test_only_behavior are treated as blocking findings
 - mocks do not replace internal domain behavior when real behavior can be asserted
 - failed, skipped, or not-run test commands are not hidden
 

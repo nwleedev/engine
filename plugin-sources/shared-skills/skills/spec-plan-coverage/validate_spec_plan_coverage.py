@@ -23,7 +23,9 @@ BLOCKING_ORDER = (
     "unresolved_risk",
     "not_run_hidden",
     "missing_coverage_report",
+    "missing_review_gate",
     "unjustified_fixture",
+    "stale_fixture",
     "fixture_overgrowth",
     "unapproved_mock",
     "missing_real_boundary_check",
@@ -139,6 +141,10 @@ def validate_document(document: dict[str, Any]) -> dict[str, Any]:
         verification_gate.get("coverage_report_ids")
     ):
         _add_code(blocking_codes, "missing_coverage_report")
+    if verification_gate.get("requires_completion_review") and not _as_list(
+        verification_gate.get("review_gate_ids")
+    ):
+        _add_code(blocking_codes, "missing_review_gate")
     if verification_gate.get("not_run_items_hidden") or (
         _as_list(verification_gate.get("not_run_items"))
         and not _as_list(verification_gate.get("disclosed_not_run_items"))
@@ -171,6 +177,10 @@ def validate_document(document: dict[str, Any]) -> dict[str, Any]:
         )
         if any(not fixture.get(field) for field in required):
             _add_code(blocking_codes, "unjustified_fixture")
+        if fixture.get("stale") is True or fixture.get("drift_status") == "stale":
+            _add_code(blocking_codes, "stale_fixture")
+        if fixture.get("generation_date") and not fixture.get("source_location"):
+            _add_code(blocking_codes, "stale_fixture")
         if fixture.get("real_boundary_preferred") is False and not fixture.get(
             "high_fidelity_boundary"
         ):

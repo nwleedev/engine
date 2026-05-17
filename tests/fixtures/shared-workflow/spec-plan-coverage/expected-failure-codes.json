@@ -6,6 +6,7 @@
   "missing-fallback": ["missing_fallback"],
   "missing-plan": ["missing_plan"],
   "missing-real-boundary-check": ["missing_real_boundary_check"],
+  "missing-review-gate": ["missing_review_gate"],
   "missing-source": ["missing_source"],
   "missing-validation": ["missing_validation"],
   "multi-claim-clause": ["multi_claim_clause"],
@@ -13,6 +14,7 @@
   "needs-spec-mapping": ["needs_spec_mapping", "missing_plan"],
   "orphan-task": ["orphan_task"],
   "stale-evidence": ["stale_evidence"],
+  "stale-fixture": ["stale_fixture"],
   "test-only-behavior": ["test_only_behavior"],
   "unapproved-mock": ["unapproved_mock"],
   "unjustified-fixture": ["unjustified_fixture"]

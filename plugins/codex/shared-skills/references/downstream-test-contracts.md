@@ -28,6 +28,11 @@ observable behavior, a real-boundary alternative, and a drift check.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | FX-001 | SCN-001 | SPEC-001.CLAUSE-001 | fixture | yes |  |  |  |  |
 
+When fixture drift can affect completion evidence, include source location and
+generation date in the fixture note or evidence bundle. Treat `stale_fixture` as
+a failure when fixture source, generation date, drift status, or update trigger
+shows the fixture no longer reflects the project boundary it claims to model.
+
 ## Fixture and Mock Priority
 
 1. Inline minimal arrange in the test body.
@@ -46,5 +51,6 @@ observable behavior, a real-boundary alternative, and a drift check.
 - Treat `unjustified_fixture` as a failure when a fixture lacks a linked scenario, linked spec clause, or real-boundary alternative.
 - Treat `fixture_overgrowth` as a failure when fixture count, factory fields, snapshot size, or generated inputs grow beyond the approved fixture budget.
 - Treat `unapproved_mock` as a failure when new mocks or mock-call assertions exceed the approved mock budget.
+- Treat `stale_fixture` as a failure when fixture drift review shows a stale source, missing update trigger, or mismatch with the current spec/project boundary.
 - Treat `missing_real_boundary_check` as a failure when the test relies on doubles without a high-fidelity boundary or documented real-boundary reason.
 - Treat `test_only_behavior` as a failure when production behavior is added only to satisfy a test fixture, mock, or fake instead of the user scenario.

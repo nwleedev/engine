@@ -119,6 +119,7 @@ def test_test_adequacy_reviewer_owns_downstream_test_quality() -> None:
         "fixture budget",
         "high-fidelity boundary",
         "fixture_overgrowth",
+        "stale_fixture",
         "missing_real_boundary_check",
         "unjustified_fixture",
         "test_only_behavior",
@@ -155,6 +156,8 @@ def test_spec_coverage_reviewer_owns_spec_clause_coverage() -> None:
         "confidential source text is redacted",
     ):
         assert term in check_block
+    assert "raw full spec" not in check_block
+    assert "raw full spec" in do_not_block
     assert "Do not approve coverage from broad SPEC IDs alone" in do_not_block
 
 
@@ -177,6 +180,7 @@ def test_completion_claim_reviewer_requires_validator_and_boundary_evidence() ->
         "stale_evidence",
         "unresolved_risk",
         "fixture_overgrowth",
+        "stale_fixture",
         "missing_real_boundary_check",
         "unjustified_fixture",
         "test_only_behavior",

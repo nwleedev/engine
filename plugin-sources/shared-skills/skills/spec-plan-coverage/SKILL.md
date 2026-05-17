@@ -41,8 +41,8 @@ checklist.
 7. Fail the gate when any required clause or task has `orphan_task`,
    `needs_spec_mapping`, `missing_plan`, `missing_validation`,
    `missing_fallback`, `missing_evidence`, `stale_evidence`,
-   `unresolved_risk`, `not_run_hidden`, `unjustified_fixture`,
-   `fixture_overgrowth`, `unapproved_mock`,
+   `unresolved_risk`, `not_run_hidden`, `missing_review_gate`,
+   `unjustified_fixture`, `stale_fixture`, `fixture_overgrowth`, `unapproved_mock`,
    `missing_real_boundary_check`, or `test_only_behavior`.
 8. Emit both a machine-readable JSON report and a redacted Markdown summary
    when source specs or plans are confidential and cannot be committed.

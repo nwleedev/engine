@@ -17,7 +17,7 @@ Check:
 - every completion claim is supported by fresh implementation evidence
 - every required spec clause is covered or explicitly deferred with owner and reason
 - missing_plan, missing_validation, missing_evidence, stale_evidence, and unresolved_risk block a done claim
-- fixture_overgrowth, missing_real_boundary_check, unjustified_fixture, and test_only_behavior block test adequacy claims
+- fixture_overgrowth, stale_fixture, missing_real_boundary_check, unjustified_fixture, and test_only_behavior block test adequacy claims
 - machine-readable JSON and redacted Markdown coverage reports are present when confidential specs cannot be committed
 - validator exit code, validator command, and validator report path are recorded for any machine-checkable coverage claim
 - not-run commands, skipped checks, and residual risks are disclosed separately from passed evidence

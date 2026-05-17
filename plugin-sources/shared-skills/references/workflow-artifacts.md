@@ -41,8 +41,9 @@ completion claim. `coverage_status` must be one of `covered`,
 
 Use `orphan_task` when a plan task has no requirement link, `needs_spec_mapping`
 when it has no spec clause link, `missing_fallback` when expected failure paths
-are not named, and `not_run_hidden` when not-run checks are omitted from the
-Verification Gate.
+are not named, `not_run_hidden` when not-run checks are omitted from the
+Verification Gate, and `missing_review_gate` when completion review evidence is
+required but not linked.
 
 | spec_clause_id | linked_requirement_ids | plan_task_ids | scenario_ids | test_or_check_ids | evidence_ids | coverage_status | gap_or_risk | owner |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
