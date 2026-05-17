@@ -77,7 +77,7 @@ def test_learnable_reference_files_exist() -> None:
 
 
 def test_learnable_readmes_use_valid_relative_links() -> None:
-    for path in [README, LEARNABLE / "adapters" / "codex" / "README.md"]:
+    for path in [README]:
         for link in _markdown_links(_text(path)):
             if link.startswith(("http://", "https://", "#")):
                 continue

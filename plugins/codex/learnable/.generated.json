@@ -1,0 +1,224 @@
+{
+  "generated": [
+    {
+      "target": ".codex-plugin/plugin.json",
+      "source": "plugin-sources/marketplace.yaml",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "README.md",
+      "source": "plugin-sources/learnable/README.md",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "_packages/learnable/__init__.py",
+      "source": "packages/learnable/learnable/__init__.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "_packages/learnable/cli.py",
+      "source": "packages/learnable/learnable/cli.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "_packages/learnable/core/__init__.py",
+      "source": "packages/learnable/learnable/core/__init__.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "_packages/learnable/core/config.py",
+      "source": "packages/learnable/learnable/core/config.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "_packages/learnable/core/errors.py",
+      "source": "packages/learnable/learnable/core/errors.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "_packages/learnable/core/paths.py",
+      "source": "packages/learnable/learnable/core/paths.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "_packages/learnable/core/redaction.py",
+      "source": "packages/learnable/learnable/core/redaction.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "_packages/learnable/materials/__init__.py",
+      "source": "packages/learnable/learnable/materials/__init__.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "_packages/learnable/materials/events.py",
+      "source": "packages/learnable/learnable/materials/events.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "_packages/learnable/materials/file_store.py",
+      "source": "packages/learnable/learnable/materials/file_store.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "_packages/learnable/materials/graph.py",
+      "source": "packages/learnable/learnable/materials/graph.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "_packages/learnable/materials/schemas.py",
+      "source": "packages/learnable/learnable/materials/schemas.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "_packages/learnable/materials/store.py",
+      "source": "packages/learnable/learnable/materials/store.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "_packages/learnable/schemas/graph.schema.json",
+      "source": "packages/learnable/learnable/schemas/graph.schema.json",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "_packages/learnable/schemas/material.schema.json",
+      "source": "packages/learnable/learnable/schemas/material.schema.json",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "_packages/learnable/schemas/session.schema.json",
+      "source": "packages/learnable/learnable/schemas/session.schema.json",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "_packages/learnable/server.py",
+      "source": "packages/learnable/learnable/server.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "_packages/learnable/static/app.css",
+      "source": "packages/learnable/learnable/static/app.css",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "_packages/learnable/static/app.js",
+      "source": "packages/learnable/learnable/static/app.js",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "_packages/learnable/static/index.html",
+      "source": "packages/learnable/learnable/static/index.html",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "_packages/learnable/web/__init__.py",
+      "source": "packages/learnable/learnable/web/__init__.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "_packages/learnable/web/asgi_backend.py",
+      "source": "packages/learnable/learnable/web/asgi_backend.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "_packages/learnable/web/auth.py",
+      "source": "packages/learnable/learnable/web/auth.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "_packages/learnable/web/handlers.py",
+      "source": "packages/learnable/learnable/web/handlers.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "_packages/learnable/web/router.py",
+      "source": "packages/learnable/learnable/web/router.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "_packages/learnable/web/static.py",
+      "source": "packages/learnable/learnable/web/static.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "_packages/learnable/web/stdlib_backend.py",
+      "source": "packages/learnable/learnable/web/stdlib_backend.py",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "references/entry-routing.md",
+      "source": "plugin-sources/learnable/references/entry-routing.md",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "references/material-schema.md",
+      "source": "plugin-sources/learnable/references/material-schema.md",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "references/policy.md",
+      "source": "plugin-sources/learnable/references/policy.md",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "references/role-prompts.md",
+      "source": "plugin-sources/learnable/references/role-prompts.md",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "references/security-review.md",
+      "source": "plugin-sources/learnable/references/security-review.md",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "references/server-workflow.md",
+      "source": "plugin-sources/learnable/references/server-workflow.md",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "references/session-model.md",
+      "source": "plugin-sources/learnable/references/session-model.md",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "references/source-policy.md",
+      "source": "plugin-sources/learnable/references/source-policy.md",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "skills/check-docs/SKILL.md",
+      "source": "plugin-sources/learnable/adapters/codex/skills/check-docs/SKILL.md",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "skills/entry/SKILL.md",
+      "source": "plugin-sources/learnable/adapters/codex/skills/entry/SKILL.md",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "skills/map-project/SKILL.md",
+      "source": "plugin-sources/learnable/adapters/codex/skills/map-project/SKILL.md",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "skills/organize-materials/SKILL.md",
+      "source": "plugin-sources/learnable/adapters/codex/skills/organize-materials/SKILL.md",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "skills/serve-materials/SKILL.md",
+      "source": "plugin-sources/learnable/adapters/codex/skills/serve-materials/SKILL.md",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "skills/verify-material/SKILL.md",
+      "source": "plugin-sources/learnable/adapters/codex/skills/verify-material/SKILL.md",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    },
+    {
+      "target": "skills/write-material/SKILL.md",
+      "source": "plugin-sources/learnable/adapters/codex/skills/write-material/SKILL.md",
+      "notice": "GENERATED FILE - DO NOT EDIT"
+    }
+  ]
+}

@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://codex.local/learnable/graph.schema.json",
+  "title": "Learnable graph record",
+  "type": "object",
+  "x-learnable-rules": [
+    "provenance runtime id values must not be used as learnable_session_id, root_node_id, node ids, edge ids, or material_path parts"
+  ],
+  "required": [
+    "schema_version",
+    "learnable_session_id",
+    "root_node_id",
+    "nodes",
+    "edges",
+    "created_at",
+    "updated_at",
+    "provenance"
+  ],
+  "properties": {
+    "schema_version": { "type": "string" },
+    "learnable_session_id": { "type": "string" },
+    "root_node_id": { "type": "string" },
+    "nodes": {
+      "type": "object",
+      "description": "Keys are stable learnable node_id values, never runtime provenance ids.",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["node_id", "parent_node_id", "depth", "material_path"],
+        "properties": {
+          "node_id": { "type": "string" },
+          "parent_node_id": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }]
+          },
+          "depth": { "type": "integer" },
+          "material_path": {
+            "type": "string",
+            "description": "Path parts must not use runtime provenance ids."
+          }
+        }
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["parent_node_id", "node_id"],
+        "properties": {
+          "parent_node_id": { "type": "string" },
+          "node_id": { "type": "string" }
+        }
+      }
+    },
+    "created_at": { "type": "string" },
+    "updated_at": { "type": "string" },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "runtime": {
+          "type": "string",
+          "enum": ["codex", "claude", "unknown"]
+        },
+        "codex_thread_id": { "type": "string" },
+        "codex_session_id": { "type": "string" },
+        "codex_turn_id": { "type": "string" },
+        "app_server_thread_id": { "type": "string" },
+        "diagnostics": { "type": "object" }
+      }
+    }
+  }
+}

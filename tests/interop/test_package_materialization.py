@@ -62,6 +62,19 @@ def test_research_prompt_package_is_materialized_into_generated_artifacts() -> N
     ).exists()
 
 
+def test_learnable_package_is_materialized_into_generated_artifact() -> None:
+    assert (
+        ROOT / "plugins/codex/learnable/_packages/learnable/__init__.py"
+    ).exists()
+    assert (
+        ROOT / "plugins/codex/learnable/_packages/learnable/static/index.html"
+    ).exists()
+    assert (
+        ROOT / "plugins/codex/learnable/_packages/learnable/schemas/session.schema.json"
+    ).exists()
+    assert not (ROOT / "plugins/claude/learnable").exists()
+
+
 def test_tomli_package_is_configured_for_python39_plugin_artifacts() -> None:
     artifacts = build_plugins._package_artifacts()
     tomli_source = ROOT / "packages/vendor/tomli/tomli"
@@ -79,6 +92,17 @@ def test_tomli_package_is_configured_for_python39_plugin_artifacts() -> None:
         for source_root, target_root, package_name in artifacts
         if source_root == tomli_source and package_name == "tomli"
     } == expected_targets
+
+
+def test_learnable_package_artifact_is_codex_only() -> None:
+    artifacts = build_plugins._package_artifacts()
+    learnable_source = ROOT / "packages/learnable/learnable"
+
+    assert {
+        target_root
+        for source_root, target_root, package_name in artifacts
+        if source_root == learnable_source and package_name == "learnable"
+    } == {ROOT / "plugins/codex/learnable/_packages/learnable"}
 
 
 def test_tomli_license_is_materialized_by_generated_build(
@@ -309,6 +333,11 @@ def test_package_artifacts_are_grouped_by_generated_plugin_root() -> None:
     ] == [
         (ROOT / "packages/deep-research-prompt-export/research_prompt", "_packages/research_prompt/"),
         (ROOT / "packages/vendor/tomli/tomli", "_packages/tomli/"),
+    ]
+    assert artifacts_by_target_root[
+        ROOT / "plugins/codex/learnable"
+    ] == [
+        (ROOT / "packages/learnable/learnable", "_packages/learnable/"),
     ]
 
 

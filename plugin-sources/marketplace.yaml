@@ -82,3 +82,13 @@ plugins:
         name: deep-research-prompt-export
         skills: ./skills/
         path: ./plugins/codex/deep-research-prompt-export
+  - id: learnable
+    version: 0.1.0
+    description: Local project learning materials as a read-only Markdown graph viewer for Codex
+    license: MIT
+    category: Productivity
+    harnesses:
+      codex:
+        name: learnable
+        skills: ./skills/
+        path: ./plugins/codex/learnable

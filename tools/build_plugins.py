@@ -20,13 +20,16 @@ from renderers.codex.skills import render_codex_skill_tree
 from renderers.codex.subagents import render_codex_agent_tree
 from renderers.plugin_tree import render_plugin_text_tree
 from tools.build.generated_registry import registry_document, registry_entry
+from tools.build.headers import markdown_header
 from tools.build.json_io import write_json
 from tools.build.materialize import replace_tree, write_text_tree
 from tools.build.metadata import load_marketplace
 from tools.build.paths import plugin_manifest_path
 
 
-COPIED_TREE_TRACEABLE_SUFFIXES = frozenset({".json", ".md", ".py", ".toml"})
+COPIED_TREE_TRACEABLE_SUFFIXES = frozenset(
+    {".css", ".html", ".js", ".json", ".md", ".py", ".toml"}
+)
 GENERATED_MANIFEST_TARGETS = frozenset(
     {
         ".claude-plugin/plugin.json",
@@ -62,6 +65,35 @@ def _registry_entries_for_copied_tree(
         and source_path.relative_to(source_root).as_posix()
         not in GENERATED_MANIFEST_TARGETS
     ]
+
+
+def _render_markdown_source(path: Path) -> str:
+    """Return Markdown text with a generated-source annotation."""
+
+    return markdown_header(path.relative_to(ROOT).as_posix()) + path.read_text(
+        encoding="utf-8"
+    )
+
+
+def _render_learnable_codex_tree(source_root: Path) -> dict[str, str]:
+    """Render Learnable's Codex adapter plus shared references into one plugin tree."""
+
+    files = render_codex_skill_tree(source_root / "adapters" / "codex")
+    files["README.md"] = _render_markdown_source(source_root / "README.md")
+    for relative_path, text in list(files.items()):
+        if relative_path.startswith("skills/"):
+            files[relative_path] = text.replace(
+                "../../../../references/",
+                "../../references/",
+            )
+
+    references_root = source_root / "references"
+    for reference_file in sorted(references_root.glob("*.md")):
+        files[f"references/{reference_file.name}"] = _render_markdown_source(
+            reference_file
+        )
+
+    return files
 
 
 def _package_license_source(source_root: Path) -> Path | None:
@@ -101,6 +133,52 @@ def _write_copied_tree_registry(
     """Write tracing metadata for copied files without inline headers."""
 
     entries = _registry_entries_for_copied_tree(source_root)
+    for package_source_root, package_target_prefix in package_entries:
+        entries.extend(
+            _registry_entries_for_copied_tree(
+                package_source_root,
+                target_prefix=package_target_prefix,
+            )
+        )
+        license_source = _package_license_source(package_source_root)
+        if license_source is not None:
+            entries.append(
+                registry_entry(
+                    f"{package_target_prefix}LICENSE",
+                    license_source.relative_to(ROOT).as_posix(),
+                )
+            )
+    entries.extend(manifest_entries)
+    _write_registry(target_root, entries)
+
+
+def _write_learnable_codex_registry(
+    source_root: Path,
+    target_root: Path,
+    package_entries: list[tuple[Path, str]],
+    manifest_entries: list[dict[str, str]],
+) -> None:
+    """Write tracing metadata for the composed Learnable Codex artifact."""
+
+    entries = [
+        registry_entry(
+            "README.md",
+            (source_root / "README.md").relative_to(ROOT).as_posix(),
+        )
+    ]
+    entries.extend(
+        entry
+        for entry in _registry_entries_for_copied_tree(
+            source_root / "adapters" / "codex"
+        )
+        if entry["target"] != "README.md"
+    )
+    entries.extend(
+        _registry_entries_for_copied_tree(
+            source_root / "references",
+            target_prefix="references/",
+        )
+    )
     for package_source_root, package_target_prefix in package_entries:
         entries.extend(
             _registry_entries_for_copied_tree(
@@ -167,6 +245,11 @@ def _package_artifacts() -> tuple[PackageArtifact, ...]:
             ROOT / "packages" / "deep-research-prompt-export" / "research_prompt",
             ROOT / "plugins" / "claude" / "deep-research-prompt-export" / "_packages" / "research_prompt",
             "research_prompt",
+        ),
+        (
+            ROOT / "packages" / "learnable" / "learnable",
+            ROOT / "plugins" / "codex" / "learnable" / "_packages" / "learnable",
+            "learnable",
         ),
         (
             ROOT / "packages" / "vendor" / "tomli" / "tomli",
@@ -257,6 +340,7 @@ def main() -> int:
     shared_skills_source = ROOT / "plugin-sources" / "shared-skills"
     shared_subagents_source = ROOT / "plugin-sources" / "shared-subagents"
     harness_foundry_source = ROOT / "plugin-sources" / "harness-foundry"
+    learnable_source = ROOT / "plugin-sources" / "learnable"
     session_memory_artifacts = (
         (
             ROOT / "plugin-sources" / "session-memory" / "adapters" / "codex",
@@ -325,6 +409,11 @@ def main() -> int:
         ROOT / "plugins" / "claude" / "harness-foundry",
         render_plugin_text_tree(harness_foundry_source),
     )
+    write_text_tree(
+        ROOT,
+        ROOT / "plugins" / "codex" / "learnable",
+        _render_learnable_codex_tree(learnable_source),
+    )
     for source_root, target_root in copied_tree_artifacts:
         replace_tree(ROOT, source_root, target_root)
     for source_root, target_root, _package_name in package_artifacts:
@@ -345,6 +434,13 @@ def main() -> int:
             plugin_root, entry = _manifest_registry_entry(plugin, "claude")
             manifest_entries_by_target_root.setdefault(plugin_root, []).append(entry)
     package_artifacts_by_target_root = _package_artifacts_by_target_root(package_artifacts)
+    learnable_codex_root = ROOT / "plugins" / "codex" / "learnable"
+    _write_learnable_codex_registry(
+        learnable_source,
+        learnable_codex_root,
+        package_artifacts_by_target_root.get(learnable_codex_root, []),
+        manifest_entries_by_target_root.pop(learnable_codex_root, []),
+    )
     for source_root, target_root in copied_tree_artifacts:
         _write_copied_tree_registry(
             source_root,

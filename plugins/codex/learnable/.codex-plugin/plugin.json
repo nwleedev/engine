@@ -1,0 +1,7 @@
+{
+  "name": "learnable",
+  "version": "0.1.0",
+  "description": "Local project learning materials as a read-only Markdown graph viewer for Codex",
+  "license": "MIT",
+  "skills": "./skills/"
+}

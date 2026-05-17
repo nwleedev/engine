@@ -46,6 +46,10 @@ plugin-sources/harness-foundry/references/*.md/
 plugin-sources/learnable/references/*
 !plugin-sources/learnable/references/*.md
 plugin-sources/learnable/references/*.md/
+!plugins/codex/learnable/references/
+plugins/codex/learnable/references/*
+!plugins/codex/learnable/references/*.md
+plugins/codex/learnable/references/*.md/
 !plugins/codex/harness-foundry/references/
 plugins/codex/harness-foundry/references/*
 !plugins/codex/harness-foundry/references/*.md

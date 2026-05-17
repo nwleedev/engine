@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Learnable</title>
+    <link rel="stylesheet" href="/assets/app.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <aside class="explorer" data-region="material-explorer" aria-label="Material explorer">
+        <div class="brand-row">
+          <div>
+            <p class="eyebrow">Local materials</p>
+            <h1>Learnable</h1>
+          </div>
+          <span class="status-pill" data-region="local-status" id="local-status">Local</span>
+        </div>
+        <div class="explorer-toolbar">
+          <span id="session-count">0 sessions</span>
+          <span id="server-state">Checking</span>
+        </div>
+        <nav class="session-list" id="sessions" aria-label="Saved learning sessions"></nav>
+      </aside>
+
+      <section class="reader">
+        <header class="reader-header">
+          <div>
+            <p class="eyebrow" id="reader-kicker">Read-only viewer</p>
+            <h2 id="material-title">Select a material</h2>
+          </div>
+          <div class="metadata-strip" data-region="metadata-strip">
+            <span id="material-created">Created time unavailable</span>
+            <span id="runtime-provenance">Runtime unknown</span>
+          </div>
+        </header>
+
+        <div class="hierarchy-strip" data-region="hierarchy" id="hierarchy">
+          No hierarchy selected
+        </div>
+
+        <div class="content-grid">
+          <article class="markdown-panel" data-region="markdown-viewer" aria-label="Markdown material">
+            <div id="empty-state" class="empty-state">No materials found</div>
+            <div id="material" class="markdown-body" hidden></div>
+          </article>
+
+          <aside class="context-panel" aria-label="Material context">
+            <section>
+              <h3>Source refs</h3>
+              <ul data-region="source-refs" id="source-refs">
+                <li>No source refs</li>
+              </ul>
+            </section>
+            <section>
+              <h3>Prerequisites</h3>
+              <ul data-region="prerequisites" id="prerequisites">
+                <li>No prerequisites detected</li>
+              </ul>
+            </section>
+            <section>
+              <h3>Related concepts</h3>
+              <ul id="related-concepts">
+                <li>Select a node to inspect child concepts</li>
+              </ul>
+            </section>
+          </aside>
+        </div>
+      </section>
+    </main>
+    <script src="/assets/app.js"></script>
+  </body>
+</html>

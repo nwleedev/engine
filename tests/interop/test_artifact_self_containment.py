@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+from tools.build.headers import GENERATED_NOTICE
+
 ROOT = Path(__file__).resolve().parents[2]
 SESSION_MEMORY_ARTIFACTS = {
     "codex": ROOT / "plugins" / "codex" / "session-memory",
@@ -12,6 +14,9 @@ SESSION_MEMORY_ARTIFACTS = {
 QUALITY_GUARD_ARTIFACTS = {
     "codex": ROOT / "plugins" / "codex" / "quality-guard",
     "claude": ROOT / "plugins" / "claude" / "quality-guard",
+}
+LEARNABLE_ARTIFACTS = {
+    "codex": ROOT / "plugins" / "codex" / "learnable",
 }
 RUNTIME_TEXT_SUFFIXES = frozenset({".py", ".md", ".json", ".toml"})
 TRACEABLE_SUFFIXES = frozenset({".py", ".md", ".toml", ".json"})
@@ -22,14 +27,17 @@ GENERATED_MANIFEST_TARGETS = {
     "claude": ".claude-plugin/plugin.json",
 }
 SOURCE_TRACE_PREFIXES = {
+    "learnable": "plugin-sources/learnable/adapters/",
     "quality-guard": "plugin-sources/quality-guard/adapters/",
     "session-memory": "plugin-sources/session-memory/adapters/",
 }
 PACKAGE_SOURCE_ROOTS = {
+    "learnable": ROOT / "packages" / "learnable" / "learnable",
     "quality-guard": ROOT / "packages" / "quality-guard" / "quality_guard",
     "session-memory": ROOT / "packages" / "session-memory" / "session_memory",
 }
 PACKAGE_TRACE_PREFIXES = {
+    "learnable": ("_packages/learnable/", "packages/learnable/learnable/"),
     "quality-guard": ("_packages/quality_guard/", "packages/quality-guard/quality_guard/"),
     "session-memory": ("_packages/session_memory/", "packages/session-memory/session_memory/"),
 }
@@ -43,6 +51,9 @@ VENDORED_PACKAGE_TRACE_PREFIXES = {
     ),
 }
 EXPECTED_RUNTIME_FILES = {
+    "learnable": {
+        "codex": ("skills/entry/SKILL.md", "references/policy.md"),
+    },
     "quality-guard": {
         "codex": ("scripts/agents_rules.py",),
         "claude": ("hooks/hooks.json", "hooks/stop.py"),
@@ -70,6 +81,33 @@ def _traceable_files(root: Path) -> list[Path]:
     )
 
 
+def _learnable_source_traceable_targets() -> set[str]:
+    source_root = ROOT / "plugin-sources" / "learnable"
+    targets = {
+        path.relative_to(source_root / "adapters" / "codex").as_posix()
+        for path in _traceable_files(source_root / "adapters" / "codex")
+        if path.relative_to(source_root / "adapters" / "codex").as_posix()
+        != GENERATED_MANIFEST_TARGETS["codex"]
+    }
+    targets.update(
+        f"references/{path.name}"
+        for path in _traceable_files(source_root / "references")
+    )
+    targets.add("README.md")
+    targets.add(GENERATED_MANIFEST_TARGETS["codex"])
+    package_target_prefix, _package_source_prefix = PACKAGE_TRACE_PREFIXES["learnable"]
+    targets.update(
+        f"{package_target_prefix}{path.relative_to(PACKAGE_SOURCE_ROOTS['learnable']).as_posix()}"
+        for path in _traceable_files(PACKAGE_SOURCE_ROOTS["learnable"])
+    )
+    targets.update(
+        f"{package_target_prefix}{path.relative_to(PACKAGE_SOURCE_ROOTS['learnable']).as_posix()}"
+        for path in PACKAGE_SOURCE_ROOTS["learnable"].rglob("*")
+        if path.is_file() and path.suffix in {".html", ".css", ".js"}
+    )
+    return targets
+
+
 def _registry_entries(root: Path) -> list[dict[str, Any]]:
     registry_path = root / ".generated.json"
     data = json.loads(registry_path.read_text(encoding="utf-8"))
@@ -80,6 +118,9 @@ def _registry_entries(root: Path) -> list[dict[str, Any]]:
 
 def _source_traceable_targets(plugin_name: str, harness: str) -> set[str]:
     """Return copied source files that must appear in the generated registry."""
+
+    if plugin_name == "learnable":
+        return _learnable_source_traceable_targets()
 
     source_root = ROOT / "plugin-sources" / plugin_name / "adapters" / harness
     targets = {
@@ -114,6 +155,19 @@ def _optional_vendored_traceable_targets(plugin_name: str) -> set[str]:
 
 
 def _expected_registry_source(plugin_name: str, harness: str, target: str) -> str:
+    if plugin_name == "learnable":
+        if target == GENERATED_MANIFEST_TARGETS[harness]:
+            return MARKETPLACE_SOURCE
+        if target == "README.md":
+            return "plugin-sources/learnable/README.md"
+        if target.startswith("references/"):
+            return f"plugin-sources/learnable/{target}"
+        package_target_prefix, package_source_prefix = PACKAGE_TRACE_PREFIXES[plugin_name]
+        if target.startswith(package_target_prefix):
+            package_relative = target.removeprefix(package_target_prefix)
+            return f"{package_source_prefix}{package_relative}"
+        return f"plugin-sources/learnable/adapters/{harness}/{target}"
+
     package_target_prefix, package_source_prefix = PACKAGE_TRACE_PREFIXES[plugin_name]
     if target == GENERATED_MANIFEST_TARGETS[harness]:
         return MARKETPLACE_SOURCE
@@ -152,7 +206,12 @@ def assert_generated_registry_traces_copied_runtime_files(
             assert (root / target).is_file()
             assert source == _expected_registry_source(plugin_name, harness, target)
             if source != MARKETPLACE_SOURCE:
-                assert (root / target).read_bytes() == (ROOT / source).read_bytes()
+                if plugin_name == "learnable" and target.endswith(".md"):
+                    generated_text = (root / target).read_text(encoding="utf-8")
+                    assert GENERATED_NOTICE in generated_text
+                    assert source in generated_text
+                else:
+                    assert (root / target).read_bytes() == (ROOT / source).read_bytes()
 
 
 def assert_artifact_is_self_contained(root: Path) -> None:
@@ -166,7 +225,14 @@ def assert_artifact_is_self_contained(root: Path) -> None:
         for marker in FORBIDDEN_PACKAGE_REFERENCES:
             if marker in text:
                 violations.append(f"{path.relative_to(ROOT)} contains {marker}")
-        if "plugin-sources/" in text and path.name != ".generated.json":
+        source_tree_mentions = [
+            line
+            for line in text.splitlines()
+            if "plugin-sources/" in line
+            and not line.startswith("<!-- source: plugin-sources/")
+            and not line.startswith("# source: plugin-sources/")
+        ]
+        if source_tree_mentions and path.name != ".generated.json":
             violations.append(f"{path.relative_to(ROOT)} references plugin-sources/")
 
     assert violations == []
@@ -208,6 +274,24 @@ def assert_required_runtime_json_matches_sources(
 def test_quality_guard_artifacts_are_self_contained() -> None:
     assert_artifact_is_self_contained(ROOT / "plugins/codex/quality-guard")
     assert_artifact_is_self_contained(ROOT / "plugins/claude/quality-guard")
+
+
+def test_learnable_artifact_is_self_contained() -> None:
+    assert_artifact_is_self_contained(ROOT / "plugins/codex/learnable")
+
+
+def test_learnable_artifact_contains_expected_runtime_files() -> None:
+    assert_artifacts_contain_expected_runtime_files(
+        "learnable",
+        LEARNABLE_ARTIFACTS,
+    )
+
+
+def test_learnable_generated_registry_traces_copied_runtime_files() -> None:
+    assert_generated_registry_traces_copied_runtime_files(
+        "learnable",
+        LEARNABLE_ARTIFACTS,
+    )
 
 
 def test_quality_guard_artifacts_contain_expected_runtime_files() -> None:
