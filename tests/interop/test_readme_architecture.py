@@ -1,9 +1,14 @@
 from __future__ import annotations
 
 from pathlib import Path
+import re
 
 ROOT = Path(__file__).resolve().parents[2]
 LEGACY_PROMPT_ID = "research" "-prompt"
+
+
+def _compact(text: str) -> str:
+    return re.sub(r"\s+", " ", text)
 
 
 def test_readme_documents_generated_plugin_architecture() -> None:
@@ -19,7 +24,8 @@ def test_readme_documents_generated_plugin_architecture() -> None:
         "deep-research-prompt-export",
         "requirements-packet",
         "test-adequacy-reviewer",
-        "docs/shared-workflow/AGENTS.block.md",
+        "docs/shared-skills/AGENTS.block.md",
+        "docs/shared-subagents/AGENTS.block.md",
     ):
         assert expected in readme
 
@@ -30,27 +36,30 @@ def test_readme_separates_current_state_from_migration_goal() -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     korean_readme = (ROOT / "README.ko.md").read_text(encoding="utf-8")
 
+    compact_readme = _compact(readme)
+    compact_korean_readme = _compact(korean_readme)
+
     for expected in (
         "plugin-sources/marketplace.yaml",
         "renders full plugin trees from `plugin-sources/`",
-        "`session-memory`,\n`quality-guard`, `shared-skills`, `shared-subagents`, and `harness-foundry`",
+        "`session-memory`, `quality-guard`, `shared-skills`, `shared-subagents`, and `harness-foundry`",
         "`_packages/` directory",
         "`deep-research-prompt-export`",
         "`requirements-packet`",
         "`test-adequacy-reviewer`",
     ):
-        assert expected in readme
+        assert expected in compact_readme
 
     for expected in (
         "plugin-sources/marketplace.yaml",
         "`plugin-sources/`",
-        "`session-memory`, `quality-guard`,\n`shared-skills`, `shared-subagents`, `harness-foundry`",
+        "`session-memory`, `quality-guard`, `shared-skills`, `shared-subagents`, `harness-foundry`",
         "`_packages/`",
         "`deep-research-prompt-export`",
         "`requirements-packet`",
         "`test-adequacy-reviewer`",
     ):
-        assert expected in korean_readme
+        assert expected in compact_korean_readme
 
     assert f"`{LEGACY_PROMPT_ID}`" not in korean_readme
 

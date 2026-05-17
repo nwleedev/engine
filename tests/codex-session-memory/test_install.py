@@ -42,8 +42,15 @@ def test_default_required_block_is_english_and_ko_block_is_opt_in():
 
     assert rules.REQUIRED_BLOCK == rules.REQUIRED_BLOCK_EN
     assert "context compaction" in rules.REQUIRED_BLOCK_EN
+    assert "CODEX_SESSION_ID" in rules.REQUIRED_BLOCK_EN
+    assert "CODEX_THREAD_ID" in rules.REQUIRED_BLOCK_EN
+    assert "If `CODEX_SESSION_ID` is missing" in rules.REQUIRED_BLOCK_EN
+    assert "Use `CODEX_THREAD_ID` only to locate the active Codex rollout transcript" in rules.REQUIRED_BLOCK_EN
+    assert "If `CODEX_THREAD_ID` is not available" not in rules.REQUIRED_BLOCK_EN
     assert "Context compaction" not in rules.REQUIRED_BLOCK_EN
     assert "컨텍스트 압축" in rules.REQUIRED_BLOCK_KO
+    assert "CODEX_SESSION_ID" in rules.REQUIRED_BLOCK_KO
+    assert "CODEX_THREAD_ID" in rules.REQUIRED_BLOCK_KO
     assert rules.required_block("en") == rules.REQUIRED_BLOCK_EN
     assert rules.required_block("ko") == rules.REQUIRED_BLOCK_KO
     assert rules.required_block(None) == rules.REQUIRED_BLOCK_EN
@@ -72,6 +79,7 @@ def test_detects_missing_markers_from_incomplete_section(tmp_path):
         "- `$session-memory:status`\n\n"
         "## Other Rules\n\n"
         "$session-memory:resume\n"
+        "CODEX_SESSION_ID\n"
         "CODEX_THREAD_ID\n"
         ".codex/\n"
         "컨텍스트 압축\n"
@@ -83,7 +91,7 @@ def test_detects_missing_markers_from_incomplete_section(tmp_path):
 
     assert report.status == "partial"
     assert "$session-memory:resume" in report.missing
-    assert "CODEX_THREAD_ID" in report.missing
+    assert "CODEX_SESSION_ID" in report.missing
 
 
 def test_does_not_install_when_markers_are_scattered_outside_section(tmp_path):
@@ -93,6 +101,7 @@ def test_does_not_install_when_markers_are_scattered_outside_section(tmp_path):
         "$session-memory:checkpoint\n"
         "$session-memory:resume\n"
         "$session-memory:status\n"
+        "CODEX_SESSION_ID\n"
         "CODEX_THREAD_ID\n"
         ".codex/\n"
         "컨텍스트 압축\n"
@@ -122,7 +131,41 @@ def test_no_section_partial_reports_only_actual_missing_markers(tmp_path):
     assert "$session-memory:checkpoint" not in report.missing
     assert "$session-memory:status" not in report.missing
     assert "$session-memory:resume" in report.missing
-    assert "CODEX_THREAD_ID" in report.missing
+    assert "CODEX_SESSION_ID" in report.missing
+
+
+def test_stale_codex_thread_id_missing_guard_is_reported(tmp_path):
+    rules = load_agents_rules()
+    stale_block = rules.REQUIRED_BLOCK.replace(
+        "If `CODEX_SESSION_ID` is missing, do not checkpoint; report it.",
+        "If `CODEX_THREAD_ID` is not available, do not checkpoint; report the missing session id to the user.",
+    )
+    (tmp_path / "AGENTS.md").write_text(stale_block, encoding="utf-8")
+
+    report = rules.check_agents_rules(tmp_path)
+
+    assert report.status == "partial"
+    assert "CODEX_SESSION_ID" in report.missing
+    assert "stale CODEX_THREAD_ID missing-env guard" in report.missing
+
+
+def test_weakened_resume_and_variant_thread_guard_are_reported(tmp_path):
+    rules = load_agents_rules()
+    weakened = rules.REQUIRED_BLOCK.replace(
+        "Immediately after manual or automatic context compaction in the same Codex session, run `$session-memory:resume <current-session-prefix>` as the first action in the next turn.",
+        "Run `$session-memory:resume <current-session-prefix>` whenever useful.",
+    ).replace(
+        "If `CODEX_SESSION_ID` is missing, do not checkpoint; report it.",
+        "If `CODEX_THREAD_ID` is missing, do not checkpoint.",
+    )
+    (tmp_path / "AGENTS.md").write_text(weakened, encoding="utf-8")
+
+    report = rules.check_agents_rules(tmp_path)
+
+    assert report.status == "partial"
+    assert "context compaction first-action resume rule" in report.missing
+    assert "CODEX_SESSION_ID missing-env guard" in report.missing
+    assert "stale CODEX_THREAD_ID missing-env guard" in report.missing
 
 
 def test_non_installed_reports_have_missing_markers(tmp_path):

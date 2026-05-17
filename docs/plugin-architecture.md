@@ -34,11 +34,12 @@ requirement fidelity, plan fidelity, citation checks, test adequacy,
 completion closure, and residual risk to separate roles such as
 `test-adequacy-reviewer`.
 
-Use `docs/shared-workflow/AGENTS.block.md` as the repository-owned copy-paste
-policy block for project `AGENTS.md` or `CLAUDE.md` setup. It routes both
-`shared-skills` workflow artifacts and `shared-subagents` delegated review
-roles, so it is public repository documentation rather than a file owned by one
-plugin bundle.
+Use `docs/shared-skills/AGENTS.block.md` and
+`docs/shared-subagents/AGENTS.block.md` as the repository-owned copy-paste
+policy blocks for project `AGENTS.md` or `CLAUDE.md` setup. The split keeps
+shared-skills workflow artifact triggers separate from shared-subagents
+delegated review policy. `docs/shared-workflow/AGENTS.block.md` remains only as
+a migration pointer.
 
 ## Source And Generated Boundary
 

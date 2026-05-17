@@ -44,11 +44,10 @@ test plans. `shared-subagents` routes review work to focused gates such as
 `test-adequacy-reviewer`, so tests written through the plugins must justify
 fixtures and mocks against observable user scenarios.
 
-For project-level setup, use `docs/shared-workflow/AGENTS.block.md` as the
-copy-paste policy block for `AGENTS.md` or `CLAUDE.md`. The block routes both
-`shared-skills` workflow artifacts and `shared-subagents` delegated review
-roles, so it intentionally lives in repository documentation instead of either
-plugin README.
+For project-level setup, use `docs/shared-skills/AGENTS.block.md` and
+`docs/shared-subagents/AGENTS.block.md` as the copy-paste policy blocks for
+`AGENTS.md` or `CLAUDE.md`. The split keeps `shared-skills` workflow artifact
+triggers separate from `shared-subagents` delegated review policy.
 
 ## Why `plugin-sources/`
 
