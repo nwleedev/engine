@@ -5,7 +5,7 @@ owner:
   name: nwleedev
 plugins:
   - id: session-memory
-    version: 0.5.2
+    version: 0.5.3
     description: Project-scoped session continuity for Codex and Claude Code with checkpoint, resume, status, and monorepo-safe artifact storage
     license: MIT
     category: Productivity

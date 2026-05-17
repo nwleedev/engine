@@ -131,8 +131,43 @@ def test_status_reports_orphan_contexts_for_artifact_repair(monkeypatch, tmp_pat
     output = capsys.readouterr().out
     assert "Orphan contexts: 1" in output
     assert "CONTEXT-orphan.md" in output
-    assert "Repair: add missing context entries to INDEX.md" in output
+    assert "Repair: run status.py repair-orphans" in output
     assert "CONTEXT-indexed.md" not in output
+
+
+def test_status_repair_orphans_reconnects_contexts_with_atomic_helper(
+    monkeypatch, tmp_path, capsys
+):
+    status = load_status()
+    artifact_dir = write_artifact_index(tmp_path, "target-session")
+    contexts = artifact_dir / "contexts"
+    (contexts / "CONTEXT-20260502-1200-test.md").unlink()
+    (contexts / "CONTEXT-orphan.md").write_text("# Orphan\n", encoding="utf-8")
+    (artifact_dir / "INDEX.md").write_text(
+        "---\nsession_id: target-session\nlast_processed_offset: 0\n---\n\n"
+        "## Contexts\n\n",
+        encoding="utf-8",
+    )
+    configure_status_common(monkeypatch, status, tmp_path, "target-session")
+
+    assert status.main(["repair-orphans"]) == 0
+
+    output = capsys.readouterr().out
+    index_text = (artifact_dir / "INDEX.md").read_text(encoding="utf-8")
+    assert "Orphan contexts repaired: 1" in output
+    assert "- [CONTEXT-orphan.md] — <recovered orphan context>" in index_text
+    assert "session_id: target-session" in index_text
+    assert not list(artifact_dir.glob(".index.tmp.*.md"))
+
+
+def test_status_repair_orphans_rejects_unknown_argument(monkeypatch, tmp_path, capsys):
+    status = load_status()
+    write_artifact_index(tmp_path, "target-session")
+    configure_status_common(monkeypatch, status, tmp_path, "target-session")
+
+    assert status.main(["unknown"]) == 2
+
+    assert "unknown status argument" in capsys.readouterr().err
 
 
 def test_status_missing_artifact_reports_clear_diagnostic_without_legacy_fallback(

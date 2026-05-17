@@ -74,12 +74,39 @@ def _print_orphan_context_diagnostics(contexts_dir, index_path):
     print(f"Orphan contexts: {len(orphans)}")
     if not orphans:
         return
-    print("Repair: add missing context entries to INDEX.md under ## Contexts.")
+    print("Repair: run status.py repair-orphans to reconnect missing context entries.")
     for path in orphans:
         print(f"  - {path}")
 
 
-def main():
+def _repair_orphan_contexts(root, session_id):
+    session_dir = _artifact_session_dir(root, session_id)
+    index_path = session_dir / "INDEX.md"
+    contexts_dir = session_dir / "contexts"
+    orphans = _orphan_context_paths(contexts_dir, index_path)
+    if not orphans:
+        print("Orphan contexts: 0")
+        print("Repair: nothing to do")
+        return 0
+
+    repaired = 0
+    for path in orphans:
+        csm_index_io.append_context_entry_with_frontmatter(
+            index_path,
+            path.name,
+            "<recovered orphan context>",
+            writer_id=f"repair-{path.stem}",
+            session_id=session_id,
+        )
+        repaired += 1
+    print(f"Orphan contexts repaired: {repaired}")
+    for path in orphans:
+        print(f"  - {path}")
+    return 0
+
+
+def main(argv=None):
+    args = list(argv or [])
     cwd = os.getcwd()
     csm_dotenv_loader.load_project_dotenv(cwd)
 
@@ -89,6 +116,12 @@ def main():
         return 0
 
     root = csm_project_root.find_project_root(cwd)
+    if args:
+        if args == ["repair-orphans"]:
+            return _repair_orphan_contexts(root, session_id)
+        print(f"error: unknown status argument: {args[0]}", file=sys.stderr)
+        return 2
+
     session_dir = _artifact_session_dir(root, session_id)
     index_path = session_dir / "INDEX.md"
     contexts_dir = session_dir / "contexts"

@@ -3,7 +3,6 @@
 
 import argparse
 from dataclasses import dataclass
-import importlib.util
 import re
 import shutil
 import sys
@@ -37,20 +36,6 @@ class MovedSession:
 class IndexBackup:
     path: Path
     text: str
-
-
-def _load_script_module(filename: str, module_name: str):
-    spec = importlib.util.spec_from_file_location(module_name, HERE / filename)
-    if spec is None or spec.loader is None:
-        raise ImportError(f"cannot load {filename}")
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[module_name] = module
-    spec.loader.exec_module(module)
-    return module
-
-
-pl = _load_script_module("parent_locator.py", "codex_session_memory_migrate_parent_locator")
-sl = _load_script_module("session_locator.py", "codex_session_memory_migrate_session_locator")
 
 
 def _parse_args(argv: Optional[list[str]]) -> argparse.Namespace:
@@ -95,13 +80,6 @@ def _candidate_dirs(sessions_root: Path) -> list[Path]:
     return candidates
 
 
-def _find_rollout_path(thread_id: str):
-    finder = getattr(sl, "find_jsonl_by_thread", None)
-    if not callable(finder):
-        return None
-    return finder(thread_id)
-
-
 def _parse_frontmatter(index_path: Path) -> dict[str, str]:
     try:
         text = index_path.read_text(encoding="utf-8")
@@ -138,18 +116,6 @@ def _migration_candidates(
 ) -> list[MigrationCandidate]:
     migratable = []
     for candidate in candidates:
-        thread_id = candidate.name
-        rollout_path = _find_rollout_path(thread_id)
-        resolution = pl.resolve_parent_thread_id(
-            thread_id,
-            rollout_path=rollout_path,
-            codex_home=project_root / ".codex",
-        )
-        if resolution.role == "child" and resolution.parent_thread_id:
-            migratable.append(
-                MigrationCandidate(candidate, str(resolution.parent_thread_id))
-            )
-            continue
         parent_session_id = _frontmatter_parent_id(candidate)
         migratable.append(MigrationCandidate(candidate, parent_session_id))
     return migratable
