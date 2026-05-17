@@ -32,6 +32,17 @@ def test_codex_skill_rendering_includes_reference_documents() -> None:
     )
 
 
+def test_codex_skill_rendering_includes_python_support_files() -> None:
+    files = render_codex_skill_tree(ROOT / "plugin-sources" / "shared-skills")
+
+    target = "skills/spec-plan-coverage/validate_spec_plan_coverage.py"
+    assert target in files
+    assert files[target].startswith(
+        "# GENERATED FILE - DO NOT EDIT\n"
+        "# source: plugin-sources/shared-skills/skills/spec-plan-coverage/validate_spec_plan_coverage.py\n\n"
+    )
+
+
 def test_codex_skill_rendering_rejects_skill_markdown_directory(
     tmp_path: Path, monkeypatch
 ) -> None:

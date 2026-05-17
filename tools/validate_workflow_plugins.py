@@ -90,6 +90,7 @@ REQUIRED_DOWNSTREAM_TEST_TERMS = (
     "drift_check",
     "unjustified_fixture",
     "fixture_overgrowth",
+    "unapproved_mock",
     "missing_real_boundary_check",
     "test_only_behavior",
     "Do not assert only mock calls",

@@ -60,7 +60,7 @@ def test_manifest_exposes_shared_skills_plugin() -> None:
     manifest = json.loads(read(manifest_path))
 
     assert manifest["name"] == "shared-skills"
-    assert manifest["version"] == "0.2.8"
+    assert manifest["version"] == "0.2.9"
     assert manifest["license"] == "MIT"
     assert manifest["skills"] == "./skills/"
     assert "requirements traceability" in manifest["description"]
@@ -204,6 +204,7 @@ def test_downstream_test_contract_limits_fixture_and_mock_use() -> None:
     assert "expiry_or_update_trigger" in text
     assert "unjustified_fixture" in text
     assert "fixture_overgrowth" in text
+    assert "unapproved_mock" in text
     assert "missing_real_boundary_check" in text
     assert "test_only_behavior" in text
     assert "Do not assert only mock calls" in text
@@ -227,6 +228,7 @@ def test_spec_plan_coverage_skill_defines_failure_codes_and_reports() -> None:
     assert "unresolved_risk" in text
     assert "unjustified_fixture" in text
     assert "fixture_overgrowth" in text
+    assert "unapproved_mock" in text
     assert "missing_real_boundary_check" in text
     assert "test_only_behavior" in text
 

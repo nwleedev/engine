@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from tools.build.headers import markdown_header
+from tools.build.headers import markdown_header, python_header
 from tools.build.paths import ROOT
 from tools.build.source_files import ensure_source_file
 
@@ -33,6 +33,14 @@ def _render_markdown_file(path: Path) -> str:
     return markdown_header(relative_source) + path.read_text(encoding="utf-8")
 
 
+def _render_python_file(path: Path) -> str:
+    """Return a generated Python support file body with source tracing."""
+
+    ensure_source_file(ROOT, path)
+    relative_source = path.relative_to(ROOT).as_posix()
+    return python_header(relative_source) + path.read_text(encoding="utf-8")
+
+
 def render_codex_skill_tree(source_root: Path) -> dict[str, str]:
     """Render shared-skill source files into Codex plugin-relative paths."""
 
@@ -46,6 +54,11 @@ def render_codex_skill_tree(source_root: Path) -> dict[str, str]:
 
     for skill_file in sorted(skills_root.glob("*/SKILL.md")):
         files[f"skills/{skill_file.parent.name}/SKILL.md"] = _render_skill_file(skill_file)
+
+    for support_file in sorted(skills_root.glob("*/*.py")):
+        files[f"skills/{support_file.parent.name}/{support_file.name}"] = (
+            _render_python_file(support_file)
+        )
 
     for reference_file in sorted(references_root.glob("*.md")):
         files[f"references/{reference_file.name}"] = _render_markdown_file(reference_file)

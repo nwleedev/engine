@@ -41,9 +41,13 @@ checklist.
 7. Fail the gate when any required clause has `missing_plan`,
    `missing_validation`, `missing_evidence`, `stale_evidence`,
    `unresolved_risk`, `unjustified_fixture`, `fixture_overgrowth`,
+   `unapproved_mock`,
    `missing_real_boundary_check`, or `test_only_behavior`.
 8. Emit both a machine-readable JSON report and a redacted Markdown summary
    when source specs or plans are confidential and cannot be committed.
+9. When a machine check is needed, run `validate_spec_plan_coverage.py` against
+   a redacted JSON intermediate artifact. The script exits `0` only for
+   `done_candidate`; blocker reports exit `1`.
 
 ## Development work
 
@@ -93,6 +97,12 @@ when the underlying spec, plan, or evidence cannot be committed.
 | coverage_report_id | matrix_id | validator_command | validator_exit_code | report_path | redacted_markdown_path | blocking_codes | final_status |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | COVERAGE-001 | MATRIX-001 |  | 1 |  |  | missing_evidence | blocked |
+```
+
+Validator command shape:
+
+```bash
+python3 validate_spec_plan_coverage.py redacted-workflow.json --json-output coverage-report.json --markdown-output coverage-report.md
 ```
 
 ## Do not

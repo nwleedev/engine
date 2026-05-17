@@ -1,0 +1,38 @@
+{
+  "coverage_report_id": "COVERAGE-001",
+  "spec_ledger": [
+    {
+      "spec_clause_id": "SC-001",
+      "linked_requirement_ids": ["REQ-001"],
+      "source_location": "redacted-spec.md#sc-001",
+      "validation_intent": "automated test",
+      "status": "accepted"
+    }
+  ],
+  "plan_contract": [
+    {
+      "task_id": "TASK-001",
+      "linked_spec_clause_ids": ["SC-001"],
+      "validation_method": "pytest focused",
+      "fallback": "manual inspection"
+    }
+  ],
+  "implementation_evidence": [
+    {
+      "evidence_id": "EVID-001",
+      "linked_spec_clause_ids": ["SC-001"],
+      "fresh": true,
+      "result": "passed"
+    }
+  ],
+  "fixture_budget": {
+    "new_fixture_count": 0,
+    "new_mock_count": 0,
+    "approved_new_fixture_count": 0,
+    "test_only_behavior": true
+  },
+  "verification_gate": {
+    "requires_coverage_report": true,
+    "coverage_report_ids": ["COVERAGE-001"]
+  }
+}

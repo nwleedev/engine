@@ -1,0 +1,16 @@
+{
+  "fixture-overgrowth": ["fixture_overgrowth", "unapproved_mock"],
+  "missing-acceptance-link": ["missing_acceptance_link"],
+  "missing-coverage-report": ["missing_coverage_report"],
+  "missing-evidence": ["missing_evidence"],
+  "missing-plan": ["missing_plan"],
+  "missing-real-boundary-check": ["missing_real_boundary_check"],
+  "missing-source": ["missing_source"],
+  "missing-validation": ["missing_validation"],
+  "multi-claim-clause": ["multi_claim_clause"],
+  "needs-spec-mapping": ["needs_spec_mapping", "missing_plan"],
+  "stale-evidence": ["stale_evidence"],
+  "test-only-behavior": ["test_only_behavior"],
+  "unapproved-mock": ["unapproved_mock"],
+  "unjustified-fixture": ["unjustified_fixture"]
+}

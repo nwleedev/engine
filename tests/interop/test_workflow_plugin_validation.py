@@ -77,6 +77,7 @@ def test_workflow_validation_constants_cover_retired_routes_and_contracts() -> N
     assert "Fixture Governance Contract" in REQUIRED_DOWNSTREAM_TEST_TERMS
     assert "unjustified_fixture" in REQUIRED_DOWNSTREAM_TEST_TERMS
     assert "fixture_overgrowth" in REQUIRED_DOWNSTREAM_TEST_TERMS
+    assert "unapproved_mock" in REQUIRED_DOWNSTREAM_TEST_TERMS
     assert "missing_real_boundary_check" in REQUIRED_DOWNSTREAM_TEST_TERMS
     assert "test_only_behavior" in REQUIRED_DOWNSTREAM_TEST_TERMS
 
@@ -192,6 +193,7 @@ def test_workflow_validation_reports_missing_schema_terms(tmp_path: Path) -> Non
         ("workflow-artifacts.md", "validator_exit_code"),
         ("downstream-test-contracts.md", "unjustified_fixture"),
         ("downstream-test-contracts.md", "fixture_overgrowth"),
+        ("downstream-test-contracts.md", "unapproved_mock"),
         ("downstream-test-contracts.md", "missing_real_boundary_check"),
         ("downstream-test-contracts.md", "test_only_behavior"),
     ],
