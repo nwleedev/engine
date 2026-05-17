@@ -4,7 +4,7 @@ Codex CLI session memory for incremental context summaries. Companion to the
 Claude artifact at `plugins/claude/session-memory/`, but independent with no
 shared code.
 
-**Verified Codex version:** 0.128.0
+**Verified Codex version:** 0.129.0
 
 ## Install
 
@@ -184,5 +184,5 @@ rtk python tools/validate_generated.py
 ## Tests
 
 ```
-python -m pytest tests/claude-session-memory -q
+python -m pytest tests/codex-session-memory -q
 ```
