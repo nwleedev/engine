@@ -361,19 +361,26 @@ def test_shared_subagents_agents_block_documents_runtime_fallback() -> None:
 
 def test_shared_subagents_agents_block_defines_subagent_use_boundaries() -> None:
     block = SHARED_SUBAGENTS_BLOCK.read_text(encoding="utf-8")
+    detailed_terms = (
+        "Spec Ledger",
+        "Spec-to-Plan Coverage Matrix",
+        "Fixture Governance Contract",
+        "validator evidence",
+        "not-run items",
+    )
 
     assert "<!-- SHARED-SUBAGENTS-START -->" in block
     assert "<!-- SHARED-SUBAGENTS-END -->" in block
     assert "Spawn subagents only when the user explicitly asks" in block
-    assert "Spec Ledger" in block
-    assert "Fixture Governance Contract" in block
-    assert "validator evidence" in block
-    assert "not-run items" in block
     assert "Use `spec-coverage-reviewer`" in block
-    assert "Use `completion-claim-reviewer`" in block
+    assert "`completion-claim-reviewer`" in block
     assert "Use subagents for broad, parallelizable work" in block
     assert "Keep simple or single-file work in the main session" in block
     assert "reviewer/code-reviewer/security-auditor gates separate" in block
+    assert block.count("\n- ") <= 6
+    assert len(block.encode("utf-8")) <= 1000
+    for term in detailed_terms:
+        assert term not in block
 
 
 def test_reviewer_defers_test_adequacy_and_plan_fidelity() -> None:

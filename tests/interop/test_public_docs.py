@@ -92,8 +92,14 @@ def test_agents_policy_blocks_are_split_and_compact() -> None:
     )
     assert "installed shared-skills `SKILL.md` and `references/*`" in skills_text
     assert "install/status diagnostic" in skills_text
+    assert skills_text.count("\n- ") <= 6
+    assert len(skills_text.encode("utf-8")) <= 1200
+    assert "Fixture Governance Contract" not in skills_text
     assert "shared-skills workflow artifacts" not in subagents_text
     assert "Spawn subagents only when the user explicitly asks" in subagents_text
     assert "reviewer/code-reviewer/security-auditor" in subagents_text
     assert "main-session fallback prompts" in subagents_text
     assert "agents.max_depth = 1" in subagents_text
+    assert subagents_text.count("\n- ") <= 6
+    assert len(subagents_text.encode("utf-8")) <= 1000
+    assert "Fixture Governance Contract" not in subagents_text

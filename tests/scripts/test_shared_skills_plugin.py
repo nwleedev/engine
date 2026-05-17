@@ -218,32 +218,35 @@ def test_downstream_test_contract_limits_fixture_and_mock_use() -> None:
     assert "observable behavior" in text
 
 
-def test_shared_skills_agents_block_enforces_spec_coverage_and_fixture_governance() -> None:
+def test_shared_skills_agents_block_is_compact_routing_layer() -> None:
     text = read(SHARED_SKILLS_BLOCK)
+    detailed_terms = (
+        "Spec Ledger",
+        "spec_clause_id",
+        "Spec-to-Plan Coverage Matrix",
+        "Fixture Governance Contract",
+        "fixture budget",
+        "unjustified_fixture",
+        "fixture_overgrowth",
+        "unapproved_mock",
+        "stale_fixture",
+        "missing_real_boundary_check",
+        "test_only_behavior",
+    )
 
     assert "<!-- SHARED-SKILLS-START -->" in text
     assert "<!-- SHARED-SKILLS-END -->" in text
     assert "requirements, research, specs, plans, tests, implementation evidence, or completion claims" in text
     assert "spec-plan-coverage" in text
-    assert "Spec Ledger" in text
-    assert "spec_clause_id" in text
-    assert "Spec-to-Plan Coverage Matrix" in text
-    assert "missing_plan" in text
-    assert "missing_validation" in text
-    assert "missing_evidence" in text
-    assert "stale_evidence" in text
-    assert "unresolved_risk" in text
     assert "scenario-test-designer" in text
     assert "test-plan-contract" in text
     assert "tdd-test-writing" in text
-    assert "Fixture Governance Contract" in text
-    assert "fixture budget" in text
-    assert "unjustified_fixture" in text
-    assert "fixture_overgrowth" in text
-    assert "unapproved_mock" in text
-    assert "stale_fixture" in text
-    assert "missing_real_boundary_check" in text
-    assert "test_only_behavior" in text
+    assert "installed shared-skills `SKILL.md` and `references/*`" in text
+    assert "install/status diagnostic" in text
+    assert text.count("\n- ") <= 6
+    assert len(text.encode("utf-8")) <= 1200
+    for term in detailed_terms:
+        assert term not in text
 
 
 def test_spec_plan_coverage_skill_defines_failure_codes_and_reports() -> None:
