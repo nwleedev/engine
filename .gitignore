@@ -60,3 +60,4 @@ plugins/claude/harness-foundry/references/*
 plugins/claude/harness-foundry/references/*.md/
 /apps/harness-foundry-lab/corpus/domain-harness/repos/*
 !/apps/harness-foundry-lab/corpus/domain-harness/repos/.gitkeep
+.playwright-mcp/
