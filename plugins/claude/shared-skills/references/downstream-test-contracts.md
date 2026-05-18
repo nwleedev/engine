@@ -3,18 +3,48 @@
 
 # Downstream Test Contracts
 
-Use these contracts when shared skills are applied inside a downstream project and tests must prove observable behavior against acceptance criteria.
+Use these contracts when shared skills are applied inside a downstream
+application project, also called a downstream project in existing generated
+docs, and tests must prove observable behavior against acceptance criteria.
 
 When `testing-workflow` routes to `test-suite-reconciliation`, complete the
 `Existing Test Relevance Inventory` and `Test Artifact Drift Inventory` before
 creating new downstream contracts. Do not count stale, demoted, deleted, or
 quarantined tests as core coverage in the contracts below.
 
+Use `testing-patterns.md` with these contracts when selecting a test layer. Core
+coverage must prove observable behavior or an explicit artifact contract.
+
 ## Scenario Test Contract
 
-| downstream project | Acceptance Criteria ID | User Scenario ID | test_layer | test_file | test_command | observable behavior |
-| --- | --- | --- | --- | --- | --- | --- |
-|  | AC-001 | SCN-001 |  |  |  |  |
+| downstream application project | Acceptance Criteria ID | User Scenario ID | behavior_boundary | public_entrypoint | observable_result | test_layer | test_file | test_command | assertion_strategy | fixture_mock_policy | determinism_policy | test_smell_risk |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+|  | AC-001 | SCN-001 | public_api |  |  |  |  |  |  |  |  | none |
+
+Use `behavior_boundary`, `public_entrypoint`, and `observable_result` to show
+what the application exposes to a user, caller, operator, external system, or
+public artifact. Use `assertion_strategy` to show why the assertion fails for
+the linked requirement. Use `fixture_mock_policy` and `determinism_policy` to
+show why the setup is faithful and stable. Use `test_smell_risk` value `none`
+only after checking `weak_assertion`, `mock_only_assertion`,
+`private_behavior_test`, `implementation_detail_assertion`, `broad_snapshot`,
+`non_diagnostic_failure`, `wrong_layer`, `flaky_shared_state`, and
+`coverage_theater`.
+
+## Behavior Boundary Classification
+
+Classify the downstream application project boundary before choosing the test
+layer. Use `test-assertion-quality.md` for the detailed classification table.
+
+| behavior_boundary | public_entrypoint | observable_result | hidden_implementation_details_to_avoid | required_test_layer | why_this_layer_is_narrowest_reliable_layer |
+| --- | --- | --- | --- | --- | --- |
+| public_api |  |  |  |  |  |
+
+## Assertion Quality Gate
+
+Record `assertion_strategy`, `fixture_mock_policy`, `determinism_policy`, and
+`test_smell_risk` before routing work to `tdd-cycle`. Use
+`language-test-smells.md` for stack-specific smell examples.
 
 ## Scenario Change Map
 
@@ -128,6 +158,15 @@ fix coverage unless the row records approved characterization-only evidence.
 `passing_command` and `observed_result` are required before TDD evidence can be
 used as completion evidence. `residual_gap` must be `none` or join to a gap,
 risk, owner follow-up, manual evidence, or replacement coverage row.
+
+## TDD Quality Evidence
+
+Use this contract with `TDD Cycle Evidence` when a test is written or modified
+for a downstream application project.
+
+| evidence_id | behavior_boundary | public_entrypoint | observable_result | intended_failure_reason | why_failure_proves_missing_behavior | assertion_quality_gate | determinism_controls | fixture_mock_justification |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| TQE-001 | public_api |  |  |  |  |  |  |  |
 
 ## Join Rules
 

@@ -19,6 +19,9 @@ REQUIRED_SHARED_SKILL_REFERENCES = (
     "downstream-test-contracts.md",
     "test-relevance-decisions.md",
     "test-artifact-drift.md",
+    "test-assertion-quality.md",
+    "language-test-smells.md",
+    "testing-patterns.md",
 )
 
 REQUIRED_SHARED_SUBAGENTS = (
@@ -89,8 +92,31 @@ REQUIRED_DEEP_RESEARCH_TERMS = (
 
 REQUIRED_DOWNSTREAM_TEST_TERMS = (
     "Scenario Test Contract",
+    "downstream application project",
     "Acceptance Criteria ID",
     "User Scenario ID",
+    "behavior_boundary",
+    "public_entrypoint",
+    "observable_result",
+    "assertion_strategy",
+    "fixture_mock_policy",
+    "determinism_policy",
+    "test_smell_risk",
+    "Behavior Boundary Classification",
+    "Assertion Quality Gate",
+    "TDD Quality Evidence",
+    "test-assertion-quality.md",
+    "language-test-smells.md",
+    "testing-patterns.md",
+    "explicit artifact contract",
+    "hidden_implementation_details_to_avoid",
+    "required_test_layer",
+    "why_this_layer_is_narrowest_reliable_layer",
+    "intended_failure_reason",
+    "why_failure_proves_missing_behavior",
+    "assertion_quality_gate",
+    "determinism_controls",
+    "fixture_mock_justification",
     "Scenario Change Map",
     "scenario_change_id",
     "previous_scenario_or_test_id",
@@ -162,6 +188,79 @@ REQUIRED_DOWNSTREAM_TEST_TERMS = (
     "test_artifact_drift_unresolved",
 )
 
+REQUIRED_TEST_ASSERTION_QUALITY_TERMS = (
+    "downstream application project",
+    "Behavior Boundary Classification",
+    "Assertion Quality Gate",
+    "TDD Quality Evidence",
+    "behavior_boundary",
+    "public_entrypoint",
+    "observable_result",
+    "hidden_implementation_details_to_avoid",
+    "required_test_layer",
+    "why_this_layer_is_narrowest_reliable_layer",
+    "assertion_strategy",
+    "fixture_mock_policy",
+    "determinism_policy",
+    "test_smell_risk",
+    "intended_failure_reason",
+    "why_failure_proves_missing_behavior",
+    "assertion_quality_gate",
+    "determinism_controls",
+    "fixture_mock_justification",
+    "weak_assertion",
+    "mock_only_assertion",
+    "private_behavior_test",
+    "implementation_detail_assertion",
+    "broad_snapshot",
+    "non_diagnostic_failure",
+    "wrong_layer",
+    "flaky_shared_state",
+    "coverage_theater",
+)
+
+REQUIRED_LANGUAGE_TEST_SMELL_TERMS = (
+    "downstream application project",
+    "behavior_boundary",
+    "public_entrypoint",
+    "observable_result",
+    "assertion_strategy",
+    "fixture_mock_policy",
+    "determinism_policy",
+    "test_smell_risk",
+    "weak_assertion",
+    "mock_only_assertion",
+    "private_behavior_test",
+    "implementation_detail_assertion",
+    "broad_snapshot",
+    "non_diagnostic_failure",
+    "wrong_layer",
+    "flaky_shared_state",
+    "coverage_theater",
+    ".NET",
+    "JavaScript/TypeScript",
+    "Java/Kotlin",
+    "SQL/Migration",
+    "IaC",
+)
+
+REQUIRED_TESTING_PATTERN_QUALITY_TERMS = (
+    "downstream application project",
+    "observable behavior",
+    "explicit artifact contract",
+    "test-assertion-quality.md",
+    "language-test-smells.md",
+    "weak assertions",
+    "mock-only assertions",
+    "private behavior tests",
+    "implementation-detail assertions",
+    "broad snapshots",
+    "non-diagnostic failures",
+    "wrong-layer tests",
+    "flaky shared",
+    "coverage theater",
+)
+
 REQUIRED_TEST_RELEVANCE_TERMS = (
     "Decision Schema",
     "Existing Test Relevance Inventory",
@@ -195,6 +294,18 @@ REQUIRED_TEST_ARTIFACT_DRIFT_TERMS = (
     "snapshot_drift_unreviewed",
     "mock_contract_mismatch",
 )
+
+REQUIRED_SHARED_SKILL_SCHEMA_HEADERS = {
+    "downstream-test-contracts.md": (
+        "| downstream application project | Acceptance Criteria ID | User Scenario ID | behavior_boundary | public_entrypoint | observable_result | test_layer | test_file | test_command | assertion_strategy | fixture_mock_policy | determinism_policy | test_smell_risk |",
+        "| behavior_boundary | public_entrypoint | observable_result | hidden_implementation_details_to_avoid | required_test_layer | why_this_layer_is_narrowest_reliable_layer |",
+        "| evidence_id | behavior_boundary | public_entrypoint | observable_result | intended_failure_reason | why_failure_proves_missing_behavior | assertion_quality_gate | determinism_controls | fixture_mock_justification |",
+    ),
+    "test-assertion-quality.md": (
+        "| behavior_boundary | public_entrypoint | observable_result | hidden_implementation_details_to_avoid | required_test_layer | why_this_layer_is_narrowest_reliable_layer |",
+        "| evidence_id | behavior_boundary | public_entrypoint | observable_result | intended_failure_reason | why_failure_proves_missing_behavior | assertion_quality_gate | determinism_controls | fixture_mock_justification |",
+    ),
+}
 
 SHARED_SKILL_ROOTS = (
     ("codex", Path("plugins/codex/shared-skills")),
@@ -266,6 +377,9 @@ def _validate_shared_skill_schema_terms(root: Path) -> list[str]:
         "downstream-test-contracts.md": REQUIRED_DOWNSTREAM_TEST_TERMS,
         "test-relevance-decisions.md": REQUIRED_TEST_RELEVANCE_TERMS,
         "test-artifact-drift.md": REQUIRED_TEST_ARTIFACT_DRIFT_TERMS,
+        "test-assertion-quality.md": REQUIRED_TEST_ASSERTION_QUALITY_TERMS,
+        "language-test-smells.md": REQUIRED_LANGUAGE_TEST_SMELL_TERMS,
+        "testing-patterns.md": REQUIRED_TESTING_PATTERN_QUALITY_TERMS,
     }
 
     for harness, relative_root in SHARED_SKILL_ROOTS:
@@ -281,6 +395,13 @@ def _validate_shared_skill_schema_terms(root: Path) -> list[str]:
                         "missing shared-skills schema term "
                         f"for {harness}: {path.relative_to(root).as_posix()} "
                         f"must include {term}"
+                    )
+            for header in REQUIRED_SHARED_SKILL_SCHEMA_HEADERS.get(reference, ()):
+                if header not in text:
+                    errors.append(
+                        "missing shared-skills schema header "
+                        f"for {harness}: {path.relative_to(root).as_posix()} "
+                        f"must include {header}"
                     )
 
     return errors

@@ -5,6 +5,13 @@ test for a requested behavior. When `testing-workflow` selects
 `test-suite-reconciliation`, reconcile existing tests and test artifacts before
 using these patterns for new or updated tests.
 
+Use `test-assertion-quality.md` and `language-test-smells.md` with every
+pattern below when downstream application project tests must prove observable
+behavior or an explicit artifact contract. Do not count weak assertions,
+mock-only assertions, private behavior tests, implementation-detail assertions,
+broad snapshots, non-diagnostic failures, wrong-layer tests, flaky shared
+state, or coverage theater as core coverage.
+
 ## Reconciliation Pattern
 
 - Use `test-suite-reconciliation` before adding tests for changed existing

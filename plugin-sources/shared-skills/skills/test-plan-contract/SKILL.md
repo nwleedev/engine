@@ -11,24 +11,39 @@ metadata:
 
 Create a `Test Plan Contract` that maps each scenario to the test layer, test file, test command, fixture or mock policy, Fixture Governance Contract, current requirement coverage, and evidence ID required for completion.
 
+Use this contract for downstream application project tests, not only for tests
+inside this plugin repository. Each planned test must identify the application
+behavior boundary, public entrypoint, observable result, assertion strategy,
+fixture/mock policy, determinism policy, and test smell risk before it can count
+as current requirement coverage. Core coverage must prove observable behavior or
+an explicit artifact contract.
+
 For implementation work that changes observable behavior, this contract is required before claiming completion. It may state that automated tests are not feasible, but it must then name the repeatable manual or inspection evidence and residual risk.
 
 Use `../../references/downstream-test-contracts.md` when fixture governance,
 scenario mapping, canonical Current Requirement Coverage Contract fields, join
 rules, allowed values, or test contract details are needed.
+Use `../../references/test-assertion-quality.md` and
+`../../references/language-test-smells.md` when behavior boundary,
+assertion quality, determinism, or stack-specific smell classification is
+needed.
 
 ## Workflow
 
 1. Start from scenario IDs and acceptance criteria IDs produced by `scenario-test-designer`.
-2. Select the narrowest existing test layer that can fail for the observable behavior.
-3. Name the test file or generated artifact that should carry the test.
-4. Name the exact command that proves failure and pass status.
-5. State the fixture and mock policy, including why real objects, high-fidelity boundaries, or in-memory substitutes are not enough when doubles are used.
-6. Set the fixture budget. Default to `0`; any fixture, mock, fake, stub, snapshot, seed, or generated input must have a Fixture Governance Contract row.
-7. Assign an evidence ID that will be filled by `implementation-evidence`.
-8. When reconciliation was required, link the current coverage row to the `reconciliation_id` and `linked_scenario_ids`, then record replacement coverage or residual risk before routing new tests.
-9. Produce a `Current Requirement Coverage Contract` that separates current core evidence from residual gaps, manual or inspection evidence, replacement coverage, and owner follow-up; use the canonical allowed values and join rules in `downstream-test-contracts.md`.
-10. Route test implementation to `tdd-cycle`.
+2. Classify `behavior_boundary`, `public_entrypoint`, and `observable_result` before choosing the test layer.
+3. Select the narrowest existing test layer that can fail for the observable behavior or explicit artifact contract.
+4. Name the test file or generated artifact that should carry the test.
+5. Name the exact command that proves failure and pass status.
+6. State `assertion_strategy`, including why it proves the current requirement's observable behavior or explicit artifact contract and how it avoids weak assertions, private behavior, implementation-detail assertions, broad snapshots, and coverage theater.
+7. State the `fixture_mock_policy`, including why real objects, high-fidelity boundaries, or in-memory substitutes are not enough when doubles are used.
+8. State the `determinism_policy` for time, randomness, ordering, locale, filesystem, ports, generated IDs, concurrency, and shared state.
+9. State `test_smell_risk` as `none` or one or more blocking smell codes.
+10. Set the fixture budget. Default to `0`; any fixture, mock, fake, stub, snapshot, seed, or generated input must have a Fixture Governance Contract row.
+11. Assign an evidence ID that will be filled by `implementation-evidence`.
+12. When reconciliation was required, link the current coverage row to the `reconciliation_id` and `linked_scenario_ids`, then record replacement coverage or residual risk before routing new tests.
+13. Produce a `Current Requirement Coverage Contract` that separates current core evidence from residual gaps, manual or inspection evidence, replacement coverage, and owner follow-up; use the canonical allowed values and join rules in `downstream-test-contracts.md`.
+14. Route test implementation to `tdd-cycle`.
 
 ## Development work
 
@@ -48,9 +63,9 @@ rules, allowed values, or test contract details are needed.
 ```markdown
 ## Test Plan Contract
 
-| scenario_id | acceptance_criteria_id | linked_spec_clause_ids | test_layer | test_file | test_command | fixture_mock_policy | fixture_governance_ids | evidence_id |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| SCN-001 | AC-001 | SPEC-001.CLAUSE-001 |  |  |  |  | FX-001 | EVID-001 |
+| scenario_id | acceptance_criteria_id | linked_spec_clause_ids | behavior_boundary | public_entrypoint | observable_result | test_layer | test_file | test_command | assertion_strategy | fixture_mock_policy | determinism_policy | test_smell_risk | fixture_governance_ids | evidence_id |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| SCN-001 | AC-001 | SPEC-001.CLAUSE-001 | public_api |  |  |  |  |  |  |  |  | none | FX-001 | EVID-001 |
 
 ## Fixture Governance Contract
 
@@ -69,7 +84,8 @@ rules, allowed values, or test contract details are needed.
 
 - Do not choose a broader test layer when a narrower public-boundary test can prove the behavior.
 - Do not route reconciliation-required work to `tdd-cycle` without a current coverage row that links accepted evidence, gaps, or residual risk to the `reconciliation_id`.
+- Do not leave `behavior_boundary`, `public_entrypoint`, `observable_result`, `assertion_strategy`, `fixture_mock_policy`, `determinism_policy`, or `test_smell_risk` blank for core downstream application project tests.
 - Do not create broad fixture factories before repeated setup proves the need.
-- Do not use mocks where observable behavior can be asserted directly.
+- Do not use mocks where observable behavior or an explicit artifact contract can be asserted directly.
 - Do not omit exact test commands from completion evidence.
 - Do not increase fixtures, mocks, fakes, stubs, snapshots, or generated inputs without fixture governance.

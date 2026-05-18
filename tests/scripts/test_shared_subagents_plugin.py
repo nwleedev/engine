@@ -118,6 +118,14 @@ def test_test_adequacy_reviewer_owns_downstream_test_quality() -> None:
         "Acceptance Criteria ID",
         "User Scenario ID",
         "linked_spec_clause_ids",
+        "behavior_boundary",
+        "public_entrypoint",
+        "observable_result",
+        "explicit artifact contract",
+        "assertion_strategy",
+        "fixture_mock_policy",
+        "determinism_policy",
+        "test_smell_risk",
         "Fixture/Mock Justification",
         "Fixture Governance Contract",
         "fixture budget",
@@ -128,11 +136,25 @@ def test_test_adequacy_reviewer_owns_downstream_test_quality() -> None:
         "unjustified_fixture",
         "test_only_behavior",
         "failed, skipped, or not-run test commands",
+        "weak_assertion",
+        "mock_only_assertion",
+        "private_behavior_test",
+        "implementation_detail_assertion",
+        "broad_snapshot",
+        "non_diagnostic_failure",
+        "wrong_layer",
+        "flaky_shared_state",
+        "coverage_theater",
     ):
         assert term in check_block
     assert "tests that assert only mock calls" in do_not_block
+    assert "observable behavior or an explicit artifact contract" in do_not_block
+    assert "implementation-detail assertions" in do_not_block
+    assert "coverage theater" in do_not_block
     assert "fixture-heavy tests without Fixture Governance Contract evidence" in do_not_block
     assert "newly written or modified tests" in instructions
+    assert "downstream application project tests" in instructions
+    assert "not limited to this plugin repository's tests" in instructions
     assert "test-reconciliation-reviewer" in instructions
 
 

@@ -28,6 +28,7 @@ After installing the plugin, restart the host coding agent or tool if the new sk
 - `research-plan`, `source-ledger`, and `claim-evidence-map` use `references/deep-research-pipeline.md`.
 - `testing-workflow`, `scenario-test-designer`, `test-suite-reconciliation`, `test-plan-contract`, and `tdd-cycle` use `references/downstream-test-contracts.md`, including the Fixture Governance Contract.
 - `test-suite-reconciliation` also uses `references/test-relevance-decisions.md` and `references/test-artifact-drift.md` for existing test decisions and artifact drift review.
+- `test-plan-contract` and `tdd-cycle` also use `references/test-assertion-quality.md` and `references/language-test-smells.md` for downstream application project assertion quality, behavior boundary classification, determinism policy, and blocking smell codes.
 - `comment-writing`, `implementation-discipline`, and `debugging-discipline` keep execution scoped and feed evidence into the same workflow artifacts.
 
 ## Downstream Test Gate

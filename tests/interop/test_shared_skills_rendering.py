@@ -27,8 +27,16 @@ def test_codex_skill_rendering_includes_reference_documents() -> None:
     files = render_codex_skill_tree(ROOT / "plugin-sources" / "shared-skills")
 
     assert "references/comment-specs-by-stack.md" in files
+    assert "references/test-assertion-quality.md" in files
+    assert "references/language-test-smells.md" in files
     assert files["references/comment-specs-by-stack.md"].startswith(
         markdown_header("plugin-sources/shared-skills/references/comment-specs-by-stack.md")
+    )
+    assert files["references/test-assertion-quality.md"].startswith(
+        markdown_header("plugin-sources/shared-skills/references/test-assertion-quality.md")
+    )
+    assert files["references/language-test-smells.md"].startswith(
+        markdown_header("plugin-sources/shared-skills/references/language-test-smells.md")
     )
 
 

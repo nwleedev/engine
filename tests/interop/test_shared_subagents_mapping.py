@@ -66,6 +66,8 @@ def test_claude_agent_markdown_preserves_test_adequacy_role_contract() -> None:
     assert 'name: "test-adequacy-reviewer"' in text
     assert "Fixture/Mock Justification" in text
     assert "downstream project" in text
+    assert "weak_assertion" in text
+    assert "coverage_theater" in text
 
 
 def test_codex_agent_tree_adds_generated_header_and_preserves_original_body() -> None:

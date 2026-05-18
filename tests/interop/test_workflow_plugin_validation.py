@@ -13,8 +13,11 @@ from tools.validate_workflow_plugins import (
     FORBIDDEN_LEGACY_NAMES,
     REQUIRED_DEEP_RESEARCH_TERMS,
     REQUIRED_DOWNSTREAM_TEST_TERMS,
+    REQUIRED_LANGUAGE_TEST_SMELL_TERMS,
+    REQUIRED_SHARED_SKILL_SCHEMA_HEADERS,
     REQUIRED_SHARED_SKILL_REFERENCES,
     REQUIRED_SHARED_SUBAGENTS,
+    REQUIRED_TEST_ASSERTION_QUALITY_TERMS,
     REQUIRED_TEST_ARTIFACT_DRIFT_TERMS,
     REQUIRED_TEST_RELEVANCE_TERMS,
     REQUIRED_WORKFLOW_ARTIFACT_TERMS,
@@ -30,30 +33,13 @@ def touch(path: Path) -> None:
 def write_minimal_workflow_plugin_shape(root: Path) -> None:
     for harness in ("codex", "claude"):
         references_root = root / "plugins" / harness / "shared-skills" / "references"
-        (references_root / "workflow-artifacts.md").parent.mkdir(
-            parents=True,
-            exist_ok=True,
-        )
-        (references_root / "workflow-artifacts.md").write_text(
-            "\n".join(REQUIRED_WORKFLOW_ARTIFACT_TERMS),
-            encoding="utf-8",
-        )
-        (references_root / "deep-research-pipeline.md").write_text(
-            "\n".join(REQUIRED_DEEP_RESEARCH_TERMS),
-            encoding="utf-8",
-        )
-        (references_root / "downstream-test-contracts.md").write_text(
-            "\n".join(REQUIRED_DOWNSTREAM_TEST_TERMS),
-            encoding="utf-8",
-        )
-        (references_root / "test-relevance-decisions.md").write_text(
-            "\n".join(REQUIRED_TEST_RELEVANCE_TERMS),
-            encoding="utf-8",
-        )
-        (references_root / "test-artifact-drift.md").write_text(
-            "\n".join(REQUIRED_TEST_ARTIFACT_DRIFT_TERMS),
-            encoding="utf-8",
-        )
+        references_root.mkdir(parents=True, exist_ok=True)
+        source_references_root = ROOT / "plugins" / harness / "shared-skills" / "references"
+        for reference in REQUIRED_SHARED_SKILL_REFERENCES:
+            (references_root / reference).write_text(
+                (source_references_root / reference).read_text(encoding="utf-8"),
+                encoding="utf-8",
+            )
 
     for agent in REQUIRED_SHARED_SUBAGENTS:
         touch(root / "plugins" / "codex" / "shared-subagents" / "agents" / f"{agent}.toml")
@@ -67,6 +53,9 @@ def test_workflow_validation_constants_cover_retired_routes_and_contracts() -> N
     assert "downstream-test-contracts.md" in REQUIRED_SHARED_SKILL_REFERENCES
     assert "test-relevance-decisions.md" in REQUIRED_SHARED_SKILL_REFERENCES
     assert "test-artifact-drift.md" in REQUIRED_SHARED_SKILL_REFERENCES
+    assert "test-assertion-quality.md" in REQUIRED_SHARED_SKILL_REFERENCES
+    assert "language-test-smells.md" in REQUIRED_SHARED_SKILL_REFERENCES
+    assert "testing-patterns.md" in REQUIRED_SHARED_SKILL_REFERENCES
     assert "requirements-reviewer" in REQUIRED_SHARED_SUBAGENTS
     assert "plan-reviewer" in REQUIRED_SHARED_SUBAGENTS
     assert "spec-coverage-reviewer" in REQUIRED_SHARED_SUBAGENTS
@@ -92,6 +81,21 @@ def test_workflow_validation_constants_cover_retired_routes_and_contracts() -> N
     assert "report_path" in REQUIRED_WORKFLOW_ARTIFACT_TERMS
     assert "used_for_claim_ids" in REQUIRED_DEEP_RESEARCH_TERMS
     assert "Fixture/Mock Justification" in REQUIRED_DOWNSTREAM_TEST_TERMS
+    assert "downstream application project" in REQUIRED_DOWNSTREAM_TEST_TERMS
+    assert "Behavior Boundary Classification" in REQUIRED_DOWNSTREAM_TEST_TERMS
+    assert "Assertion Quality Gate" in REQUIRED_DOWNSTREAM_TEST_TERMS
+    assert "TDD Quality Evidence" in REQUIRED_DOWNSTREAM_TEST_TERMS
+    assert "test-assertion-quality.md" in REQUIRED_DOWNSTREAM_TEST_TERMS
+    assert "language-test-smells.md" in REQUIRED_DOWNSTREAM_TEST_TERMS
+    assert "testing-patterns.md" in REQUIRED_DOWNSTREAM_TEST_TERMS
+    assert "explicit artifact contract" in REQUIRED_DOWNSTREAM_TEST_TERMS
+    assert "behavior_boundary" in REQUIRED_DOWNSTREAM_TEST_TERMS
+    assert "public_entrypoint" in REQUIRED_DOWNSTREAM_TEST_TERMS
+    assert "observable_result" in REQUIRED_DOWNSTREAM_TEST_TERMS
+    assert "assertion_strategy" in REQUIRED_DOWNSTREAM_TEST_TERMS
+    assert "fixture_mock_policy" in REQUIRED_DOWNSTREAM_TEST_TERMS
+    assert "determinism_policy" in REQUIRED_DOWNSTREAM_TEST_TERMS
+    assert "test_smell_risk" in REQUIRED_DOWNSTREAM_TEST_TERMS
     assert "Scenario Change Map" in REQUIRED_DOWNSTREAM_TEST_TERMS
     assert "linked_scenario_ids" in REQUIRED_DOWNSTREAM_TEST_TERMS
     assert "relationship_to_current_requirement" in REQUIRED_DOWNSTREAM_TEST_TERMS
@@ -114,6 +118,19 @@ def test_workflow_validation_constants_cover_retired_routes_and_contracts() -> N
     assert "quarantine" in REQUIRED_TEST_RELEVANCE_TERMS
     assert "Test Artifact Drift Inventory" in REQUIRED_TEST_ARTIFACT_DRIFT_TERMS
     assert "no_artifact_expected" in REQUIRED_TEST_ARTIFACT_DRIFT_TERMS
+    for smell_code in (
+        "weak_assertion",
+        "mock_only_assertion",
+        "private_behavior_test",
+        "implementation_detail_assertion",
+        "broad_snapshot",
+        "non_diagnostic_failure",
+        "wrong_layer",
+        "flaky_shared_state",
+        "coverage_theater",
+    ):
+        assert smell_code in REQUIRED_TEST_ASSERTION_QUALITY_TERMS
+        assert smell_code in REQUIRED_LANGUAGE_TEST_SMELL_TERMS
 
 
 def test_workflow_validation_reports_legacy_generated_artifact_path(
@@ -231,6 +248,25 @@ def test_workflow_validation_reports_missing_schema_terms(tmp_path: Path) -> Non
         ("workflow-artifacts.md", "coverage_report_id"),
         ("workflow-artifacts.md", "validator_exit_code"),
         ("downstream-test-contracts.md", "unjustified_fixture"),
+        ("downstream-test-contracts.md", "downstream application project"),
+        ("downstream-test-contracts.md", "Behavior Boundary Classification"),
+        ("downstream-test-contracts.md", "Assertion Quality Gate"),
+        ("downstream-test-contracts.md", "TDD Quality Evidence"),
+        ("downstream-test-contracts.md", "behavior_boundary"),
+        ("downstream-test-contracts.md", "public_entrypoint"),
+        ("downstream-test-contracts.md", "observable_result"),
+        ("downstream-test-contracts.md", "hidden_implementation_details_to_avoid"),
+        ("downstream-test-contracts.md", "required_test_layer"),
+        ("downstream-test-contracts.md", "why_this_layer_is_narrowest_reliable_layer"),
+        ("downstream-test-contracts.md", "assertion_strategy"),
+        ("downstream-test-contracts.md", "fixture_mock_policy"),
+        ("downstream-test-contracts.md", "determinism_policy"),
+        ("downstream-test-contracts.md", "test_smell_risk"),
+        ("downstream-test-contracts.md", "intended_failure_reason"),
+        ("downstream-test-contracts.md", "why_failure_proves_missing_behavior"),
+        ("downstream-test-contracts.md", "assertion_quality_gate"),
+        ("downstream-test-contracts.md", "determinism_controls"),
+        ("downstream-test-contracts.md", "fixture_mock_justification"),
         ("downstream-test-contracts.md", "Scenario Change Map"),
         ("downstream-test-contracts.md", "scenario_change_id"),
         ("downstream-test-contracts.md", "previous_scenario_or_test_id"),
@@ -273,6 +309,70 @@ def test_workflow_validation_reports_missing_schema_terms(tmp_path: Path) -> Non
         ("test-relevance-decisions.md", "quarantine"),
         ("test-artifact-drift.md", "Test Artifact Drift Inventory"),
         ("test-artifact-drift.md", "no_artifact_expected"),
+        ("test-assertion-quality.md", "Behavior Boundary Classification"),
+        ("test-assertion-quality.md", "Assertion Quality Gate"),
+        ("test-assertion-quality.md", "TDD Quality Evidence"),
+        ("test-assertion-quality.md", "downstream application project"),
+        ("test-assertion-quality.md", "behavior_boundary"),
+        ("test-assertion-quality.md", "public_entrypoint"),
+        ("test-assertion-quality.md", "observable_result"),
+        ("test-assertion-quality.md", "hidden_implementation_details_to_avoid"),
+        ("test-assertion-quality.md", "required_test_layer"),
+        ("test-assertion-quality.md", "why_this_layer_is_narrowest_reliable_layer"),
+        ("test-assertion-quality.md", "assertion_strategy"),
+        ("test-assertion-quality.md", "fixture_mock_policy"),
+        ("test-assertion-quality.md", "determinism_policy"),
+        ("test-assertion-quality.md", "test_smell_risk"),
+        ("test-assertion-quality.md", "intended_failure_reason"),
+        ("test-assertion-quality.md", "why_failure_proves_missing_behavior"),
+        ("test-assertion-quality.md", "assertion_quality_gate"),
+        ("test-assertion-quality.md", "determinism_controls"),
+        ("test-assertion-quality.md", "fixture_mock_justification"),
+        ("test-assertion-quality.md", "weak_assertion"),
+        ("test-assertion-quality.md", "mock_only_assertion"),
+        ("test-assertion-quality.md", "private_behavior_test"),
+        ("test-assertion-quality.md", "implementation_detail_assertion"),
+        ("test-assertion-quality.md", "broad_snapshot"),
+        ("test-assertion-quality.md", "non_diagnostic_failure"),
+        ("test-assertion-quality.md", "wrong_layer"),
+        ("test-assertion-quality.md", "flaky_shared_state"),
+        ("test-assertion-quality.md", "coverage_theater"),
+        ("language-test-smells.md", "downstream application project"),
+        ("language-test-smells.md", "behavior_boundary"),
+        ("language-test-smells.md", "public_entrypoint"),
+        ("language-test-smells.md", "observable_result"),
+        ("language-test-smells.md", "assertion_strategy"),
+        ("language-test-smells.md", "fixture_mock_policy"),
+        ("language-test-smells.md", "determinism_policy"),
+        ("language-test-smells.md", "test_smell_risk"),
+        ("language-test-smells.md", "weak_assertion"),
+        ("language-test-smells.md", "mock_only_assertion"),
+        ("language-test-smells.md", "private_behavior_test"),
+        ("language-test-smells.md", "implementation_detail_assertion"),
+        ("language-test-smells.md", "broad_snapshot"),
+        ("language-test-smells.md", "non_diagnostic_failure"),
+        ("language-test-smells.md", "wrong_layer"),
+        ("language-test-smells.md", "flaky_shared_state"),
+        ("language-test-smells.md", "coverage_theater"),
+        ("language-test-smells.md", ".NET"),
+        ("language-test-smells.md", "JavaScript/TypeScript"),
+        ("language-test-smells.md", "Java/Kotlin"),
+        ("language-test-smells.md", "SQL/Migration"),
+        ("language-test-smells.md", "IaC"),
+        ("testing-patterns.md", "downstream application project"),
+        ("testing-patterns.md", "observable behavior"),
+        ("testing-patterns.md", "explicit artifact contract"),
+        ("testing-patterns.md", "test-assertion-quality.md"),
+        ("testing-patterns.md", "language-test-smells.md"),
+        ("testing-patterns.md", "weak assertions"),
+        ("testing-patterns.md", "mock-only assertions"),
+        ("testing-patterns.md", "private behavior tests"),
+        ("testing-patterns.md", "implementation-detail assertions"),
+        ("testing-patterns.md", "broad snapshots"),
+        ("testing-patterns.md", "non-diagnostic failures"),
+        ("testing-patterns.md", "wrong-layer tests"),
+        ("testing-patterns.md", "flaky shared"),
+        ("testing-patterns.md", "coverage theater"),
     ],
 )
 def test_workflow_validation_reports_each_missing_blocking_term(
@@ -300,6 +400,43 @@ def test_workflow_validation_reports_each_missing_blocking_term(
         "missing shared-skills schema term" in error
         and f"plugins/codex/shared-skills/references/{reference}" in error
         and term in error
+        for error in errors
+    )
+
+
+@pytest.mark.parametrize(
+    ("reference", "header"),
+    [
+        (reference, header)
+        for reference, headers in REQUIRED_SHARED_SKILL_SCHEMA_HEADERS.items()
+        for header in headers
+    ],
+)
+def test_workflow_validation_reports_each_missing_schema_header(
+    tmp_path: Path,
+    reference: str,
+    header: str,
+) -> None:
+    write_minimal_workflow_plugin_shape(tmp_path)
+    target = (
+        tmp_path
+        / "plugins"
+        / "codex"
+        / "shared-skills"
+        / "references"
+        / reference
+    )
+    target.write_text(
+        target.read_text(encoding="utf-8").replace(header, header.replace("|", ":", 1)),
+        encoding="utf-8",
+    )
+
+    errors = validate_workflow_plugins(tmp_path)
+
+    assert any(
+        "missing shared-skills schema header" in error
+        and f"plugins/codex/shared-skills/references/{reference}" in error
+        and header in error
         for error in errors
     )
 

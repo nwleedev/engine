@@ -199,6 +199,7 @@ def test_downstream_test_contract_limits_fixture_and_mock_use() -> None:
     scenario_change = section_body(text, "Scenario Change Map")
     current_coverage = section_body(text, "Current Requirement Coverage Contract")
     tdd_evidence = section_body(text, "TDD Cycle Evidence")
+    quality_evidence = section_body(text, "TDD Quality Evidence")
     join_rules = section_body(text, "Join Rules")
 
     assert (
@@ -257,8 +258,16 @@ def test_downstream_test_contract_limits_fixture_and_mock_use() -> None:
     ):
         assert term in current_coverage
     assert (
+        "| downstream application project | Acceptance Criteria ID | User Scenario ID | behavior_boundary | public_entrypoint | observable_result | test_layer | test_file | test_command | assertion_strategy | fixture_mock_policy | determinism_policy | test_smell_risk |"
+        in text
+    )
+    assert (
         "| tdd_evidence_id | scenario_id | acceptance_criteria_id | reconciliation_id | test_file | failing_command | observed_failure | passing_command | observed_result | residual_gap |"
         in tdd_evidence
+    )
+    assert (
+        "| evidence_id | behavior_boundary | public_entrypoint | observable_result | intended_failure_reason | why_failure_proves_missing_behavior | assertion_quality_gate | determinism_controls | fixture_mock_justification |"
+        in quality_evidence
     )
     for term in (
         "failing_command",
@@ -296,6 +305,76 @@ def test_downstream_test_contract_limits_fixture_and_mock_use() -> None:
     assert "Do not assert only mock calls" in text
     assert "Do not create broad fixture factories" in text
     assert "observable behavior" in text
+    for term in (
+        "Behavior Boundary Classification",
+        "Assertion Quality Gate",
+        "TDD Quality Evidence",
+        "downstream application project",
+        "behavior_boundary",
+        "public_entrypoint",
+        "observable_result",
+        "assertion_strategy",
+        "fixture_mock_policy",
+        "determinism_policy",
+        "test_smell_risk",
+        "weak_assertion",
+        "mock_only_assertion",
+        "private_behavior_test",
+        "implementation_detail_assertion",
+        "broad_snapshot",
+        "non_diagnostic_failure",
+        "wrong_layer",
+        "flaky_shared_state",
+        "coverage_theater",
+    ):
+        assert term in text
+
+
+def test_test_quality_references_define_assertion_gate_and_language_smells() -> None:
+    assertion_quality = read(PLUGIN_ROOT / "references" / "test-assertion-quality.md")
+    language_smells = read(PLUGIN_ROOT / "references" / "language-test-smells.md")
+
+    for text in (assertion_quality, language_smells):
+        assert "downstream application project" in text
+        for term in (
+            "behavior_boundary",
+            "public_entrypoint",
+            "observable_result",
+            "assertion_strategy",
+            "fixture_mock_policy",
+            "determinism_policy",
+            "test_smell_risk",
+            "weak_assertion",
+            "mock_only_assertion",
+            "private_behavior_test",
+            "implementation_detail_assertion",
+            "broad_snapshot",
+            "non_diagnostic_failure",
+            "wrong_layer",
+            "flaky_shared_state",
+            "coverage_theater",
+        ):
+            assert term in text
+
+    assert "Behavior Boundary Classification" in assertion_quality
+    assert "Assertion Quality Gate" in assertion_quality
+    assert "TDD Quality Evidence" in assertion_quality
+    assert (
+        "| evidence_id | behavior_boundary | public_entrypoint | observable_result | intended_failure_reason | why_failure_proves_missing_behavior | assertion_quality_gate | determinism_controls | fixture_mock_justification |"
+        in assertion_quality
+    )
+    for stack in (
+        "Python",
+        "JavaScript/TypeScript",
+        "Java/Kotlin",
+        ".NET",
+        "Go",
+        "Rust",
+        "SQL/Migration",
+        "IaC",
+    ):
+        assert stack in language_smells
+        assert f"| {stack} |" in language_smells
 
 
 def test_reconciliation_references_define_decisions_and_artifact_drift() -> None:
@@ -407,6 +486,52 @@ def test_shared_skills_test_skills_point_to_downstream_test_reference() -> None:
         assert "when fixture governance" in text
         assert "scenario mapping" in text
         assert "test contract details are needed" in text
+
+
+def test_tdd_and_test_plan_contracts_include_behavior_quality_fields() -> None:
+    tdd_text = read(PLUGIN_ROOT / "skills" / "tdd-cycle" / "SKILL.md")
+    plan_text = read(PLUGIN_ROOT / "skills" / "test-plan-contract" / "SKILL.md")
+
+    for text in (tdd_text, plan_text):
+        assert "downstream application project" in text
+        assert "../../references/test-assertion-quality.md" in text
+        assert "../../references/language-test-smells.md" in text
+        assert "observable behavior" in text
+        assert "explicit artifact contract" in text
+        for term in (
+            "behavior_boundary",
+            "public_entrypoint",
+            "observable_result",
+            "assertion_strategy",
+            "fixture_mock_policy",
+            "determinism_policy",
+            "test_smell_risk",
+        ):
+            assert term in text
+
+    for section in (
+        "Behavior Boundary Classification",
+        "Assertion Quality Gate",
+        "TDD Quality Evidence",
+    ):
+        assert section in tdd_text
+
+    assert (
+        "| behavior_boundary | public_entrypoint | observable_result | hidden_implementation_details_to_avoid | required_test_layer | why_this_layer_is_narrowest_reliable_layer |"
+        in tdd_text
+    )
+    assert (
+        "| evidence_id | behavior_boundary | public_entrypoint | observable_result | intended_failure_reason | why_failure_proves_missing_behavior | assertion_quality_gate | determinism_controls | fixture_mock_justification |"
+        in tdd_text
+    )
+    assert (
+        "| downstream application project | Acceptance Criteria ID | User Scenario ID | behavior_boundary | public_entrypoint | observable_result | test_layer | test_file | test_command | assertion_strategy | fixture_mock_policy | determinism_policy | test_smell_risk |"
+        in tdd_text
+    )
+    assert (
+        "| scenario_id | acceptance_criteria_id | linked_spec_clause_ids | behavior_boundary | public_entrypoint | observable_result | test_layer | test_file | test_command | assertion_strategy | fixture_mock_policy | determinism_policy | test_smell_risk | fixture_governance_ids | evidence_id |"
+        in plan_text
+    )
 
 
 def test_test_suite_reconciliation_skill_defines_required_contracts() -> None:
@@ -521,6 +646,13 @@ def test_testing_workflow_skill_defines_required_routes() -> None:
 
     assert "single entry point" in text
     assert "Testing Workflow Route" in text
+    assert "../../references/test-assertion-quality.md" in text
+    assert "../../references/language-test-smells.md" in text
+    assert "../../references/testing-patterns.md" in text
+    assert "Behavior Boundary Classification" in text
+    assert "Assertion Quality Gate" in text
+    assert "TDD Quality Evidence" in text
+    assert "explicit artifact contract" in text
     assert "| route | use_when | next_step |" in text
     assert (
         "| route_id | request_summary | behavior_change_type | existing_tests_may_be_affected | selected_route | required_next_skill_or_agent | reason | residual_risk_if_skipped |"
@@ -608,6 +740,9 @@ def test_tdd_cycle_skill_defines_tdd_workflow() -> None:
     assert "Fixture Governance Contract" in text
     assert "fixture budget" in text
     assert "high-fidelity boundary" in text
+    assert "Behavior Boundary Classification" in text
+    assert "Assertion Quality Gate" in text
+    assert "TDD Quality Evidence" in text
 
 
 def test_scenario_test_designer_defines_change_map_schema() -> None:
@@ -765,6 +900,23 @@ def test_testing_patterns_reference_documents_required_types() -> None:
     )
 
     assert "# Testing Patterns" in text
+    assert "test-assertion-quality.md" in text
+    assert "language-test-smells.md" in text
+    assert "downstream application project" in text
+    assert "observable behavior" in text
+    assert "explicit artifact contract" in text
+    for smell_phrase in (
+        "weak assertions",
+        "mock-only assertions",
+        "private behavior tests",
+        "implementation-detail assertions",
+        "broad snapshots",
+        "non-diagnostic failures",
+        "wrong-layer tests",
+        "flaky shared",
+        "coverage theater",
+    ):
+        assert smell_phrase in text
     double_priority = section_body(text, "Test double priority")
     assert "inline minimal arrange" in double_priority
     assert "real domain objects" in double_priority

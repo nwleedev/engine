@@ -11,6 +11,12 @@ metadata:
 
 Use this skill to write test code through a TDD workflow: define the observable behavior first, write the smallest useful failing test, confirm the failure, add the minimum implementation, confirm the pass, refactor, and record evidence.
 
+This skill is for downstream application projects that use the plugin, not only
+for tests inside this plugin repository. Treat each test as evidence for the
+application's current requirement, public contract, user-visible behavior, or
+operational boundary. Core TDD evidence must prove observable behavior or an
+explicit artifact contract.
+
 Do not force a new test framework. Prefer the project's existing test framework, package manager, directory layout, naming convention, fixture style, assertion helpers, and CI commands.
 
 When the selected testing route requires reconciliation, do not add a new test until `test-suite-reconciliation` has produced a `Reconciliation Contract` and `test-plan-contract` has produced current coverage with the linked `reconciliation_id`.
@@ -18,6 +24,10 @@ When the selected testing route requires reconciliation, do not add a new test u
 Use `../../references/downstream-test-contracts.md` when fixture governance,
 scenario mapping, canonical TDD Cycle Evidence fields, join rules, allowed
 values, or test contract details are needed.
+Use `../../references/test-assertion-quality.md` and
+`../../references/language-test-smells.md` when assertion quality, behavior
+boundary classification, language-specific smells, or blocking smell codes need
+review.
 
 ## When to use
 
@@ -42,16 +52,49 @@ values, or test contract details are needed.
 1. Restate the requirement as one observable behavior that a user, caller, client, operator, or system boundary can see.
 2. Detect the stack, existing test tools, nearest existing test layer, test file placement, naming conventions, and command style.
 3. Use the nearest existing test layer by default. Check `references/testing-patterns.md` only when the behavior boundary is unclear, the existing layer is a poor fit, or the work needs contract, property, snapshot, performance, security, accessibility, migration, or infrastructure validation.
-4. For reconciliation-required work, confirm the `reconciliation_id`, accepted core evidence, residual gaps, and replacement coverage from the current coverage contract before writing or modifying tests.
-5. Write the smallest failing test with inline minimal arrange first; extract a fixture only when repeated arrange becomes clearer with a precise name and the Fixture Governance Contract approves it.
-6. Run the narrowest command and confirm the intended failure message proves the missing behavior, not a syntax, import, environment, or setup error.
-7. Add the minimum implementation needed to pass the failing test.
-8. Run the same command and confirm the test passes for the intended behavior.
-9. Refactor production and test code only while keeping the test suite green.
-10. Add boundary, negative, regression, accessibility, security, or performance cases only when the risk justifies them.
-11. Record `TDD Cycle Evidence` with the `reconciliation_id` when applicable, failing command, observed failure, passing command, observed result, and any gaps; use the canonical join rules in `downstream-test-contracts.md`.
-12. Prepare a reviewer handoff only when review is requested, the parent task asks for one, or a TDD evidence claim needs review.
-13. Report the detected stack, selected or reused test layer, commands run, evidence, risks, and next verification needs.
+4. Complete `Behavior Boundary Classification` for the downstream application project before choosing the first failing test.
+5. Apply the `Assertion Quality Gate` before writing the test so the assertion strategy, fixture/mock policy, determinism policy, and smell risk are explicit.
+6. For reconciliation-required work, confirm the `reconciliation_id`, accepted core evidence, residual gaps, and replacement coverage from the current coverage contract before writing or modifying tests.
+7. Write the smallest failing test with inline minimal arrange first; extract a fixture only when repeated arrange becomes clearer with a precise name and the Fixture Governance Contract approves it.
+8. Run the narrowest command and confirm the intended failure message proves the missing behavior, not a syntax, import, environment, or setup error.
+9. Add the minimum implementation needed to pass the failing test.
+10. Run the same command and confirm the test passes for the intended behavior.
+11. Refactor production and test code only while keeping the test suite green.
+12. Add boundary, negative, regression, accessibility, security, or performance cases only when the risk justifies them.
+13. Record `TDD Cycle Evidence` with the `reconciliation_id` when applicable, failing command, observed failure, passing command, and observed result; also record `TDD Quality Evidence` with assertion quality, determinism, and fixture/mock justification; use the canonical join rules in `downstream-test-contracts.md`.
+14. Prepare a reviewer handoff only when review is requested, the parent task asks for one, or a TDD evidence claim needs review.
+15. Report the detected stack, selected or reused test layer, commands run, evidence, risks, and next verification needs.
+
+## Behavior Boundary Classification
+
+Before writing or modifying a downstream application project test, classify the
+boundary that should break if the requirement breaks.
+
+| behavior_boundary | public_entrypoint | observable_result | hidden_implementation_details_to_avoid | required_test_layer | why_this_layer_is_narrowest_reliable_layer |
+| --- | --- | --- | --- | --- | --- |
+| public_api |  |  |  |  |  |
+
+Allowed `behavior_boundary` values include `domain_rule`, `public_api`,
+`ui_behavior`, `integration_boundary`, `generated_artifact_contract`,
+`security_policy`, `performance_budget`, `migration_compatibility`, and
+`infrastructure_policy`.
+
+## Assertion Quality Gate
+
+Do not write or count a test as core evidence until the assertion quality row
+shows how the test proves observable behavior and avoids implementation detail.
+
+| assertion_gate_id | behavior_boundary | public_entrypoint | observable_result | assertion_strategy | fixture_mock_policy | determinism_policy | test_smell_risk | decision |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| AQG-001 | public_api |  |  |  |  |  | none | approved |
+
+Blocking `test_smell_risk` values are `weak_assertion`,
+`mock_only_assertion`, `private_behavior_test`,
+`implementation_detail_assertion`, `broad_snapshot`,
+`non_diagnostic_failure`, `wrong_layer`, `flaky_shared_state`, and
+`coverage_theater`. Use `none` only after checking the blocking codes in
+`test-assertion-quality.md` and the stack-specific examples in
+`language-test-smells.md`.
 
 ## Test type decision matrix
 
@@ -160,10 +203,17 @@ reviewer handoff
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | TDD-001 | SCN-001 | AC-001 | REC-001 |  |  |  |  |  | none |
 
+## TDD Quality Evidence
+
+| evidence_id | behavior_boundary | public_entrypoint | observable_result | intended_failure_reason | why_failure_proves_missing_behavior | assertion_quality_gate | determinism_controls | fixture_mock_justification |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| TQE-001 | public_api |  |  |  |  |  |  |  |
+
 ## Scenario Test Contract
 
-| Scenario ID | Acceptance Criteria ID | Test Layer | Test File | Command | Fixture/Mock Policy | Evidence ID |
-| --- | --- | --- | --- | --- | --- | --- |
+| downstream application project | Acceptance Criteria ID | User Scenario ID | behavior_boundary | public_entrypoint | observable_result | test_layer | test_file | test_command | assertion_strategy | fixture_mock_policy | determinism_policy | test_smell_risk |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+|  | AC-001 | SCN-001 | public_api |  |  |  |  |  |  |  |  | none |
 
 ## Fixture/Mock Justification
 
