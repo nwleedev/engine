@@ -13,7 +13,11 @@ Use this skill to write test code through a TDD workflow: define the observable 
 
 Do not force a new test framework. Prefer the project's existing test framework, package manager, directory layout, naming convention, fixture style, assertion helpers, and CI commands.
 
-Use `../../references/downstream-test-contracts.md` when fixture governance, scenario mapping, or test contract details are needed.
+When the selected testing route requires reconciliation, do not add a new test until `test-suite-reconciliation` has produced a `Reconciliation Contract` and `test-plan-contract` has produced current coverage with the linked `reconciliation_id`.
+
+Use `../../references/downstream-test-contracts.md` when fixture governance,
+scenario mapping, canonical TDD Cycle Evidence fields, join rules, allowed
+values, or test contract details are needed.
 
 ## When to use
 
@@ -38,15 +42,16 @@ Use `../../references/downstream-test-contracts.md` when fixture governance, sce
 1. Restate the requirement as one observable behavior that a user, caller, client, operator, or system boundary can see.
 2. Detect the stack, existing test tools, nearest existing test layer, test file placement, naming conventions, and command style.
 3. Use the nearest existing test layer by default. Check `references/testing-patterns.md` only when the behavior boundary is unclear, the existing layer is a poor fit, or the work needs contract, property, snapshot, performance, security, accessibility, migration, or infrastructure validation.
-4. Write the smallest failing test with inline minimal arrange first; extract a fixture only when repeated arrange becomes clearer with a precise name and the Fixture Governance Contract approves it.
-5. Run the narrowest command and confirm the intended failure message proves the missing behavior, not a syntax, import, environment, or setup error.
-6. Add the minimum implementation needed to pass the failing test.
-7. Run the same command and confirm the test passes for the intended behavior.
-8. Refactor production and test code only while keeping the test suite green.
-9. Add boundary, negative, regression, accessibility, security, or performance cases only when the risk justifies them.
-10. Record TDD evidence with the failing command, observed failure, passing command, observed result, and any gaps.
-11. Prepare a reviewer handoff only when review is requested, the parent task asks for one, or a TDD evidence claim needs review.
-12. Report the detected stack, selected or reused test layer, commands run, evidence, risks, and next verification needs.
+4. For reconciliation-required work, confirm the `reconciliation_id`, accepted core evidence, residual gaps, and replacement coverage from the current coverage contract before writing or modifying tests.
+5. Write the smallest failing test with inline minimal arrange first; extract a fixture only when repeated arrange becomes clearer with a precise name and the Fixture Governance Contract approves it.
+6. Run the narrowest command and confirm the intended failure message proves the missing behavior, not a syntax, import, environment, or setup error.
+7. Add the minimum implementation needed to pass the failing test.
+8. Run the same command and confirm the test passes for the intended behavior.
+9. Refactor production and test code only while keeping the test suite green.
+10. Add boundary, negative, regression, accessibility, security, or performance cases only when the risk justifies them.
+11. Record `TDD Cycle Evidence` with the `reconciliation_id` when applicable, failing command, observed failure, passing command, observed result, and any gaps; use the canonical join rules in `downstream-test-contracts.md`.
+12. Prepare a reviewer handoff only when review is requested, the parent task asks for one, or a TDD evidence claim needs review.
+13. Report the detected stack, selected or reused test layer, commands run, evidence, risks, and next verification needs.
 
 ## Test type decision matrix
 
@@ -149,6 +154,12 @@ reviewer handoff
 
 ## Output
 
+## TDD Cycle Evidence
+
+| tdd_evidence_id | scenario_id | acceptance_criteria_id | reconciliation_id | test_file | failing_command | observed_failure | passing_command | observed_result | residual_gap |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| TDD-001 | SCN-001 | AC-001 | REC-001 |  |  |  |  |  | none |
+
 ## Scenario Test Contract
 
 | Scenario ID | Acceptance Criteria ID | Test Layer | Test File | Command | Fixture/Mock Policy | Evidence ID |
@@ -181,6 +192,7 @@ reviewer handoff
 - Do not write flaky tests that depend on sleep, real external services, production data, order dependence, uncontrolled time, uncontrolled random values, shared state, or ambient environment.
 - Do not write implementation-detail-only tests that verify private helpers, incidental call order, internal state, or coverage without behavior.
 - Do not leave `.only`, focused tests, skipped tests, disabled assertions, broad snapshots, or tests that cannot fail for the requirement.
+- Do not add a new test for changed existing requirements until reconciliation results and current coverage identify the gap or replacement coverage.
 - Do not implement production behavior before confirming the intended failure of the failing test.
 - Do not put secrets, production credentials, internal endpoints, private customer data, or live tokens into fixtures, snapshots, logs, or test output.
 - Do not omit failing evidence, passing evidence, or selected test layer rationale when claiming TDD work is complete.

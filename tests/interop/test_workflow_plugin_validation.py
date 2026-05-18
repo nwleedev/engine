@@ -92,6 +92,16 @@ def test_workflow_validation_constants_cover_retired_routes_and_contracts() -> N
     assert "report_path" in REQUIRED_WORKFLOW_ARTIFACT_TERMS
     assert "used_for_claim_ids" in REQUIRED_DEEP_RESEARCH_TERMS
     assert "Fixture/Mock Justification" in REQUIRED_DOWNSTREAM_TEST_TERMS
+    assert "Scenario Change Map" in REQUIRED_DOWNSTREAM_TEST_TERMS
+    assert "linked_scenario_ids" in REQUIRED_DOWNSTREAM_TEST_TERMS
+    assert "relationship_to_current_requirement" in REQUIRED_DOWNSTREAM_TEST_TERMS
+    assert "required_action" in REQUIRED_DOWNSTREAM_TEST_TERMS
+    assert "Current Requirement Coverage Contract" in REQUIRED_DOWNSTREAM_TEST_TERMS
+    assert "coverage_status" in REQUIRED_DOWNSTREAM_TEST_TERMS
+    assert "replacement_coverage" in REQUIRED_DOWNSTREAM_TEST_TERMS
+    assert "blocking_risks" in REQUIRED_DOWNSTREAM_TEST_TERMS
+    assert "TDD Cycle Evidence" in REQUIRED_DOWNSTREAM_TEST_TERMS
+    assert "Join Rules" in REQUIRED_DOWNSTREAM_TEST_TERMS
     assert "Fixture Governance Contract" in REQUIRED_DOWNSTREAM_TEST_TERMS
     assert "unjustified_fixture" in REQUIRED_DOWNSTREAM_TEST_TERMS
     assert "stale_fixture" in REQUIRED_DOWNSTREAM_TEST_TERMS
@@ -221,6 +231,38 @@ def test_workflow_validation_reports_missing_schema_terms(tmp_path: Path) -> Non
         ("workflow-artifacts.md", "coverage_report_id"),
         ("workflow-artifacts.md", "validator_exit_code"),
         ("downstream-test-contracts.md", "unjustified_fixture"),
+        ("downstream-test-contracts.md", "Scenario Change Map"),
+        ("downstream-test-contracts.md", "scenario_change_id"),
+        ("downstream-test-contracts.md", "previous_scenario_or_test_id"),
+        ("downstream-test-contracts.md", "linked_scenario_ids"),
+        ("downstream-test-contracts.md", "current_acceptance_criteria_id"),
+        ("downstream-test-contracts.md", "relationship_to_current_requirement"),
+        ("downstream-test-contracts.md", "replacement_or_gap_id"),
+        ("downstream-test-contracts.md", "obsolete"),
+        ("downstream-test-contracts.md", "missing_current_coverage"),
+        ("downstream-test-contracts.md", "not_applicable_with_reason"),
+        ("downstream-test-contracts.md", "required_action"),
+        ("downstream-test-contracts.md", "keep"),
+        ("downstream-test-contracts.md", "replace"),
+        ("downstream-test-contracts.md", "manual_or_inspection_evidence"),
+        ("downstream-test-contracts.md", "Current Requirement Coverage Contract"),
+        ("downstream-test-contracts.md", "coverage_contract_id"),
+        ("downstream-test-contracts.md", "current_requirement_id"),
+        ("downstream-test-contracts.md", "acceptance_criteria_id"),
+        ("downstream-test-contracts.md", "coverage_status"),
+        ("downstream-test-contracts.md", "core_evidence"),
+        ("downstream-test-contracts.md", "residual_gap"),
+        ("downstream-test-contracts.md", "covered"),
+        ("downstream-test-contracts.md", "residual_risk_id"),
+        ("downstream-test-contracts.md", "replacement_coverage"),
+        ("downstream-test-contracts.md", "owner_or_followup"),
+        ("downstream-test-contracts.md", "blocking_risks"),
+        ("downstream-test-contracts.md", "manual_evidence_not_repeatable"),
+        ("downstream-test-contracts.md", "TDD Cycle Evidence"),
+        ("downstream-test-contracts.md", "tdd_evidence_id"),
+        ("downstream-test-contracts.md", "scenario_id"),
+        ("downstream-test-contracts.md", "test_file"),
+        ("downstream-test-contracts.md", "Join Rules"),
         ("downstream-test-contracts.md", "stale_fixture"),
         ("downstream-test-contracts.md", "fixture_overgrowth"),
         ("downstream-test-contracts.md", "unapproved_mock"),

@@ -196,11 +196,84 @@ def test_workflow_skill_outputs_use_canonical_schema_headers() -> None:
 
 def test_downstream_test_contract_limits_fixture_and_mock_use() -> None:
     text = read(PLUGIN_ROOT / "references" / "downstream-test-contracts.md")
+    scenario_change = section_body(text, "Scenario Change Map")
+    current_coverage = section_body(text, "Current Requirement Coverage Contract")
+    tdd_evidence = section_body(text, "TDD Cycle Evidence")
+    join_rules = section_body(text, "Join Rules")
 
     assert (
         "| fixture_id | linked_scenario_ids | linked_spec_clause_ids | fixture_type | real_boundary_preferred | justification | owner | drift_check | expiry_or_update_trigger |"
         in text
     )
+    assert (
+        "| scenario_change_id | previous_scenario_or_test_id | linked_scenario_ids | current_acceptance_criteria_id | relationship_to_current_requirement | required_action | replacement_or_gap_id | reconciliation_id |"
+        in scenario_change
+    )
+    for term in (
+        "relationship_to_current_requirement",
+        "required_action",
+        "still_valid",
+        "partially_valid",
+        "obsolete",
+        "contradicts_current_requirement",
+        "missing_current_coverage",
+        "not_applicable_with_reason",
+        "keep",
+        "update",
+        "split",
+        "replace",
+        "demote",
+        "delete",
+        "quarantine",
+        "add_new_coverage",
+        "manual_or_inspection_evidence",
+    ):
+        assert term in scenario_change
+    assert (
+        "| coverage_contract_id | reconciliation_id | current_requirement_id | acceptance_criteria_id | linked_scenario_ids | coverage_status | core_evidence | residual_gap | residual_risk_id | manual_or_inspection_evidence | replacement_coverage | owner_or_followup | blocking_risks |"
+        in current_coverage
+    )
+    for term in (
+        "coverage_status",
+        "covered",
+        "covered_with_manual_evidence",
+        "partial_gap",
+        "replacement_required",
+        "blocked_by_risk",
+        "not_applicable_with_reason",
+        "residual_risk_id",
+        "manual_or_inspection_evidence",
+        "replacement_coverage",
+        "owner_or_followup",
+        "blocking_risks",
+        "none",
+        "stale_test_counted_as_core",
+        "test_artifact_drift_unresolved",
+        "unjustified_fixture",
+        "missing_real_boundary_check",
+        "test_only_behavior",
+        "missing_current_coverage",
+        "manual_evidence_not_repeatable",
+    ):
+        assert term in current_coverage
+    assert (
+        "| tdd_evidence_id | scenario_id | acceptance_criteria_id | reconciliation_id | test_file | failing_command | observed_failure | passing_command | observed_result | residual_gap |"
+        in tdd_evidence
+    )
+    for term in (
+        "failing_command",
+        "observed_failure",
+        "passing_command",
+        "observed_result",
+    ):
+        assert term in tdd_evidence
+    for term in (
+        "Scenario Change Map.linked_scenario_ids",
+        "Current Requirement Coverage Contract.linked_scenario_ids",
+        "TDD Cycle Evidence.scenario_id",
+        "reconciliation_id",
+    ):
+        assert term in join_rules
     assert "downstream project" in text
     assert "Acceptance Criteria ID" in text
     assert "User Scenario ID" in text
@@ -331,7 +404,9 @@ def test_shared_skills_test_skills_point_to_downstream_test_reference() -> None:
         text = read(PLUGIN_ROOT / "skills" / skill_name / "SKILL.md")
 
         assert "../../references/downstream-test-contracts.md" in text
-        assert "when fixture governance, scenario mapping, or test contract details are needed" in text
+        assert "when fixture governance" in text
+        assert "scenario mapping" in text
+        assert "test contract details are needed" in text
 
 
 def test_test_suite_reconciliation_skill_defines_required_contracts() -> None:
@@ -533,6 +608,66 @@ def test_tdd_cycle_skill_defines_tdd_workflow() -> None:
     assert "Fixture Governance Contract" in text
     assert "fixture budget" in text
     assert "high-fidelity boundary" in text
+
+
+def test_scenario_test_designer_defines_change_map_schema() -> None:
+    text = read(PLUGIN_ROOT / "skills" / "scenario-test-designer" / "SKILL.md")
+
+    assert "Scenario Change Map" in text
+    for term in (
+        "scenario_change_id",
+        "previous_scenario_or_test_id",
+        "linked_scenario_ids",
+        "current_acceptance_criteria_id",
+        "relationship_to_current_requirement",
+        "required_action",
+        "replacement_or_gap_id",
+        "reconciliation_id",
+    ):
+        assert term in text
+    assert "canonical allowed values and join rules" in text
+    assert "before new test contracts are created" in text
+
+
+def test_test_plan_contract_defines_current_requirement_coverage() -> None:
+    text = read(PLUGIN_ROOT / "skills" / "test-plan-contract" / "SKILL.md")
+
+    assert "Current Requirement Coverage Contract" in text
+    for field in (
+        "coverage_contract_id",
+        "reconciliation_id",
+        "current_requirement_id",
+        "acceptance_criteria_id",
+        "linked_scenario_ids",
+        "coverage_status",
+        "core_evidence",
+        "residual_gap",
+        "residual_risk_id",
+        "manual_or_inspection_evidence",
+        "replacement_coverage",
+        "owner_or_followup",
+        "blocking_risks",
+    ):
+        assert field in text
+    assert "canonical allowed values and join rules" in text
+
+
+def test_tdd_cycle_reconciliation_gate_and_evidence_schema() -> None:
+    text = read(PLUGIN_ROOT / "skills" / "tdd-cycle" / "SKILL.md")
+
+    assert "TDD Cycle Evidence" in text
+    assert (
+        "| tdd_evidence_id | scenario_id | acceptance_criteria_id | reconciliation_id | test_file | failing_command | observed_failure | passing_command | observed_result | residual_gap |"
+        in text
+    )
+    assert "canonical join rules" in text
+    assert "do not add a new test until" in text
+    assert "Current Requirement Coverage Contract" in read(
+        PLUGIN_ROOT / "skills" / "verification-gate" / "SKILL.md"
+    )
+    assert "TDD Cycle Evidence" in read(
+        PLUGIN_ROOT / "skills" / "implementation-evidence" / "SKILL.md"
+    )
 
 
 def test_comment_writing_skill_defines_comment_workflow() -> None:

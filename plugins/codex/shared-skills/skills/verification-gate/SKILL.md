@@ -22,11 +22,12 @@ Use `../../references/workflow-artifacts.md` when table schemas, row-level rules
 2. List the required evidence IDs from `implementation-evidence`, `source-ledger`, or `claim-evidence-map`.
 3. Compare every requirement, spec clause, task, and acceptance criterion against the available evidence.
 4. For development work that changes observable behavior, require Scenario Test Contract or Test Plan Contract evidence, or record why tests are not feasible.
-5. Require a `Spec-to-Plan Coverage Matrix` when a Spec Ledger exists.
-6. List failed items with the command, artifact, or review step that failed.
-7. List not-run items separately from failed items.
-8. Record residual risks, unrelated known failures, and out-of-scope issues.
-9. Set final status to `done`, `done_with_concerns`, `blocked`, or `needs_context`.
+5. When reconciliation was required, require the `Reconciliation Contract`, `Current Requirement Coverage Contract`, and any `TDD Cycle Evidence` linked by `reconciliation_id`.
+6. Require a `Spec-to-Plan Coverage Matrix` when a Spec Ledger exists.
+7. List failed items with the command, artifact, or review step that failed.
+8. List not-run items separately from failed items.
+9. Record residual risks, unrelated known failures, and out-of-scope issues.
+10. Set final status to `done`, `done_with_concerns`, `blocked`, or `needs_context`.
 
 ## Development work
 
@@ -34,6 +35,7 @@ Use `../../references/workflow-artifacts.md` when table schemas, row-level rules
 - Keep unrelated baseline failures separate and name them precisely.
 - Verify generated artifacts and source artifacts when both are acceptance criteria.
 - Treat missing required test plan, test execution, or test-inapplicable rationale as a failed item, not a residual risk.
+- Treat missing reconciliation evidence, missing current coverage, or an unlinked `reconciliation_id` as a failed item when the testing route required reconciliation.
 - Treat `missing_plan`, `missing_validation`, `missing_evidence`, `stale_evidence`, `unresolved_risk`, `unjustified_fixture`, `fixture_overgrowth`, `missing_real_boundary_check`, and `test_only_behavior` as blockers unless explicitly deferred with owner and reason.
 
 ## Non-development work

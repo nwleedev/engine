@@ -12,11 +12,13 @@ metadata:
 
 ## Purpose
 
-Create a scenario test design that links acceptance criteria to user-visible happy paths, boundary scenarios, and failure scenarios before selecting test files or writing tests.
+Create a scenario test design that links acceptance criteria to user-visible happy paths, boundary scenarios, failure scenarios, and any previous scenario or test relationship before selecting test files or writing tests.
 
 Use this as a required gate for implementation work that changes observable behavior or acceptance criteria. If the work is test-inapplicable, record the reason and route the residual risk to `verification-gate`.
 
-Use `../../references/downstream-test-contracts.md` when fixture governance, scenario mapping, or test contract details are needed.
+Use `../../references/downstream-test-contracts.md` when fixture governance,
+scenario mapping, canonical Scenario Change Map fields, join rules, allowed
+values, or test contract details are needed.
 
 ## Workflow
 
@@ -26,7 +28,8 @@ Use `../../references/downstream-test-contracts.md` when fixture governance, sce
 4. Define the happy path in observable behavior terms.
 5. Define at least one boundary scenario when inputs, state, permissions, size, time, concurrency, or compatibility can vary.
 6. Define at least one failure scenario when safe failure, error display, rejection, rollback, or degraded behavior matters.
-7. Route executable test contracts to `test-plan-contract` or concrete test writing to `tdd-cycle`.
+7. When the work follows a reconciliation route, produce a `Scenario Change Map` that relates previous scenarios or tests to the current acceptance criteria before new test contracts are created; use the canonical allowed values and join rules in `downstream-test-contracts.md`.
+8. Route executable test contracts to `test-plan-contract` or concrete test writing to `tdd-cycle`.
 
 ## Development work
 
@@ -48,11 +51,18 @@ Use `../../references/downstream-test-contracts.md` when fixture governance, sce
 | user_scenario_id | acceptance_criteria_id | happy_path | boundary_scenario | failure_scenario |
 | --- | --- | --- | --- | --- |
 | SCN-001 | AC-001 |  |  |  |
+
+## Scenario Change Map
+
+| scenario_change_id | previous_scenario_or_test_id | linked_scenario_ids | current_acceptance_criteria_id | relationship_to_current_requirement | required_action | replacement_or_gap_id | reconciliation_id |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| SCM-001 | TEST-001 | SCN-001 | AC-001 | still_valid | keep |  | REC-001 |
 ```
 
 ## Do not
 
 - Do not count scenarios without acceptance criteria as core coverage.
+- Do not skip the `Scenario Change Map` when existing scenario or test evidence may be affected by current acceptance criteria.
 - Do not design tests around mocks when user-visible behavior can be asserted.
 - Do not omit failure scenarios for risky or externally visible behavior.
 - Do not merge unrelated user journeys into one scenario.

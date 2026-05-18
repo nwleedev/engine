@@ -21,13 +21,15 @@ Use `../../references/workflow-artifacts.md` when table schemas, row-level rules
 4. Describe behavior changed in terms of observable outcomes.
 5. Record every command run, exit status, and the relevant observed result.
 6. Separate failed commands, skipped commands, and not-applicable checks.
-7. Route completion claims to `verification-gate` after required evidence is present.
+7. Link reconciliation-required work to the `reconciliation_id`, `Current Requirement Coverage Contract`, and `TDD Cycle Evidence` before completion evidence is accepted.
+8. Route completion claims to `verification-gate` after required evidence is present.
 
 ## Development work
 
 - Include test, lint, build, generation, validation, and focused reproduction commands.
 - Record generated artifact updates separately from canonical source edits.
 - Preserve the difference between a failing RED command and a passing GREEN command when TDD is used.
+- Preserve reconciliation links when TDD follows changed existing requirements, including accepted core evidence, residual gaps, replacement coverage, and owner follow-up.
 - Record Fixture Governance Contract evidence when fixtures, mocks, fakes, stubs, snapshots, or generated inputs were added or expanded.
 
 ## Non-development work

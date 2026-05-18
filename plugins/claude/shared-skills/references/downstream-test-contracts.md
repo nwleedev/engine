@@ -16,6 +16,63 @@ quarantined tests as core coverage in the contracts below.
 | --- | --- | --- | --- | --- | --- | --- |
 |  | AC-001 | SCN-001 |  |  |  |  |
 
+## Scenario Change Map
+
+Use this contract when existing scenarios, tests, artifacts, or acceptance
+criteria may be affected by current requirements. Each row must connect one
+previous scenario or test to the current acceptance criteria before new or
+replacement test contracts are created.
+
+| scenario_change_id | previous_scenario_or_test_id | linked_scenario_ids | current_acceptance_criteria_id | relationship_to_current_requirement | required_action | replacement_or_gap_id | reconciliation_id |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| SCM-001 | TEST-001 | SCN-001 | AC-001 | still_valid | keep |  | REC-001 |
+
+Allowed `relationship_to_current_requirement` values are `still_valid`,
+`partially_valid`, `obsolete`, `contradicts_current_requirement`,
+`missing_current_coverage`, and `not_applicable_with_reason`. Use
+`still_valid` only when the previous scenario or test proves the current
+acceptance criterion without assertion, fixture, or artifact drift. Use
+`partially_valid` when it still proves part of the current behavior but needs
+new coverage for a named gap. Use `obsolete` or
+`contradicts_current_requirement` when the previous evidence must not count as
+core coverage for the current requirement.
+
+Allowed `required_action` values are `keep`, `update`, `split`, `replace`,
+`demote`, `delete`, `quarantine`, `add_new_coverage`, and
+`manual_or_inspection_evidence`. Use `keep` only with `still_valid`; use
+`add_new_coverage` when no previous scenario or test proves the current
+acceptance criterion. `replacement_or_gap_id` must name the replacement test,
+coverage gap, residual risk, or manual evidence row when `required_action` is
+not `keep`.
+
+## Current Requirement Coverage Contract
+
+Use this contract to decide what currently counts as core coverage after a
+requirement, acceptance criterion, or test suite has changed. Every row must
+join to one or more scenario IDs through `linked_scenario_ids`, and
+reconciliation-required work must join to the relevant `reconciliation_id`.
+
+| coverage_contract_id | reconciliation_id | current_requirement_id | acceptance_criteria_id | linked_scenario_ids | coverage_status | core_evidence | residual_gap | residual_risk_id | manual_or_inspection_evidence | replacement_coverage | owner_or_followup | blocking_risks |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| CRC-001 | REC-001 | REQ-001 | AC-001 | SCN-001 | covered | TEST-001 | none |  |  |  |  | none |
+
+Allowed `coverage_status` values are `covered`, `covered_with_manual_evidence`,
+`partial_gap`, `replacement_required`, `blocked_by_risk`, and
+`not_applicable_with_reason`. Use `covered` only when executable, current,
+non-quarantined evidence proves every linked scenario. Use
+`covered_with_manual_evidence` only when automated coverage is infeasible and
+`manual_or_inspection_evidence` names a repeatable check. Use `partial_gap` or
+`replacement_required` when `replacement_coverage` or `residual_gap` is needed
+before the requirement can be completed.
+
+`replacement_coverage` must name the new or retained evidence that replaces a
+demoted, obsolete, contradictory, or quarantined test. `blocking_risks` must be
+`none` or a comma-separated list of blocking risk codes such as
+`stale_test_counted_as_core`, `test_artifact_drift_unresolved`,
+`unjustified_fixture`, `missing_real_boundary_check`, `test_only_behavior`,
+`missing_current_coverage`, or `manual_evidence_not_repeatable`.
+`owner_or_followup` is required when `coverage_status` is not `covered`.
+
 ## Fixture/Mock Justification
 
 | Name | Type | Needed Because | Real Alternative Considered | Behavior Hidden | Decision |
@@ -54,6 +111,40 @@ Allowed `expectation_status` values are `artifact_expected`,
 Treat `test_artifact_drift_unresolved`, `snapshot_drift_unreviewed`, and
 `mock_contract_mismatch` as blocking failures when an artifact-backed test is
 used as core evidence.
+
+## TDD Cycle Evidence
+
+Use this contract when a test is written or modified through a TDD cycle. A row
+must join to the scenario and acceptance criterion it proves. When
+reconciliation was required, it must also join to the same `reconciliation_id`
+used by the Scenario Change Map and Current Requirement Coverage Contract.
+
+| tdd_evidence_id | scenario_id | acceptance_criteria_id | reconciliation_id | test_file | failing_command | observed_failure | passing_command | observed_result | residual_gap |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| TDD-001 | SCN-001 | AC-001 | REC-001 |  |  |  |  |  | none |
+
+`failing_command` and `observed_failure` are required for new behavior or bug
+fix coverage unless the row records approved characterization-only evidence.
+`passing_command` and `observed_result` are required before TDD evidence can be
+used as completion evidence. `residual_gap` must be `none` or join to a gap,
+risk, owner follow-up, manual evidence, or replacement coverage row.
+
+## Join Rules
+
+- `Scenario Test Contract.User Scenario ID`,
+  `Scenario Change Map.linked_scenario_ids`,
+  `Current Requirement Coverage Contract.linked_scenario_ids`, and
+  `TDD Cycle Evidence.scenario_id` must use the same stable `SCN-*` IDs.
+- `acceptance_criteria_id` and `current_acceptance_criteria_id` values must
+  join to a current Requirement Packet, Spec Contract, or Scenario Test
+  Contract acceptance criteria ID.
+- `reconciliation_id` must join Scenario Change Map, Current Requirement
+  Coverage Contract, TDD Cycle Evidence, Implementation Evidence, and
+  Verification Gate rows whenever the selected testing route required
+  reconciliation.
+- Core completion evidence must not count stale, obsolete, contradictory,
+  orphaned, quarantined, or drift-unreviewed tests unless replacement coverage
+  or repeatable manual evidence is recorded.
 
 ## Fixture and Mock Priority
 
