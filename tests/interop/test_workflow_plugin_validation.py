@@ -15,6 +15,8 @@ from tools.validate_workflow_plugins import (
     REQUIRED_DOWNSTREAM_TEST_TERMS,
     REQUIRED_SHARED_SKILL_REFERENCES,
     REQUIRED_SHARED_SUBAGENTS,
+    REQUIRED_TEST_ARTIFACT_DRIFT_TERMS,
+    REQUIRED_TEST_RELEVANCE_TERMS,
     REQUIRED_WORKFLOW_ARTIFACT_TERMS,
     validate_workflow_plugins,
 )
@@ -44,6 +46,14 @@ def write_minimal_workflow_plugin_shape(root: Path) -> None:
             "\n".join(REQUIRED_DOWNSTREAM_TEST_TERMS),
             encoding="utf-8",
         )
+        (references_root / "test-relevance-decisions.md").write_text(
+            "\n".join(REQUIRED_TEST_RELEVANCE_TERMS),
+            encoding="utf-8",
+        )
+        (references_root / "test-artifact-drift.md").write_text(
+            "\n".join(REQUIRED_TEST_ARTIFACT_DRIFT_TERMS),
+            encoding="utf-8",
+        )
 
     for agent in REQUIRED_SHARED_SUBAGENTS:
         touch(root / "plugins" / "codex" / "shared-subagents" / "agents" / f"{agent}.toml")
@@ -55,10 +65,13 @@ def test_workflow_validation_constants_cover_retired_routes_and_contracts() -> N
     assert "online-researcher" in FORBIDDEN_LEGACY_NAMES
     assert "workflow-artifacts.md" in REQUIRED_SHARED_SKILL_REFERENCES
     assert "downstream-test-contracts.md" in REQUIRED_SHARED_SKILL_REFERENCES
+    assert "test-relevance-decisions.md" in REQUIRED_SHARED_SKILL_REFERENCES
+    assert "test-artifact-drift.md" in REQUIRED_SHARED_SKILL_REFERENCES
     assert "requirements-reviewer" in REQUIRED_SHARED_SUBAGENTS
     assert "plan-reviewer" in REQUIRED_SHARED_SUBAGENTS
     assert "spec-coverage-reviewer" in REQUIRED_SHARED_SUBAGENTS
     assert "completion-claim-reviewer" in REQUIRED_SHARED_SUBAGENTS
+    assert "test-reconciliation-reviewer" in REQUIRED_SHARED_SUBAGENTS
     assert "changed_files" in REQUIRED_WORKFLOW_ARTIFACT_TERMS
     assert "Spec Ledger" in REQUIRED_WORKFLOW_ARTIFACT_TERMS
     assert "Spec-to-Plan Coverage Matrix" in REQUIRED_WORKFLOW_ARTIFACT_TERMS
@@ -86,6 +99,11 @@ def test_workflow_validation_constants_cover_retired_routes_and_contracts() -> N
     assert "unapproved_mock" in REQUIRED_DOWNSTREAM_TEST_TERMS
     assert "missing_real_boundary_check" in REQUIRED_DOWNSTREAM_TEST_TERMS
     assert "test_only_behavior" in REQUIRED_DOWNSTREAM_TEST_TERMS
+    assert "test_artifact_drift_unresolved" in REQUIRED_DOWNSTREAM_TEST_TERMS
+    assert "Existing Test Relevance Inventory" in REQUIRED_TEST_RELEVANCE_TERMS
+    assert "quarantine" in REQUIRED_TEST_RELEVANCE_TERMS
+    assert "Test Artifact Drift Inventory" in REQUIRED_TEST_ARTIFACT_DRIFT_TERMS
+    assert "no_artifact_expected" in REQUIRED_TEST_ARTIFACT_DRIFT_TERMS
 
 
 def test_workflow_validation_reports_legacy_generated_artifact_path(
@@ -208,6 +226,11 @@ def test_workflow_validation_reports_missing_schema_terms(tmp_path: Path) -> Non
         ("downstream-test-contracts.md", "unapproved_mock"),
         ("downstream-test-contracts.md", "missing_real_boundary_check"),
         ("downstream-test-contracts.md", "test_only_behavior"),
+        ("downstream-test-contracts.md", "test_artifact_drift_unresolved"),
+        ("test-relevance-decisions.md", "Existing Test Relevance Inventory"),
+        ("test-relevance-decisions.md", "quarantine"),
+        ("test-artifact-drift.md", "Test Artifact Drift Inventory"),
+        ("test-artifact-drift.md", "no_artifact_expected"),
     ],
 )
 def test_workflow_validation_reports_each_missing_blocking_term(

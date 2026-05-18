@@ -3,7 +3,26 @@
 
 # Testing Patterns
 
-Use this reference from `tdd-cycle` when choosing the smallest useful failing test for a requested behavior.
+Use this reference from `tdd-cycle` when choosing the smallest useful failing
+test for a requested behavior. When `testing-workflow` selects
+`test-suite-reconciliation`, reconcile existing tests and test artifacts before
+using these patterns for new or updated tests.
+
+## Reconciliation Pattern
+
+- Use `test-suite-reconciliation` before adding tests for changed existing
+  requirements, public contracts, schemas, migrations, bug expectations,
+  security policies, performance budgets, generated artifact contracts, or
+  expected artifact baselines.
+- Classify existing tests with `keep`, `update`, `split`, `move`, `demote`,
+  `delete`, or `quarantine` before routing gaps to `test-plan-contract`.
+- Classify artifact drift for fixtures, mocks, fakes, stubs, snapshots,
+  goldens, seeds, cassettes, generated expected outputs, schema example files,
+  benchmark baseline files, and IaC expected output files before accepting
+  baseline changes.
+- Treat `stale_test_counted_as_core`, `contradictory_test_kept`,
+  `obsolete_test_kept`, `test_artifact_drift_unresolved`, and
+  `quarantined_test_counted_as_evidence` as blockers for completion evidence.
 
 ## Test double priority
 

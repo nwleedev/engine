@@ -9,6 +9,9 @@ from pathlib import Path
 PLUGIN_ROOT = (
     Path(__file__).resolve().parents[2] / "plugins" / "codex" / "shared-subagents"
 )
+CLAUDE_PLUGIN_ROOT = (
+    Path(__file__).resolve().parents[2] / "plugins" / "claude" / "shared-subagents"
+)
 ROOT = Path(__file__).resolve().parents[2]
 SHARED_SUBAGENTS_BLOCK = ROOT / "docs" / "shared-subagents" / "AGENTS.block.md"
 
@@ -21,6 +24,7 @@ EXPECTED_AGENTS = (
     "plan-reviewer",
     "spec-coverage-reviewer",
     "citation-verifier",
+    "test-reconciliation-reviewer",
     "test-adequacy-reviewer",
     "closure-reviewer",
     "completion-claim-reviewer",
@@ -128,6 +132,40 @@ def test_test_adequacy_reviewer_owns_downstream_test_quality() -> None:
         assert term in check_block
     assert "tests that assert only mock calls" in do_not_block
     assert "fixture-heavy tests without Fixture Governance Contract evidence" in do_not_block
+    assert "newly written or modified tests" in instructions
+    assert "test-reconciliation-reviewer" in instructions
+
+
+def test_test_reconciliation_reviewer_owns_existing_test_relevance_and_artifact_drift() -> None:
+    data = agent_data("test-reconciliation-reviewer")
+    instructions = data["developer_instructions"]
+    check_block = instruction_block(instructions, "Check:", "Return findings first")
+    do_not_block = instruction_block(
+        instructions,
+        "Do not judge",
+        "Do not make code changes.",
+    )
+
+    assert "artifact drift" in data["description"]
+    for term in (
+        "Existing Test Relevance Inventory",
+        "Test Artifact Drift Inventory",
+        "Reconciliation Contract",
+        "Coverage Gap After Reconciliation",
+        "stale",
+        "obsolete",
+        "contradictory",
+        "orphaned",
+        "false-confidence",
+        "artifact drift",
+        "snapshot_drift_unreviewed",
+        "mock_contract_mismatch",
+        "test_artifact_drift_unresolved",
+        "failed, skipped, or not-run reconciliation commands",
+    ):
+        assert term in check_block
+    assert "newly written or modified test adequacy" in do_not_block
+    assert "test-adequacy-reviewer" in do_not_block
 
 
 def test_spec_coverage_reviewer_owns_spec_clause_coverage() -> None:
@@ -202,9 +240,19 @@ def test_superpowers_routing_includes_spec_coverage_and_completion_reviewers() -
     ).read_text(encoding="utf-8")
 
     assert "| spec coverage review | `spec-coverage-reviewer` |" in routing
+    assert "| test reconciliation review | `test-reconciliation-reviewer` |" in routing
+    assert "| test adequacy review | `test-adequacy-reviewer` |" in routing
     assert "| completion claim review | `completion-claim-reviewer` |" in routing
     assert "Coverage Report, Verification Gate, and Evidence Bundle" in routing
     assert "Do not use `plan-reviewer` as a substitute for `spec-coverage-reviewer`" in routing
+    assert "Do not use `test-adequacy-reviewer` for existing test relevance" in routing
+    assert "Do not use `test-reconciliation-reviewer` for newly written or modified test assertion quality" in routing
+    assert "reconciliation/current-coverage test plans" in routing
+    assert "related test results, stale/obsolete/contradictory/orphan/false-confidence coverage claims" in routing
+    assert "deletion/demotion/quarantine evidence to `test-reconciliation-reviewer`" in routing
+    assert "new/modified test plans" in routing
+    assert "assertion quality, behavior boundary coverage, fixture/mock justification, determinism" in routing
+    assert "executable test adequacy to `test-adequacy-reviewer`" in routing
     assert (
         "Do not use `closure-reviewer` as a substitute for `completion-claim-reviewer`"
         in routing
@@ -236,6 +284,15 @@ def test_readme_documents_agent_bundle_without_scaffold_flow() -> None:
     assert "skills/scaffold/scaffold.py" not in readme
     assert "install_shared_subagents.py" not in readme
     assert "Use `$shared-subagents:scaffold`" not in readme
+
+
+def test_claude_readme_documents_test_reconciliation_reviewer() -> None:
+    readme = (CLAUDE_PLUGIN_ROOT / "README.md").read_text(encoding="utf-8")
+
+    assert "test-reconciliation-reviewer" in readme
+    assert "existing test relevance and artifact drift" in readme
+    assert "newly written or modified test quality" in readme
+    assert "stale test and artifact drift evidence" in readme
 
 
 def test_install_skill_dry_run_targets_project_local_agents(tmp_path: Path) -> None:

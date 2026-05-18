@@ -17,6 +17,7 @@ AGENT_NAMES = (
     "plan-reviewer.toml",
     "spec-coverage-reviewer.toml",
     "citation-verifier.toml",
+    "test-reconciliation-reviewer.toml",
     "test-adequacy-reviewer.toml",
     "closure-reviewer.toml",
     "completion-claim-reviewer.toml",

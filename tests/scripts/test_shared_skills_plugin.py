@@ -16,7 +16,9 @@ SKILLS = (
     "research-plan",
     "source-ledger",
     "claim-evidence-map",
+    "testing-workflow",
     "scenario-test-designer",
+    "test-suite-reconciliation",
     "test-plan-contract",
     "tdd-cycle",
     "spec-plan-coverage",
@@ -213,9 +215,37 @@ def test_downstream_test_contract_limits_fixture_and_mock_use() -> None:
     assert "unapproved_mock" in text
     assert "missing_real_boundary_check" in text
     assert "test_only_behavior" in text
+    assert "Artifact Drift Contract" in text
+    assert "expectation_status" in text
+    assert "no_artifact_expected" in text
+    assert "no_existing_artifact_found" in text
+    assert "test_artifact_drift_unresolved" in text
     assert "Do not assert only mock calls" in text
     assert "Do not create broad fixture factories" in text
     assert "observable behavior" in text
+
+
+def test_reconciliation_references_define_decisions_and_artifact_drift() -> None:
+    decisions = read(PLUGIN_ROOT / "references" / "test-relevance-decisions.md")
+    drift = read(PLUGIN_ROOT / "references" / "test-artifact-drift.md")
+
+    assert "Decision Schema" in decisions
+    assert "Existing Test Relevance Inventory" in decisions
+    for decision in ("keep", "update", "split", "move", "demote", "delete", "quarantine"):
+        assert f"`{decision}`" in decisions
+
+    assert "Expectation Schema" in drift
+    assert "Test Artifact Drift Inventory" in drift
+    for term in (
+        "expectation_status",
+        "no_artifact_expected",
+        "no_existing_artifact_found",
+        "schema example",
+        "benchmark baseline",
+        "IaC expected output",
+        "test_artifact_drift_unresolved",
+    ):
+        assert term in drift
 
 
 def test_shared_skills_agents_block_is_compact_routing_layer() -> None:
@@ -252,9 +282,13 @@ def test_shared_skills_agents_block_is_compact_routing_layer() -> None:
     assert "research-plan" in text
     assert "source-ledger" in text
     assert "claim-evidence-map" in text
+    assert "testing-workflow" in text
     assert "scenario-test-designer" in text
+    assert "test-suite-reconciliation" in text
     assert "test-plan-contract" in text
     assert "tdd-cycle" in text
+    assert "test-adequacy-reviewer" in text
+    assert "test-reconciliation-reviewer" in text
     assert "implementation-discipline" in text
     assert "debugging-discipline" in text
     assert "comment-writing" in text
@@ -288,7 +322,9 @@ def test_shared_skills_workflow_skills_point_to_workflow_artifact_reference() ->
 
 def test_shared_skills_test_skills_point_to_downstream_test_reference() -> None:
     for skill_name in (
+        "testing-workflow",
         "scenario-test-designer",
+        "test-suite-reconciliation",
         "test-plan-contract",
         "tdd-cycle",
     ):
@@ -296,6 +332,156 @@ def test_shared_skills_test_skills_point_to_downstream_test_reference() -> None:
 
         assert "../../references/downstream-test-contracts.md" in text
         assert "when fixture governance, scenario mapping, or test contract details are needed" in text
+
+
+def test_test_suite_reconciliation_skill_defines_required_contracts() -> None:
+    text = read(PLUGIN_ROOT / "skills" / "test-suite-reconciliation" / "SKILL.md")
+
+    for step in (
+        "Requirement Change Detection",
+        "Affected Test and Artifact Discovery",
+        "Existing Test Relevance Classification",
+        "Test Artifact Drift Classification",
+        "Acceptance Criteria Traceability Matrix",
+        "Assertion Quality Revalidation",
+        "Determinism and Flakiness Revalidation",
+        "Coverage Gap After Reconciliation",
+        "Removal, Demotion, and Quarantine Evidence",
+        "Reconciliation Contract",
+    ):
+        assert step in text
+
+    for output_schema in (
+        "Existing Test Relevance Inventory",
+        "Test Artifact Drift Inventory",
+        "Coverage Gap After Reconciliation",
+    ):
+        assert output_schema in text
+
+    for decision in ("keep", "update", "split", "move", "demote", "delete", "quarantine"):
+        assert f"`{decision}`" in text
+
+    for expectation_status in (
+        "artifact_expected",
+        "expectation_status",
+        "no_artifact_expected",
+        "no_existing_artifact_found",
+        "blocker_drift",
+    ):
+        assert expectation_status in text
+
+    sample_row = (
+        "| ART-001 | snapshot |  | TEST-001 | artifact required | "
+        "artifact_expected | reviewed_current |  |  |  |  |"
+    )
+    assert sample_row in text
+    assert (
+        "| ART-001 | snapshot |  | TEST-001 | artifact required | "
+        "reviewed_current | no_drift |  |  |  |  |"
+    ) not in text
+
+    decisions = read(PLUGIN_ROOT / "references" / "test-relevance-decisions.md")
+    assert (
+        "| TEST-001 | tests/example_test.py | AC-001 | old error is accepted | "
+        "new error is rejected | update | assertion still targets obsolete behavior | "
+        "false_confidence_test | test-plan-contract |"
+    ) in decisions
+    assert (
+        "| TEST-001 | tests/example_test.py | AC-001 | old error is accepted | "
+        "new error is rejected | update | assertion still targets obsolete behavior | "
+        "obsolete_test_kept | test-plan-contract |"
+    ) not in decisions
+
+    for failure_code in (
+        "new_test_added_without_reconciliation",
+        "stale_test_counted_as_core",
+        "contradictory_test_kept",
+        "obsolete_test_kept",
+        "orphan_test_as_core_coverage",
+        "false_confidence_test",
+        "test_artifact_drift_unresolved",
+        "snapshot_drift_unreviewed",
+        "mock_contract_mismatch",
+        "quarantined_test_counted_as_evidence",
+        "deletion_without_risk_record",
+    ):
+        assert failure_code in text
+
+
+def test_testing_workflow_review_only_route_partitions_reviewers() -> None:
+    text = read(PLUGIN_ROOT / "skills" / "testing-workflow" / "SKILL.md")
+
+    reconciliation_terms = (
+        "reconciliation evidence",
+        "existing test relevance",
+        "artifact drift",
+        "stale/obsolete/contradictory/orphan/false-confidence coverage claims",
+        "deletion/demotion/quarantine evidence",
+        "reconciliation/current-coverage test plans",
+        "test results for that evidence",
+    )
+    adequacy_terms = (
+        "newly written or modified test assertion quality",
+        "behavior boundary",
+        "fixture/mock justification",
+        "determinism",
+        "executable test adequacy",
+        "new/modified test plans",
+        "test results for those tests",
+    )
+
+    review_only_row = next(
+        line for line in text.splitlines() if line.startswith("| Review Only |")
+    )
+    assert "`test-reconciliation-reviewer`" in review_only_row
+    assert "`test-adequacy-reviewer`" in review_only_row
+    for term in reconciliation_terms:
+        assert term in review_only_row
+    for term in adequacy_terms:
+        assert term in review_only_row
+
+
+def test_testing_workflow_skill_defines_required_routes() -> None:
+    text = read(PLUGIN_ROOT / "skills" / "testing-workflow" / "SKILL.md")
+
+    assert "single entry point" in text
+    assert "Testing Workflow Route" in text
+    assert "| route | use_when | next_step |" in text
+    assert (
+        "| route_id | request_summary | behavior_change_type | existing_tests_may_be_affected | selected_route | required_next_skill_or_agent | reason | residual_risk_if_skipped |"
+        in text
+    )
+    assert "| --- | --- | --- | --- | --- | --- | --- | --- |" in text
+    assert "| ROUTE-001 |  |  |  |  |  |  |  |" in text
+    for route_name in (
+        "New Behavior Coverage",
+        "Reconciliation Required",
+        "Artifact Drift Review",
+        "Review Only",
+        "Test Inapplicable",
+    ):
+        assert route_name in text
+    for next_step in (
+        "scenario-test-designer -> test-plan-contract -> tdd-cycle",
+        "test-suite-reconciliation -> test-plan-contract -> tdd-cycle",
+        "test-suite-reconciliation",
+        "test-reconciliation-reviewer` for reconciliation evidence, existing test relevance, artifact drift",
+        "test-adequacy-reviewer",
+        "test-plan-contract -> verification-gate",
+    ):
+        assert next_step in text
+    assert "newly written or modified test adequacy" in text
+    assert "stale, obsolete, contradictory, orphaned, false-confidence" in text
+    for changed_expectation in (
+        "public API",
+        "schema",
+        "migration",
+        "bug expectation",
+        "security policy",
+        "performance budget",
+        "generated artifact contract",
+    ):
+        assert changed_expectation in text
 
 
 def test_spec_plan_coverage_skill_defines_failure_codes_and_reports() -> None:

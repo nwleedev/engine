@@ -30,9 +30,9 @@ of publishing loose advice. `shared-skills` starts with `requirements-packet`
 and carries requirement IDs through spec contracts, plan contracts,
 implementation evidence, verification gates, research source ledgers, and
 scenario test contracts. `shared-subagents` keeps routing explicit by sending
-requirement fidelity, plan fidelity, citation checks, test adequacy,
-completion closure, and residual risk to separate roles such as
-`test-adequacy-reviewer`.
+requirement fidelity, plan fidelity, citation checks, test reconciliation,
+test adequacy, completion closure, and residual risk to separate roles such as
+`test-reconciliation-reviewer` and `test-adequacy-reviewer`.
 
 Use `docs/session-memory/AGENTS.block.md` as the repository-owned Codex
 session-memory copy-paste policy block for project `AGENTS.md` setup. Use

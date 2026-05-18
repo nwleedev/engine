@@ -2,6 +2,11 @@
 
 Use these contracts when shared skills are applied inside a downstream project and tests must prove observable behavior against acceptance criteria.
 
+When `testing-workflow` routes to `test-suite-reconciliation`, complete the
+`Existing Test Relevance Inventory` and `Test Artifact Drift Inventory` before
+creating new downstream contracts. Do not count stale, demoted, deleted, or
+quarantined tests as core coverage in the contracts below.
+
 ## Scenario Test Contract
 
 | downstream project | Acceptance Criteria ID | User Scenario ID | test_layer | test_file | test_command | observable behavior |
@@ -30,6 +35,23 @@ generation date in the fixture note or evidence bundle. Treat `stale_fixture` as
 a failure when fixture source, generation date, drift status, or update trigger
 shows the fixture no longer reflects the project boundary it claims to model.
 
+## Artifact Drift Contract
+
+Use this contract for snapshots, goldens, cassettes, generated expected output,
+schema example files, benchmark baseline files, and IaC expected output files
+that support a downstream test claim. For full classification rules, use
+`test-artifact-drift.md`.
+
+| artifact_id | artifact_type | linked_test_ids | expectation_status | drift_status | source_or_generator | owner | review_evidence |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| ART-001 | schema example | TEST-001 | artifact_expected | reviewed_current |  |  |  |
+
+Allowed `expectation_status` values are `artifact_expected`,
+`no_artifact_expected`, `no_existing_artifact_found`, and `blocker_drift`.
+Treat `test_artifact_drift_unresolved`, `snapshot_drift_unreviewed`, and
+`mock_contract_mismatch` as blocking failures when an artifact-backed test is
+used as core evidence.
+
 ## Fixture and Mock Priority
 
 1. Inline minimal arrange in the test body.
@@ -51,3 +73,5 @@ shows the fixture no longer reflects the project boundary it claims to model.
 - Treat `stale_fixture` as a failure when fixture drift review shows a stale source, missing update trigger, or mismatch with the current spec/project boundary.
 - Treat `missing_real_boundary_check` as a failure when the test relies on doubles without a high-fidelity boundary or documented real-boundary reason.
 - Treat `test_only_behavior` as a failure when production behavior is added only to satisfy a test fixture, mock, or fake instead of the user scenario.
+- Treat `test_artifact_drift_unresolved` as a failure when snapshot, golden, generated expected output, schema example, benchmark baseline, or IaC expected output drift is unresolved.
+- Treat `quarantined_test_counted_as_evidence` as a failure when quarantined tests are included in core completion evidence.

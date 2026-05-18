@@ -17,6 +17,8 @@ REQUIRED_SHARED_SKILL_REFERENCES = (
     "workflow-artifacts.md",
     "deep-research-pipeline.md",
     "downstream-test-contracts.md",
+    "test-relevance-decisions.md",
+    "test-artifact-drift.md",
 )
 
 REQUIRED_SHARED_SUBAGENTS = (
@@ -24,6 +26,7 @@ REQUIRED_SHARED_SUBAGENTS = (
     "plan-reviewer",
     "spec-coverage-reviewer",
     "citation-verifier",
+    "test-reconciliation-reviewer",
     "test-adequacy-reviewer",
     "closure-reviewer",
     "completion-claim-reviewer",
@@ -100,6 +103,45 @@ REQUIRED_DOWNSTREAM_TEST_TERMS = (
     "missing_real_boundary_check",
     "test_only_behavior",
     "Do not assert only mock calls",
+    "Artifact Drift Contract",
+    "expectation_status",
+    "no_artifact_expected",
+    "no_existing_artifact_found",
+    "test_artifact_drift_unresolved",
+)
+
+REQUIRED_TEST_RELEVANCE_TERMS = (
+    "Decision Schema",
+    "Existing Test Relevance Inventory",
+    "keep",
+    "update",
+    "split",
+    "move",
+    "demote",
+    "delete",
+    "quarantine",
+    "stale_test_counted_as_core",
+    "contradictory_test_kept",
+    "obsolete_test_kept",
+    "orphan_test_as_core_coverage",
+    "false_confidence_test",
+    "mock_contract_mismatch",
+    "deletion_without_risk_record",
+)
+
+REQUIRED_TEST_ARTIFACT_DRIFT_TERMS = (
+    "Expectation Schema",
+    "Test Artifact Drift Inventory",
+    "expectation_status",
+    "no_artifact_expected",
+    "no_existing_artifact_found",
+    "blocker_drift",
+    "schema example",
+    "benchmark baseline",
+    "IaC expected output",
+    "test_artifact_drift_unresolved",
+    "snapshot_drift_unreviewed",
+    "mock_contract_mismatch",
 )
 
 SHARED_SKILL_ROOTS = (
@@ -170,6 +212,8 @@ def _validate_shared_skill_schema_terms(root: Path) -> list[str]:
         "workflow-artifacts.md": REQUIRED_WORKFLOW_ARTIFACT_TERMS,
         "deep-research-pipeline.md": REQUIRED_DEEP_RESEARCH_TERMS,
         "downstream-test-contracts.md": REQUIRED_DOWNSTREAM_TEST_TERMS,
+        "test-relevance-decisions.md": REQUIRED_TEST_RELEVANCE_TERMS,
+        "test-artifact-drift.md": REQUIRED_TEST_ARTIFACT_DRIFT_TERMS,
     }
 
     for harness, relative_root in SHARED_SKILL_ROOTS:

@@ -25,6 +25,7 @@ EXPECTED_AGENTS = (
     "plan-reviewer",
     "spec-coverage-reviewer",
     "citation-verifier",
+    "test-reconciliation-reviewer",
     "test-adequacy-reviewer",
     "closure-reviewer",
     "completion-claim-reviewer",

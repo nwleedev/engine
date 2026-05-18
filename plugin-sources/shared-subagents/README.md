@@ -6,7 +6,7 @@ Shared Codex and Claude Code subagent templates for reusable Superpowers workflo
 
 - `context-manager`, `code-mapper`, and `docs-researcher` gather project context, code structure, and official documentation evidence.
 - `source-researcher`, `requirements-reviewer`, `plan-reviewer`, `spec-coverage-reviewer`, and `citation-verifier` keep Source Ledger, Requirement Packet, Plan Contract, Spec Ledger, Spec-to-Plan Coverage Matrix, Traceability Matrix, and Claim Evidence Map work separate.
-- `test-adequacy-reviewer`, `completion-claim-reviewer`, `closure-reviewer`, and `risk-reviewer` review downstream test quality, Fixture Governance Contract evidence, verification-gate evidence, risk register items, residual risk, rollback, fallback, and unverifiable items.
+- `test-reconciliation-reviewer`, `test-adequacy-reviewer`, `completion-claim-reviewer`, `closure-reviewer`, and `risk-reviewer` review existing test relevance and artifact drift, newly written or modified test quality, Fixture Governance Contract evidence, verification-gate evidence, risk register items, residual risk, rollback, fallback, and unverifiable items.
 - `reviewer`, `code-reviewer`, and `security-auditor` remain separate gates for correctness/behavior regression/contract review, maintainability/design/readability, and security-audit review.
 
 ## Cross-Check Summary
@@ -30,7 +30,7 @@ Use the bundled agents through the runtime plugin loader when available. If your
 
 This bundle ships generated Markdown subagents under `agents/`. Claude Code plugin-bundled agents are Markdown files with YAML frontmatter and can be discovered from the plugin `agents/` directory at startup. If your Claude Code environment discovers plugin-bundled agents directly, invoke them by name. If your environment requires project-local agents, copy the needed files into `.claude/agents/` and restart Claude Code.
 
-Example: `Use the test-adequacy-reviewer subagent to review tests for AC-001 / SCN-001.`
+Examples: `Use the test-reconciliation-reviewer subagent to review stale test and artifact drift evidence for AC-001.` `Use the test-adequacy-reviewer subagent to review tests for AC-001 / SCN-001.`
 
 ## Principles
 
@@ -56,8 +56,8 @@ Use `references/superpowers-routing.md` for Superpowers stage routing and custom
 
 Expected generated bundle results:
 
-- The Codex bundle contains fifteen TOML files under `agents/`.
-- The Claude Code bundle contains fifteen Markdown files under `agents/`.
+- The Codex bundle contains sixteen TOML files under `agents/`.
+- The Claude Code bundle contains sixteen Markdown files under `agents/`.
 - Each TOML file contains `developer_instructions`.
 - Each TOML file contains `# shared-subagents:provided-agent` so optional project-local copies can be identified as plugin-provided templates.
 - The Codex manifest advertises `skills`, because the `install` skill provides the project-local Codex agent copy workflow.

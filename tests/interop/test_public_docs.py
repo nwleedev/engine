@@ -25,6 +25,7 @@ def test_plugin_architecture_doc_describes_public_repo_layout() -> None:
         "_packages/",
         "deep-research-prompt-export",
         "requirements-packet",
+        "test-reconciliation-reviewer",
         "test-adequacy-reviewer",
         "docs/session-memory/AGENTS.block.md",
         "docs/shared-skills/AGENTS.block.md",
@@ -101,6 +102,7 @@ def test_agents_policy_blocks_are_split_and_compact() -> None:
     assert "research-plan" in skills_text
     assert "source-ledger" in skills_text
     assert "claim-evidence-map" in skills_text
+    assert "testing-workflow" in skills_text
     assert "implementation-discipline" in skills_text
     assert "debugging-discipline" in skills_text
     assert "comment-writing" in skills_text
@@ -127,6 +129,7 @@ def test_agents_policy_blocks_are_split_and_compact() -> None:
         "plan-reviewer",
         "spec-coverage-reviewer",
         "citation-verifier",
+        "test-reconciliation-reviewer",
         "test-adequacy-reviewer",
         "closure-reviewer",
         "completion-claim-reviewer",
