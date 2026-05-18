@@ -29,12 +29,12 @@ After installing the plugin, restart the host coding agent or tool if the new sk
 
 - `requirements-packet`, `spec-contract`, `plan-contract`, `spec-plan-coverage`, `implementation-evidence`, and `verification-gate` use `references/workflow-artifacts.md`.
 - `research-plan`, `source-ledger`, and `claim-evidence-map` use `references/deep-research-pipeline.md`.
-- `scenario-test-designer`, `test-plan-contract`, and `tdd-test-writing` use `references/downstream-test-contracts.md`, including the Fixture Governance Contract.
+- `scenario-test-designer`, `test-plan-contract`, and `tdd-cycle` use `references/downstream-test-contracts.md`, including the Fixture Governance Contract.
 - `comment-writing`, `implementation-discipline`, and `debugging-discipline` keep execution scoped and feed evidence into the same workflow artifacts.
 
 ## Downstream Test Gate
 
-When implementation work changes observable behavior, public contracts, data shape, or acceptance criteria, route the work through `scenario-test-designer`, `test-plan-contract`, and `tdd-test-writing` before completion. Tests may be marked inapplicable only when `test-plan-contract` names the reason and `verification-gate` records the residual risk.
+When implementation work changes observable behavior, public contracts, data shape, or acceptance criteria, route the work through `scenario-test-designer`, `test-plan-contract`, and `tdd-cycle` before completion. Tests may be marked inapplicable only when `test-plan-contract` names the reason and `verification-gate` records the residual risk.
 
 Core scenario coverage must link to an Acceptance Criteria ID or User Scenario ID, use the nearest executable project test layer, and justify each fixture, fake, stub, or mock against observable behavior. `test-adequacy-reviewer` should review downstream test-writing work before closure when subagents are available.
 
@@ -53,7 +53,7 @@ The default fixture budget is `0`. Any fixture, mock, fake, stub, snapshot, seed
 - `claim-evidence-map`: map claims to source IDs, confidence, counterevidence, and decision impact.
 - `scenario-test-designer`: link acceptance criteria to user scenarios, happy paths, boundary scenarios, and failure scenarios.
 - `test-plan-contract`: map scenarios to test layers, files, commands, fixture/mock policy, and evidence IDs.
-- `tdd-test-writing`: write tests through a TDD workflow, choose test types by behavior boundary, and prepare reviewer handoff evidence.
+- `tdd-cycle`: write tests through a TDD workflow, choose test types by behavior boundary, and prepare reviewer handoff evidence.
 - `comment-writing`: write language/technology-stack-appropriate comments and documentation comments for new-teammate understanding, with `docs-researcher` and `code-reviewer` handoff points.
 - `implementation-discipline`: keep code, docs, config, and operational changes scoped and traceable.
 - `debugging-discipline`: investigate failures and conflicting evidence before proposing fixes.

@@ -1,14 +1,11 @@
 ---
-name: tdd-test-writing
+name: tdd-cycle
 description: Use when writing or modifying tests with test-driven development across any language or technology stack.
 metadata:
   short-description: Write correct test code by test type using a TDD workflow.
 ---
-<!-- GENERATED FILE - DO NOT EDIT -->
-<!-- source: plugin-sources/shared-skills/skills/tdd-test-writing/SKILL.md -->
 
-
-# TDD Test Writing
+# TDD Cycle
 
 ## Purpose
 
@@ -40,7 +37,7 @@ Use `../../references/downstream-test-contracts.md` when fixture governance, sce
 
 1. Restate the requirement as one observable behavior that a user, caller, client, operator, or system boundary can see.
 2. Detect the stack, existing test tools, nearest existing test layer, test file placement, naming conventions, and command style.
-3. Use the nearest existing test layer by default. Check `references/tdd-test-types.md` only when the behavior boundary is unclear, the existing layer is a poor fit, or the work needs contract, property, snapshot, performance, security, accessibility, migration, or infrastructure validation.
+3. Use the nearest existing test layer by default. Check `references/testing-patterns.md` only when the behavior boundary is unclear, the existing layer is a poor fit, or the work needs contract, property, snapshot, performance, security, accessibility, migration, or infrastructure validation.
 4. Write the smallest failing test with inline minimal arrange first; extract a fixture only when repeated arrange becomes clearer with a precise name and the Fixture Governance Contract approves it.
 5. Run the narrowest command and confirm the intended failure message proves the missing behavior, not a syntax, import, environment, or setup error.
 6. Add the minimum implementation needed to pass the failing test.
@@ -53,7 +50,7 @@ Use `../../references/downstream-test-contracts.md` when fixture governance, sce
 
 ## Test type decision matrix
 
-Use this as a quick selector, not as a required classification ceremony. Start with the nearest existing test layer and use `references/tdd-test-types.md` for detailed rules only when the right layer is unclear or specialized coverage is needed.
+Use this as a quick selector, not as a required classification ceremony. Start with the nearest existing test layer and use `references/testing-patterns.md` for detailed rules only when the right layer is unclear or specialized coverage is needed.
 
 | Test type | Use when | First failing test shape |
 | --- | --- | --- |

@@ -18,7 +18,7 @@ SKILLS = (
     "claim-evidence-map",
     "scenario-test-designer",
     "test-plan-contract",
-    "tdd-test-writing",
+    "tdd-cycle",
     "spec-plan-coverage",
     "comment-writing",
     "implementation-discipline",
@@ -254,7 +254,7 @@ def test_shared_skills_agents_block_is_compact_routing_layer() -> None:
     assert "claim-evidence-map" in text
     assert "scenario-test-designer" in text
     assert "test-plan-contract" in text
-    assert "tdd-test-writing" in text
+    assert "tdd-cycle" in text
     assert "implementation-discipline" in text
     assert "debugging-discipline" in text
     assert "comment-writing" in text
@@ -290,7 +290,7 @@ def test_shared_skills_test_skills_point_to_downstream_test_reference() -> None:
     for skill_name in (
         "scenario-test-designer",
         "test-plan-contract",
-        "tdd-test-writing",
+        "tdd-cycle",
     ):
         text = read(PLUGIN_ROOT / "skills" / skill_name / "SKILL.md")
 
@@ -323,8 +323,8 @@ def test_spec_plan_coverage_skill_defines_failure_codes_and_reports() -> None:
     assert "test_only_behavior" in text
 
 
-def test_tdd_test_writing_skill_defines_tdd_workflow() -> None:
-    text = read(PLUGIN_ROOT / "skills" / "tdd-test-writing" / "SKILL.md")
+def test_tdd_cycle_skill_defines_tdd_workflow() -> None:
+    text = read(PLUGIN_ROOT / "skills" / "tdd-cycle" / "SKILL.md")
 
     assert "Purpose" in text
     assert "When to use" in text
@@ -412,8 +412,8 @@ def test_comment_specs_reference_documents_required_stacks() -> None:
     assert "unrelated refactoring" in text
 
 
-def test_tdd_test_types_reference_documents_required_types() -> None:
-    text = read(PLUGIN_ROOT / "references" / "tdd-test-types.md")
+def test_testing_patterns_reference_documents_required_types() -> None:
+    text = read(PLUGIN_ROOT / "references" / "testing-patterns.md")
     test_types = (
         "Unit",
         "Integration",
@@ -443,7 +443,7 @@ def test_tdd_test_types_reference_documents_required_types() -> None:
         "- **Use existing project tools first:**",
     )
 
-    assert "# TDD Test Types" in text
+    assert "# Testing Patterns" in text
     double_priority = section_body(text, "Test double priority")
     assert "inline minimal arrange" in double_priority
     assert "real domain objects" in double_priority
@@ -484,7 +484,7 @@ def test_readme_documents_plugin_only_installation() -> None:
 
     assert "Plugin-only distribution" in readme
     assert "$shared-skills:" in readme
-    assert "- `tdd-test-writing`:" in readme
+    assert "- `tdd-cycle`:" in readme
     assert "- `comment-writing`:" in readme
     assert "does not copy skills into" in readme
     assert "does not edit AGENTS.md" in readme

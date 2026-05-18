@@ -1,9 +1,6 @@
-<!-- GENERATED FILE - DO NOT EDIT -->
-<!-- source: plugin-sources/shared-skills/references/tdd-test-types.md -->
+# Testing Patterns
 
-# TDD Test Types
-
-Use this reference from `tdd-test-writing` when choosing the smallest useful failing test for a requested behavior.
+Use this reference from `tdd-cycle` when choosing the smallest useful failing test for a requested behavior.
 
 ## Test double priority
 

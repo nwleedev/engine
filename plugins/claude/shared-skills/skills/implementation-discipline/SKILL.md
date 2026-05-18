@@ -18,7 +18,7 @@ Keep main-session changes scoped, traceable, and verifiable.
 2. Read the relevant local rules, files, dependencies, and existing patterns before editing.
 3. Keep the edit scope tied to the user's approved goal.
 4. Record touched areas, validation needs, and review handoff points.
-5. For behavior-changing work, route acceptance criteria through `scenario-test-designer`, `test-plan-contract`, and `tdd-test-writing` before completion unless tests are explicitly inapplicable.
+5. For behavior-changing work, route acceptance criteria through `scenario-test-designer`, `test-plan-contract`, and `tdd-cycle` before completion unless tests are explicitly inapplicable.
 6. Use `implementation-evidence` and `verification-gate` before completion claims.
 
 ## Development work

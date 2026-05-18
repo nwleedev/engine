@@ -23,7 +23,7 @@ Use `../../references/downstream-test-contracts.md` when fixture governance, sce
 4. Define the happy path in observable behavior terms.
 5. Define at least one boundary scenario when inputs, state, permissions, size, time, concurrency, or compatibility can vary.
 6. Define at least one failure scenario when safe failure, error display, rejection, rollback, or degraded behavior matters.
-7. Route executable test contracts to `test-plan-contract` or concrete test writing to `tdd-test-writing`.
+7. Route executable test contracts to `test-plan-contract` or concrete test writing to `tdd-cycle`.
 
 ## Development work
 

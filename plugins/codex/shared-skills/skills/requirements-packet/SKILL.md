@@ -30,7 +30,7 @@ Use `../../references/workflow-artifacts.md` when table schemas, row-level rules
 
 - Capture behavior, target files or interfaces, validation expectations, and constraints before writing code.
 - Treat inferred technical assumptions as unconfirmed until the user accepts them or local evidence proves them.
-- Route test-writing requirements to `scenario-test-designer`, `test-plan-contract`, or `tdd-test-writing` after acceptance criteria are stable.
+- Route test-writing requirements to `scenario-test-designer`, `test-plan-contract`, or `tdd-cycle` after acceptance criteria are stable.
 
 ## Non-development work
 

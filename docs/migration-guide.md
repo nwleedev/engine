@@ -60,3 +60,11 @@ research-prompt -> deep-research-prompt-export.
 | spec-reviewer | requirements-reviewer + plan-reviewer | Requirement fidelity and plan fidelity are distinct. |
 | online-researcher | source-researcher | Source collection no longer owns decision synthesis. |
 | research-prompt | deep-research-prompt-export | The plugin exports prompts for external ChatGPT Deep Research handoff. |
+
+## Shared Skills TDD Rename
+
+`tdd-test-writing` is renamed to `tdd-cycle`, and
+`references/tdd-test-types.md` is renamed to `references/testing-patterns.md`.
+This is a breaking rename: the previous skill name and reference file are not
+kept as aliases, wrappers, or deprecated compatibility shims. Update prompts,
+AGENTS guidance, tests, and generated-artifact checks to the new names.

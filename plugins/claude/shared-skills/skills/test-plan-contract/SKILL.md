@@ -27,7 +27,7 @@ Use `../../references/downstream-test-contracts.md` when fixture governance, sce
 5. State the fixture and mock policy, including why real objects, high-fidelity boundaries, or in-memory substitutes are not enough when doubles are used.
 6. Set the fixture budget. Default to `0`; any fixture, mock, fake, stub, snapshot, seed, or generated input must have a Fixture Governance Contract row.
 7. Assign an evidence ID that will be filled by `implementation-evidence`.
-8. Route test implementation to `tdd-test-writing`.
+8. Route test implementation to `tdd-cycle`.
 
 ## Development work
 
