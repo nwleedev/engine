@@ -199,9 +199,9 @@ reviewer handoff
 
 ## TDD Cycle Evidence
 
-| tdd_evidence_id | scenario_id | acceptance_criteria_id | reconciliation_id | test_file | failing_command | observed_failure | passing_command | observed_result | residual_gap |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| TDD-001 | SCN-001 | AC-001 | REC-001 |  |  |  |  |  | none |
+| evidence_id | reconciliation_id | scenario_id | acceptance_criteria_id | failing_command | observed_failure | passing_command | observed_result | residual_gap |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| TDD-001 | REC-001 | SCN-001 | AC-001 |  |  |  |  | none |
 
 ## TDD Quality Evidence
 

@@ -51,9 +51,15 @@ values, or test contract details are needed.
 
 ## Scenario Change Map
 
-| scenario_change_id | previous_scenario_or_test_id | linked_scenario_ids | current_acceptance_criteria_id | relationship_to_current_requirement | required_action | replacement_or_gap_id | reconciliation_id |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| SCM-001 | TEST-001 | SCN-001 | AC-001 | still_valid | keep |  | REC-001 |
+| scenario_id | previous_acceptance_criteria | current_acceptance_criteria | scenario_status | affected_tests | required_action |
+| --- | --- | --- | --- | --- | --- |
+| SCN-001 | AC-OLD-001 | AC-001 | still_valid | TEST-001 | keep |
+
+## Scenario Change Map Extension
+
+| scenario_id | previous_scenario_or_test_id | relationship_to_current_requirement | replacement_or_gap_id | reconciliation_id |
+| --- | --- | --- | --- | --- |
+| SCN-001 | TEST-001 | still_valid |  | REC-001 |
 ```
 
 ## Do not

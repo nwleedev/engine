@@ -78,9 +78,15 @@ needed.
 
 ## Current Requirement Coverage Contract
 
-| coverage_contract_id | reconciliation_id | current_requirement_id | acceptance_criteria_id | linked_scenario_ids | coverage_status | core_evidence | residual_gap | residual_risk_id | manual_or_inspection_evidence | replacement_coverage | owner_or_followup | blocking_risks |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| CRC-001 | REC-001 | REQ-001 | AC-001 | SCN-001 | covered | TEST-001 | none |  |  |  |  | none |
+| coverage_id | acceptance_criteria_id | behavior_boundary | reconciliation_decision_ids | required_test_changes | required_artifact_changes | required_new_tests | commands | evidence_ids | blocking_risks |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| CRC-001 | AC-001 | public_api | REC-001 | none | none | none |  | TEST-001 | none |
+
+## Current Requirement Coverage Extension
+
+| coverage_id | reconciliation_id | current_requirement_id | linked_scenario_ids | coverage_status | core_evidence | residual_gap | residual_risk_id | manual_or_inspection_evidence | replacement_coverage | owner_or_followup |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| CRC-001 | REC-001 | REQ-001 | SCN-001 | covered | TEST-001 | none |  |  |  |  |
 ```
 
 ## Do not

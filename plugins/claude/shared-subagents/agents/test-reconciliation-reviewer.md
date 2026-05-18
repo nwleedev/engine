@@ -23,6 +23,7 @@ Check:
 - every existing test affected by the current requirement was reclassified against current acceptance criteria
 - stale, obsolete, contradictory, orphaned, demoted, deleted, quarantined, or false-confidence tests are excluded from core completion evidence
 - artifact drift for fixtures, mocks, fakes, stubs, snapshots, goldens, seeds, cassettes, generated expected outputs, schema examples, benchmark baselines, and IaC expected outputs is classified before evidence is accepted
+- artifact absence distinguishes `no_artifact_expected` from `no_existing_artifact_found` so intentionally unnecessary artifacts are not recorded as residual risk and expected-but-missing artifacts are not hidden
 - blocker drift, snapshot_drift_unreviewed, mock_contract_mismatch, and test_artifact_drift_unresolved block done claims
 - kept tests still assert observable current behavior with acceptance criteria or scenario links
 - deleted, demoted, moved, split, or quarantined tests have risk, owner, expiry, or replacement coverage evidence where required

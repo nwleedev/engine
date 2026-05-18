@@ -207,7 +207,12 @@ def test_downstream_test_contract_limits_fixture_and_mock_use() -> None:
         in text
     )
     assert (
-        "| scenario_change_id | previous_scenario_or_test_id | linked_scenario_ids | current_acceptance_criteria_id | relationship_to_current_requirement | required_action | replacement_or_gap_id | reconciliation_id |"
+        "| scenario_id | previous_acceptance_criteria | current_acceptance_criteria | scenario_status | affected_tests | required_action |"
+        in scenario_change
+    )
+    assert "Scenario Change Map Extension" in scenario_change
+    assert (
+        "| scenario_id | previous_scenario_or_test_id | relationship_to_current_requirement | replacement_or_gap_id | reconciliation_id |"
         in scenario_change
     )
     for term in (
@@ -231,7 +236,12 @@ def test_downstream_test_contract_limits_fixture_and_mock_use() -> None:
     ):
         assert term in scenario_change
     assert (
-        "| coverage_contract_id | reconciliation_id | current_requirement_id | acceptance_criteria_id | linked_scenario_ids | coverage_status | core_evidence | residual_gap | residual_risk_id | manual_or_inspection_evidence | replacement_coverage | owner_or_followup | blocking_risks |"
+        "| coverage_id | acceptance_criteria_id | behavior_boundary | reconciliation_decision_ids | required_test_changes | required_artifact_changes | required_new_tests | commands | evidence_ids | blocking_risks |"
+        in current_coverage
+    )
+    assert "Current Requirement Coverage Extension" in current_coverage
+    assert (
+        "| coverage_id | reconciliation_id | current_requirement_id | linked_scenario_ids | coverage_status | core_evidence | residual_gap | residual_risk_id | manual_or_inspection_evidence | replacement_coverage | owner_or_followup |"
         in current_coverage
     )
     for term in (
@@ -262,7 +272,7 @@ def test_downstream_test_contract_limits_fixture_and_mock_use() -> None:
         in text
     )
     assert (
-        "| tdd_evidence_id | scenario_id | acceptance_criteria_id | reconciliation_id | test_file | failing_command | observed_failure | passing_command | observed_result | residual_gap |"
+        "| evidence_id | reconciliation_id | scenario_id | acceptance_criteria_id | failing_command | observed_failure | passing_command | observed_result | residual_gap |"
         in tdd_evidence
     )
     assert (
@@ -277,8 +287,8 @@ def test_downstream_test_contract_limits_fixture_and_mock_use() -> None:
     ):
         assert term in tdd_evidence
     for term in (
-        "Scenario Change Map.linked_scenario_ids",
-        "Current Requirement Coverage Contract.linked_scenario_ids",
+        "Scenario Change Map.scenario_id",
+        "Current Requirement Coverage Extension.linked_scenario_ids",
         "TDD Cycle Evidence.scenario_id",
         "reconciliation_id",
     ):
@@ -562,17 +572,18 @@ def test_test_suite_reconciliation_skill_defines_required_contracts() -> None:
         assert f"`{decision}`" in text
 
     for expectation_status in (
-        "artifact_expected",
+        "expected",
         "expectation_status",
         "no_artifact_expected",
+        "unknown_expected",
+        "found",
         "no_existing_artifact_found",
-        "blocker_drift",
     ):
         assert expectation_status in text
 
     sample_row = (
-        "| ART-001 | snapshot |  | TEST-001 | artifact required | "
-        "artifact_expected | reviewed_current |  |  |  |  |"
+        "| ART-001 | snapshot |  | TEST-001 | core evidence artifact | "
+        "expected | reviewed_current | keep |  |  |"
     )
     assert sample_row in text
     assert (
@@ -750,10 +761,12 @@ def test_scenario_test_designer_defines_change_map_schema() -> None:
 
     assert "Scenario Change Map" in text
     for term in (
-        "scenario_change_id",
+        "scenario_id",
+        "previous_acceptance_criteria",
+        "current_acceptance_criteria",
+        "scenario_status",
+        "affected_tests",
         "previous_scenario_or_test_id",
-        "linked_scenario_ids",
-        "current_acceptance_criteria_id",
         "relationship_to_current_requirement",
         "required_action",
         "replacement_or_gap_id",
@@ -769,7 +782,13 @@ def test_test_plan_contract_defines_current_requirement_coverage() -> None:
 
     assert "Current Requirement Coverage Contract" in text
     for field in (
-        "coverage_contract_id",
+        "coverage_id",
+        "reconciliation_decision_ids",
+        "required_test_changes",
+        "required_artifact_changes",
+        "required_new_tests",
+        "commands",
+        "evidence_ids",
         "reconciliation_id",
         "current_requirement_id",
         "acceptance_criteria_id",
@@ -792,7 +811,7 @@ def test_tdd_cycle_reconciliation_gate_and_evidence_schema() -> None:
 
     assert "TDD Cycle Evidence" in text
     assert (
-        "| tdd_evidence_id | scenario_id | acceptance_criteria_id | reconciliation_id | test_file | failing_command | observed_failure | passing_command | observed_result | residual_gap |"
+        "| evidence_id | reconciliation_id | scenario_id | acceptance_criteria_id | failing_command | observed_failure | passing_command | observed_result | residual_gap |"
         in text
     )
     assert "canonical join rules" in text

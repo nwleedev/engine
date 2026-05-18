@@ -53,9 +53,19 @@ criteria may be affected by current requirements. Each row must connect one
 previous scenario or test to the current acceptance criteria before new or
 replacement test contracts are created.
 
-| scenario_change_id | previous_scenario_or_test_id | linked_scenario_ids | current_acceptance_criteria_id | relationship_to_current_requirement | required_action | replacement_or_gap_id | reconciliation_id |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| SCM-001 | TEST-001 | SCN-001 | AC-001 | still_valid | keep |  | REC-001 |
+| scenario_id | previous_acceptance_criteria | current_acceptance_criteria | scenario_status | affected_tests | required_action |
+| --- | --- | --- | --- | --- | --- |
+| SCN-001 | AC-OLD-001 | AC-001 | still_valid | TEST-001 | keep |
+
+### Scenario Change Map Extension
+
+Use this extension when reconciliation needs explicit linkage to replacement
+coverage, gaps, or residual risk. The extension must not replace the canonical
+Scenario Change Map fields.
+
+| scenario_id | previous_scenario_or_test_id | relationship_to_current_requirement | replacement_or_gap_id | reconciliation_id |
+| --- | --- | --- | --- | --- |
+| SCN-001 | TEST-001 | still_valid |  | REC-001 |
 
 Allowed `relationship_to_current_requirement` values are `still_valid`,
 `partially_valid`, `obsolete`, `contradicts_current_requirement`,
@@ -82,9 +92,19 @@ requirement, acceptance criterion, or test suite has changed. Every row must
 join to one or more scenario IDs through `linked_scenario_ids`, and
 reconciliation-required work must join to the relevant `reconciliation_id`.
 
-| coverage_contract_id | reconciliation_id | current_requirement_id | acceptance_criteria_id | linked_scenario_ids | coverage_status | core_evidence | residual_gap | residual_risk_id | manual_or_inspection_evidence | replacement_coverage | owner_or_followup | blocking_risks |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| CRC-001 | REC-001 | REQ-001 | AC-001 | SCN-001 | covered | TEST-001 | none |  |  |  |  | none |
+| coverage_id | acceptance_criteria_id | behavior_boundary | reconciliation_decision_ids | required_test_changes | required_artifact_changes | required_new_tests | commands | evidence_ids | blocking_risks |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| CRC-001 | AC-001 | public_api | REC-001 | none | none | none |  | TEST-001 | none |
+
+### Current Requirement Coverage Extension
+
+Use this extension when the canonical Current Requirement Coverage Contract
+needs explicit residual risk, manual evidence, replacement coverage, owner, or
+follow-up fields.
+
+| coverage_id | reconciliation_id | current_requirement_id | linked_scenario_ids | coverage_status | core_evidence | residual_gap | residual_risk_id | manual_or_inspection_evidence | replacement_coverage | owner_or_followup |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| CRC-001 | REC-001 | REQ-001 | SCN-001 | covered | TEST-001 | none |  |  |  |  |
 
 Allowed `coverage_status` values are `covered`, `covered_with_manual_evidence`,
 `partial_gap`, `replacement_required`, `blocked_by_risk`, and
@@ -132,12 +152,16 @@ schema example files, benchmark baseline files, and IaC expected output files
 that support a downstream test claim. For full classification rules, use
 `test-artifact-drift.md`.
 
-| artifact_id | artifact_type | linked_test_ids | expectation_status | drift_status | source_or_generator | owner | review_evidence |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| ART-001 | schema example | TEST-001 | artifact_expected | reviewed_current |  |  |  |
+| artifact_id | artifact_type | path | used_by_tests | current_role | expectation_status | drift_status | required_action | drift_reason | owner_or_followup |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| ART-001 | schema example | docs/schema/user.json | TEST-001 | API compatibility baseline | expected | reviewed_current | keep |  |  |
 
-Allowed `expectation_status` values are `artifact_expected`,
-`no_artifact_expected`, `no_existing_artifact_found`, and `blocker_drift`.
+Allowed `expectation_status` values are `expected`, `no_artifact_expected`,
+`unknown_expected`, and `found`.
+When an artifact is `expected` or `unknown_expected` but no existing artifact is
+found after the declared search, record `no_existing_artifact_found` as the
+drift or residual-risk condition instead of treating it as an expectation
+status.
 Treat `test_artifact_drift_unresolved`, `snapshot_drift_unreviewed`, and
 `mock_contract_mismatch` as blocking failures when an artifact-backed test is
 used as core evidence.
@@ -149,9 +173,9 @@ must join to the scenario and acceptance criterion it proves. When
 reconciliation was required, it must also join to the same `reconciliation_id`
 used by the Scenario Change Map and Current Requirement Coverage Contract.
 
-| tdd_evidence_id | scenario_id | acceptance_criteria_id | reconciliation_id | test_file | failing_command | observed_failure | passing_command | observed_result | residual_gap |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| TDD-001 | SCN-001 | AC-001 | REC-001 |  |  |  |  |  | none |
+| evidence_id | reconciliation_id | scenario_id | acceptance_criteria_id | failing_command | observed_failure | passing_command | observed_result | residual_gap |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| TDD-001 | REC-001 | SCN-001 | AC-001 |  |  |  |  | none |
 
 `failing_command` and `observed_failure` are required for new behavior or bug
 fix coverage unless the row records approved characterization-only evidence.
@@ -171,12 +195,13 @@ for a downstream application project.
 ## Join Rules
 
 - `Scenario Test Contract.User Scenario ID`,
-  `Scenario Change Map.linked_scenario_ids`,
-  `Current Requirement Coverage Contract.linked_scenario_ids`, and
+  `Scenario Change Map.scenario_id`,
+  `Current Requirement Coverage Extension.linked_scenario_ids`, and
   `TDD Cycle Evidence.scenario_id` must use the same stable `SCN-*` IDs.
-- `acceptance_criteria_id` and `current_acceptance_criteria_id` values must
-  join to a current Requirement Packet, Spec Contract, or Scenario Test
-  Contract acceptance criteria ID.
+- `acceptance_criteria_id`, `previous_acceptance_criteria`, and
+  `current_acceptance_criteria` values must join to a current or prior
+  Requirement Packet, Spec Contract, or Scenario Test Contract acceptance
+  criteria ID as appropriate.
 - `reconciliation_id` must join Scenario Change Map, Current Requirement
   Coverage Contract, TDD Cycle Evidence, Implementation Evidence, and
   Verification Gate rows whenever the selected testing route required

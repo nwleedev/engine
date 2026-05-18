@@ -45,8 +45,8 @@ Use `../../references/downstream-test-contracts.md` when fixture governance, sce
    the test cannot remain core evidence.
 4. **Test Artifact Drift Classification**: Classify each affected artifact with
    expectation status, drift status, source, owner, and review evidence. Use
-   `no_artifact_expected`, `no_existing_artifact_found`, or blocker drift when
-   an artifact is absent.
+   `no_artifact_expected`, `no_existing_artifact_found`, or a blocking drift
+   condition when an artifact is absent.
 5. **Acceptance Criteria Traceability Matrix**: Map each current acceptance
    criterion to kept, updated, moved, or planned test evidence. Do not count
    demoted, deleted, quarantined, stale, contradictory, or orphaned tests as
@@ -73,25 +73,32 @@ Use `../../references/downstream-test-contracts.md` when fixture governance, sce
 ```markdown
 ## Existing Test Relevance Inventory
 
-| test_id | test_file | linked_acceptance_criteria_ids | previous_expectation | current_expectation | decision | reason | blocking_failure_code | downstream_action |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| TEST-001 |  | AC-001 |  |  | keep |  |  | none |
+| test_id | test_file | test_name | current_assertion | old_requirement_link | current_requirement_link | decision | required_action | reason | risk_if_kept | risk_if_changed_or_removed |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| TEST-001 |  |  |  |  | AC-001 | keep | none |  | none | none |
 
 Allowed `decision` values: `keep`, `update`, `split`, `move`, `demote`, `delete`, `quarantine`.
 
 ## Test Artifact Drift Inventory
 
-| artifact_id | artifact_type | artifact_path | linked_test_ids | expected_artifact_policy | expectation_status | drift_status | source_or_generator | owner | blocking_failure_code | review_evidence |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| ART-001 | snapshot |  | TEST-001 | artifact required | artifact_expected | reviewed_current |  |  |  |  |
+| artifact_id | artifact_type | path | used_by_tests | current_role | expectation_status | drift_status | required_action | drift_reason | owner_or_followup |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| ART-001 | snapshot |  | TEST-001 | core evidence artifact | expected | reviewed_current | keep |  |  |
 
-Allowed `expectation_status` values: `artifact_expected`, `no_artifact_expected`, `no_existing_artifact_found`, `blocker_drift`.
+Allowed `expectation_status` values: `expected`, `no_artifact_expected`, `unknown_expected`, `found`.
+
+Use `no_artifact_expected` only when the current downstream application behavior
+is proven without an artifact. Use `unknown_expected` when the workflow cannot
+yet determine whether an artifact is required. When an artifact is `expected` or
+`unknown_expected` and no existing artifact is found, record the residual risk
+candidate in `drift_status`, `required_action`, and `drift_reason`; do not encode
+that condition as an `expectation_status`.
 
 ## Coverage Gap After Reconciliation
 
-| gap_id | acceptance_criteria_id | missing_or_invalid_evidence | cause | required_test_pattern | downstream_contract_id | owner | blocking_failure_code |
+| gap_id | acceptance_criteria_id | behavior_boundary | why_reconciled_tests_are_insufficient | required_new_or_updated_test | selected_layer | command | priority |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| GAP-001 | AC-001 |  |  | regression | TPC-001 |  |  |
+| GAP-001 | AC-001 | public_api |  |  |  |  | high |
 
 ## Reconciliation Contract
 
@@ -127,7 +134,8 @@ Blocking failure codes include
   claims.
 - Record absence explicitly: use `no_artifact_expected` when the requirement
   does not need an artifact, `no_existing_artifact_found` when an expected
-  artifact is missing, and `blocker_drift` when absence hides unresolved drift.
+  artifact is missing, and a blocking drift condition when absence hides
+  unresolved drift.
 - Keep deletion, demotion, and quarantine decisions tied to risk and owner
   evidence, not convenience or test pass status.
 

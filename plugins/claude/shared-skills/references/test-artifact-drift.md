@@ -15,19 +15,19 @@ coverage gaps.
 
 | expectation_status | use_when | evidence_required | blocking_behavior |
 | --- | --- | --- | --- |
-| `artifact_expected` | The current requirement needs an artifact or baseline. | Artifact path, generator or source, linked test IDs, owner. | Missing or stale artifact blocks core evidence. |
+| `expected` | The current requirement needs an artifact or baseline. | Artifact path, generator or source, linked test IDs, owner. | Missing or stale artifact blocks core evidence. |
 | `no_artifact_expected` | The current requirement is proven without any artifact. | Reason the behavior is covered by assertions, command, or manual inspection. | Do not create a placeholder artifact. |
-| `no_existing_artifact_found` | An artifact is expected but none exists yet. | Search locations, required downstream contract, owner. | Treat as coverage gap until created or justified. |
-| `blocker_drift` | Artifact absence or mismatch prevents trustworthy evidence. | Drift description, blocked criteria, owner, recovery trigger. | Blocks completion as `test_artifact_drift_unresolved`. |
+| `unknown_expected` | The workflow cannot yet prove whether the current requirement needs an artifact. | Search locations, decision owner, and follow-up needed to classify expected vs not expected. | Blocks completion until resolved or recorded as residual risk. |
+| `found` | An artifact exists but its current role still needs drift classification. | Artifact path, linked tests, and source or generator when known. | Cannot count as core evidence until drift status is current. |
 
 ## Test Artifact Drift Inventory
 
 ```markdown
-| artifact_id | artifact_type | artifact_path | linked_test_ids | expected_artifact_policy | expectation_status | drift_status | source_or_generator | owner | blocking_failure_code | review_evidence |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| ART-001 | schema example | docs/schema/user.json | TEST-001 | artifact required for API compatibility | artifact_expected | drifted | schema generator | platform | test_artifact_drift_unresolved | diff reviewed |
-| ART-002 | benchmark baseline | benchmarks/login.json | TEST-002 | performance budget tracked elsewhere | no_artifact_expected | not_applicable | p95 dashboard | perf |  | linked evidence |
-| ART-003 | IaC expected output | infra/expected/plan.json | TEST-003 | IaC expected output required | no_existing_artifact_found | missing | terraform plan | infra | test_artifact_drift_unresolved | search log |
+| artifact_id | artifact_type | path | used_by_tests | current_role | expectation_status | drift_status | required_action | drift_reason | owner_or_followup |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| ART-001 | schema example | docs/schema/user.json | TEST-001 | API compatibility baseline | expected | drifted | update | schema diff conflicts with current contract | platform |
+| ART-002 | benchmark baseline | benchmarks/login.json | TEST-002 | performance budget tracked elsewhere | no_artifact_expected | not_applicable | keep external evidence | covered by p95 dashboard | perf |
+| ART-003 | IaC expected output | infra/expected/plan.json | TEST-003 | IaC plan baseline | expected | no_existing_artifact_found | create or document residual risk | search found no current expected output | infra |
 ```
 
 ## Drift Classes
@@ -41,6 +41,8 @@ coverage gaps.
 - `unreviewed`: snapshot, golden, schema example, benchmark baseline, or IaC
   expected output changed without human or automated review.
 - `missing`: an expected artifact was not found.
+- `no_existing_artifact_found`: an artifact is expected or expectation is still
+  unknown, but no existing artifact was found after a documented search.
 - `not_applicable`: no artifact is expected for the requirement.
 
 ## Failure Terms
